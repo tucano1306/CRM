@@ -20,6 +20,8 @@ export interface Product {
   name: string;
   description: string;
   unit: 'case' | 'pk';
+  price: number;
+  stock: number;
   sellerIds: string[];
 }
 
@@ -29,13 +31,15 @@ export interface Order {
   sellerId: string;
   status: 'PENDING' | 'PLACED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELED';
   items: OrderItem[];
+  totalAmount: number;  // AGREGADO
   createdAt: string;
   updatedAt: string;
 }
 
 export interface OrderItem {
   productId: string;
+  productName: string;  // AGREGADO
   quantity: number;
+  pricePerUnit: number; // AGREGADO (era opcional)
   confirmed: boolean;
-  pricePerUnit?: number;
 }

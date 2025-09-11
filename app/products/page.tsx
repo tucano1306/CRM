@@ -153,15 +153,15 @@ export default function ProductsPage() {
                       type="text"
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Descripción detallada del producto"
+                      placeholder="Describe el producto brevemente"
                       className="mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       required
                     />
                   </div>
                 </div>
 
-                {/* Responsive grid for smaller fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* Grid layout for smaller fields */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <Label htmlFor="unit" className="text-sm font-semibold text-gray-700">
                       Unidad
@@ -170,10 +170,11 @@ export default function ProductsPage() {
                       id="unit"
                       value={formData.unit}
                       onChange={(e) => setFormData({ ...formData, unit: e.target.value as 'case' | 'pk' })}
-                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      required
                     >
-                      <option value="case">Case</option>
-                      <option value="pk">Package</option>
+                      <option value="case">Caso</option>
+                      <option value="pk">Paquete</option>
                     </select>
                   </div>
 
@@ -185,7 +186,6 @@ export default function ProductsPage() {
                       id="price"
                       type="number"
                       step="0.01"
-                      min="0"
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       placeholder="0.00"
@@ -201,7 +201,6 @@ export default function ProductsPage() {
                     <Input
                       id="stock"
                       type="number"
-                      min="0"
                       value={formData.stock}
                       onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                       placeholder="0"
@@ -211,11 +210,10 @@ export default function ProductsPage() {
                   </div>
                 </div>
 
-                {/* Responsive button */}
                 <Button 
                   type="submit" 
-                  disabled={loading} 
-                  className="w-full sm:w-auto sm:min-w-[200px] disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={loading}
+                  className="w-full sm:w-auto px-8 py-2 bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 >
                   {loading ? 'Creando...' : 'Crear Producto'}
                 </Button>
@@ -252,7 +250,13 @@ export default function ProductsPage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Stock:</span>
-                    <span className={`font-semibold ${product.stock > 10 ? 'text-green-600' : product.stock > 0 ? 'text-orange-600' : 'text-red-600'}`}>
+                    <span className={`font-semibold ${
+                      product.stock > 10 
+                        ? 'text-green-600' 
+                        : product.stock > 0 
+                        ? 'text-orange-600' 
+                        : 'text-red-600'
+                    }`}>
                       {product.stock}
                     </span>
                   </div>

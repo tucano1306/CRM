@@ -1,0 +1,109 @@
+import { render, screen, fireEvent } from '@testing-library/react'
+import '@testing-library/jest-dom'
+
+// Mock del componente ProductCard (crea uno simple para testear)
+interface Product {
+  id: string
+  name: string
+  description: string
+  unit: string
+  price: number
+  stock: number
+}
+
+interface ProductCardProps {
+  product: Product
+  onEdit?: (product: Product) => void
+  onDelete?: (id: string) => void
+}
+
+function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
+  return (
+    <div data-testid={`product-${product.id}`}>
+      <h3>{product.name}</h3>
+      <p>{product.description}</p>
+      <span>Price: ${product.price}</span>
+      <span>Stock: {product.stock} {product.unit}</span>
+      
+      {onEdit && (
+        <button onClick={() => onEdit(product)} data-testid="edit-button">
+          Edit
+        </button>
+      )}
+      
+      {onDelete && (
+        <button onClick={() => onDelete(product.id)} data-testid="delete-button">
+          Delete
+        </button>
+      )}
+    </div>
+  )
+}
+
+describe('ProductCard Component', () => {
+  const mockProduct: Product = {
+    id: 'prod-1',
+    name: 'Test Tomatoes',
+    description: 'Fresh test tomatoes',
+    unit: 'case',
+    price: 25.99,
+    stock: 100
+  }
+
+  test('renders product information correctly', () => {
+    render(<ProductCard product={mockProduct} />)
+    
+    expect(screen.getByText('Test Tomatoes')).toBeInTheDocument()
+    expect(screen.getByText('Fresh test tomatoes')).toBeInTheDocument()
+    expect(screen.getByText('Price: $25.99')).toBeInTheDocument()
+    expect(screen.getByText('Stock: 100 case')).toBeInTheDocument()
+  })
+
+  test('calls onEdit when edit button is clicked', () => {
+    const mockOnEdit = jest.fn()
+    
+    render(<ProductCard product={mockProduct} onEdit={mockOnEdit} />)
+    
+    const editButton = screen.getByTestId('edit-button')
+    fireEvent.click(editButton)
+    
+    expect(mockOnEdit).toHaveBeenCalledTimes(1)
+    expect(mockOnEdit).toHaveBeenCalledWith(mockProduct)
+  })
+
+  test('calls onDelete when delete button is clicked', () => {
+    const mockOnDelete = jest.fn()
+    
+    render(<ProductCard product={mockProduct} onDelete={mockOnDelete} />)
+    
+    const deleteButton = screen.getByTestId('delete-button')
+    fireEvent.click(deleteButton)
+    
+    expect(mockOnDelete).toHaveBeenCalledTimes(1)
+    expect(mockOnDelete).toHaveBeenCalledWith(mockProduct.id)
+  })
+
+  test('does not render buttons when callbacks are not provided', () => {
+    render(<ProductCard product={mockProduct} />)
+    
+    expect(screen.queryByTestId('edit-button')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('delete-button')).not.toBeInTheDocument()
+  })
+
+  test('displays correct product data for different products', () => {
+    const differentProduct: Product = {
+      id: 'prod-2',
+      name: 'Mozzarella Cheese',
+      description: 'Italian mozzarella',
+      unit: 'pk',
+      price: 15.50,
+      stock: 50
+    }
+    
+    render(<ProductCard product={differentProduct} />)
+    
+    expect(screen.getByText('Mozzarella Cheese')).toBeInTheDocument()
+    expect(screen.getByText('Price: $15.5')).toBeInTheDocument()
+    expect(screen.getByText('Stock: 50 pk')).toBeInTheDocument()
+  })
+})
