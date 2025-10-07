@@ -1,0 +1,360 @@
+// ============================================
+// FOOD ORDER MANAGEMENT CRM - PRISMA SCHEMA
+// ============================================
+// Este es el schema completo de Prisma para el CRM de gestión de pedidos de comida
+// Reemplazar TODO el contenido de prisma/schema.prisma con este archivo
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum UserRole {
+  ADMIN
+  SELLER
+  CLIENT
+}
+
+enum ProductUnit {
+  case
+  pk
+  box
+  unit
+  kg
+  lb
+}
+
+enum OrderStatus {
+  PENDING
+  PLACED
+  CONFIRMED
+  COMPLETED
+  CANCELED
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum TimeSlot {
+  MORNING // 6am - 12pm
+  AFTERNOON // 12pm - 6pm
+  EVENING // 6pm - 12am
+  NIGHT // 12am - 6am
+}
+
+// ============================================
+// AUTHENTICATED USER (Managed by Auth Service)
+// ============================================
+
+model AuthenticatedUser {
+  id        String   @id @default(uuid())
+  authId    String   @unique // ID from Auth proxy service
+  email     String   @unique
+  name      String
+  role      UserRole @default(CLIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations based on role
+  clientAccounts Client[]      @relation("ClientUsers")
+  sellerAccounts Seller[]      @relation("SellerUsers")
+  chatMessages   ChatMessage[]
+
+  @@index([authId])
+  @@index([email])
+  @@index([role])
+  @@map("authenticated_users")
+}
+
+// ============================================
+// CLIENT
+// ============================================
+
+model Client {
+  id           String  @id @default(uuid())
+  name         String
+  businessName String?
+  address      String
+  phone        String
+  email        String
+
+  // Settings
+  orderConfirmationEnabled Boolean @default(true)
+  notificationsEnabled     Boolean @default(true)
+
+  // Relations
+  sellerId String?
+  seller   Seller? @relation("SellerClients", fields: [sellerId], references: [id], onDelete: SetNull)
+
+  // Multiple authenticated users can belong to one client
+  users         AuthenticatedUser[] @relation("ClientUsers")
+  orders        Order[]
+  pendingOrders PendingOrder[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sellerId])
+  @@index([email])
+  @@map("clients")
+}
+
+// ============================================
+// SELLER
+// ============================================
+
+model Seller {
+  id         String  @id @default(uuid())
+  name       String
+  email      String  @unique
+  phone      String?
+  isActive   Boolean @default(true)
+  territory  String? // Geographic territory or area
+  commission Float? // Commission percentage
+
+  // Multiple authenticated users can be sellers
+  users AuthenticatedUser[] @relation("SellerUsers")
+
+  // Relations
+  clients      Client[]        @relation("SellerClients")
+  products     ProductSeller[]
+  orders       Order[]
+  schedules    Schedule[]
+  chatMessages ChatMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
+  @@index([isActive])
+  @@map("sellers")
+}
+
+// ============================================
+// PRODUCT
+// ============================================
+
+model Product {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  unit        ProductUnit @default(case)
+  price       Float       @default(0)
+  stock       Int         @default(0)
+  sku         String?     @unique
+  imageUrl    String?
+  isActive    Boolean     @default(true)
+
+  // Relations
+  sellers    ProductSeller[]
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+  @@index([unit])
+  @@index([isActive])
+  @@map("products")
+}
+
+// ============================================
+// PRODUCT-SELLER (Many-to-Many)
+// ============================================
+
+model ProductSeller {
+  id String @id @default(uuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  sellerId String
+  seller   Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  // Seller-specific pricing
+  sellerPrice Float?
+  isAvailable Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  @@unique([productId, sellerId])
+  @@index([productId])
+  @@index([sellerId])
+  @@map("product_sellers")
+}
+
+// ============================================
+// ORDER
+// ============================================
+
+model Order {
+  id          String      @id @default(uuid())
+  orderNumber String      @unique @default(uuid()) // Human-readable order number
+  status      OrderStatus @default(PENDING)
+  totalAmount Float       @default(0)
+  notes       String?
+
+  // Confirmation tracking
+  confirmedAt DateTime?
+  canceledAt  DateTime?
+  completedAt DateTime?
+
+  // Relations
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  sellerId String
+  seller   Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  items        OrderItem[]
+  chatMessages ChatMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([sellerId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+// ============================================
+// ORDER ITEM
+// ============================================
+
+model OrderItem {
+  id           String  @id @default(uuid())
+  productName  String // Denormalized for history
+  quantity     Int
+  pricePerUnit Float
+  confirmed    Boolean @default(false)
+  subtotal     Float // quantity * pricePerUnit
+
+  // Relations
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+// ============================================
+// PENDING ORDER
+// ============================================
+
+model PendingOrder {
+  id     String  @id @default(uuid())
+  status String  @default("draft") // draft, submitted, reviewed
+  notes  String?
+
+  // Relations
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([status])
+  @@map("pending_orders")
+}
+
+// ============================================
+// SCHEDULE (Seller Availability)
+// ============================================
+
+model Schedule {
+  id        String    @id @default(uuid())
+  dayOfWeek DayOfWeek
+  timeSlot  TimeSlot
+  isActive  Boolean   @default(true)
+  notes     String?
+
+  // Relations
+  sellerId String
+  seller   Seller @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Compound unique constraint: one seller can't have duplicate day/time slots
+  @@unique([sellerId, dayOfWeek, timeSlot])
+  @@index([sellerId])
+  @@index([dayOfWeek])
+  @@map("schedules")
+}
+
+// ============================================
+// CHAT MESSAGE
+// ============================================
+
+model ChatMessage {
+  id          String  @id @default(uuid())
+  message     String
+  isRead      Boolean @default(false)
+  messageType String  @default("text") // text, system, notification
+
+  // Relations - Message sent by authenticated user
+  userId String
+  user   AuthenticatedUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Message context
+  sellerId String?
+  seller   Seller? @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+
+  // Optional: Link to specific order
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([sellerId])
+  @@index([orderId])
+  @@index([createdAt])
+  @@map("chat_messages")
+}
+
+// ============================================
+// ANALYTICS & LOGS (Optional - for future)
+// ============================================
+
+model ActivityLog {
+  id          String  @id @default(uuid())
+  action      String // created, updated, deleted, login, etc.
+  entityType  String // order, product, client, etc.
+  entityId    String?
+  description String?
+  metadata    Json? // Additional data in JSON format
+
+  userId String? // Reference to AuthenticatedUser.authId
+
+  createdAt DateTime @default(now())
+
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
+  @@map("activity_logs")
+}
