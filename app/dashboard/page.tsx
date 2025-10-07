@@ -7,20 +7,20 @@ import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
 
 interface Stats {
-  totalProducts: number;
-  totalClients: number;
-  totalOrders: number;
-  pendingOrders: number;
-  totalRevenue: number;
+  total_products: number;
+  total_clients: number;
+  total_orders: number;
+  pending_orders: number;
+  total_revenue: number | string;
 }
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats>({
-    totalProducts: 0,
-    totalClients: 0,
-    totalOrders: 0,
-    pendingOrders: 0,
-    totalRevenue: 0
+    total_products: 0,
+    total_clients: 0,
+    total_orders: 0,
+    pending_orders: 0,
+    total_revenue: 0
   })
 
   useEffect(() => {
@@ -32,6 +32,7 @@ export default function DashboardPage() {
       const response = await fetch('/api/stats')
       if (response.ok) {
         const data = await response.json()
+        console.log('Stats recibidas:', data)
         setStats(data)
       }
     } catch (error) {
@@ -39,10 +40,15 @@ export default function DashboardPage() {
     }
   }
 
+  // Convertir total_revenue a número si viene como string
+  const totalRevenue = typeof stats.total_revenue === 'string' 
+    ? parseFloat(stats.total_revenue) 
+    : stats.total_revenue
+
   const cards = [
     {
       title: 'Total Productos',
-      value: stats.totalProducts,
+      value: stats.total_products,
       description: '+12% desde el mes pasado',
       icon: Package,
       bgClass: 'bg-gradient-to-br from-blue-50 to-blue-100',
@@ -50,7 +56,7 @@ export default function DashboardPage() {
     },
     {
       title: 'Total Clientes',
-      value: stats.totalClients,
+      value: stats.total_clients,
       description: '+8% desde el mes pasado',
       icon: Users,
       bgClass: 'bg-gradient-to-br from-green-50 to-green-100',
@@ -58,7 +64,7 @@ export default function DashboardPage() {
     },
     {
       title: 'Órdenes Totales',
-      value: stats.totalOrders,
+      value: stats.total_orders,
       description: '+23% desde el mes pasado',
       icon: ShoppingCart,
       bgClass: 'bg-gradient-to-br from-purple-50 to-purple-100',
@@ -66,7 +72,7 @@ export default function DashboardPage() {
     },
     {
       title: 'Ingresos',
-      value: `$${stats.totalRevenue.toFixed(2)}`,
+      value: `$${totalRevenue.toFixed(2)}`,
       description: '+15% desde el mes pasado',
       icon: DollarSign,
       bgClass: 'bg-gradient-to-br from-emerald-50 to-emerald-100',
@@ -183,11 +189,11 @@ export default function DashboardPage() {
             <CardContent>
               <div className="grid grid-cols-2 gap-4 text-center">
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.pendingOrders}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.pending_orders}</p>
                   <p className="text-xs text-gray-600">Órdenes Pendientes</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.totalProducts}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.total_products}</p>
                   <p className="text-xs text-gray-600">Productos Total</p>
                 </div>
               </div>
