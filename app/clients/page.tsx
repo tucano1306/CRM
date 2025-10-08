@@ -35,16 +35,17 @@ export default function ClientsPage() {
   }, [])
 
   const fetchClients = async () => {
-    try {
-      const response = await fetch('/api/clients')
-      if (response.ok) {
-        const data = await response.json()
-        setClients(data)
-      }
-    } catch (error) {
-      console.error('Error al cargar clientes:', error)
+  try {
+    const response = await fetch('/api/clients')
+    if (response.ok) {
+      const result = await response.json()
+      setClients(result.data || [])  // ← CORRECCIÓN
     }
+  } catch (error) {
+    console.error('Error al cargar clientes:', error)
+    setClients([])  // ← Agregar esto también
   }
+}
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

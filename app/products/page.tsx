@@ -35,18 +35,19 @@ export default function ProductsPage() {
     fetchProducts()
   }, [])
 
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch('/api/products')
-      if (response.ok) {
-        const data = await response.json()
-        setProducts(data)
-      }
-    } catch (error) {
-      console.error('Error al cargar productos:', error)
+const fetchProducts = async () => {
+  try {
+    const response = await fetch('/api/products')
+    if (response.ok) {
+      const result = await response.json()
+      // CAMBIO: ahora el API devuelve { success, data, pagination }
+      setProducts(result.data || [])
     }
+  } catch (error) {
+    console.error('Error al cargar productos:', error)
+    setProducts([]) // Asegurar array vacío
   }
-
+}
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
