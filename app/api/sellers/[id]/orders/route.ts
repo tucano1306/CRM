@@ -1,0 +1,78 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
+// GET - Obtener órdenes de un seller
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const searchParams = request.nextUrl.searchParams
+    const status = searchParams.get('status')
+    
+    const where: any = { sellerId: id }
+    if (status) {
+      where.status = status
+    }
+
+    const orders = await prisma.order.findMany({
+      where,
+      include: {
+        client: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true
+          }
+        },
+        items: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                unit: true
+              }
+            }
+          }
+        },
+        _count: {
+          select: { items: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+
+    // Calcular totales por estado
+    const statusSummary = await prisma.order.groupBy({
+      by: ['status'],
+      where: { sellerId: id },
+      _count: true,
+      _sum: { totalAmount: true }
+    })
+
+    return NextResponse.json({
+      success: true,
+      data: orders,
+      count: orders.length,
+      summary: statusSummary.map(s => ({
+        status: s.status,
+        count: s._count,
+        totalAmount: s._sum.totalAmount || 0
+      }))
+    })
+  } catch (error) {
+    console.error('Error:', error)
+    return NextResponse.json(
+      { 
+        success: false,
+        error: 'Error al obtener órdenes del seller' 
+      },
+      { status: 500 }
+    )
+  }
+}
