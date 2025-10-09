@@ -1,0 +1,80 @@
+'use client'
+
+import { useUser, UserButton } from '@clerk/nextjs'
+import { Home, Package, ShoppingCart, User, Menu, X, Store } from 'lucide-react'
+import Link from 'next/link'
+import { useState } from 'react'
+import { usePathname } from 'next/navigation'
+
+export default function BuyerLayout({ children }: { children: React.ReactNode }) {
+  const { user } = useUser()
+  const pathname = usePathname()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const navigation = [
+    { name: 'Inicio', href: '/buyer/dashboard', icon: Home },
+    { name: 'Catálogo', href: '/buyer/catalog', icon: Store },
+    { name: 'Carrito', href: '/buyer/cart', icon: ShoppingCart },
+    { name: 'Órdenes', href: '/buyer/orders', icon: Package },
+    { name: 'Perfil', href: '/buyer/profile', icon: User },
+  ]
+
+  return (
+    <div className="flex h-screen bg-gray-50">
+      {/* Sidebar */}
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-purple-700 to-pink-600 shadow-2xl transition-transform lg:translate-x-0 lg:static`}>
+        <div className="flex h-full flex-col">
+          <div className="flex h-20 items-center justify-between px-6 border-b border-purple-500">
+            <div>
+              <h1 className="text-2xl font-bold text-white">Food CRM</h1>
+              <p className="text-xs text-purple-200">Comprador</p>
+            </div>
+            <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white">
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+
+          <nav className="flex-1 space-y-2 px-3 py-6">
+            {navigation.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center gap-3 rounded-xl px-4 py-3 font-medium transition ${
+                    isActive ? 'bg-white text-purple-700 shadow-lg' : 'text-purple-100 hover:bg-purple-600'
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.name}
+                </Link>
+              )
+            })}
+          </nav>
+
+          <div className="border-t border-purple-500 p-4 bg-purple-800">
+            <div className="flex items-center gap-3">
+              <UserButton afterSignOutUrl="/sign-in" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">{user?.firstName}</p>
+                <p className="text-xs text-purple-300">{user?.primaryEmailAddress?.emailAddress}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <header className="flex h-16 items-center justify-between border-b bg-white px-6 lg:hidden">
+          <button onClick={() => setSidebarOpen(true)}>
+            <Menu className="h-6 w-6" />
+          </button>
+          <h1 className="font-bold">Food CRM</h1>
+          <UserButton />
+        </header>
+        <main className="flex-1 overflow-y-auto">{children}</main>
+      </div>
+    </div>
+  )
+}
