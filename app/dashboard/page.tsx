@@ -2,88 +2,170 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Package, Users, ShoppingCart, DollarSign, TrendingUp, Clock } from 'lucide-react'
+import { Package, Users, ShoppingCart, DollarSign, TrendingUp, AlertTriangle, Activity } from 'lucide-react'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts'
 
-interface Stats {
-  total_products: number;
-  total_clients: number;
-  total_orders: number;
-  pending_orders: number;
-  total_revenue: number | string;
+interface DashboardData {
+  overview: {
+    totalClients: number
+    activeClients: number
+    totalProducts: number
+    lowStockProducts: number
+    totalSellers: number
+    totalOrders: number
+    pendingOrders: number
+    completedOrders: number
+    canceledOrders: number
+    totalRevenue: number
+    averageOrderValue: number
+  }
+  ordersByStatus: Array<{
+    status: string
+    count: number
+    totalAmount: number
+  }>
+  recentPerformance: {
+    last7Days: {
+      orders: number
+      revenue: number
+    }
+    currentMonth: {
+      orders: number
+      revenue: number
+    }
+  }
+  topProducts: Array<{
+    productId: string
+    productName: string
+    totalSold: number
+    totalRevenue: number
+    ordersCount: number
+  }>
+}
+
+interface SalesData {
+  dailySales: Array<{
+    date: string
+    orders: number
+    revenue: number
+  }>
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<Stats>({
-    total_products: 0,
-    total_clients: 0,
-    total_orders: 0,
-    pending_orders: 0,
-    total_revenue: 0
-  })
+  const [loading, setLoading] = useState(true)
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
+  const [salesData, setSalesData] = useState<SalesData | null>(null)
 
   useEffect(() => {
-    fetchStats()
+    fetchDashboardData()
+    fetchSalesData()
   }, [])
 
-  const fetchStats = async () => {
+  const fetchDashboardData = async () => {
     try {
-      const response = await fetch('/api/stats')
+      const response = await fetch('/api/analytics/dashboard')
       if (response.ok) {
-        const data = await response.json()
-        console.log('Stats recibidas:', data)
-        setStats(data)
+        const result = await response.json()
+        if (result.success) {
+          setDashboardData(result.data)
+        }
       }
     } catch (error) {
-      console.error('Error al cargar estadísticas:', error)
+      console.error('Error al cargar dashboard:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  // Convertir total_revenue a número si viene como string
-  const totalRevenue = typeof stats.total_revenue === 'string' 
-    ? parseFloat(stats.total_revenue) 
-    : stats.total_revenue
+  const fetchSalesData = async () => {
+    try {
+      const response = await fetch('/api/analytics/sales?period=month')
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success) {
+          setSalesData(result.data)
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar ventas:', error)
+    }
+  }
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Cargando dashboard...</p>
+          </div>
+        </div>
+      </MainLayout>
+    )
+  }
+
+  if (!dashboardData) {
+    return (
+      <MainLayout>
+        <div className="text-center py-12">
+          <p className="text-gray-600">No se pudieron cargar los datos del dashboard</p>
+        </div>
+      </MainLayout>
+    )
+  }
+
+  const { overview, recentPerformance, topProducts } = dashboardData
 
   const cards = [
     {
       title: 'Total Productos',
-      value: stats.total_products,
-      description: '+12% desde el mes pasado',
+      value: overview.totalProducts,
+      description: `${overview.lowStockProducts} con stock bajo`,
       icon: Package,
       bgClass: 'bg-gradient-to-br from-blue-50 to-blue-100',
-      iconClass: 'text-blue-600'
+      iconClass: 'text-blue-600',
+      alert: overview.lowStockProducts > 0
     },
     {
       title: 'Total Clientes',
-      value: stats.total_clients,
-      description: '+8% desde el mes pasado',
+      value: overview.totalClients,
+      description: `${overview.activeClients} activos`,
       icon: Users,
       bgClass: 'bg-gradient-to-br from-green-50 to-green-100',
       iconClass: 'text-green-600'
     },
     {
       title: 'Órdenes Totales',
-      value: stats.total_orders,
-      description: '+23% desde el mes pasado',
+      value: overview.totalOrders,
+      description: `${overview.pendingOrders} pendientes`,
       icon: ShoppingCart,
       bgClass: 'bg-gradient-to-br from-purple-50 to-purple-100',
-      iconClass: 'text-purple-600'
+      iconClass: 'text-purple-600',
+      alert: overview.pendingOrders > 0
     },
     {
-      title: 'Ingresos',
-      value: `$${totalRevenue.toFixed(2)}`,
-      description: '+15% desde el mes pasado',
+      title: 'Ingresos Totales',
+      value: `$${overview.totalRevenue.toFixed(2)}`,
+      description: `Promedio: $${overview.averageOrderValue.toFixed(2)}`,
       icon: DollarSign,
       bgClass: 'bg-gradient-to-br from-emerald-50 to-emerald-100',
       iconClass: 'text-emerald-600'
     }
   ]
 
+  // Preparar datos para gráfica
+  const chartData = salesData?.dailySales.slice(0, 7).reverse().map(day => ({
+    date: new Date(day.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }),
+    ventas: Number(day.revenue),
+    ordenes: Number(day.orders)
+  })) || []
+
   return (
     <MainLayout>
       <div className="space-y-6 sm:space-y-8">
-        {/* Dashboard header with gradient background */}
+        {/* Header */}
         <div className="bg-gradient-to-br from-indigo-50 to-blue-100 rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-inner">
           <PageHeader 
             title="Dashboard" 
@@ -91,110 +173,160 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Responsive stats grid */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {cards.map((card) => {
             const Icon = card.icon
             return (
               <Card key={card.title} className="shadow-lg hover:shadow-xl transition-all duration-200 border-0">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-xs sm:text-sm font-semibold text-gray-700 uppercase tracking-wide">
-                    {card.title}
-                  </CardTitle>
-                  <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-lg flex items-center justify-center ${card.bgClass}`}>
-                    <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${card.iconClass}`} />
+                <CardContent className={`${card.bgClass} p-6`}>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-gray-600">{card.title}</p>
+                      <p className="text-3xl font-bold text-gray-900">{card.value}</p>
+                      <div className="flex items-center gap-2">
+                        {card.alert && <AlertTriangle className="h-4 w-4 text-orange-600" />}
+                        <p className={`text-xs ${card.alert ? 'text-orange-600 font-semibold' : 'text-gray-500'}`}>
+                          {card.description}
+                        </p>
+                      </div>
+                    </div>
+                    <Icon className={`h-12 w-12 ${card.iconClass}`} />
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-1 sm:space-y-2">
-                  <div className="text-2xl sm:text-3xl font-extrabold text-gray-900">{card.value}</div>
-                  <p className="text-xs sm:text-sm text-gray-600">{card.description}</p>
                 </CardContent>
               </Card>
             )
           })}
         </div>
 
-        {/* Responsive content grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+        {/* Gráfica de Ventas */}
+        <Card className="shadow-lg border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+              Ventas de los Últimos 7 Días
+            </CardTitle>
+            <CardDescription>
+              Últimos 7 días: {recentPerformance.last7Days.orders} órdenes por ${recentPerformance.last7Days.revenue.toFixed(2)}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <Tooltip />
+                  <Line 
+                    yAxisId="left"
+                    type="monotone" 
+                    dataKey="ventas" 
+                    stroke="#3b82f6" 
+                    strokeWidth={2}
+                    name="Ingresos ($)"
+                  />
+                  <Line 
+                    yAxisId="right"
+                    type="monotone" 
+                    dataKey="ordenes" 
+                    stroke="#10b981" 
+                    strokeWidth={2}
+                    name="Órdenes"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Top Productos y Performance */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Top 5 Productos */}
           <Card className="shadow-lg border-0">
             <CardHeader>
               <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Clock className="h-5 w-5 text-blue-600" />
-                Actividad Reciente
+                <Package className="h-5 w-5 text-purple-600" />
+                Top 5 Productos Más Vendidos
               </CardTitle>
-              <CardDescription className="text-gray-600">
-                Últimas acciones en el sistema
-              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3 sm:space-y-4">
-                <div className="flex items-center space-x-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
-                  <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">Nuevo producto agregado</p>
-                    <p className="text-xs text-gray-500">Hace 2 horas</p>
+              <div className="space-y-4">
+                {topProducts.slice(0, 5).map((product, index) => (
+                  <div key={product.productId} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-purple-100 text-purple-700 rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">{product.productName}</p>
+                        <p className="text-xs text-gray-500">{product.ordersCount} órdenes</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-gray-900">{product.totalSold} unidades</p>
+                      <p className="text-xs text-green-600">${product.totalRevenue.toFixed(2)}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center space-x-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">Cliente registrado</p>
-                    <p className="text-xs text-gray-500">Hace 4 horas</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-gray-900 truncate">Orden procesada</p>
-                    <p className="text-xs text-gray-500">Hace 6 horas</p>
-                  </div>
-                </div>
+                ))}
               </div>
             </CardContent>
           </Card>
 
+          {/* Performance Reciente */}
           <Card className="shadow-lg border-0">
             <CardHeader>
               <CardTitle className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-green-600" />
-                Acciones Rápidas
+                <Activity className="h-5 w-5 text-green-600" />
+                Performance Reciente
               </CardTitle>
-              <CardDescription className="text-gray-600">
-                Operaciones frecuentes del sistema
-              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <button className="w-full text-left px-4 py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors duration-200 font-medium text-sm sm:text-base">
-                + Crear nuevo producto
-              </button>
-              <button className="w-full text-left px-4 py-3 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg transition-colors duration-200 font-medium text-sm sm:text-base">
-                + Registrar cliente
-              </button>
-              <button className="w-full text-left px-4 py-3 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg transition-colors duration-200 font-medium text-sm sm:text-base">
-                📊 Ver estadísticas
-              </button>
-              <button className="w-full text-left px-4 py-3 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg transition-colors duration-200 font-medium text-sm sm:text-base">
-                📋 Gestionar órdenes
-              </button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Mobile-friendly stats summary */}
-        <div className="lg:hidden">
-          <Card className="shadow-lg border-0">
-            <CardHeader>
-              <CardTitle className="text-lg font-bold text-gray-900">Resumen Rápido</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4 text-center">
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.pending_orders}</p>
-                  <p className="text-xs text-gray-600">Órdenes Pendientes</p>
+            <CardContent className="space-y-6">
+              <div className="bg-blue-50 p-6 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-gray-600">Últimos 7 Días</p>
+                  <TrendingUp className="h-5 w-5 text-blue-600" />
                 </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">{stats.total_products}</p>
-                  <p className="text-xs text-gray-600">Productos Total</p>
+                <p className="text-3xl font-bold text-gray-900 mb-1">
+                  ${recentPerformance.last7Days.revenue.toFixed(2)}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {recentPerformance.last7Days.orders} órdenes completadas
+                </p>
+              </div>
+
+              <div className="bg-green-50 p-6 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-gray-600">Mes Actual</p>
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                </div>
+                <p className="text-3xl font-bold text-gray-900 mb-1">
+                  ${recentPerformance.currentMonth.revenue.toFixed(2)}
+                </p>
+                <p className="text-sm text-gray-600">
+                  {recentPerformance.currentMonth.orders} órdenes completadas
+                </p>
+              </div>
+
+              <div className="bg-purple-50 p-6 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-medium text-gray-600">Estado de Órdenes</p>
+                  <ShoppingCart className="h-5 w-5 text-purple-600" />
+                </div>
+                <div className="grid grid-cols-3 gap-4 mt-3">
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-yellow-600">{overview.pendingOrders}</p>
+                    <p className="text-xs text-gray-600">Pendientes</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-green-600">{overview.completedOrders}</p>
+                    <p className="text-xs text-gray-600">Completadas</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-2xl font-bold text-red-600">{overview.canceledOrders}</p>
+                    <p className="text-xs text-gray-600">Canceladas</p>
+                  </div>
                 </div>
               </div>
             </CardContent>

@@ -1,267 +1,344 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Package, Plus, Edit, Trash2, TrendingUp, AlertTriangle, DollarSign, ShoppingCart } from 'lucide-react'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
-import { Package, Plus, Edit, Trash2 } from 'lucide-react'
 
 interface Product {
-  id: string;
-  name: string;
-  description: string;
-  unit: 'case' | 'pk';
-  price: number;
-  stock: number;
-  sellerIds: string[];
+  id: string
+  name: string
+  description: string
+  unit: string
+  price: number
+  stock: number
+  isActive: boolean
+}
+
+interface ProductStats {
+  productId: string
+  productName: string
+  totalSold: number
+  totalRevenue: number
+  ordersCount: number
+}
+
+interface ProductWithStats extends Product {
+  stats?: ProductStats
 }
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([])
+  const [products, setProducts] = useState<ProductWithStats[]>([])
+  const [productStats, setProductStats] = useState<ProductStats[]>([])
   const [showForm, setShowForm] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    unit: 'case' as 'case' | 'pk',
+    unit: 'pk',
     price: '',
     stock: ''
   })
 
   useEffect(() => {
     fetchProducts()
+    fetchProductStats()
   }, [])
 
-const fetchProducts = async () => {
-  try {
-    const response = await fetch('/api/products')
-    if (response.ok) {
-      const result = await response.json()
-      // CAMBIO: ahora el API devuelve { success, data, pagination }
-      setProducts(result.data || [])
-    }
-  } catch (error) {
-    console.error('Error al cargar productos:', error)
-    setProducts([]) // Asegurar array vacío
-  }
-}
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
+  const fetchProducts = async () => {
     try {
-      const response = await fetch('/api/products', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          price: parseFloat(formData.price),
-          stock: parseInt(formData.stock)
-        }),
-      })
-
+      const response = await fetch('/api/products')
       if (response.ok) {
-        await fetchProducts()
-        setFormData({ name: '', description: '', unit: 'case', price: '', stock: '' })
-        setShowForm(false)
-      } else {
-        alert('Error al crear producto')
+        const result = await response.json()
+        if (result.success) {
+          setProducts(result.data)
+        }
       }
     } catch (error) {
-      console.error('Error:', error)
-      alert('Error al crear producto')
+      console.error('Error al cargar productos:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const deleteProduct = async (id: string) => {
-    if (confirm('¿Estás seguro de eliminar este producto?')) {
-      try {
-        const response = await fetch(`/api/products/${id}`, {
-          method: 'DELETE',
-        })
-
-        if (response.ok) {
-          await fetchProducts()
-        } else {
-          alert('Error al eliminar producto')
+  const fetchProductStats = async () => {
+    try {
+      const response = await fetch('/api/analytics/products')
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success) {
+          setProductStats(result.data.topSelling || [])
         }
-      } catch (error) {
-        console.error('Error:', error)
-        alert('Error al eliminar producto')
       }
+    } catch (error) {
+      console.error('Error al cargar estadísticas:', error)
     }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    try {
+      const response = await fetch('/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          price: parseFloat(formData.price),
+          stock: parseInt(formData.stock)
+        })
+      })
+
+      if (response.ok) {
+        setShowForm(false)
+        setFormData({ name: '', description: '', unit: 'pk', price: '', stock: '' })
+        fetchProducts()
+        fetchProductStats()
+      }
+    } catch (error) {
+      console.error('Error al crear producto:', error)
+    }
+  }
+
+  const deleteProduct = async (id: string) => {
+    if (!confirm('¿Estás seguro de eliminar este producto?')) return
+
+    try {
+      const response = await fetch(`/api/products/${id}`, { method: 'DELETE' })
+      if (response.ok) {
+        fetchProducts()
+        fetchProductStats()
+      }
+    } catch (error) {
+      console.error('Error al eliminar producto:', error)
+    }
+  }
+
+  // Combinar productos con sus estadísticas
+  const productsWithStats: ProductWithStats[] = products.map(product => {
+    const stats = productStats.find(s => s.productId === product.id)
+    return { ...product, stats }
+  })
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Cargando productos...</p>
+          </div>
+        </div>
+      </MainLayout>
+    )
   }
 
   return (
     <MainLayout>
-      <div className="space-y-6 sm:space-y-8">
-        <PageHeader 
-          title="Gestión de Productos" 
-          description="Administra tu catálogo de productos"
-          action={
-            <Button 
-              onClick={() => setShowForm(!showForm)}
-              className="w-full sm:w-auto gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              {showForm ? 'Cancelar' : 'Agregar Producto'}
-            </Button>
-          }
-        />
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <PageHeader 
+            title="Gestión de Productos" 
+            description="Administra tu catálogo de productos"
+          />
+          <Button 
+            onClick={() => setShowForm(!showForm)}
+            className="gap-2 w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4" />
+            Nuevo Producto
+          </Button>
+        </div>
 
-        {/* Responsive form */}
+        {/* Formulario */}
         {showForm && (
           <Card className="shadow-lg border-0">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-blue-600" />
-                Nuevo Producto
-              </CardTitle>
-              <CardDescription>Completa la información del producto</CardDescription>
+              <CardTitle>Agregar Nuevo Producto</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                {/* Full width fields */}
-                <div className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name" className="text-sm font-semibold text-gray-700">
-                      Nombre del Producto
-                    </Label>
+                    <Label htmlFor="name">Nombre del Producto</Label>
                     <Input
                       id="name"
-                      type="text"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Ej: Tomates frescos"
-                      className="mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
                       required
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="description" className="text-sm font-semibold text-gray-700">
-                      Descripción
-                    </Label>
-                    <Input
-                      id="description"
-                      type="text"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Describe el producto brevemente"
-                      className="mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {/* Grid layout for smaller fields */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="unit" className="text-sm font-semibold text-gray-700">
-                      Unidad
-                    </Label>
+                    <Label htmlFor="unit">Unidad de Medida</Label>
                     <select
                       id="unit"
                       value={formData.unit}
-                      onChange={(e) => setFormData({ ...formData, unit: e.target.value as 'case' | 'pk' })}
-                      className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      onChange={(e) => setFormData({...formData, unit: e.target.value})}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2"
                       required
                     >
-                      <option value="case">Caso</option>
-                      <option value="pk">Paquete</option>
+                      <option value="pk">Paquete (pk)</option>
+                      <option value="case">Caja (case)</option>
+                      <option value="unit">Unidad (unit)</option>
+                      <option value="kg">Kilogramo (kg)</option>
+                      <option value="lb">Libra (lb)</option>
                     </select>
                   </div>
 
                   <div>
-                    <Label htmlFor="price" className="text-sm font-semibold text-gray-700">
-                      Precio ($)
-                    </Label>
+                    <Label htmlFor="price">Precio</Label>
                     <Input
                       id="price"
                       type="number"
                       step="0.01"
                       value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      placeholder="0.00"
-                      className="mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      onChange={(e) => setFormData({...formData, price: e.target.value})}
                       required
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="stock" className="text-sm font-semibold text-gray-700">
-                      Stock
-                    </Label>
+                    <Label htmlFor="stock">Stock Inicial</Label>
                     <Input
                       id="stock"
                       type="number"
                       value={formData.stock}
-                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                      placeholder="0"
-                      className="mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      onChange={(e) => setFormData({...formData, stock: e.target.value})}
                       required
                     />
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  disabled={loading}
-                  className="w-full sm:w-auto px-8 py-2 bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                >
-                  {loading ? 'Creando...' : 'Crear Producto'}
-                </Button>
+                <div>
+                  <Label htmlFor="description">Descripción</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit">
+                    Guardar Producto
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
         )}
 
-        {/* Responsive products grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {products.map((product) => (
-            <Card key={product.id} className="shadow-lg hover:shadow-xl transition-all duration-200 border-0">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="text-lg font-bold text-gray-900 truncate">
-                      {product.name}
-                    </CardTitle>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-lg font-extrabold text-green-600">
-                        ${product.price}
-                      </span>
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+        {/* Lista de Productos Mejorada */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {productsWithStats.map((product) => {
+            const hasLowStock = product.stock < 10
+            const hasStats = product.stats && product.stats.totalSold > 0
+            
+            return (
+              <Card key={product.id} className="shadow-lg hover:shadow-xl transition-all duration-200 border-0">
+                <CardContent className="p-6">
+                  {/* Header del Producto */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Package className="h-5 w-5 text-blue-600" />
+                        <h3 className="font-bold text-lg text-gray-900 truncate">
+                          {product.name}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                        {product.description}
+                      </p>
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                         {product.unit}
                       </span>
                     </div>
                   </div>
-                </div>
-                <CardDescription className="text-sm text-gray-600 line-clamp-2">
-                  {product.description}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Stock:</span>
-                    <span className={`font-semibold ${
-                      product.stock > 10 
-                        ? 'text-green-600' 
-                        : product.stock > 0 
-                        ? 'text-orange-600' 
-                        : 'text-red-600'
-                    }`}>
-                      {product.stock}
-                    </span>
+
+                  {/* Precio y Stock */}
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-green-50 p-3 rounded-lg">
+                      <div className="flex items-center gap-2 mb-1">
+                        <DollarSign className="h-4 w-4 text-green-600" />
+                        <p className="text-xs text-gray-600">Precio</p>
+                      </div>
+                      <p className="text-xl font-bold text-gray-900">
+                        ${product.price.toFixed(2)}
+                      </p>
+                    </div>
+
+                    <div className={`p-3 rounded-lg ${hasLowStock ? 'bg-red-50' : 'bg-blue-50'}`}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Package className={`h-4 w-4 ${hasLowStock ? 'text-red-600' : 'text-blue-600'}`} />
+                        <p className="text-xs text-gray-600">Stock</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <p className={`text-xl font-bold ${hasLowStock ? 'text-red-600' : 'text-gray-900'}`}>
+                          {product.stock}
+                        </p>
+                        {hasLowStock && <AlertTriangle className="h-4 w-4 text-red-600" />}
+                      </div>
+                    </div>
                   </div>
-                  
+
+                  {/* Estadísticas de Ventas */}
+                  {hasStats ? (
+                    <div className="bg-purple-50 p-4 rounded-lg mb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <TrendingUp className="h-4 w-4 text-purple-600" />
+                        <p className="text-sm font-semibold text-gray-900">Performance de Ventas</p>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div>
+                          <p className="text-lg font-bold text-purple-600">
+                            {product.stats!.totalSold}
+                          </p>
+                          <p className="text-xs text-gray-600">Vendidos</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-green-600">
+                            ${product.stats!.totalRevenue.toFixed(0)}
+                          </p>
+                          <p className="text-xs text-gray-600">Ingresos</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-blue-600">
+                            {product.stats!.ordersCount}
+                          </p>
+                          <p className="text-xs text-gray-600">Órdenes</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 p-4 rounded-lg mb-4 text-center">
+                      <ShoppingCart className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-xs text-gray-500">Sin ventas registradas</p>
+                    </div>
+                  )}
+
+                  {/* Alertas */}
+                  {hasLowStock && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                        <p className="text-xs text-orange-800 font-medium">
+                          Stock bajo - Considera reabastecer pronto
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Botones de Acción */}
                   <div className="flex gap-2">
                     <Button 
                       variant="outline" 
@@ -269,7 +346,7 @@ const fetchProducts = async () => {
                       className="flex-1 gap-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
                     >
                       <Edit className="h-3 w-3" />
-                      <span className="hidden sm:inline">Editar</span>
+                      <span>Editar</span>
                     </Button>
                     <Button 
                       variant="destructive" 
@@ -278,20 +355,20 @@ const fetchProducts = async () => {
                       className="gap-1"
                     >
                       <Trash2 className="h-3 w-3" />
-                      <span className="hidden sm:inline">Eliminar</span>
+                      <span>Eliminar</span>
                     </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
 
         {/* Empty state */}
         {products.length === 0 && (
           <Card className="shadow-lg border-0">
             <CardContent className="text-center py-12">
-              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <p className="text-lg font-medium text-gray-900 mb-2">No hay productos registrados</p>
               <p className="text-gray-600 mb-4">Comienza agregando tu primer producto al catálogo</p>
               <Button onClick={() => setShowForm(true)} className="gap-2">

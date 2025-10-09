@@ -1,28 +1,51 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Users, Plus, Building, MapPin, Phone, Mail, Edit, Trash2, Search, ShoppingCart, DollarSign, TrendingUp, Clock } from 'lucide-react'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
-import { Users, Plus, Edit, Trash2, Building, Phone, Mail, MapPin } from 'lucide-react'
 
 interface Client {
-  id: string;
-  name: string;
-  address: string;
-  phone: string;
-  email: string;
-  sellerId?: string;
+  id: string
+  name: string
+  address: string
+  phone: string
+  email: string
+  createdAt: string
+  seller?: {
+    id: string
+    name: string
+  }
+}
+
+interface ClientStats {
+  client: {
+    id: string
+    name: string
+    email: string
+  }
+  stats: {
+    totalOrders: number
+    totalSpent: number
+    averageOrderValue: number
+    lastOrderDate: string | null
+  }
+}
+
+interface ClientWithStats extends Client {
+  stats?: ClientStats['stats']
 }
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>([])
+  const [clients, setClients] = useState<ClientWithStats[]>([])
+  const [clientsStats, setClientsStats] = useState<ClientStats[]>([])
   const [showForm, setShowForm] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -32,20 +55,38 @@ export default function ClientsPage() {
 
   useEffect(() => {
     fetchClients()
+    fetchClientsStats()
   }, [])
 
   const fetchClients = async () => {
-  try {
-    const response = await fetch('/api/clients')
-    if (response.ok) {
-      const result = await response.json()
-      setClients(result.data || [])  // ← CORRECCIÓN
+    try {
+      const response = await fetch('/api/clients')
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success) {
+          setClients(result.data)
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar clientes:', error)
+    } finally {
+      setLoading(false)
     }
-  } catch (error) {
-    console.error('Error al cargar clientes:', error)
-    setClients([])  // ← Agregar esto también
   }
-}
+
+  const fetchClientsStats = async () => {
+    try {
+      const response = await fetch('/api/analytics/clients')
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success) {
+          setClientsStats(result.data.topBySpending || [])
+        }
+      }
+    } catch (error) {
+      console.error('Error al cargar estadísticas:', error)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -54,228 +95,268 @@ export default function ClientsPage() {
     try {
       const response = await fetch('/api/clients', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
       })
 
       if (response.ok) {
-        await fetchClients()
-        setFormData({ name: '', address: '', phone: '', email: '' })
         setShowForm(false)
-      } else {
-        alert('Error al crear cliente')
+        setFormData({ name: '', address: '', phone: '', email: '' })
+        fetchClients()
+        fetchClientsStats()
       }
     } catch (error) {
-      console.error('Error:', error)
-      alert('Error al crear cliente')
+      console.error('Error al crear cliente:', error)
     } finally {
       setLoading(false)
     }
   }
 
   const deleteClient = async (id: string) => {
-    if (confirm('¿Estás seguro de eliminar este cliente?')) {
-      try {
-        const response = await fetch(`/api/clients/${id}`, {
-          method: 'DELETE',
-        })
+    if (!confirm('¿Estás seguro de eliminar este cliente?')) return
 
-        if (response.ok) {
-          await fetchClients()
-        } else {
-          alert('Error al eliminar cliente')
-        }
-      } catch (error) {
-        console.error('Error:', error)
-        alert('Error al eliminar cliente')
+    try {
+      const response = await fetch(`/api/clients/${id}`, { method: 'DELETE' })
+      if (response.ok) {
+        fetchClients()
+        fetchClientsStats()
       }
+    } catch (error) {
+      console.error('Error al eliminar cliente:', error)
     }
   }
 
-  // Filter clients based on search term
-  const filteredClients = clients.filter(client =>
+  // Combinar clientes con sus estadísticas
+  const clientsWithStats: ClientWithStats[] = clients.map(client => {
+    const statsData = clientsStats.find(cs => cs.client.id === client.id)
+    return { ...client, stats: statsData?.stats }
+  })
+
+  const filteredClients = clientsWithStats.filter(client =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.phone.includes(searchTerm)
+    client.email.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  if (loading && clients.length === 0) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Cargando clientes...</p>
+          </div>
+        </div>
+      </MainLayout>
+    )
+  }
 
   return (
     <MainLayout>
-      <div className="space-y-6 sm:space-y-8">
-        <PageHeader 
-          title="Gestión de Clientes" 
-          description="Administra tu base de clientes y sus datos de contacto"
-          action={
-            <Button 
-              onClick={() => setShowForm(!showForm)}
-              className="w-full sm:w-auto gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              {showForm ? 'Cancelar' : 'Agregar Cliente'}
-            </Button>
-          }
-        />
-
-        {/* Search bar - responsive */}
-        <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
-          <div className="relative max-w-xs sm:max-w-md w-full">
-            <Input
-              type="text"
-              placeholder="Buscar clientes..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-4 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-          </div>
-          <div className="text-sm text-gray-600">
-            {filteredClients.length} cliente{filteredClients.length !== 1 ? 's' : ''} encontrado{filteredClients.length !== 1 ? 's' : ''}
-          </div>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <PageHeader 
+            title="Gestión de Clientes" 
+            description="Administra tu cartera de clientes"
+          />
+          <Button 
+            onClick={() => setShowForm(!showForm)}
+            className="gap-2 w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4" />
+            Nuevo Cliente
+          </Button>
         </div>
 
-        {/* Responsive form */}
+        {/* Búsqueda */}
+        {clients.length > 0 && (
+          <Card className="shadow-lg border-0">
+            <CardContent className="p-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Buscar por nombre o email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Formulario */}
         {showForm && (
           <Card className="shadow-lg border-0">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="h-5 w-5 text-blue-600" />
-                Nuevo Cliente
-              </CardTitle>
-              <CardDescription>Completa la información del cliente</CardDescription>
+              <CardTitle>Agregar Nuevo Cliente</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                {/* Full width field */}
-                <div>
-                  <Label htmlFor="name" className="text-sm font-semibold text-gray-700">
-                    Nombre de la Empresa
-                  </Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Ej: Restaurante La Plaza"
-                    className="mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="address" className="text-sm font-semibold text-gray-700">
-                    Dirección Completa
-                  </Label>
-                  <Input
-                    id="address"
-                    type="text"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="123 Main St, Miami FL 33101"
-                    className="mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
-                  />
-                </div>
-
-                {/* Responsive grid for contact info */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">
-                      Teléfono
-                    </Label>
+                    <Label htmlFor="name">Nombre del Cliente</Label>
                     <Input
-                      id="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="(555) 123-4567"
-                      className="mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      placeholder="Nombre del restaurante"
                       required
                     />
                   </div>
 
                   <div>
-                    <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
-                      Email de Contacto
-                    </Label>
+                    <Label htmlFor="phone">Teléfono</Label>
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="(555) 123-4567"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="email">Email</Label>
                     <Input
                       id="email"
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       placeholder="contacto@empresa.com"
-                      className="mt-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="address">Dirección</Label>
+                    <Input
+                      id="address"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      placeholder="123 Main St, Miami FL"
                       required
                     />
                   </div>
                 </div>
 
-                {/* Responsive button */}
-                <Button 
-                  type="submit" 
-                  disabled={loading} 
-                  className="w-full sm:w-auto sm:min-w-[200px] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Creando...' : 'Crear Cliente'}
-                </Button>
+                <div className="flex gap-2 justify-end">
+                  <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit" disabled={loading}>
+                    {loading ? 'Creando...' : 'Crear Cliente'}
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
         )}
 
-        {/* Responsive clients grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {filteredClients.map((client) => (
-            <Card key={client.id} className="shadow-lg hover:shadow-xl transition-all duration-200 border-0">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="min-w-0 flex-1">
-                    <CardTitle className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                      <Building className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                      <span className="truncate">{client.name}</span>
-                    </CardTitle>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="space-y-3">
-                  {/* Contact info with icons */}
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-start gap-2">
-                      <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 break-words">{client.address}</span>
+        {/* Lista de Clientes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredClients.map((client) => {
+            const hasOrders = client.stats && client.stats.totalOrders > 0
+            const isActive = hasOrders && client.stats!.totalOrders >= 3
+
+            return (
+              <Card key={client.id} className="shadow-lg hover:shadow-xl transition-all duration-200 border-0">
+                <CardContent className="p-6">
+                  {/* Header del Cliente */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className={`p-3 rounded-lg ${isActive ? 'bg-green-100' : 'bg-blue-100'}`}>
+                        <Building className={`h-5 w-5 ${isActive ? 'text-green-600' : 'text-blue-600'}`} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-bold text-lg text-gray-900 truncate">
+                          {client.name}
+                        </h3>
+                        {isActive && (
+                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full font-semibold">
+                            Cliente Activo
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    
-                    <div className="flex items-center gap-2">
+                  </div>
+
+                  {/* Información de Contacto */}
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-start gap-2 text-sm">
+                      <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700">{client.address}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm">
                       <Phone className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                      <a 
-                        href={`tel:${client.phone}`}
-                        className="text-blue-600 hover:text-blue-800 transition-colors"
-                      >
+                      <a href={`tel:${client.phone}`} className="text-blue-600 hover:text-blue-800">
                         {client.phone}
                       </a>
                     </div>
-                    
-                    <div className="flex items-center gap-2">
+
+                    <div className="flex items-center gap-2 text-sm">
                       <Mail className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                      <a 
-                        href={`mailto:${client.email}`}
-                        className="text-blue-600 hover:text-blue-800 transition-colors truncate"
-                      >
+                      <a href={`mailto:${client.email}`} className="text-blue-600 hover:text-blue-800 truncate">
                         {client.email}
                       </a>
                     </div>
                   </div>
-                  
-                  {/* Action buttons */}
-                  <div className="flex gap-2 pt-2">
+
+                  {/* Estadísticas de Órdenes */}
+                  {hasOrders ? (
+                    <div className="bg-purple-50 rounded-lg p-4 mb-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <TrendingUp className="h-4 w-4 text-purple-600" />
+                        <p className="text-sm font-semibold text-gray-900">Estadísticas de Compra</p>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div>
+                          <p className="text-lg font-bold text-purple-600">
+                            {client.stats!.totalOrders}
+                          </p>
+                          <p className="text-xs text-gray-600">Órdenes</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-green-600">
+                            ${client.stats!.totalSpent.toFixed(0)}
+                          </p>
+                          <p className="text-xs text-gray-600">Gastado</p>
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold text-blue-600">
+                            ${client.stats!.averageOrderValue.toFixed(0)}
+                          </p>
+                          <p className="text-xs text-gray-600">Promedio</p>
+                        </div>
+                      </div>
+                      {client.stats!.lastOrderDate && (
+                        <div className="mt-3 pt-3 border-t border-purple-200">
+                          <div className="flex items-center gap-2 text-xs text-gray-600">
+                            <Clock className="h-3 w-3" />
+                            <span>
+                              Última orden: {new Date(client.stats!.lastOrderDate).toLocaleDateString('es-ES')}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 rounded-lg p-4 mb-4 text-center">
+                      <ShoppingCart className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-xs text-gray-500">Sin órdenes registradas</p>
+                    </div>
+                  )}
+
+                  {/* Botones de Acción */}
+                  <div className="flex gap-2">
                     <Button 
                       variant="outline" 
                       size="sm" 
                       className="flex-1 gap-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
                     >
                       <Edit className="h-3 w-3" />
-                      <span className="hidden sm:inline">Editar</span>
+                      Editar
                     </Button>
                     <Button 
                       variant="destructive" 
@@ -284,24 +365,22 @@ export default function ClientsPage() {
                       className="gap-1"
                     >
                       <Trash2 className="h-3 w-3" />
-                      <span className="hidden sm:inline">Eliminar</span>
+                      Eliminar
                     </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
 
-        {/* Empty state */}
+        {/* Empty State */}
         {clients.length === 0 && (
           <Card className="shadow-lg border-0">
             <CardContent className="text-center py-12">
-              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
               <p className="text-lg font-medium text-gray-900 mb-2">No hay clientes registrados</p>
-              <p className="text-gray-600 mb-4 max-w-md mx-auto">
-                Comienza agregando tu primer cliente para gestionar pedidos
-              </p>
+              <p className="text-gray-600 mb-4">Comienza agregando tu primer cliente para gestionar pedidos</p>
               <Button onClick={() => setShowForm(true)} className="gap-2">
                 <Plus className="h-4 w-4" />
                 Agregar Primer Cliente
@@ -310,7 +389,7 @@ export default function ClientsPage() {
           </Card>
         )}
 
-        {/* No search results */}
+        {/* No Search Results */}
         {clients.length > 0 && filteredClients.length === 0 && (
           <Card className="shadow-lg border-0">
             <CardContent className="text-center py-8">
@@ -326,19 +405,6 @@ export default function ClientsPage() {
             </CardContent>
           </Card>
         )}
-
-        {/* Mobile-friendly summary */}
-        <div className="sm:hidden">
-          <Card className="shadow-lg border-0">
-            <CardContent className="p-4">
-              <div className="text-center">
-                <p className="text-sm text-gray-600">
-                  Total: <span className="font-semibold">{clients.length}</span> clientes registrados
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </MainLayout>
   )
