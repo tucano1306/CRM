@@ -37,6 +37,7 @@ export default function ProductsPage() {
   const [productStats, setProductStats] = useState<ProductStats[]>([])
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -84,8 +85,11 @@ export default function ProductsPage() {
     e.preventDefault()
     
     try {
-      const response = await fetch('/api/products', {
-        method: 'POST',
+      const url = editingId ? `/api/products/${editingId}` : '/api/products'
+      const method = editingId ? 'PUT' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
@@ -96,15 +100,36 @@ export default function ProductsPage() {
 
       if (response.ok) {
         setShowForm(false)
+        setEditingId(null)
         setFormData({ name: '', description: '', unit: 'pk', price: '', stock: '' })
         fetchProducts()
         fetchProductStats()
       }
     } catch (error) {
-      console.error('Error al crear producto:', error)
+      console.error('Error al guardar producto:', error)
     }
   }
 
+  const startEdit = (product: Product) => {
+    setEditingId(product.id)
+    setFormData({
+      name: product.name,
+      description: product.description,
+      unit: product.unit,
+      price: product.price.toString(),
+      stock: product.stock.toString()
+    })
+    setShowForm(true)
+    // Scroll hacia arriba para ver el formulario
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setFormData({ name: '', description: '', unit: 'pk', price: '', stock: '' })
+    setShowForm(false)
+  }
+  
   const deleteProduct = async (id: string) => {
     if (!confirm('¿Estás seguro de eliminar este producto?')) return
 
@@ -159,7 +184,7 @@ export default function ProductsPage() {
         {showForm && (
           <Card className="shadow-lg border-0">
             <CardHeader>
-              <CardTitle>Agregar Nuevo Producto</CardTitle>
+              <CardTitle>{editingId ? 'Editar Producto' : 'Agregar Nuevo Producto'}</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -226,13 +251,13 @@ export default function ProductsPage() {
                 </div>
 
                 <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
-                    Cancelar
-                  </Button>
-                  <Button type="submit">
-                    Guardar Producto
-                  </Button>
-                </div>
+  <Button type="button" variant="outline" onClick={cancelEdit}>
+    Cancelar
+  </Button>
+  <Button type="submit" disabled={loading}>
+    {loading ? 'Guardando...' : editingId ? 'Actualizar' : 'Crear Producto'}
+  </Button>
+</div>
               </form>
             </CardContent>
           </Card>
@@ -340,14 +365,15 @@ export default function ProductsPage() {
 
                   {/* Botones de Acción */}
                   <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="flex-1 gap-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
-                    >
-                      <Edit className="h-3 w-3" />
-                      <span>Editar</span>
-                    </Button>
+                 <Button 
+  variant="outline" 
+  size="sm" 
+  className="flex-1 gap-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
+  onClick={() => startEdit(product)}
+>
+  <Edit className="h-3 w-3" />
+  <span>Editar</span>
+</Button> 
                     <Button 
                       variant="destructive" 
                       size="sm" 

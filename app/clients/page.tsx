@@ -46,6 +46,7 @@ export default function ClientsPage() {
   const [showForm, setShowForm] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -93,23 +94,45 @@ export default function ClientsPage() {
     setLoading(true)
 
     try {
-      const response = await fetch('/api/clients', {
-        method: 'POST',
+      const url = editingId ? `/api/clients/${editingId}` : '/api/clients'
+      const method = editingId ? 'PUT' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       })
 
       if (response.ok) {
         setShowForm(false)
+        setEditingId(null)
         setFormData({ name: '', address: '', phone: '', email: '' })
         fetchClients()
         fetchClientsStats()
       }
     } catch (error) {
-      console.error('Error al crear cliente:', error)
+      console.error('Error al guardar cliente:', error)
     } finally {
       setLoading(false)
     }
+  }
+
+  const startEdit = (client: Client) => {
+    setEditingId(client.id)
+    setFormData({
+      name: client.name,
+      address: client.address,
+      phone: client.phone,
+      email: client.email
+    })
+    setShowForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setFormData({ name: '', address: '', phone: '', email: '' })
+    setShowForm(false)
   }
 
   const deleteClient = async (id: string) => {
@@ -126,7 +149,6 @@ export default function ClientsPage() {
     }
   }
 
-  // Combinar clientes con sus estadísticas
   const clientsWithStats: ClientWithStats[] = clients.map(client => {
     const statsData = clientsStats.find(cs => cs.client.id === client.id)
     return { ...client, stats: statsData?.stats }
@@ -189,7 +211,7 @@ export default function ClientsPage() {
         {showForm && (
           <Card className="shadow-lg border-0">
             <CardHeader>
-              <CardTitle>Agregar Nuevo Cliente</CardTitle>
+              <CardTitle>{editingId ? 'Editar Cliente' : 'Agregar Nuevo Cliente'}</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -241,11 +263,11 @@ export default function ClientsPage() {
                 </div>
 
                 <div className="flex gap-2 justify-end">
-                  <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+                  <Button type="button" variant="outline" onClick={cancelEdit}>
                     Cancelar
                   </Button>
                   <Button type="submit" disabled={loading}>
-                    {loading ? 'Creando...' : 'Crear Cliente'}
+                    {loading ? 'Guardando...' : editingId ? 'Actualizar Cliente' : 'Crear Cliente'}
                   </Button>
                 </div>
               </form>
@@ -354,6 +376,7 @@ export default function ClientsPage() {
                       variant="outline" 
                       size="sm" 
                       className="flex-1 gap-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
+                      onClick={() => startEdit(client)}
                     >
                       <Edit className="h-3 w-3" />
                       Editar
@@ -395,12 +418,14 @@ export default function ClientsPage() {
             <CardContent className="text-center py-8">
               <Users className="h-8 w-8 text-gray-400 mx-auto mb-3" />
               <p className="text-gray-600">No se encontraron clientes que coincidan con "{searchTerm}"</p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-4 gap-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
                 onClick={() => setSearchTerm('')}
-                className="mt-3"
               >
-                Limpiar búsqueda
+                <Search className="h-3 w-3" />
+                Limpiar Búsqueda
               </Button>
             </CardContent>
           </Card>
