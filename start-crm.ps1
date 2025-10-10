@@ -1,11 +1,7 @@
-# ===============================================
-# Food Orders CRM - Script de Inicio
-# ===============================================
-
 Write-Host ""
-Write-Host "===============================================" -ForegroundColor Cyan
-Write-Host "  Food Orders CRM - Iniciando Sistema         " -ForegroundColor Cyan
-Write-Host "===============================================" -ForegroundColor Cyan
+Write-Host "================================================" -ForegroundColor Cyan
+Write-Host "  Food Orders CRM - Iniciando                  " -ForegroundColor Cyan
+Write-Host "================================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Verificar servidor
@@ -13,49 +9,53 @@ $port = 3000
 $portInUse = Get-NetTCPConnection -LocalPort $port -ErrorAction SilentlyContinue
 
 if (-not $portInUse) {
-    Write-Host "Iniciando servidor Next.js..." -ForegroundColor Yellow
+    Write-Host "Iniciando servidor..." -ForegroundColor Yellow
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PWD'; npm run dev"
     Write-Host "Esperando 10 segundos..." -ForegroundColor Yellow
     Start-Sleep -Seconds 10
 } else {
-    Write-Host "Servidor ya corriendo en puerto $port" -ForegroundColor Green
+    Write-Host "Servidor ya corriendo" -ForegroundColor Green
 }
 
 Write-Host ""
-Write-Host "===============================================" -ForegroundColor Cyan
-Write-Host "  Abriendo Navegadores                        " -ForegroundColor Cyan
-Write-Host "===============================================" -ForegroundColor Cyan
+Write-Host "================================================" -ForegroundColor Cyan
+Write-Host "  Abriendo navegadores                         " -ForegroundColor Cyan
+Write-Host "================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# Abrir navegadores
-Write-Host "Abriendo Dashboard de Vendedor (Chrome)..." -ForegroundColor Blue
-Start-Process chrome "http://localhost:3000/dashboard"
-Start-Sleep -Seconds 2
+# VENDEDOR en Microsoft Edge
+Write-Host "[1/2] Abriendo Microsoft Edge para VENDEDOR..." -ForegroundColor Blue
+try {
+    Start-Process msedge "http://localhost:3000/sign-in"
+    Write-Host "      Edge abierto" -ForegroundColor Green
+} catch {
+    Write-Host "      Edge no encontrado, usando Chrome..." -ForegroundColor Yellow
+    Start-Process chrome "http://localhost:3000/sign-in"
+}
 
-Write-Host "Abriendo Dashboard de Comprador (Incognito)..." -ForegroundColor Magenta
-Start-Process chrome "--incognito http://localhost:3000/buyer/dashboard"
+Start-Sleep -Seconds 3
+
+# COMPRADOR en Chrome Incognito
+Write-Host "[2/2] Abriendo Chrome Incognito para COMPRADOR..." -ForegroundColor Magenta
+Start-Process chrome "--incognito http://localhost:3000/sign-in"
+Write-Host "      Chrome incognito abierto" -ForegroundColor Green
 
 Write-Host ""
-Write-Host "===============================================" -ForegroundColor Green
-Write-Host "  Sistema iniciado correctamente!             " -ForegroundColor Green
-Write-Host "===============================================" -ForegroundColor Green
+Write-Host "================================================" -ForegroundColor Green
+Write-Host "  Navegadores listos                           " -ForegroundColor Green
+Write-Host "================================================" -ForegroundColor Green
 Write-Host ""
-
-Write-Host "INSTRUCCIONES:" -ForegroundColor Yellow
+Write-Host "IMPORTANTE: Debes iniciar sesion con usuarios DIFERENTES" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "1. En Chrome (ventana NORMAL):" -ForegroundColor Blue
-Write-Host "   - Iniciar sesion con: vendedor@test.com" -ForegroundColor White
-Write-Host "   - Password: Test123456!" -ForegroundColor Gray
-Write-Host "   - Veras: Dashboard de VENDEDOR (azul)" -ForegroundColor Gray
+Write-Host "Microsoft Edge (VENDEDOR):" -ForegroundColor Blue
+Write-Host "  Email: tucano0109@gmail.com" -ForegroundColor White
+Write-Host "  Deberia ir a: /dashboard (interfaz azul)" -ForegroundColor Gray
 Write-Host ""
-Write-Host "2. En Chrome (ventana INCOGNITO):" -ForegroundColor Magenta
-Write-Host "   - Iniciar sesion con: comprador@test.com" -ForegroundColor White
-Write-Host "   - Password: Test123456!" -ForegroundColor Gray
-Write-Host "   - Veras: Dashboard de COMPRADOR (morado)" -ForegroundColor Gray
+Write-Host "Chrome Incognito (COMPRADOR):" -ForegroundColor Magenta
+Write-Host "  Email: l3oyucon1978@gmail.com" -ForegroundColor White
+Write-Host "  Deberia ir a: /buyer/dashboard (interfaz morada)" -ForegroundColor Gray
 Write-Host ""
-Write-Host "IMPORTANTE:" -ForegroundColor Red
-Write-Host "- Debes usar USUARIOS DIFERENTES en cada navegador" -ForegroundColor Yellow
-Write-Host "- Si ves la misma interfaz, cierra sesion y vuelve a entrar" -ForegroundColor Yellow
+Write-Host "Si ambos muestran la misma interfaz:" -ForegroundColor Red
+Write-Host "  - Verifica que estes usando correos DIFERENTES" -ForegroundColor Yellow
+Write-Host "  - Cierra TODO y vuelve a ejecutar el script" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "Presiona cualquier tecla para continuar..." -ForegroundColor Gray
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
