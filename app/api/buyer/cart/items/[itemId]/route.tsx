@@ -1,0 +1,123 @@
+import { NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
+type RouteContext = {
+  params: {
+    itemId: string
+  }
+}
+
+// PUT /api/buyer/cart/items/[itemId] - Actualizar cantidad
+export async function PUT(request: Request, context: RouteContext) {
+  try {
+    const { userId } = await auth()
+
+    if (!userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const quantity = body.quantity
+
+    if (!quantity || quantity < 1) {
+      return NextResponse.json(
+        { error: 'Cantidad inválida' },
+        { status: 400 }
+      )
+    }
+
+    const itemId = context.params.itemId
+
+    // Verificar que el item existe y pertenece al usuario
+    const item = await prisma.cartItem.findUnique({
+      where: { id: itemId },
+      include: {
+        cart: true,
+        product: true,
+      },
+    })
+
+    if (!item || item.cart.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Item no encontrado' },
+        { status: 404 }
+      )
+    }
+
+    // Verificar stock
+    if (item.product.stock < quantity) {
+      return NextResponse.json(
+        { error: 'Stock insuficiente' },
+        { status: 400 }
+      )
+    }
+
+    // Actualizar cantidad
+    await prisma.cartItem.update({
+      where: { id: itemId },
+      data: { quantity: quantity },
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Cantidad actualizada',
+    })
+  } catch (error) {
+    console.error('Error actualizando item:', error)
+    return NextResponse.json(
+      { error: 'Error actualizando item' },
+      { status: 500 }
+    )
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
+// DELETE /api/buyer/cart/items/[itemId] - Eliminar item
+export async function DELETE(request: Request, context: RouteContext) {
+  try {
+    const { userId } = await auth()
+
+    if (!userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
+    const itemId = context.params.itemId
+
+    // Verificar que el item existe y pertenece al usuario
+    const item = await prisma.cartItem.findUnique({
+      where: { id: itemId },
+      include: {
+        cart: true,
+      },
+    })
+
+    if (!item || item.cart.userId !== userId) {
+      return NextResponse.json(
+        { error: 'Item no encontrado' },
+        { status: 404 }
+      )
+    }
+
+    // Eliminar item
+    await prisma.cartItem.delete({
+      where: { id: itemId },
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Producto eliminado del carrito',
+    })
+  } catch (error) {
+    console.error('Error eliminando item:', error)
+    return NextResponse.json(
+      { error: 'Error eliminando item' },
+      { status: 500 }
+    )
+  } finally {
+    await prisma.$disconnect()
+  }
+}

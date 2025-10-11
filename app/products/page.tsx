@@ -18,6 +18,7 @@ interface Product {
   price: number
   stock: number
   isActive: boolean
+  sku: string | null  // ← CORREGIDO
 }
 
 interface ProductStats {
@@ -43,7 +44,8 @@ export default function ProductsPage() {
     description: '',
     unit: 'pk',
     price: '',
-    stock: ''
+    stock: '',
+    sku: ''  // ← AGREGADO
   })
 
   useEffect(() => {
@@ -94,14 +96,15 @@ export default function ProductsPage() {
         body: JSON.stringify({
           ...formData,
           price: parseFloat(formData.price),
-          stock: parseInt(formData.stock)
+          stock: parseInt(formData.stock),
+          sku: formData.sku || null  // ← AGREGADO
         })
       })
 
       if (response.ok) {
         setShowForm(false)
         setEditingId(null)
-        setFormData({ name: '', description: '', unit: 'pk', price: '', stock: '' })
+        setFormData({ name: '', description: '', unit: 'pk', price: '', stock: '', sku: '' })  // ← ACTUALIZADO
         fetchProducts()
         fetchProductStats()
       }
@@ -117,16 +120,16 @@ export default function ProductsPage() {
       description: product.description,
       unit: product.unit,
       price: product.price.toString(),
-      stock: product.stock.toString()
+      stock: product.stock.toString(),
+      sku: product.sku || ''  // ← AGREGADO
     })
     setShowForm(true)
-    // Scroll hacia arriba para ver el formulario
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const cancelEdit = () => {
     setEditingId(null)
-    setFormData({ name: '', description: '', unit: 'pk', price: '', stock: '' })
+    setFormData({ name: '', description: '', unit: 'pk', price: '', stock: '', sku: '' })  // ← ACTUALIZADO
     setShowForm(false)
   }
   
@@ -144,7 +147,6 @@ export default function ProductsPage() {
     }
   }
 
-  // Combinar productos con sus estadísticas
   const productsWithStats: ProductWithStats[] = products.map(product => {
     const stats = productStats.find(s => s.productId === product.id)
     return { ...product, stats }
@@ -199,6 +201,18 @@ export default function ProductsPage() {
                     />
                   </div>
 
+                  {/* ← CAMPO SKU AGREGADO */}
+                  <div>
+                    <Label htmlFor="sku">SKU (Código Único)</Label>
+                    <Input
+                      id="sku"
+                      value={formData.sku}
+                      onChange={(e) => setFormData({...formData, sku: e.target.value})}
+                      placeholder="Ej: PIZZA-001"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Opcional. Código único para identificar el producto.</p>
+                  </div>
+
                   <div>
                     <Label htmlFor="unit">Unidad de Medida</Label>
                     <select
@@ -251,19 +265,19 @@ export default function ProductsPage() {
                 </div>
 
                 <div className="flex gap-2 justify-end">
-  <Button type="button" variant="outline" onClick={cancelEdit}>
-    Cancelar
-  </Button>
-  <Button type="submit" disabled={loading}>
-    {loading ? 'Guardando...' : editingId ? 'Actualizar' : 'Crear Producto'}
-  </Button>
-</div>
+                  <Button type="button" variant="outline" onClick={cancelEdit}>
+                    Cancelar
+                  </Button>
+                  <Button type="submit">
+                    {editingId ? 'Actualizar' : 'Crear Producto'}
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
         )}
 
-        {/* Lista de Productos Mejorada */}
+        {/* Lista de Productos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {productsWithStats.map((product) => {
             const hasLowStock = product.stock < 10
@@ -272,7 +286,6 @@ export default function ProductsPage() {
             return (
               <Card key={product.id} className="shadow-lg hover:shadow-xl transition-all duration-200 border-0">
                 <CardContent className="p-6">
-                  {/* Header del Producto */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -281,6 +294,10 @@ export default function ProductsPage() {
                           {product.name}
                         </h3>
                       </div>
+                      {/* ← MOSTRAR SKU SI EXISTE */}
+                      {product.sku && (
+                        <p className="text-xs text-gray-500 mb-2">SKU: {product.sku}</p>
+                      )}
                       <p className="text-sm text-gray-600 line-clamp-2 mb-2">
                         {product.description}
                       </p>
@@ -290,7 +307,6 @@ export default function ProductsPage() {
                     </div>
                   </div>
 
-                  {/* Precio y Stock */}
                   <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="bg-green-50 p-3 rounded-lg">
                       <div className="flex items-center gap-2 mb-1">
@@ -316,7 +332,6 @@ export default function ProductsPage() {
                     </div>
                   </div>
 
-                  {/* Estadísticas de Ventas */}
                   {hasStats ? (
                     <div className="bg-purple-50 p-4 rounded-lg mb-4">
                       <div className="flex items-center gap-2 mb-3">
@@ -351,7 +366,6 @@ export default function ProductsPage() {
                     </div>
                   )}
 
-                  {/* Alertas */}
                   {hasLowStock && (
                     <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4">
                       <div className="flex items-center gap-2">
@@ -363,17 +377,16 @@ export default function ProductsPage() {
                     </div>
                   )}
 
-                  {/* Botones de Acción */}
                   <div className="flex gap-2">
-                 <Button 
-  variant="outline" 
-  size="sm" 
-  className="flex-1 gap-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
-  onClick={() => startEdit(product)}
->
-  <Edit className="h-3 w-3" />
-  <span>Editar</span>
-</Button> 
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="flex-1 gap-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
+                      onClick={() => startEdit(product)}
+                    >
+                      <Edit className="h-3 w-3" />
+                      <span>Editar</span>
+                    </Button> 
                     <Button 
                       variant="destructive" 
                       size="sm" 
@@ -390,7 +403,6 @@ export default function ProductsPage() {
           })}
         </div>
 
-        {/* Empty state */}
         {products.length === 0 && (
           <Card className="shadow-lg border-0">
             <CardContent className="text-center py-12">
