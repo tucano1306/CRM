@@ -8,21 +8,22 @@ datasource db {
 }
 
 model Client {
-  id                       String                @id @default(uuid())
+  id                       String                  @id @default(uuid())
   name                     String
   businessName             String?
   address                  String
   phone                    String
   email                    String
-  orderConfirmationEnabled Boolean               @default(true)
-  notificationsEnabled     Boolean               @default(true)
+  orderConfirmationMethod  OrderConfirmationMethod @default(MANUAL) // ⬅️ NUEVA LÍNEA
+  orderConfirmationEnabled Boolean                 @default(true)
+  notificationsEnabled     Boolean                 @default(true)
   sellerId                 String?
-  createdAt                DateTime              @default(now())
-  updatedAt                DateTime              @updatedAt
-  seller                   Seller?               @relation(fields: [sellerId], references: [id])
+  createdAt                DateTime                @default(now())
+  updatedAt                DateTime                @updatedAt
+  seller                   Seller?                 @relation(fields: [sellerId], references: [id])
   orders                   Order[]
   pending_orders           pending_orders[]
-  authenticated_users      authenticated_users[] @relation("ClientUsers")
+  authenticated_users      authenticated_users[]   @relation("ClientUsers")
 
   @@index([email])
   @@index([sellerId])
@@ -280,14 +281,13 @@ model schedules {
   id        String    @id
   dayOfWeek DayOfWeek
   timeSlot  TimeSlot
- 
- 
-  isActive  Boolean   @default(true)
+
+  isActive  Boolean  @default(true)
   notes     String?
   sellerId  String
-  createdAt DateTime  @default(now())
+  createdAt DateTime @default(now())
   updatedAt DateTime
-  sellers   Seller    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  sellers   Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
 
   @@unique([sellerId, dayOfWeek, timeSlot])
   @@index([dayOfWeek])
