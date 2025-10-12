@@ -1,159 +1,102 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
+import { PrismaClient } from '@prisma/client'
 
-// GET - Reporte de ventas por período
-export async function GET(request: NextRequest) {
+const prisma = new PrismaClient()
+
+export async function GET(request: Request) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const period = searchParams.get('period') || 'month'
-    const startDate = searchParams.get('startDate')
-    const endDate = searchParams.get('endDate')
+    const { userId } = await auth()
 
-    // Construir filtros de fecha
-    const dateFilter: any = { status: 'COMPLETED' }
-    
-    if (startDate && endDate) {
-      dateFilter.createdAt = {
-        gte: new Date(startDate),
-        lte: new Date(endDate)
-      }
-    } else {
-      const now = new Date()
-      let startPeriod = new Date()
-
-      switch (period) {
-        case 'day':
-          startPeriod.setHours(0, 0, 0, 0)
-          break
-        case 'week':
-          startPeriod.setDate(now.getDate() - 7)
-          break
-        case 'month':
-          startPeriod.setMonth(now.getMonth() - 1)
-          break
-        case 'year':
-          startPeriod.setFullYear(now.getFullYear() - 1)
-          break
-      }
-
-      dateFilter.createdAt = { gte: startPeriod }
+    if (!userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // Ventas totales del período
-    const totalSales = await prisma.order.aggregate({
-      where: dateFilter,
-      _sum: { totalAmount: true },
-      _count: true,
-      _avg: { totalAmount: true }
-    })
+    const { searchParams } = new URL(request.url)
+    const period = searchParams.get('period') || 'month'
 
-    // Ventas por día (últimos 30 días) - CORREGIDO
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    // Calcular fechas según el periodo
+    const now = new Date()
+    let startDate: Date
 
-    const dailySales = await prisma.$queryRaw<Array<{
-      date: Date
-      orders: bigint
-      revenue: number
-    }>>`
-      SELECT 
-        DATE("createdAt") as date,
-        COUNT(*)::bigint as orders,
-        SUM("totalAmount")::numeric as revenue
-      FROM orders
-      WHERE status = 'COMPLETED' 
-        AND "createdAt" >= ${thirtyDaysAgo}
-      GROUP BY DATE("createdAt")
-      ORDER BY date DESC
-      LIMIT 30
-    `
+    switch (period) {
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        break
+      case 'month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        break
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1)
+        break
+      default:
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+    }
 
-    // Ventas por seller
-    const salesBySeller = await prisma.order.groupBy({
-      by: ['sellerId'],
-      where: dateFilter,
-      _sum: { totalAmount: true },
-      _count: true,
-      orderBy: {
-        _sum: { totalAmount: 'desc' }
-      }
-    })
-
-    // Obtener info de sellers
-    const sellersWithSales = await Promise.all(
-      salesBySeller.map(async (sale) => {
-        const seller = await prisma.seller.findUnique({
-          where: { id: sale.sellerId },
-          select: { id: true, name: true, email: true, commission: true }
-        })
-
-        const commission = seller?.commission 
-          ? (sale._sum.totalAmount || 0) * (seller.commission / 100)
-          : 0
-
-        return {
-          seller,
-          totalOrders: sale._count,
-          totalRevenue: sale._sum.totalAmount || 0,
-          commission
+    // Obtener órdenes del periodo
+    const orders = await prisma.order.findMany({
+      where: {
+        createdAt: {
+          gte: startDate,
+        },
+        status: {
+          in: ['COMPLETED', 'PROCESSING', 'PENDING']
         }
-      })
-    )
-
-    // Ventas por cliente
-    const salesByClient = await prisma.order.groupBy({
-      by: ['clientId'],
-      where: dateFilter,
-      _sum: { totalAmount: true },
-      _count: true,
-      orderBy: {
-        _sum: { totalAmount: 'desc' }
       },
-      take: 10
+      select: {
+        id: true,
+        totalAmount: true,
+        createdAt: true,
+        status: true,
+      },
+      orderBy: {
+        createdAt: 'asc',
+      },
     })
 
-    // Obtener info de clientes
-    const clientsWithSales = await Promise.all(
-      salesByClient.map(async (sale) => {
-        const client = await prisma.client.findUnique({
-          where: { id: sale.clientId },
-          select: { id: true, name: true, email: true }
-        })
+    // Agrupar por día
+    const dailySalesMap = new Map<string, { orders: number; revenue: number }>()
 
-        return {
-          client,
-          totalOrders: sale._count,
-          totalSpent: sale._sum.totalAmount || 0
-        }
-      })
-    )
+    orders.forEach(order => {
+      const dateKey = order.createdAt.toISOString().split('T')[0]
+      
+      if (!dailySalesMap.has(dateKey)) {
+        dailySalesMap.set(dateKey, { orders: 0, revenue: 0 })
+      }
+
+      const daySales = dailySalesMap.get(dateKey)!
+      daySales.orders += 1
+      daySales.revenue += order.totalAmount
+    })
+
+    // Convertir a array ordenado
+    const dailySales = Array.from(dailySalesMap.entries())
+      .map(([date, data]) => ({
+        date,
+        orders: data.orders,
+        revenue: data.revenue,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date))
 
     return NextResponse.json({
       success: true,
       data: {
-        summary: {
-          totalOrders: totalSales._count,
-          totalRevenue: totalSales._sum.totalAmount || 0,
-          averageOrderValue: totalSales._avg.totalAmount || 0,
-          period
-        },
-        dailySales: dailySales.map(day => ({
-          date: day.date,
-          orders: Number(day.orders),
-          revenue: Number(day.revenue)
-        })),
-        topSellers: sellersWithSales.slice(0, 5),
-        topClients: clientsWithSales
-      }
+        dailySales,
+        period,
+        startDate: startDate.toISOString(),
+        endDate: now.toISOString(),
+      },
     })
   } catch (error) {
-    console.error('Error:', error)
+    console.error('Error obteniendo analytics de ventas:', error)
     return NextResponse.json(
       { 
-        success: false,
-        error: 'Error al obtener reporte de ventas' 
+        error: 'Error obteniendo estadísticas de ventas',
+        details: (error as Error).message 
       },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }
