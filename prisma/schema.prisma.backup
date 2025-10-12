@@ -1,0 +1,283 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProductUnit {
+  pk
+  case
+  unit
+  kg
+  lb
+}
+
+enum OrderStatus {
+  PENDING
+  confirmed
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum OrderConfirmationMethod {
+  MANUAL
+  AUTOMATIC
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model User {
+  id           String   @id @default(uuid())
+  clerkUserId  String   @unique
+  email        String   @unique
+  name         String?
+  role         String   @default("CLIENT")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Client {
+  id                     String                @id @default(uuid())
+  clerkUserId            String                @unique
+  name                   String
+  email                  String
+  phone                  String?
+  address                String?
+  city                   String?
+  state                  String?
+  zipCode                String?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  sellerId               String?
+  orderConfirmationMethod OrderConfirmationMethod @default(AUTOMATIC)
+
+  seller                 Seller?               @relation(fields: [sellerId], references: [id])
+  orders                 Order[]
+
+  @@index([clerkUserId])
+  @@map("clients")
+}
+
+model Seller {
+  id            String          @id @default(uuid())
+  clerkUserId   String          @unique
+  name          String
+  email         String?
+  phone         String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  clients       Client[]
+  products      ProductSeller[]
+  orders        Order[]
+  orderSchedules OrderSchedule[]
+  chatSchedules  ChatSchedule[]
+
+  @@index([clerkUserId])
+  @@map("sellers")
+}
+
+model Product {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  unit        ProductUnit @default(case)
+  price       Float       @default(0)
+  stock       Int         @default(0)
+  sku         String?     @unique
+  imageUrl    String?
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  sellers     ProductSeller[]
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+
+  @@index([name])
+  @@index([unit])
+  @@index([isActive])
+  @@map("products")
+}
+
+model ProductSeller {
+  id        String   @id @default(uuid())
+  productId String
+  sellerId  String
+  createdAt DateTime @default(now())
+
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  seller    Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, sellerId])
+  @@index([productId])
+  @@index([sellerId])
+  @@map("product_sellers")
+}
+
+model Order {
+  id                 String        @id @default(uuid())
+  clerkUserId        String
+  clientId           String?
+  sellerId           String?
+  status             OrderStatus   @default(PENDING)
+  paymentStatus      PaymentStatus @default(PENDING)
+  totalAmount        Float
+  subtotal           Float
+  tax                Float
+  notes              String?
+  confirmationDeadline DateTime?
+  idempotencyKey     String?       @unique
+  generalMessage     String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  items              OrderItem[]
+  client             Client?       @relation(fields: [clientId], references: [id])
+  seller             Seller?       @relation(fields: [sellerId], references: [id])
+  chatMessages       ChatMessage[]
+  statusUpdates      OrderStatusUpdate[]
+
+  @@index([clerkUserId])
+  @@index([clientId])
+  @@index([sellerId])
+  @@index([status])
+  @@map("orders")
+}
+
+model OrderItem {
+  id           String   @id @default(uuid())
+  orderId      String
+  productId    String
+  productName  String
+  quantity     Int
+  pricePerUnit Float
+  subtotal     Float
+  itemNote     String?
+  createdAt    DateTime @default(now())
+
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product      Product? @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model OrderSchedule {
+  id        String    @id @default(uuid())
+  sellerId  String
+  dayOfWeek DayOfWeek
+  startTime String    // Formato: "08:00"
+  endTime   String    // Formato: "17:00"
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  seller    Seller    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@unique([sellerId, dayOfWeek])
+  @@index([sellerId])
+  @@index([dayOfWeek])
+  @@map("order_schedules")
+}
+
+model ChatSchedule {
+  id        String    @id @default(uuid())
+  sellerId  String
+  dayOfWeek DayOfWeek
+  startTime String
+  endTime   String
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  seller    Seller    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@unique([sellerId, dayOfWeek])
+  @@index([sellerId])
+  @@index([dayOfWeek])
+  @@map("chat_schedules")
+}
+
+model ChatMessage {
+  id              String   @id @default(uuid())
+  senderId        String   // Clerk User ID
+  receiverId      String   // Clerk User ID
+  message         String
+  orderId         String?
+  isRead          Boolean  @default(false)
+  idempotencyKey  String?  @unique
+  createdAt       DateTime @default(now())
+
+  order           Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([orderId])
+  @@index([createdAt])
+  @@map("chat_messages")
+}
+
+model OrderStatusUpdate {
+  id              String      @id @default(uuid())
+  idempotencyKey  String      @unique
+  orderId         String
+  oldStatus       OrderStatus
+  newStatus       OrderStatus
+  createdAt       DateTime    @default(now())
+
+  order           Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([idempotencyKey])
+  @@map("order_status_updates")
+}
+
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  items     CartItem[]
+
+  @@index([userId])
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  productId String
+  quantity  Int      @default(1)
+  price     Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@unique([cartId, productId])
+  @@index([cartId])
+  @@index([productId])
+  @@map("cart_items")
+}

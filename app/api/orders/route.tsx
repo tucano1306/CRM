@@ -57,9 +57,9 @@ export async function GET(request: Request) {
     const stats = {
       total: orders.length,
       pending: orders.filter(o => o.status === 'PENDING').length,
-      processing: orders.filter(o => o.status === 'PROCESSING').length,
+      processing: orders.filter(o => o.status === 'CONFIRMED').length,
       completed: orders.filter(o => o.status === 'COMPLETED').length,
-      cancelled: orders.filter(o => o.status === 'CANCELLED').length,
+      cancelled: orders.filter(o => o.status === 'CANCELED').length,
     }
 
     return NextResponse.json({

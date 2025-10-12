@@ -33,7 +33,7 @@ export async function GET() {
       
       // Órdenes en proceso
       prisma.order.count({
-        where: { status: 'PROCESSING' },
+        where: { status: 'CONFIRMED' },
       }),
       
       // Órdenes completadas
@@ -43,7 +43,7 @@ export async function GET() {
       
       // Órdenes canceladas
       prisma.order.count({
-        where: { status: 'CANCELLED' },
+        where: { status: 'CANCELED' },
       }),
       
       // Ingresos totales (solo órdenes completadas)
@@ -123,9 +123,9 @@ export async function GET() {
         },
         ordersByStatus: [
           { status: 'PENDING', count: pendingOrders, totalAmount: 0 },
-          { status: 'PROCESSING', count: processingOrders, totalAmount: 0 },
+          { status: 'CONFIRMED', count: processingOrders, totalAmount: 0 },
           { status: 'COMPLETED', count: completedOrders, totalAmount: totalRevenue._sum.totalAmount || 0 },
-          { status: 'CANCELLED', count: cancelledOrders, totalAmount: 0 },
+          { status: 'CANCELED', count: cancelledOrders, totalAmount: 0 },
         ],
         recentPerformance: {
           last7Days: {

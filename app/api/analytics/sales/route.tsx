@@ -34,15 +34,15 @@ export async function GET(request: Request) {
     }
 
     // Obtener órdenes del periodo
-    const orders = await prisma.order.findMany({
-      where: {
-        createdAt: {
-          gte: startDate,
-        },
-        status: {
-          in: ['COMPLETED', 'PROCESSING', 'PENDING']
-        }
-      },
+   const orders = await prisma.order.findMany({
+  where: {
+    createdAt: {
+      gte: startDate,
+    },
+    status: {
+      in: ["COMPLETED", "CONFIRMED", "PLACED", "PENDING"]  // ✅ Correcto
+    }
+  },
       select: {
         id: true,
         totalAmount: true,

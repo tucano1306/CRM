@@ -17,7 +17,7 @@ export async function GET() {
       where: {
         order: {
           status: {
-            in: ['COMPLETED', 'PROCESSING', 'PENDING']
+            in: ['COMPLETED', 'CONFIRMED', 'PENDING']
           }
         }
       },

@@ -7,93 +7,67 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum ProductUnit {
-  pk
-  case
-  unit
-  kg
-  lb
-}
-
-enum OrderStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  CANCELLED
-}
-
-enum PaymentStatus {
-  PENDING
-  PAID
-  FAILED
-}
-
-model User {
-  id           String   @id @default(uuid())
-  clerkUserId  String   @unique
-  email        String   @unique
-  name         String?
-  role         String   @default("CLIENT")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@map("users")
-}
-
 model Client {
-  id          String   @id @default(uuid())
-  clerkUserId String   @unique
-  name        String
-  email       String
-  phone       String?
-  address     String?
-  city        String?
-  state       String?
-  zipCode     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  sellerId    String?
+  id                       String                @id @default(uuid())
+  name                     String
+  businessName             String?
+  address                  String
+  phone                    String
+  email                    String
+  orderConfirmationEnabled Boolean               @default(true)
+  notificationsEnabled     Boolean               @default(true)
+  sellerId                 String?
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
+  seller                   Seller?               @relation(fields: [sellerId], references: [id])
+  orders                   Order[]
+  pending_orders           pending_orders[]
+  authenticated_users      authenticated_users[] @relation("ClientUsers")
 
-  seller      Seller?  @relation(fields: [sellerId], references: [id])
-  orders      Order[]
-
-  @@index([clerkUserId])
+  @@index([email])
+  @@index([sellerId])
   @@map("clients")
 }
 
 model Seller {
-  id          String   @id @default(uuid())
-  clerkUserId String   @unique
-  name        String
-  email       String?
-  phone       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                  String                @id @default(uuid())
+  name                String
+  email               String                @unique
+  phone               String?
+  isActive            Boolean               @default(true)
+  territory           String?
+  commission          Float?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  chat_messages       ChatMessage[]
+  chatSchedules       ChatSchedule[]
+  clients             Client[]
+  orderSchedules      OrderSchedule[]
+  orders              Order[]
+  products            ProductSeller[]
+  schedules           schedules[]
+  authenticated_users authenticated_users[] @relation("SellerUsers")
 
-  clients     Client[]
-  products    ProductSeller[]
-  orders      Order[]
-
-  @@index([clerkUserId])
+  @@index([email])
+  @@index([isActive])
   @@map("sellers")
 }
 
 model Product {
-  id          String      @id @default(uuid())
+  id          String          @id @default(uuid())
   name        String
   description String?
-  unit        ProductUnit @default(case)
-  price       Float       @default(0)
-  stock       Int         @default(0)
-  sku         String?     @unique
+  unit        ProductUnit     @default(case)
+  price       Float           @default(0)
+  stock       Int             @default(0)
+  sku         String?         @unique
   imageUrl    String?
-  isActive    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  sellers     ProductSeller[]
-  orderItems  OrderItem[] // Removed duplicate definition
+  isActive    Boolean         @default(true)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
   cartItems   CartItem[]
+  orderItems  OrderItem[]
+  sellers     ProductSeller[]
 
   @@index([name])
   @@index([unit])
@@ -102,13 +76,14 @@ model Product {
 }
 
 model ProductSeller {
-  id        String   @id @default(uuid())
-  productId String
-  sellerId  String
-  createdAt DateTime @default(now())
-
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  seller    Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  productId   String
+  sellerId    String
+  sellerPrice Float?
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  seller      Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
 
   @@unique([productId, sellerId])
   @@index([productId])
@@ -117,46 +92,115 @@ model ProductSeller {
 }
 
 model Order {
-  id            String        @id @default(uuid())
-  clerkUserId   String
-  clientId      String?
-  sellerId      String?
-  status        OrderStatus   @default(PENDING)
-  paymentStatus PaymentStatus @default(PENDING)
-  totalAmount   Float
-  subtotal      Float
-  tax           Float
+  id            String              @id @default(uuid())
+  orderNumber   String              @unique
+  status        OrderStatus         @default(PENDING)
+  totalAmount   Float               @default(0)
   notes         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
+  confirmedAt   DateTime?
+  canceledAt    DateTime?
+  completedAt   DateTime?
+  clientId      String
+  sellerId      String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  chatMessages  ChatMessage[]
   items         OrderItem[]
-  client        Client?      @relation(fields: [clientId], references: [id])
-  seller        Seller?      @relation(fields: [sellerId], references: [id])
+  statusUpdates OrderStatusUpdate[]
+  client        Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  seller        Seller              @relation(fields: [sellerId], references: [id], onDelete: Cascade)
 
-  @@index([clerkUserId])
   @@index([clientId])
   @@index([sellerId])
   @@index([status])
+  @@index([createdAt])
   @@map("orders")
 }
 
 model OrderItem {
   id           String   @id @default(uuid())
-  orderId      String
-  productId    String
   productName  String
   quantity     Int
   pricePerUnit Float
+  confirmed    Boolean  @default(false)
   subtotal     Float
+  orderId      String
+  productId    String
   createdAt    DateTime @default(now())
-
   order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product      Product? @relation(fields: [productId], references: [id])
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([productId])
   @@map("order_items")
+}
+
+model OrderSchedule {
+  id        String    @id @default(uuid())
+  sellerId  String
+  dayOfWeek DayOfWeek
+  startTime String
+  endTime   String
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  seller    Seller    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@unique([sellerId, dayOfWeek])
+  @@index([sellerId])
+  @@index([dayOfWeek])
+  @@map("order_schedules")
+}
+
+model ChatSchedule {
+  id        String    @id @default(uuid())
+  sellerId  String
+  dayOfWeek DayOfWeek
+  startTime String
+  endTime   String
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  seller    Seller    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@unique([sellerId, dayOfWeek])
+  @@index([sellerId])
+  @@index([dayOfWeek])
+  @@map("chat_schedules")
+}
+
+model ChatMessage {
+  id                  String              @id @default(uuid())
+  message             String
+  isRead              Boolean             @default(false)
+  messageType         String              @default("text")
+  userId              String
+  sellerId            String?
+  orderId             String?
+  createdAt           DateTime            @default(now())
+  order               Order?              @relation(fields: [orderId], references: [id])
+  sellers             Seller?             @relation(fields: [sellerId], references: [id])
+  authenticated_users authenticated_users @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([createdAt])
+  @@index([sellerId])
+  @@index([userId])
+  @@map("chat_messages")
+}
+
+model OrderStatusUpdate {
+  id             String      @id @default(uuid())
+  idempotencyKey String      @unique
+  orderId        String
+  oldStatus      OrderStatus
+  newStatus      OrderStatus
+  createdAt      DateTime    @default(now())
+  order          Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([idempotencyKey])
+  @@map("order_status_updates")
 }
 
 model Cart {
@@ -178,7 +222,6 @@ model CartItem {
   price     Float
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
   product   Product  @relation(fields: [productId], references: [id])
 
@@ -186,4 +229,118 @@ model CartItem {
   @@index([cartId])
   @@index([productId])
   @@map("cart_items")
+}
+
+model activity_logs {
+  id          String   @id
+  action      String
+  entityType  String
+  entityId    String?
+  description String?
+  metadata    Json?
+  userId      String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([entityId])
+  @@index([entityType])
+}
+
+model authenticated_users {
+  id            String        @id
+  authId        String        @unique
+  email         String        @unique
+  name          String
+  role          UserRole      @default(CLIENT)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime
+  chat_messages ChatMessage[]
+  clients       Client[]      @relation("ClientUsers")
+  sellers       Seller[]      @relation("SellerUsers")
+
+  @@index([authId])
+  @@index([email])
+  @@index([role])
+}
+
+model pending_orders {
+  id        String   @id
+  status    String   @default("draft")
+  notes     String?
+  clientId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  clients   Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([status])
+}
+
+model schedules {
+  id        String    @id
+  dayOfWeek DayOfWeek
+  timeSlot  TimeSlot
+ 
+ 
+  isActive  Boolean   @default(true)
+  notes     String?
+  sellerId  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime
+  sellers   Seller    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@unique([sellerId, dayOfWeek, timeSlot])
+  @@index([dayOfWeek])
+  @@index([sellerId])
+}
+
+enum ProductUnit {
+  case
+  pk
+  box
+  unit
+  kg
+  lb
+}
+
+enum OrderStatus {
+  PENDING
+  PLACED
+  CONFIRMED
+  COMPLETED
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum OrderConfirmationMethod {
+  MANUAL
+  AUTOMATIC
+}
+
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+enum TimeSlot {
+  MORNING
+  AFTERNOON
+  EVENING
+  NIGHT
+}
+
+enum UserRole {
+  ADMIN
+  SELLER
+  CLIENT
 }

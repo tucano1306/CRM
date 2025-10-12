@@ -73,7 +73,7 @@ export async function PATCH(
     const notes = body.notes
 
     // Validar estado
-    const validStatuses = ['PENDING', 'PROCESSING', 'COMPLETED', 'CANCELLED']
+    const validStatuses = ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELED']
     if (newStatus && !validStatuses.includes(newStatus)) {
       return NextResponse.json(
         { error: 'Estado inválido' },
@@ -95,12 +95,12 @@ export async function PATCH(
 
     // Construir objeto de actualización
     const updateData: {
-      status?: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED'
+      status?: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELED'
       notes?: string | null
     } = {}
     
     if (newStatus) {
-      updateData.status = newStatus as 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED'
+      updateData.status = newStatus as 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELED'
     }
     
     if (notes !== undefined) {

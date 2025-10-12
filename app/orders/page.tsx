@@ -19,7 +19,7 @@ import PageHeader from '@/components/shared/PageHeader'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
-type OrderStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'CANCELLED'
+type OrderStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELED'
 
 type OrderItem = {
   id: string
@@ -169,7 +169,7 @@ export default function OrdersManagementPage() {
 
   const getNextStatus = (currentStatus: OrderStatus): OrderStatus | null => {
     const statusFlow: Record<OrderStatus, OrderStatus | null> = {
-      PENDING: 'PROCESSING',
+      PENDING: 'CONFIRMED',
       PROCESSING: 'COMPLETED',
       COMPLETED: null,
       CANCELLED: null,
@@ -427,9 +427,9 @@ export default function OrdersManagementPage() {
                           </Button>
                         )}
 
-                        {order.status !== 'CANCELLED' && order.status !== 'COMPLETED' && (
+                        {order.status !== 'CANCELED' && order.status !== 'COMPLETED' && (
                           <Button
-                            onClick={() => updateOrderStatus(order.id, 'CANCELLED')}
+                            onClick={() => updateOrderStatus(order.id, 'CANCELED')}
                             disabled={updatingOrder === order.id}
                             variant="outline"
                             className="border-red-300 text-red-600 hover:bg-red-50"
