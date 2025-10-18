@@ -30,6 +30,7 @@ model Client {
   @@map("clients")
 }
 
+
 model Seller {
   id                  String                @id @default(uuid())
   name                String
@@ -40,6 +41,7 @@ model Seller {
   commission          Float?
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
+  
   chat_messages       ChatMessage[]
   chatSchedules       ChatSchedule[]
   clients             Client[]
@@ -53,6 +55,8 @@ model Seller {
   @@index([isActive])
   @@map("sellers")
 }
+
+
 
 model Product {
   id          String          @id @default(uuid())
@@ -93,23 +97,33 @@ model ProductSeller {
 }
 
 model Order {
-  id            String              @id @default(uuid())
-  orderNumber   String              @unique
-  status        OrderStatus         @default(PENDING)
-  totalAmount   Float               @default(0)
-  notes         String?
-  confirmedAt   DateTime?
-  canceledAt    DateTime?
-  completedAt   DateTime?
-  clientId      String
-  sellerId      String
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  chatMessages  ChatMessage[]
-  items         OrderItem[]
-  statusUpdates OrderStatusUpdate[]
-  client        Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  seller        Seller              @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  id                      String              @id @default(uuid())
+  orderNumber             String              @unique
+  status                  OrderStatus         @default(PENDING)
+  totalAmount             Decimal             @default(0) @db.Decimal(10, 2)
+  notes                   String?
+  confirmedAt             DateTime?
+  canceledAt              DateTime?
+  completedAt             DateTime?
+  
+  // Campos nuevos para confirmación y mensajes
+  confirmationDeadline    DateTime?
+  idempotencyKey          String?             @unique
+  generalMessage          String?
+
+  // Relations
+  clientId                String
+  client                  Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  
+  sellerId                String
+  seller                  Seller              @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  
+  orderItems              OrderItem[]
+  chatMessages            ChatMessage[]
+  orderStatusUpdates      OrderStatusUpdate[]
+
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
 
   @@index([clientId])
   @@index([sellerId])
@@ -118,33 +132,43 @@ model Order {
   @@map("orders")
 }
 
+
 model OrderItem {
   id           String   @id @default(uuid())
   productName  String
   quantity     Int
-  pricePerUnit Float
+  pricePerUnit Decimal  @db.Decimal(10, 2)
+  subtotal     Decimal  @db.Decimal(10, 2)
   confirmed    Boolean  @default(false)
-  subtotal     Float
+  
+  // Campo nuevo
+  itemNote     String?
+  
+  // Relations
   orderId      String
-  productId    String
-  createdAt    DateTime @default(now())
   order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  productId    String
   product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now())
 
   @@index([orderId])
   @@index([productId])
   @@map("order_items")
 }
 
+
 model OrderSchedule {
   id        String    @id @default(uuid())
   sellerId  String
   dayOfWeek DayOfWeek
-  startTime String
-  endTime   String
+  startTime String    // Formato: "08:00"
+  endTime   String    // Formato: "17:00"
   isActive  Boolean   @default(true)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
   seller    Seller    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
 
   @@unique([sellerId, dayOfWeek])
@@ -157,11 +181,12 @@ model ChatSchedule {
   id        String    @id @default(uuid())
   sellerId  String
   dayOfWeek DayOfWeek
-  startTime String
-  endTime   String
+  startTime String    // Formato: "08:00"
+  endTime   String    // Formato: "17:00"
   isActive  Boolean   @default(true)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+
   seller    Seller    @relation(fields: [sellerId], references: [id], onDelete: Cascade)
 
   @@unique([sellerId, dayOfWeek])
@@ -172,17 +197,23 @@ model ChatSchedule {
 
 model ChatMessage {
   id                  String              @id @default(uuid())
+  senderId            String              // Clerk User ID del que envía
+  receiverId          String              // Clerk User ID del que recibe
   message             String
   isRead              Boolean             @default(false)
   messageType         String              @default("text")
+  idempotencyKey      String?             @unique
   userId              String
   sellerId            String?
   orderId             String?
   createdAt           DateTime            @default(now())
-  order               Order?              @relation(fields: [orderId], references: [id])
-  sellers             Seller?             @relation(fields: [sellerId], references: [id])
+  
+  order               Order?              @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  sellers             Seller?             @relation(fields: [sellerId], references: [id], onDelete: SetNull)
   authenticated_users authenticated_users @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([senderId])
+  @@index([receiverId])
   @@index([orderId])
   @@index([createdAt])
   @@index([sellerId])

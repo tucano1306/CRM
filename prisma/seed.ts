@@ -151,6 +151,36 @@ async function main() {
     }
   })
 
+  // Después de client3, AGREGAR:
+
+const client4 = await prisma.client.create({
+  data: {
+    name: 'Cliente de Prueba 1',
+    businessName: 'Negocio Test 1',
+    address: '123 Test St',
+    phone: '555-0001',
+    email: 'test1@example.com',
+    sellerId: seller1.id,
+    orderConfirmationEnabled: true,
+    notificationsEnabled: true,
+  }
+})
+
+const client5 = await prisma.client.create({
+  data: {
+    name: 'Cliente de Prueba 2',
+    businessName: 'Negocio Test 2',
+    address: '456 Test Ave',
+    phone: '555-0002',
+    email: 'test2@example.com',
+    sellerId: seller2.id,
+    orderConfirmationEnabled: true,
+    notificationsEnabled: true,
+  }
+})
+
+console.log('✅ Clientes de prueba creados (sin órdenes)')
+
   console.log('✅ Clientes creados')
 
   // ============================================
@@ -225,136 +255,154 @@ async function main() {
 
   console.log('✅ Relaciones producto-vendedor creadas')
 
-  // ============================================
-  // 7. ORDERS
-  // ============================================
-  console.log('🛒 Creando órdenes...')
-
-  const order1 = await prisma.order.create({
-    data: {
-      orderNumber: 'ORD-2025-001',
-      clientId: client1.id,
-      sellerId: seller1.id,
-      status: 'PENDING' as OrderStatus,
-      totalAmount: 0,
-      notes: 'Primera orden de prueba',
-      items: {
-        create: [
-          {
-            productId: product1.id,
-            productName: product1.name,
-            quantity: 5,
-            pricePerUnit: 45.99,
-            subtotal: 229.95,
-            confirmed: false,
-          },
-          {
-            productId: product2.id,
-            productName: product2.name,
-            quantity: 20,
-            pricePerUnit: 5.99,
-            subtotal: 119.80,
-            confirmed: false,
-          }
-        ]
-      }
-    }
-  })
-
-  await prisma.order.update({
-    where: { id: order1.id },
-    data: { totalAmount: 349.75 }
-  })
-
-  const order2 = await prisma.order.create({
-    data: {
-      orderNumber: 'ORD-2025-002',
-      clientId: client2.id,
-      sellerId: seller1.id,
-      status: 'CONFIRMED' as OrderStatus,
-      totalAmount: 0,
-      confirmedAt: new Date(),
-      notes: 'Orden confirmada',
-      items: {
-        create: [
-          {
-            productId: product3.id,
-            productName: product3.name,
-            quantity: 10,
-            pricePerUnit: 24.99,
-            subtotal: 249.90,
-            confirmed: true,
-          }
-        ]
-      }
-    }
-  })
-
-  await prisma.order.update({
-    where: { id: order2.id },
-    data: { totalAmount: 249.90 }
-  })
-
-  const order3 = await prisma.order.create({
-    data: {
-      orderNumber: 'ORD-2025-003',
-      clientId: client3.id,
-      sellerId: seller2.id,
-      status: 'COMPLETED' as OrderStatus,
-      totalAmount: 0,
-      confirmedAt: new Date(Date.now() - 86400000),
-      completedAt: new Date(),
-      notes: 'Orden completada',
-      items: {
-        create: [
-          {
-            productId: product4.id,
-            productName: product4.name,
-            quantity: 15,
-            pricePerUnit: 12.50,
-            subtotal: 187.50,
-            confirmed: true,
-          }
-        ]
-      }
-    }
-  })
-
-  await prisma.order.update({
-    where: { id: order3.id },
-    data: { totalAmount: 187.50 }
-  })
-
-  console.log('✅ Órdenes creadas')
-
-  // ============================================
   // 8. SCHEDULES
-  // ============================================
-  console.log('📅 Creando horarios...')
+// ============================================
+console.log('📅 Creando horarios...')
 
-  await prisma.schedules.createMany({
-    data: [
-      {
-        id: 'sched_001',
-        sellerId: seller1.id,
-        dayOfWeek: 'MONDAY' as DayOfWeek,
-        timeSlot: 'MORNING' as TimeSlot,
-        isActive: true,
-        notes: 'Horario regular',
-        updatedAt: new Date(),
-      },
-      {
-        id: 'sched_002',
-        sellerId: seller1.id,
-        dayOfWeek: 'WEDNESDAY' as DayOfWeek,
-        timeSlot: 'AFTERNOON' as TimeSlot,
-        isActive: true,
-        updatedAt: new Date(),
-      }
-    ]
-  })
+await prisma.schedules.create({
+  data: {
+    id: crypto.randomUUID(),
+    sellerId: seller1.id,
+    dayOfWeek: 'MONDAY' as DayOfWeek,
+    timeSlot: 'MORNING' as TimeSlot,
+    isActive: true,
+    notes: 'Horario regular',
+    updatedAt: new Date(),
+  }
+})
+
+await prisma.schedules.create({
+  data: {
+    id: crypto.randomUUID(),
+    sellerId: seller1.id,
+    dayOfWeek: 'WEDNESDAY' as DayOfWeek,
+    timeSlot: 'AFTERNOON' as TimeSlot,
+    isActive: true,
+    updatedAt: new Date(),
+  }
+})
+
+console.log('✅ Horarios creados')
+
+console.log('✅ Horarios creados')
 
   console.log('✅ Horarios creados')
+
+  // ============================================
+// 7. CREAR ORDERS
+// ============================================
+console.log('📝 Creando órdenes...')
+
+const order1 = await prisma.order.create({
+  data: {
+    orderNumber: `ORD-${Date.now()}-1`,
+    clientId: client1.id,
+    sellerId: seller1.id,
+    status: 'PENDING' as OrderStatus,
+    totalAmount: 349.75,
+    notes: 'Primera orden de prueba',
+  }
+})
+
+await prisma.orderItem.createMany({
+  data: [
+    {
+      orderId: order1.id,
+      productId: product1.id,
+      productName: product1.name,
+      quantity: 5,
+      pricePerUnit: 45.99,
+      subtotal: 229.95,
+      confirmed: false,
+    },
+    {
+      orderId: order1.id,
+      productId: product2.id,
+      productName: product2.name,
+      quantity: 20,
+      pricePerUnit: 5.99,
+      subtotal: 119.80,
+      confirmed: false,
+    }
+  ]
+})
+
+const order2 = await prisma.order.create({
+  data: {
+    orderNumber: `ORD-${Date.now()}-2`,
+    clientId: client2.id,
+    sellerId: seller1.id,
+    status: 'CONFIRMED' as OrderStatus,
+    totalAmount: 249.90,
+    confirmedAt: new Date(),
+    notes: 'Orden confirmada',
+  }
+})
+
+await prisma.orderItem.create({
+  data: {
+    orderId: order2.id,
+    productId: product3.id,
+    productName: product3.name,
+    quantity: 10,
+    pricePerUnit: 24.99,
+    subtotal: 249.90,
+    confirmed: true,
+  }
+})
+
+const order3 = await prisma.order.create({
+  data: {
+    orderNumber: `ORD-${Date.now()}-3`,
+    clientId: client3.id,
+    sellerId: seller2.id,
+    status: 'COMPLETED' as OrderStatus,
+    totalAmount: 187.50,
+    confirmedAt: new Date(Date.now() - 86400000),
+    completedAt: new Date(),
+    notes: 'Orden completada',
+  }
+})
+
+await prisma.orderItem.create({
+  data: {
+    orderId: order3.id,
+    productId: product4.id,
+    productName: product4.name,
+    quantity: 15,
+    pricePerUnit: 12.50,
+    subtotal: 187.50,
+    confirmed: true,
+  }
+})
+
+// Después de crear product4, AGREGAR:
+
+const product5 = await prisma.product.create({
+  data: {
+    name: 'Producto de Prueba 1',
+    description: 'Este producto NO tiene órdenes - puede eliminarse',
+    unit: 'case' as ProductUnit,
+    price: 10.00,
+    stock: 50,
+    sku: 'TEST-001',
+    isActive: true,
+  }
+})
+
+const product6 = await prisma.product.create({
+  data: {
+    name: 'Producto de Prueba 2',
+    description: 'Este producto NO tiene órdenes - puede eliminarse',
+    unit: 'pk' as ProductUnit,
+    price: 15.00,
+    stock: 30,
+    sku: 'TEST-002',
+    isActive: true,
+  }
+})
+
+console.log('✅ Órdenes creadas')
 
   // ============================================
   // RESUMEN

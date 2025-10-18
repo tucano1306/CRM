@@ -66,6 +66,35 @@ export async function GET() {
       }),
     ]);
 
+    // Obtener estadísticas diarias de los últimos 7 días
+    const last7DaysDate = new Date();
+    last7DaysDate.setDate(last7DaysDate.getDate() - 7);
+
+    const dailyOrders = await prisma.order.groupBy({
+      by: ['createdAt'],
+      where: {
+        status: 'COMPLETED',
+        createdAt: {
+          gte: last7DaysDate
+        }
+      },
+      _sum: {
+        totalAmount: true
+      },
+      _count: {
+        id: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    const dailyStats = dailyOrders.map(day => ({
+      date: day.createdAt.toISOString().split('T')[0],
+      orders: day._count.id,
+      revenue: Number(day._sum.totalAmount || 0)
+    }));
+
     // Órdenes recientes (últimas 5)
     const recentOrders = await prisma.order.findMany({
       take: 5,
@@ -77,7 +106,7 @@ export async function GET() {
             email: true,
           },
         },
-        items: {
+        orderItems: {
           include: {
             product: {
               select: {
@@ -119,7 +148,7 @@ export async function GET() {
           totalClients: 0, // Agregado según el primer código
           activeClients: 0, // Agregado según el primer código
           totalSellers: 0, // Agregado según el primer código
-          averageOrderValue: totalOrders > 0 ? (totalRevenue._sum.totalAmount || 0) / totalOrders : 0,
+         averageOrderValue: totalOrders > 0 ? Number(totalRevenue._sum.totalAmount || 0) / totalOrders : 0,
         },
         ordersByStatus: [
           { status: 'PENDING', count: pendingOrders, totalAmount: 0 },
@@ -129,13 +158,14 @@ export async function GET() {
         ],
         recentPerformance: {
           last7Days: {
-            orders: 0,
-            revenue: 0,
+            orders: dailyStats.reduce((acc, day) => acc + day.orders, 0),
+            revenue: dailyStats.reduce((acc, day) => acc + day.revenue, 0),
           },
           currentMonth: {
             orders: totalOrders,
             revenue: totalRevenue._sum.totalAmount || 0,
           },
+          dailyStats: dailyStats  // ✅ Agregar esto
         },
         topProducts: topProducts.map(p => ({
           productId: p.productId,

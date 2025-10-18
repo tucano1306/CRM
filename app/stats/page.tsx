@@ -118,13 +118,11 @@ export default function StatsPage() {
   const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
   // Preparar datos para gráficos
-  const salesChartData = salesData.dailySales
-    .slice(-15)
-    .map(day => ({
-      fecha: new Date(day.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }),
-      ventas: Number(day.revenue.toFixed(2)),
-      ordenes: Number(day.orders)
-    }))
+ const salesChartData = salesData.dailySales.map((day: any) => ({
+  fecha: day.fecha,
+  ventas: Number(day.ventas) || 0,
+  ordenes: Number(day.ordenes) || 0
+}))
 
   const topProductsChartData = productStats.topSelling.slice(0, 5).map(item => ({
     name: item.productName.length > 15 ? item.productName.substring(0, 15) + '...' : item.productName,
@@ -174,7 +172,7 @@ export default function StatsPage() {
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Ingresos</p>
                   <p className="text-3xl font-bold text-gray-900">
-                    ${totalRevenue.toFixed(2)}
+                   ${Number(totalRevenue).toFixed(2)}
                   </p>
                 </div>
                 <div className="bg-green-100 p-3 rounded-lg">
@@ -407,7 +405,7 @@ export default function StatsPage() {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-gray-900">{product.totalSold} unidades</p>
-                      <p className="text-sm text-green-600">${product.totalRevenue.toFixed(2)}</p>
+                      <p className="text-sm text-green-600">${Number(product.totalRevenue).toFixed(2)}</p>
                     </div>
                   </div>
                 ))}

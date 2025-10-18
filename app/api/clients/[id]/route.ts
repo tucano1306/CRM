@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-
-
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: clientId } = await params
     const client = await prisma.client.findUnique({
-      where: { id: params.id },
+      where: { id: clientId },
       include: {
-        seller: true,
-        users: true,
+        seller: true,        
         orders: {
           include: {
-            items: true
+            orderItems: true  // ✅
           },
           orderBy: { createdAt: 'desc' },
           take: 10
@@ -36,7 +34,7 @@ export async function GET(
     // Calcular estadísticas
     const stats = await prisma.order.aggregate({
       where: { 
-        clientId: params.id,
+        clientId: clientId,
         status: 'COMPLETED'
       },
       _sum: { totalAmount: true },
@@ -44,7 +42,7 @@ export async function GET(
     })
 
     const totalOrders = await prisma.order.count({
-      where: { clientId: params.id }
+      where: { clientId: clientId }
     })
 
     return NextResponse.json({
@@ -71,14 +69,15 @@ export async function GET(
 }
 
 export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: clientId } = await params
     const body = await request.json()
 
     const updatedClient = await prisma.client.update({
-      where: { id: params.id },
+      where: { id: clientId },
       data: body,
       include: { seller: true }
     })
@@ -101,16 +100,17 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: clientId } = await params
     // Verificar si tiene órdenes
     const ordersCount = await prisma.order.count({
-      where: { clientId: params.id }
+      where: { clientId: clientId }
     })
 
-    if (ordersCount > 0) {
+   if (ordersCount > 0) {
       return NextResponse.json(
         { 
           success: false,
@@ -121,7 +121,7 @@ export async function DELETE(
     }
 
     await prisma.client.delete({
-      where: { id: params.id }
+      where: { id: clientId }
     })
 
     return NextResponse.json({

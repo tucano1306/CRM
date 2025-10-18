@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { auth, currentUser } from '@clerk/nextjs/server'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
@@ -15,6 +15,16 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     const notes = body.notes || null
+    // Idempotency: accept an optional idempotencyKey from client. If provided,
+    // return previously created order with the same key.
+    const idempotencyKey: string | undefined = body.idempotencyKey
+
+    if (idempotencyKey) {
+      const existing = await prisma.order.findFirst({ where: { idempotencyKey } })
+      if (existing) {
+        return NextResponse.json({ success: true, order: existing, message: 'Order already processed (idempotent)' })
+      }
+    }
 
     // Obtener carrito con items
     const cart = await prisma.cart.findFirst({
@@ -56,27 +66,111 @@ export async function POST(request: Request) {
     const tax = subtotal * TAX_RATE
     const totalAmount = subtotal + tax
 
-// Buscar cliente por clerkUserId
-const client = await prisma.client.findFirst({
-  where: { 
-    clerkUserId: userId
-  },
-})
+    console.log('userId:', userId)
 
-    // Crear orden usando transacción
+    // Primero buscar o crear el authenticated_users
+    let authUser = await prisma.authenticated_users.findFirst({
+      where: { authId: userId }
+    })
+
+    console.log('AuthUser encontrado:', authUser ? 'SÍ' : 'NO')
+
+    if (!authUser) {
+      console.log('Creando authenticated_users...')
+      // Obtener datos del usuario de Clerk
+      const user = await currentUser()
+      
+      if (!user) {
+        return NextResponse.json(
+          { error: 'Usuario no autenticado' },
+          { status: 401 }
+        )
+      }
+      
+      authUser = await prisma.authenticated_users.create({
+        data: {
+          id: crypto.randomUUID(),
+          authId: userId,
+          email: user.emailAddresses[0]?.emailAddress || '',
+          name: user.firstName || user.username || 'Usuario',
+          role: 'CLIENT',
+          updatedAt: new Date()
+        }
+      })
+      console.log('AuthUser creado:', authUser.id)
+    }
+
+    // Ahora buscar o crear el cliente
+    let client = await prisma.client.findFirst({
+      where: {
+        authenticated_users: {
+          some: {
+            authId: userId
+          }
+        }
+      }
+    })
+
+    console.log('Cliente encontrado:', client ? 'SÍ' : 'NO')
+
+    if (!client) {
+      console.log('Creando cliente automáticamente...')
+      client = await prisma.client.create({
+        data: {
+          name: authUser.name || 'Cliente Nuevo',
+          businessName: authUser.name || 'Mi Negocio',
+          address: 'Dirección por definir',
+          phone: 'Teléfono por definir',
+          email: authUser.email,
+          orderConfirmationEnabled: true,
+          notificationsEnabled: true,
+          authenticated_users: {
+            connect: { id: authUser.id }
+          }
+        }
+      })
+      console.log('Cliente creado:', client.id)
+    }
+
+    // Asegurar que el cliente tenga un seller válido
+    let sellerId = client.sellerId
+
+    if (!sellerId) {
+      console.log('Cliente sin seller, buscando uno disponible...')
+      const availableSeller = await prisma.seller.findFirst({
+        where: { isActive: true }
+      })
+      
+      if (!availableSeller) {
+        return NextResponse.json(
+          { error: 'No hay vendedores disponibles' },
+          { status: 400 }
+        )
+      }
+      
+      sellerId = availableSeller.id
+      
+      // Actualizar el cliente con el seller
+      await prisma.client.update({
+        where: { id: client.id },
+        data: { sellerId: sellerId }
+      })
+      
+      console.log('Seller asignado:', sellerId)
+    }
+
+    // Ahora crear la orden con el sellerId válido
     const order = await prisma.$transaction(async (tx) => {
-      // Crear la orden
       const newOrder = await tx.order.create({
         data: {
-          clerkUserId: userId,
-          clientId: client?.id,
+          orderNumber: `ORD-${Date.now()}`,
+          clientId: client.id,
+          sellerId: sellerId,  // Ahora garantizado que existe
           status: 'PENDING',
-          paymentStatus: 'PENDING',
           totalAmount: totalAmount,
-          subtotal: subtotal,
-          tax: tax,
           notes: notes,
-        },
+          idempotencyKey: idempotencyKey || null,
+        }
       })
 
       // Crear los items de la orden
@@ -105,19 +199,15 @@ const client = await prisma.client.findFirst({
 
       // Vaciar carrito
       await tx.cartItem.deleteMany({
-        where: { cartId: cart.id },
+        where: { cartId: cart.id },  // CORRECTO
       })
 
       // Retornar orden completa
       return await tx.order.findUnique({
         where: { id: newOrder.id },
         include: {
-          items: {
-            include: {
-              product: true,
-            },
-          },
-          client: true,
+          orderItems: true,  // Cambiado de items a orderItems
+          client: true
         },
       })
     })
@@ -147,10 +237,44 @@ export async function GET() {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
+    // Primero buscar o crear el authenticated_users (para consistencia, aunque en GET solo se necesita lectura)
+    let authUser = await prisma.authenticated_users.findFirst({
+      where: { authId: userId }
+    })
+
+    if (!authUser) {
+      // En GET, si no existe authUser, no creamos automáticamente (solo lectura). Retornar error o manejar según lógica de negocio.
+      return NextResponse.json(
+        { error: 'Usuario no encontrado' },
+        { status: 404 }
+      )
+    }
+
+    // Buscar cliente por authId a través de la relación (para obtener client.id)
+    const client = await prisma.client.findFirst({
+      where: {
+        authenticated_users: {
+          some: {
+            authId: userId
+          }
+        }
+      }
+    })
+
+    if (!client) {
+      return NextResponse.json(
+        { error: 'Cliente no encontrado' },
+        { status: 404 }
+      )
+    }
+
     const orders = await prisma.order.findMany({
-      where: { clerkUserId: userId },
+      where: { 
+        // clerkUserId: userId,  // ELIMINADO
+        clientId: client.id  // Usado clientId
+      },
       include: {
-        items: {
+        orderItems: {  // Cambiado de items a orderItems
           include: {
             product: true,
           },

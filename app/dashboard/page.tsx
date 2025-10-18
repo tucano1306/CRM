@@ -30,11 +30,18 @@ interface DashboardData {
     last7Days: {
       orders: number
       revenue: number
+      
     }
     currentMonth: {
       orders: number
       revenue: number
     }
+     dailyStats: Array<{
+    date: string
+    orders: number
+    revenue: number
+  }>
+  
   }
   topProducts: Array<{
     productId: string
@@ -147,8 +154,8 @@ export default function DashboardPage() {
     },
     {
       title: 'Ingresos Totales',
-      value: `$${overview.totalRevenue.toFixed(2)}`,
-      description: `Promedio: $${overview.averageOrderValue.toFixed(2)}`,
+      value: `$${Number(overview.totalRevenue).toFixed(2)}`,
+      description: `Promedio: $${Number(overview.averageOrderValue).toFixed(2)}`,
       icon: DollarSign,
       bgClass: 'bg-gradient-to-br from-emerald-50 to-emerald-100',
       iconClass: 'text-emerald-600'
@@ -156,11 +163,11 @@ export default function DashboardPage() {
   ]
 
   // Preparar datos para gráfica
-  const chartData = salesData?.dailySales.slice(0, 7).reverse().map(day => ({
-    date: new Date(day.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }),
-    ventas: Number(day.revenue),
-    ordenes: Number(day.orders)
-  })) || []
+const chartData = recentPerformance.dailyStats.map((day: any) => ({
+  fecha: new Date(day.date).toLocaleDateString('es-ES', { month: 'short', day: 'numeric' }),
+  ventas: Number(day.revenue),
+  ordenes: Number(day.orders)
+}))
 
   return (
     <MainLayout>
@@ -266,7 +273,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-gray-900">{product.totalSold} unidades</p>
-                      <p className="text-xs text-green-600">${product.totalRevenue.toFixed(2)}</p>
+                      <p className="text-xs text-green-600">${Number(product.totalRevenue).toFixed(2)}</p>
                     </div>
                   </div>
                 ))}
@@ -302,7 +309,7 @@ export default function DashboardPage() {
                   <TrendingUp className="h-5 w-5 text-green-600" />
                 </div>
                 <p className="text-3xl font-bold text-gray-900 mb-1">
-                  ${recentPerformance.currentMonth.revenue.toFixed(2)}
+                  ${Number(recentPerformance.currentMonth.revenue).toFixed(2)}
                 </p>
                 <p className="text-sm text-gray-600">
                   {recentPerformance.currentMonth.orders} órdenes completadas

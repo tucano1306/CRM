@@ -347,7 +347,7 @@ export default function ProductsPage() {
                         </div>
                         <div>
                           <p className="text-lg font-bold text-green-600">
-                            ${product.stats!.totalRevenue.toFixed(0)}
+                            ${Number(product.stats!.totalRevenue).toFixed(0)}
                           </p>
                           <p className="text-xs text-gray-600">Ingresos</p>
                         </div>

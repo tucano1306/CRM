@@ -67,15 +67,15 @@ const statusConfig = {
     color: 'text-yellow-600',
     bg: 'bg-yellow-50',
     border: 'border-yellow-200',
-    buttonColor: 'bg-yellow-600 hover:bg-yellow-700',
+    buttonColor: 'bg-yellow-600'
   },
-  PROCESSING: {
-    label: 'En Proceso',
-    icon: Loader,
+  CONFIRMED: {  // ✅ Cambiar de PROCESSING a CONFIRMED
+    label: 'Confirmada',
+    icon: CheckCircle,
     color: 'text-blue-600',
     bg: 'bg-blue-50',
     border: 'border-blue-200',
-    buttonColor: 'bg-blue-600 hover:bg-blue-700',
+    buttonColor: 'bg-blue-600'
   },
   COMPLETED: {
     label: 'Completada',
@@ -83,15 +83,15 @@ const statusConfig = {
     color: 'text-green-600',
     bg: 'bg-green-50',
     border: 'border-green-200',
-    buttonColor: 'bg-green-600 hover:bg-green-700',
+    buttonColor: 'bg-green-600'
   },
-  CANCELLED: {
+  CANCELED: {  // ✅ Cambiar de CANCELLED a CANCELED
     label: 'Cancelada',
     icon: XCircle,
     color: 'text-red-600',
     bg: 'bg-red-50',
     border: 'border-red-200',
-    buttonColor: 'bg-red-600 hover:bg-red-700',
+    buttonColor: 'bg-red-600'
   },
 }
 
@@ -167,14 +167,11 @@ export default function OrdersManagementPage() {
     setExpandedOrder(expandedOrder === orderId ? null : orderId)
   }
 
-  const getNextStatus = (currentStatus: OrderStatus): OrderStatus | null => {
-    const statusFlow: Record<OrderStatus, OrderStatus | null> = {
-      PENDING: 'CONFIRMED',
-      PROCESSING: 'COMPLETED',
-      COMPLETED: null,
-      CANCELLED: null,
-    }
-    return statusFlow[currentStatus]
+  const nextStatusMap = {
+    PENDING: 'CONFIRMED',  // ✅ Cambiar de PROCESSING
+    CONFIRMED: 'COMPLETED',  // ✅ Cambiar de PROCESSING
+    COMPLETED: null,
+    CANCELED: null,  // ✅ Cambiar de CANCELLED
   }
 
   if (loading) {
@@ -215,23 +212,26 @@ export default function OrdersManagementPage() {
             </CardContent>
           </Card>
 
-          {Object.entries(statusConfig).map(([status, config]) => (
-            <Card
-              key={status}
-              className={`cursor-pointer transition-all ${filterStatus === status ? 'ring-2 ring-blue-500' : ''}`}
-              onClick={() => setFilterStatus(status)}
-            >
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <config.icon className={`mx-auto mb-1 ${config.color}`} size={20} />
-                  <p className="text-sm text-gray-600">{config.label}</p>
-                  <p className={`text-2xl font-bold ${config.color}`}>
-                    {stats[status.toLowerCase() as keyof OrderStats]}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+          {Object.entries(statusConfig).map(([status, config]) => {
+            const Icon = config.icon
+            return (
+              <Card
+                key={status}
+                className={`cursor-pointer transition-all ${filterStatus === status ? 'ring-2 ring-blue-500' : ''}`}
+                onClick={() => setFilterStatus(status)}
+              >
+                <CardContent className="p-4">
+                  <div className="text-center">
+                    <Icon className={`mx-auto mb-1 ${config.color}`} size={20} />
+                    <p className="text-sm text-gray-600">{config.label}</p>
+                    <p className={`text-2xl font-bold ${config.color}`}>
+                      {stats[status.toLowerCase() as keyof OrderStats]}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
 
         {/* Filtro activo */}
@@ -266,7 +266,7 @@ export default function OrdersManagementPage() {
               const config = statusConfig[order.status]
               const StatusIcon = config.icon
               const isExpanded = expandedOrder === order.id
-              const nextStatus = getNextStatus(order.status)
+              const nextStatus = nextStatusMap[order.status as keyof typeof nextStatusMap]
 
               return (
                 <Card key={order.id} className="overflow-hidden">
@@ -327,10 +327,10 @@ export default function OrdersManagementPage() {
                       <div className="text-right">
                         <p className="text-xs text-gray-500 mb-1">Total</p>
                         <p className="text-2xl font-bold text-purple-600">
-                          ${order.totalAmount.toFixed(2)}
+                          ${Number(order.totalAmount).toFixed(2)}
                         </p>
                         <p className="text-xs text-gray-600">
-                          {order.items.length} {order.items.length === 1 ? 'producto' : 'productos'}
+                          {order.orderItems?.length || 0} {(order.orderItems?.length || 0) === 1 ? 'producto' : 'productos'}
                         </p>
                       </div>
                     </div>
@@ -409,33 +409,39 @@ export default function OrdersManagementPage() {
                       {/* Acciones */}
                       <div className="flex flex-wrap gap-3">
                         {nextStatus && (
-                          <Button
-                            onClick={() => updateOrderStatus(order.id, nextStatus)}
-                            disabled={updatingOrder === order.id}
-                            className={`${statusConfig[nextStatus].buttonColor} text-white`}
-                          >
-                            {updatingOrder === order.id ? (
-                              <>
-                                <Loader className="animate-spin mr-2" size={16} />
-                                Actualizando...
-                              </>
-                            ) : (
-                              <>
-                                Marcar como {statusConfig[nextStatus].label}
-                              </>
+                          <>
+                            {(() => {
+                              const nextStatusConfig = statusConfig[nextStatus as keyof typeof statusConfig]
+                              return (
+                                <Button
+                                  onClick={() => updateOrderStatus(order.id, nextStatus as OrderStatus)}
+                                  disabled={updatingOrder === order.id}
+                                  className={`${nextStatusConfig.buttonColor} text-white`}
+                                >
+                                  {updatingOrder === order.id ? (
+                                    <>
+                                      <Loader className="animate-spin mr-2" size={16} />
+                                      Actualizando...
+                                    </>
+                                  ) : (
+                                    <>
+                                      Marcar como {nextStatusConfig.label}
+                                    </>
+                                  )}
+                                </Button>
+                              )
+                            })()}
+                            {order.status !== 'CANCELED' && order.status !== 'COMPLETED' && (
+                              <Button
+                                onClick={() => updateOrderStatus(order.id, 'CANCELED')}
+                                disabled={updatingOrder === order.id}
+                                variant="outline"
+                                className="border-red-300 text-red-600 hover:bg-red-50"
+                              >
+                                Cancelar Orden
+                              </Button>
                             )}
-                          </Button>
-                        )}
-
-                        {order.status !== 'CANCELED' && order.status !== 'COMPLETED' && (
-                          <Button
-                            onClick={() => updateOrderStatus(order.id, 'CANCELED')}
-                            disabled={updatingOrder === order.id}
-                            variant="outline"
-                            className="border-red-300 text-red-600 hover:bg-red-50"
-                          >
-                            Cancelar Orden
-                          </Button>
+                          </>
                         )}
                       </div>
                     </div>

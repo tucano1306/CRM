@@ -15,26 +15,21 @@ import {
 
 type OrderItem = {
   id: string
+  productName: string
   quantity: number
-  price: number
+  pricePerUnit: number
   subtotal: number
-  product: {
-    id: string
-    name: string
-    imageUrl: string | null
-    sku: string | null
-  }
+  productId: string
 }
 
 type Order = {
   id: string
+  orderNumber: string
   status: string
   totalAmount: number
-  subtotal: number
-  tax: number
   notes: string | null
   createdAt: string
-  items: OrderItem[]
+  orderItems: OrderItem[]
 }
 
 const statusConfig = {
@@ -156,6 +151,10 @@ export default function OrdersPage() {
               const config = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.PENDING
               const StatusIcon = config.icon
               const isExpanded = expandedOrder === order.id
+              
+              // Calcular subtotal e impuestos
+              const subtotal = order.orderItems?.reduce((sum, item) => sum + Number(item.subtotal), 0) || 0
+              const tax = subtotal * 0.10
 
               return (
                 <div
@@ -174,7 +173,7 @@ export default function OrdersPage() {
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">
-                            Orden #{order.id.slice(0, 8)}
+                            Orden #{order.orderNumber || order.id.slice(0, 8)}
                           </p>
                           <p className={`font-semibold ${config.color}`}>
                             {config.label}
@@ -183,11 +182,11 @@ export default function OrdersPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-purple-600">
-                          ${order.totalAmount.toFixed(2)}
+                          ${Number(order.totalAmount).toFixed(2)}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {order.items.length}{' '}
-                          {order.items.length === 1 ? 'producto' : 'productos'}
+                          {order.orderItems?.length || 0}{' '}
+                          {order.orderItems?.length === 1 ? 'producto' : 'productos'}           
                         </p>
                       </div>
                     </div>
@@ -211,39 +210,26 @@ export default function OrdersPage() {
                         Productos
                       </h4>
                       <div className="space-y-3 mb-6">
-                        {order.items.map((item) => (
+                        {order.orderItems?.map((item) => (
                           <div
                             key={item.id}
                             className="flex items-center justify-between bg-white p-4 rounded-lg"
                           >
                             <div className="flex items-center gap-4">
                               <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
-                                {item.product.imageUrl ? (
-                                  <img
-                                    src={item.product.imageUrl}
-                                    alt={item.product.name}
-                                    className="w-full h-full object-cover rounded-lg"
-                                  />
-                                ) : (
-                                  <Package className="text-purple-300" size={32} />
-                                )}
+                                <Package className="text-purple-300" size={32} />
                               </div>
                               <div>
                                 <p className="font-semibold text-gray-800">
-                                  {item.product.name}
+                                  {item.productName}
                                 </p>
-                                {item.product.sku && (
-                                  <p className="text-xs text-gray-500">
-                                    SKU: {item.product.sku}
-                                  </p>
-                                )}
                                 <p className="text-sm text-gray-600">
-                                 ${item.price ? item.price.toFixed(2) : '0.00'} × {item.quantity}
-                                 </p>
+                                  ${Number(item.pricePerUnit).toFixed(2)} × {item.quantity}
+                                </p>
                               </div>
                             </div>
                             <p className="font-bold text-purple-600">
-                              ${item.subtotal.toFixed(2)}
+                              ${Number(item.subtotal).toFixed(2)}
                             </p>
                           </div>
                         ))}
@@ -254,13 +240,13 @@ export default function OrdersPage() {
                         <div className="flex justify-between text-gray-600">
                           <span>Subtotal</span>
                           <span className="font-semibold">
-                            ${order.subtotal.toFixed(2)}
+                            ${Number(subtotal).toFixed(2)}
                           </span>
                         </div>
                         <div className="flex justify-between text-gray-600">
                           <span>Impuestos (10%)</span>
                           <span className="font-semibold">
-                            ${order.tax.toFixed(2)}
+                            ${Number(tax).toFixed(2)}
                           </span>
                         </div>
                         <div className="border-t border-gray-200 pt-2 flex justify-between items-center">
@@ -268,7 +254,7 @@ export default function OrdersPage() {
                             Total
                           </span>
                           <span className="text-2xl font-bold text-purple-600">
-                            ${order.totalAmount.toFixed(2)}
+                            ${Number(order.totalAmount).toFixed(2)}
                           </span>
                         </div>
                       </div>
