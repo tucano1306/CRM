@@ -52,6 +52,34 @@ type Order = {
   items: OrderItem[]
 }
 
+interface OrderWithItems extends Order {
+  orderItems: Array<{
+    id: string
+    productName: string
+    quantity: number
+    pricePerUnit: number
+    subtotal: number
+    confirmed: boolean
+    product: {
+      id: string
+      name: string
+      sku: string | null
+      imageUrl: string | null
+      price: number
+    }
+  }>
+  client: {
+    id: string
+    name: string
+    email: string
+    phone: string | null
+  }
+  seller: {
+    id: string
+    name: string
+  }
+}
+
 type OrderStats = {
   total: number
   pending: number
@@ -96,7 +124,7 @@ const statusConfig = {
 }
 
 export default function OrdersManagementPage() {
-  const [orders, setOrders] = useState<Order[]>([])
+  const [orders, setOrders] = useState<OrderWithItems[]>([])
   const [stats, setStats] = useState<OrderStats>({
     total: 0,
     pending: 0,
@@ -342,7 +370,7 @@ export default function OrdersManagementPage() {
                       {/* Productos */}
                       <h4 className="font-semibold text-gray-800 mb-4">Productos</h4>
                       <div className="space-y-3 mb-6">
-                        {order.items.map((item) => (
+                        {order.orderItems.map((item) => (
                           <div
                             key={item.id}
                             className="flex items-center justify-between bg-white p-4 rounded-lg"
@@ -369,12 +397,12 @@ export default function OrdersManagementPage() {
                                   </p>
                                 )}
                                 <p className="text-sm text-gray-600">
-                                  ${item.pricePerUnit.toFixed(2)} × {item.quantity}
+                                  ${Number(item.pricePerUnit).toFixed(2)} × {item.quantity}
                                 </p>
                               </div>
                             </div>
                             <p className="font-bold text-purple-600">
-                              ${item.subtotal.toFixed(2)}
+                              ${Number(item.subtotal).toFixed(2)}
                             </p>
                           </div>
                         ))}
@@ -384,16 +412,16 @@ export default function OrdersManagementPage() {
                       <div className="bg-white p-4 rounded-lg space-y-2 mb-6">
                         <div className="flex justify-between text-gray-600">
                           <span>Subtotal</span>
-                          <span className="font-semibold">${order.subtotal.toFixed(2)}</span>
+                          <span className="font-semibold">${Number(order.subtotal).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-gray-600">
                           <span>Impuestos (10%)</span>
-                          <span className="font-semibold">${order.tax.toFixed(2)}</span>
+                          <span className="font-semibold">${Number(order.tax).toFixed(2)}</span>
                         </div>
                         <div className="border-t border-gray-200 pt-2 flex justify-between items-center">
                           <span className="text-lg font-bold text-gray-800">Total</span>
                           <span className="text-2xl font-bold text-purple-600">
-                            ${order.totalAmount.toFixed(2)}
+                            ${Number(order.totalAmount).toFixed(2)}
                           </span>
                         </div>
                       </div>

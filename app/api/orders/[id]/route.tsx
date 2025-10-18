@@ -22,7 +22,7 @@ export async function GET(
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
-        items: {
+        orderItems: {
           include: {
             product: true,
           },
@@ -111,7 +111,7 @@ export async function PATCH(
       where: { id: orderId },
       data: updateData,
       include: {
-        items: {
+        orderItems: {
           include: {
             product: true,
           },
