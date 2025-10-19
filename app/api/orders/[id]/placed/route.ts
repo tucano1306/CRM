@@ -1,4 +1,4 @@
-// app/api/orders/[id]/confirm/route.ts
+// app/api/orders/[id]/placed/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
@@ -6,9 +6,9 @@ import { auth } from '@clerk/nextjs/server'
 const prisma = new PrismaClient()
 
 /**
- * PUT /api/orders/[id]/confirm
- * Confirmar orden por el vendedor (PLACED → CONFIRMED)
- * Solo el vendedor asignado puede confirmar
+ * PUT /api/orders/[id]/placed
+ * Confirmar orden manualmente (solo para método MANUAL)
+ * Solo el buyer dueño puede confirmar
  */
 export async function PUT(
   request: NextRequest,
@@ -44,7 +44,7 @@ export async function PUT(
       }
     }
 
-    // 3. Obtener la orden
+    // 3. Obtener la orden y verificar permisos
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
@@ -60,8 +60,8 @@ export async function PUT(
       )
     }
 
-    // 4. Verificar que el usuario autenticado sea el vendedor de la orden
-    const userSeller = await prisma.seller.findFirst({
+    // 4. Verificar que el usuario autenticado sea el cliente de la orden
+    const userClient = await prisma.client.findFirst({
       where: {
         authenticated_users: {
           some: { authId: userId }
@@ -69,31 +69,43 @@ export async function PUT(
       }
     })
 
-    if (!userSeller || userSeller.id !== order.sellerId) {
+    if (!userClient || userClient.id !== order.clientId) {
       return NextResponse.json(
         { success: false, error: 'No tienes permiso para confirmar esta orden' },
         { status: 403 }
       )
     }
 
-    // 5. Verificar que la orden esté en estado PLACED
-    if (order.status !== 'PLACED') {
+    // 5. Verificar que el cliente tenga método MANUAL
+    if (userClient.orderConfirmationMethod !== 'MANUAL') {
       return NextResponse.json(
         { 
           success: false, 
-          error: `No se puede confirmar. Estado actual: ${order.status}. Debe estar en PLACED.` 
+          error: 'Tu método de confirmación no es MANUAL. Contacta al vendedor.' 
         },
         { status: 400 }
       )
     }
 
-    // 6. Actualizar orden a CONFIRMED usando transacción
+    // 6. Verificar que la orden esté en estado PENDING
+    if (order.status !== 'PENDING') {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: `No se puede confirmar. Estado actual: ${order.status}` 
+        },
+        { status: 400 }
+      )
+    }
+
+    // 7. Actualizar orden a PLACED usando transacción
     const updatedOrder = await prisma.$transaction(async (tx) => {
       // Actualizar orden
       const updated = await tx.order.update({
         where: { id: orderId },
         data: {
-          status: 'CONFIRMED'
+          status: 'PLACED',
+          confirmedAt: new Date()
         },
         include: {
           client: true,
@@ -112,8 +124,8 @@ export async function PUT(
           data: {
             idempotencyKey,
             orderId,
-            oldStatus: 'PLACED',
-            newStatus: 'CONFIRMED'
+            oldStatus: 'PENDING',
+            newStatus: 'PLACED'
           }
         })
       }
@@ -123,12 +135,12 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      message: 'Orden confirmada por el vendedor exitosamente',
+      message: 'Orden confirmada exitosamente',
       order: updatedOrder
     })
 
   } catch (error) {
-    console.error('Error en PUT /api/orders/[id]/confirm:', error)
+    console.error('Error en PUT /api/orders/[id]/placed:', error)
     return NextResponse.json(
       { success: false, error: 'Error interno del servidor' },
       { status: 500 }

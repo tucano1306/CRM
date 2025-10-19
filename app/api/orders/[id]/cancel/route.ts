@@ -1,4 +1,4 @@
-// app/api/orders/[id]/confirm/route.ts
+// app/api/orders/[id]/cancel/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
@@ -6,9 +6,9 @@ import { auth } from '@clerk/nextjs/server'
 const prisma = new PrismaClient()
 
 /**
- * PUT /api/orders/[id]/confirm
- * Confirmar orden por el vendedor (PLACED → CONFIRMED)
- * Solo el vendedor asignado puede confirmar
+ * PUT /api/orders/[id]/cancel
+ * Cancelar orden
+ * Puede ser cancelada por el cliente (owner) o el vendedor asignado
  */
 export async function PUT(
   request: NextRequest,
@@ -26,7 +26,7 @@ export async function PUT(
 
     const { id: orderId } = params
     const body = await request.json()
-    const { idempotencyKey } = body
+    const { idempotencyKey, reason } = body
 
     // 2. Validar idempotencyKey (opcional)
     if (idempotencyKey) {
@@ -38,7 +38,7 @@ export async function PUT(
       if (existingUpdate) {
         return NextResponse.json({
           success: true,
-          message: 'Orden ya confirmada previamente (idempotent)',
+          message: 'Orden ya cancelada previamente (idempotent)',
           order: existingUpdate.order
         })
       }
@@ -60,7 +60,15 @@ export async function PUT(
       )
     }
 
-    // 4. Verificar que el usuario autenticado sea el vendedor de la orden
+    // 4. Verificar permisos: cliente o vendedor de la orden
+    const userClient = await prisma.client.findFirst({
+      where: {
+        authenticated_users: {
+          some: { authId: userId }
+        }
+      }
+    })
+
     const userSeller = await prisma.seller.findFirst({
       where: {
         authenticated_users: {
@@ -69,31 +77,40 @@ export async function PUT(
       }
     })
 
-    if (!userSeller || userSeller.id !== order.sellerId) {
+    const isClientOwner = userClient && userClient.id === order.clientId
+    const isSellerAssigned = userSeller && userSeller.id === order.sellerId
+
+    if (!isClientOwner && !isSellerAssigned) {
       return NextResponse.json(
-        { success: false, error: 'No tienes permiso para confirmar esta orden' },
+        { success: false, error: 'No tienes permiso para cancelar esta orden' },
         { status: 403 }
       )
     }
 
-    // 5. Verificar que la orden esté en estado PLACED
-    if (order.status !== 'PLACED') {
+    // 5. Verificar que la orden no esté ya COMPLETED o CANCELED
+    if (order.status === 'COMPLETED') {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: `No se puede confirmar. Estado actual: ${order.status}. Debe estar en PLACED.` 
-        },
+        { success: false, error: 'No se puede cancelar una orden completada' },
         { status: 400 }
       )
     }
 
-    // 6. Actualizar orden a CONFIRMED usando transacción
+    if (order.status === 'CANCELED') {
+      return NextResponse.json(
+        { success: false, error: 'La orden ya está cancelada' },
+        { status: 400 }
+      )
+    }
+
+    // 6. Actualizar orden a CANCELED usando transacción
     const updatedOrder = await prisma.$transaction(async (tx) => {
       // Actualizar orden
       const updated = await tx.order.update({
         where: { id: orderId },
         data: {
-          status: 'CONFIRMED'
+          status: 'CANCELED',
+          canceledAt: new Date(),
+          notes: reason ? `${order.notes || ''}\nMotivo de cancelación: ${reason}`.trim() : order.notes
         },
         include: {
           client: true,
@@ -112,8 +129,8 @@ export async function PUT(
           data: {
             idempotencyKey,
             orderId,
-            oldStatus: 'PLACED',
-            newStatus: 'CONFIRMED'
+            oldStatus: order.status,
+            newStatus: 'CANCELED'
           }
         })
       }
@@ -123,12 +140,12 @@ export async function PUT(
 
     return NextResponse.json({
       success: true,
-      message: 'Orden confirmada por el vendedor exitosamente',
+      message: 'Orden cancelada exitosamente',
       order: updatedOrder
     })
 
   } catch (error) {
-    console.error('Error en PUT /api/orders/[id]/confirm:', error)
+    console.error('Error en PUT /api/orders/[id]/cancel:', error)
     return NextResponse.json(
       { success: false, error: 'Error interno del servidor' },
       { status: 500 }

@@ -1,54 +1,147 @@
-import { NextResponse } from 'next/server'
+// app/api/schedule/route.ts
+import { NextRequest, NextResponse } from 'next/server'
+import { PrismaClient, DayOfWeek } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
-import { prisma } from '@/lib/prisma'
 
-// PUT /api/schedule - replace seller's order schedules
-export async function PUT(request: Request) {
+const prisma = new PrismaClient()
+
+/**
+ * PUT /api/schedule
+ * Configurar horarios de pedidos
+ * Solo SELLER puede configurar
+ */
+export async function PUT(request: NextRequest) {
   try {
+    // 1. Verificar autenticación
     const { userId } = await auth()
-    if (!userId) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-
-    const body = await request.json()
-    const { sellerId, schedules, idempotencyKey } = body
-
-    if (!sellerId || !Array.isArray(schedules)) {
-      return NextResponse.json({ error: 'sellerId y schedules son requeridos' }, { status: 400 })
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'No autorizado' },
+        { status: 401 }
+      )
     }
 
-    // Simple idempotency: if idempotencyKey provided and we've already processed it (stored on an order), skip
-    if (idempotencyKey) {
-      const existing = await prisma.order.findFirst({ where: { idempotencyKey } })
-      if (existing) return NextResponse.json({ success: true, message: 'Already applied (idempotent)' })
-    }
-
-    // Replace existing OrderSchedules for seller with provided ones
-    await prisma.$transaction(async (tx) => {
-      await tx.orderSchedule.deleteMany({ where: { sellerId } })
-      for (const s of schedules) {
-        await tx.orderSchedule.create({ data: { id: s.id || undefined, sellerId, dayOfWeek: s.dayOfWeek, startTime: s.startTime, endTime: s.endTime, isActive: s.isActive ?? true } })
+    // 2. Verificar que sea vendedor
+    const seller = await prisma.seller.findFirst({
+      where: {
+        authenticated_users: {
+          some: { authId: userId }
+        }
       }
     })
 
-    return NextResponse.json({ success: true, message: 'Schedules updated' })
+    if (!seller) {
+      return NextResponse.json(
+        { success: false, error: 'Solo sellers pueden configurar horarios' },
+        { status: 403 }
+      )
+    }
+
+    // 3. Obtener datos del request
+    const body = await request.json()
+    const { schedules } = body
+
+    if (!Array.isArray(schedules)) {
+      return NextResponse.json(
+        { success: false, error: 'schedules debe ser un array' },
+        { status: 400 }
+      )
+    }
+
+    // 4. Validar formato
+    for (const schedule of schedules) {
+      if (!schedule.dayOfWeek || !schedule.startTime || !schedule.endTime) {
+        return NextResponse.json(
+          { success: false, error: 'Cada horario debe tener dayOfWeek, startTime y endTime' },
+          { status: 400 }
+        )
+      }
+    }
+
+    // 5. Actualizar horarios usando transacción
+    const result = await prisma.$transaction(async (tx) => {
+      // Borrar horarios existentes
+      await tx.orderSchedule.deleteMany({
+        where: { sellerId: seller.id }
+      })
+
+      // Crear nuevos horarios
+      const created = []
+      for (const schedule of schedules) {
+        const newSchedule = await tx.orderSchedule.create({
+          data: {
+            sellerId: seller.id,
+            dayOfWeek: schedule.dayOfWeek as DayOfWeek,
+            startTime: schedule.startTime,
+            endTime: schedule.endTime,
+            isActive: schedule.isActive !== false
+          }
+        })
+        created.push(newSchedule)
+      }
+
+      return created
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Horarios actualizados exitosamente',
+      schedules: result
+    })
+
   } catch (error) {
-    console.error('Error en schedule PUT', error)
-    return NextResponse.json({ error: 'Error actualizando schedules' }, { status: 500 })
+    console.error('Error al actualizar horarios:', error)
+    return NextResponse.json(
+      { success: false, error: 'Error interno' },
+      { status: 500 }
+    )
   } finally {
     await prisma.$disconnect()
   }
 }
 
-// GET /api/schedule?sellerId=... - get schedules for seller
-export async function GET(request: Request) {
+/**
+ * GET /api/schedule
+ * Obtener horarios de pedidos
+ */
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url)
-    const sellerId = searchParams.get('sellerId')
-    if (!sellerId) return NextResponse.json({ error: 'sellerId requerido' }, { status: 400 })
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json(
+        { success: false, error: 'No autorizado' },
+        { status: 401 }
+      )
+    }
 
-    const schedules = await prisma.orderSchedule.findMany({ where: { sellerId }, orderBy: { dayOfWeek: 'asc' } })
-    return NextResponse.json({ success: true, schedules })
+    // Obtener todos los horarios
+    const schedules = await prisma.orderSchedule.findMany({
+      include: {
+        seller: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      },
+      orderBy: [
+        { dayOfWeek: 'asc' },
+        { startTime: 'asc' }
+      ]
+    })
+
+    return NextResponse.json({
+      success: true,
+      schedules
+    })
+
   } catch (error) {
-    console.error('Error en schedule GET', error)
-    return NextResponse.json({ error: 'Error obteniendo schedules' }, { status: 500 })
+    console.error('Error:', error)
+    return NextResponse.json(
+      { success: false, error: 'Error interno' },
+      { status: 500 }
+    )
+  } finally {
+    await prisma.$disconnect()
   }
 }
