@@ -16,12 +16,12 @@ export async function GET() {
     }
 
     // Obtener el cliente vinculado al usuario autenticado
-    const authUser = await prisma.authenticatedUser.findUnique({
+    const authUser = await prisma.authenticated_users.findUnique({
       where: { authId: userId },
-      include: { clientAccounts: true },
+      include: { clients: true },
     })
 
-    if (!authUser || authUser.clientAccounts.length === 0) {
+    if (!authUser || authUser.clients.length === 0) {
       // Si no hay cliente, retornar array vacío
       return NextResponse.json({
         success: true,
@@ -29,13 +29,13 @@ export async function GET() {
       })
     }
 
-    const client = authUser.clientAccounts[0]
+    const client = authUser.clients[0]
 
     // Obtener las últimas 10 órdenes del cliente
     const orders = await prisma.order.findMany({
       where: { clientId: client.id },
       include: {
-        items: true,
+        orderItems: true,
       },
       orderBy: { createdAt: 'desc' },
       take: 10,
@@ -47,7 +47,7 @@ export async function GET() {
       orderNumber: order.orderNumber,
       status: order.status,
       totalAmount: order.totalAmount,
-      itemsCount: order.items.length,
+      itemsCount: order.orderItems.length,
       createdAt: order.createdAt,
     }))
 

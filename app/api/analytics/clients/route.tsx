@@ -22,22 +22,19 @@ export async function GET(request: NextRequest) {
     // Obtener detalles de top clientes
     const topClientsWithDetails = await Promise.all(
       topClientsBySpending
-        .filter(item => item.clientId !== null) // Filtrar clientId no nulos
+        .filter(item => item.clientId !== null)
         .map(async (item) => {
           const client = await prisma.client.findUnique({
-            where: { id: item.clientId as string }, // Asegurar que es string
+            where: { id: item.clientId as string },
             select: {
               id: true,
-              clerkUserId: true,
               name: true,
+              businessName: true,
               email: true,
               phone: true,
               address: true,
-              city: true,
-              state: true,
-              zipCode: true,
               createdAt: true,
-              seller: { // Relación seller agregada ahora que existe en el esquema
+              seller: {
                 select: {
                   id: true,
                   name: true
@@ -60,8 +57,10 @@ export async function GET(request: NextRequest) {
             client,
             stats: {
               totalOrders: item._count,
-              totalSpent: item._sum.totalAmount || 0,
-              averageOrderValue: item._sum.totalAmount ? (item._sum.totalAmount / item._count) : 0,
+              totalSpent: Number(item._sum.totalAmount || 0),
+              averageOrderValue: item._sum.totalAmount 
+                ? Number((Number(item._sum.totalAmount) / item._count).toFixed(2))
+                : 0,
               lastOrderDate: lastOrder?.createdAt,
               lastOrderStatus: lastOrder?.status
             }
@@ -87,7 +86,6 @@ export async function GET(request: NextRequest) {
             where: { id: item.clientId as string },
             select: {
               id: true,
-              clerkUserId: true,
               name: true,
               email: true
             }
@@ -112,7 +110,6 @@ export async function GET(request: NextRequest) {
       take: limit,
       select: {
         id: true,
-        clerkUserId: true,
         name: true,
         email: true,
         createdAt: true,
@@ -134,7 +131,6 @@ export async function GET(request: NextRequest) {
       take: limit,
       select: {
         id: true,
-        clerkUserId: true,
         name: true,
         email: true,
         createdAt: true

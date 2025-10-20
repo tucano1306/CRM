@@ -16,12 +16,12 @@ export async function GET() {
     }
 
     // Obtener el cliente vinculado al usuario autenticado
-    const authUser = await prisma.authenticatedUser.findUnique({
+    const authUser = await prisma.authenticated_users.findUnique({
       where: { authId: userId },
-      include: { clientAccounts: true },
+      include: { clients: true }, // ✅ CORREGIDO: clients no clientAccounts
     })
 
-    if (!authUser || authUser.clientAccounts.length === 0) {
+    if (!authUser || authUser.clients.length === 0) {
       // Si no existe el cliente, retornar estadísticas en cero
       return NextResponse.json({
         success: true,
@@ -36,7 +36,7 @@ export async function GET() {
       })
     }
 
-    const client = authUser.clientAccounts[0]
+    const client = authUser.clients[0] // ✅ CORREGIDO
 
     // Obtener todas las órdenes del cliente
     const orders = await prisma.order.findMany({
@@ -54,7 +54,7 @@ export async function GET() {
     
     const totalSpent = orders
       .filter((o) => o.status === 'COMPLETED')
-      .reduce((sum, o) => sum + o.totalAmount, 0)
+      .reduce((sum, o) => sum + Number(o.totalAmount), 0) // ✅ CORREGIDO: Number()
 
     const lastOrderDate = orders.length > 0 ? orders[0].createdAt : null
 
@@ -67,7 +67,7 @@ export async function GET() {
         totalOrders,
         pendingOrders,
         completedOrders,
-        totalSpent,
+        totalSpent: Number(totalSpent.toFixed(2)), // ✅ CORREGIDO
         lastOrderDate,
         favoriteProducts,
       },

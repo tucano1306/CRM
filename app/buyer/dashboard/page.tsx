@@ -242,7 +242,8 @@ export default function BuyerDashboardPage() {
                             {order.itemsCount} productos • {new Date(order.createdAt).toLocaleDateString('es-ES')}
                           </p>
                         </div>
-                        <p className="text-2xl font-bold">${order.totalAmount.toFixed(2)}</p>
+                        // ✅ CORRECTO
+                        <p className="text-2xl font-bold">${Number(order.totalAmount).toFixed(2)}</p>
                       </div>
                     </div>
                   ))}
