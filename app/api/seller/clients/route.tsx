@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 export async function GET() {
   try {
     const { userId } = await auth()
+    console.log('🔍 [1] userId del vendedor:', userId)
 
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
@@ -19,14 +20,17 @@ export async function GET() {
       }
     })
 
+    console.log('🔍 [2] Seller encontrado:', seller?.id, seller?.name)
+
     if (!seller) {
       return NextResponse.json({ 
         success: false, 
-        error: 'No eres vendedor' 
+        error: 'No eres vendedor',
+        debug: { userId }
       })
     }
 
-    // Obtener clientes del vendedor con sus usuarios autenticados
+    // Obtener clientes del vendedor
     const clients = await prisma.client.findMany({
       where: { sellerId: seller.id },
       include: {
@@ -35,10 +39,19 @@ export async function GET() {
       orderBy: { name: 'asc' }
     })
 
+    console.log('🔍 [3] Clientes encontrados:', clients.length)
+
     // Obtener mensajes no leídos por cliente
     const clientsWithUnread = await Promise.all(
       clients.map(async (client) => {
         const clientAuth = client.authenticated_users[0]
+        
+        console.log(`🔍 [4] Cliente "${client.name}":`, {
+          id: client.id,
+          email: client.email,
+          hasAuth: !!clientAuth,
+          clerkUserId: clientAuth?.authId
+        })
         
         if (!clientAuth) {
           return {
@@ -58,6 +71,8 @@ export async function GET() {
           }
         })
 
+        console.log(`🔍 [5] Mensajes no leídos de "${client.name}":`, unreadCount)
+
         return {
           id: client.id,
           name: client.name,
@@ -71,13 +86,18 @@ export async function GET() {
     // Filtrar solo clientes con clerkUserId
     const validClients = clientsWithUnread.filter(c => c.clerkUserId)
 
+    console.log('🔍 [6] Clientes válidos (con authId):', validClients.length)
+
     return NextResponse.json({
       success: true,
       clients: validClients
     })
   } catch (error) {
-    console.error('Error:', error)
-    return NextResponse.json({ error: 'Error interno' }, { status: 500 })
+    console.error('❌ Error en GET /api/seller/clients:', error)
+    return NextResponse.json({ 
+      error: 'Error interno',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   } finally {
     await prisma.$disconnect()
   }
