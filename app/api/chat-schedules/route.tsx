@@ -8,22 +8,56 @@ const prisma = new PrismaClient()
 /**
  * GET /api/chat-schedules?sellerId=xxx
  * Obtener horarios de chat de un vendedor
+ * Si no se proporciona sellerId, usa el seller del usuario autenticado
  */
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const sellerId = searchParams.get('sellerId')
-
-    if (!sellerId) {
+    const { userId } = await auth()
+    
+    if (!userId) {
       return NextResponse.json(
-        { success: false, error: 'sellerId es requerido' },
-        { status: 400 }
+        { success: false, error: 'No autorizado' },
+        { status: 401 }
       )
+    }
+
+    const { searchParams } = new URL(request.url)
+    let sellerId = searchParams.get('sellerId')
+
+    // Si no se proporciona sellerId, buscar el seller del usuario autenticado
+    if (!sellerId) {
+      const seller = await prisma.seller.findFirst({
+        where: {
+          authenticated_users: {
+            some: { authId: userId }
+          }
+        }
+      })
+
+      if (!seller) {
+        return NextResponse.json(
+          { success: false, error: 'Seller no encontrado' },
+          { status: 404 }
+        )
+      }
+
+      sellerId = seller.id
     }
 
     const schedules = await prisma.chatSchedule.findMany({
       where: { sellerId },
-      orderBy: { dayOfWeek: 'asc' }
+      orderBy: [
+        { dayOfWeek: 'asc' },
+        { startTime: 'asc' }
+      ],
+      include: {
+        seller: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
     })
 
     return NextResponse.json({
@@ -145,6 +179,14 @@ export async function POST(request: NextRequest) {
   } finally {
     await prisma.$disconnect()
   }
+}
+
+/**
+ * PUT /api/chat-schedules
+ * Alias de POST para seguir convenciones REST
+ */
+export async function PUT(request: NextRequest) {
+  return POST(request)
 }
 
 /**

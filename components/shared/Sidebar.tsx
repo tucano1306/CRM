@@ -12,7 +12,8 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Settings,
-  X
+  X,
+  MessageCircle
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import ThemeToggle from './ThemeToggle'
@@ -37,6 +38,11 @@ const menuItems = [
     title: 'Órdenes',
     href: '/orders',
     icon: ShoppingCart
+  },
+  {
+    title: 'Chat',
+    href: '/chat',
+    icon: MessageCircle
   },
   {
     title: 'Estadísticas',

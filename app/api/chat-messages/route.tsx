@@ -106,7 +106,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Obtener información del usuario autenticado
+    // 4. Obtener authenticated_user del sender
     const authenticatedUser = await prisma.authenticated_users.findFirst({
       where: { authId: userId }
     })
@@ -118,23 +118,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 5. Verificar horario de chat si el receptor es vendedor
-    const receiverSeller = await prisma.seller.findFirst({
+    // 5. Verificar horario de chat si el sender es seller
+    const senderSeller = await prisma.seller.findFirst({
       where: {
         authenticated_users: {
-          some: { authId: receiverId }
+          some: { authId: userId }
         }
       }
     })
 
-    if (receiverSeller) {
+    if (senderSeller) {
       const now = new Date()
-      const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase() // ✅ CORREGIDO
+      const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()
       const currentTime = now.toTimeString().slice(0, 5) // "HH:MM"
 
       const chatSchedule = await prisma.chatSchedule.findFirst({
         where: {
-          sellerId: receiverSeller.id,
+          sellerId: senderSeller.id,
           dayOfWeek: dayOfWeek as any,
           isActive: true,
           startTime: { lte: currentTime },
@@ -145,8 +145,8 @@ export async function POST(request: NextRequest) {
       if (!chatSchedule) {
         return NextResponse.json({
           success: false,
-          error: 'Fuera del horario de chat del vendedor',
-          details: `El vendedor no está disponible para chat en este momento. Día: ${dayOfWeek}, Hora: ${currentTime}`
+          error: 'Fuera del horario de chat',
+          details: `El chat está disponible según los horarios configurados. Día: ${dayOfWeek}, Hora actual: ${currentTime}`
         }, { status: 403 })
       }
     }
@@ -160,7 +160,7 @@ export async function POST(request: NextRequest) {
         orderId: orderId || null,
         idempotencyKey: idempotencyKey || null,
         userId: authenticatedUser.id,
-        sellerId: receiverSeller ? receiverSeller.id : null
+        sellerId: senderSeller ? senderSeller.id : null
       },
       include: {
         order: {

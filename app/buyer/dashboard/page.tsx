@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { 
   ShoppingCart, Package, Clock, CheckCircle, 
-  TrendingUp, Store, Heart 
+  TrendingUp, Store, Heart, MessageCircle 
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -196,6 +196,18 @@ export default function BuyerDashboardPage() {
                     <div>
                       <h3 className="font-semibold text-purple-900">Mis Órdenes</h3>
                       <p className="text-sm text-purple-700">Ver historial</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+
+              <Link href="/buyer/chat">
+                <div className="p-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl transition cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <MessageCircle className="h-6 w-6 text-white" />
+                    <div>
+                      <h3 className="font-semibold text-white">Chat con Vendedor</h3>
+                      <p className="text-sm text-purple-100">Envía mensajes</p>
                     </div>
                   </div>
                 </div>
