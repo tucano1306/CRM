@@ -113,7 +113,7 @@ export default function StatsPage() {
   }
 
   // Calcular resumen de ventas
-  const totalRevenue = salesData.dailySales.reduce((sum, day) => sum + day.revenue, 0)
+  const totalRevenue = salesData.dailySales.reduce((sum, day) => sum + Number(day.revenue), 0)
   const totalOrders = salesData.dailySales.reduce((sum, day) => sum + day.orders, 0)
   const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
 

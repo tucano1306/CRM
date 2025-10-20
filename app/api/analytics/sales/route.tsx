@@ -34,15 +34,15 @@ export async function GET(request: Request) {
     }
 
     // Obtener órdenes del periodo
-   const orders = await prisma.order.findMany({
-  where: {
-    createdAt: {
-      gte: startDate,
-    },
-    status: {
-      in: ["COMPLETED", "CONFIRMED", "PLACED", "PENDING"]  // ✅ Correcto
-    }
-  },
+    const orders = await prisma.order.findMany({
+      where: {
+        createdAt: {
+          gte: startDate,
+        },
+        status: {
+          in: ["COMPLETED", "CONFIRMED", "PLACED", "PENDING"]
+        }
+      },
       select: {
         id: true,
         totalAmount: true,
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
 
       const daySales = dailySalesMap.get(dateKey)!
       daySales.orders += 1
-      daySales.revenue += order.totalAmount
+      daySales.revenue += Number(order.totalAmount) // ✅ CORREGIDO
     })
 
     // Convertir a array ordenado
@@ -74,7 +74,7 @@ export async function GET(request: Request) {
       .map(([date, data]) => ({
         date,
         orders: data.orders,
-        revenue: data.revenue,
+        revenue: Number(data.revenue.toFixed(2)), // ✅ CORREGIDO
       }))
       .sort((a, b) => a.date.localeCompare(b.date))
 

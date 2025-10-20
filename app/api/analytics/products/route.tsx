@@ -52,7 +52,7 @@ export async function GET() {
 
       const product = productMap.get(item.productId)!
       product.totalSold += item.quantity
-      product.totalRevenue += item.subtotal
+      product.totalRevenue += Number(item.subtotal) // ✅ CORREGIDO
       product.ordersCount.add(item.orderId)
     })
 
@@ -62,7 +62,7 @@ export async function GET() {
         productId: p.productId,
         productName: p.productName,
         totalSold: p.totalSold,
-        totalRevenue: p.totalRevenue,
+        totalRevenue: Number(p.totalRevenue.toFixed(2)), // ✅ CORREGIDO
         ordersCount: p.ordersCount.size,
       }))
       .sort((a, b) => b.totalSold - a.totalSold)

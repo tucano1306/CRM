@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-
-
-
 // GET - Obtener items de una orden
 export async function GET(
   request: NextRequest,
@@ -27,9 +24,9 @@ export async function GET(
       orderBy: { createdAt: 'asc' }
     })
 
-    // Calcular totales
+    // Calcular totales - Convertir Decimal a número
     const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0)
-    const totalAmount = items.reduce((sum, item) => sum + (item.quantity * item.pricePerUnit), 0)
+    const totalAmount = items.reduce((sum, item) => sum + (item.quantity * Number(item.pricePerUnit)), 0)
 
     return NextResponse.json({
       success: true,
@@ -37,7 +34,7 @@ export async function GET(
       summary: {
         totalItems: items.length,
         totalQuantity,
-        totalAmount,
+        totalAmount: Number(totalAmount.toFixed(2)),
         confirmedItems: items.filter(item => item.confirmed).length
       }
     })
