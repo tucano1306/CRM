@@ -33,6 +33,8 @@ type Cart = {
   items: CartItem[]
 }
 
+import { v4 as uuidv4 } from 'uuid'
+
 export default function CartPage() {
   const router = useRouter()
   const [cart, setCart] = useState<Cart | null>(null)
@@ -139,6 +141,7 @@ export default function CartPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           notes: null,
+          idempotencyKey: uuidv4()  // agregando idempotencyKey
         }),
       })
 

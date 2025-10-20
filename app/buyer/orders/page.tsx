@@ -29,8 +29,12 @@ type Order = {
   totalAmount: number
   notes: string | null
   createdAt: string
+  confirmationDeadline?: string  // confirmation deadline (ISO string)
   orderItems: OrderItem[]
 }
+
+import { v4 as uuidv4 } from 'uuid'
+import OrderCountdown from '@/components/buyer/OrderCountdown'
 
 const statusConfig = {
   PENDING: {
@@ -91,6 +95,30 @@ export default function OrdersPage() {
 
   const toggleExpand = (orderId: string) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId)
+  }
+
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}/cancel`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idempotencyKey: uuidv4()
+        })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        alert('✅ Orden cancelada exitosamente')
+        fetchOrders() // Recargar órdenes
+      } else {
+        alert('❌ Error: ' + (result.error || 'No se pudo cancelar'))
+      }
+    } catch (error) {
+      console.error('Error cancelando orden:', error)
+      alert('❌ Error de conexión al cancelar')
+    }
   }
 
   if (loading) {
@@ -190,6 +218,18 @@ export default function OrdersPage() {
                         </p>
                       </div>
                     </div>
+
+                  {/* Countdown para órdenes PENDING con deadline */}
+                  {order.status === 'PENDING' && order.confirmationDeadline && (
+                    <div className="px-6 py-4 border-t border-gray-100">
+                      <OrderCountdown
+                        orderId={order.id}
+                        deadline={order.confirmationDeadline}
+                        onCancel={handleCancelOrder}
+                        onExpired={() => fetchOrders()}
+                      />
+                    </div>
+                  )}
 
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <Calendar size={16} />
