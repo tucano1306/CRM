@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { v4 as uuidv4 } from 'uuid'
+import { apiCall, getErrorMessage } from '@/lib/api-client'
 import {
   Package,
   Clock,
@@ -11,7 +13,10 @@ import {
   ShoppingBag,
   DollarSign,
   Calendar,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react'
+import OrderCountdown from '@/components/buyer/OrderCountdown'
 
 type OrderItem = {
   id: string
@@ -29,12 +34,9 @@ type Order = {
   totalAmount: number
   notes: string | null
   createdAt: string
-  confirmationDeadline?: string  // confirmation deadline (ISO string)
+  confirmationDeadline?: string
   orderItems: OrderItem[]
 }
-
-import { v4 as uuidv4 } from 'uuid'
-import OrderCountdown from '@/components/buyer/OrderCountdown'
 
 const statusConfig = {
   PENDING: {
@@ -71,25 +73,36 @@ export default function OrdersPage() {
   const router = useRouter()
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [timedOut, setTimedOut] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
 
   useEffect(() => {
     fetchOrders()
   }, [])
 
+  // ✅ fetchOrders CON TIMEOUT
   const fetchOrders = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/buyer/orders')
-      const data = await response.json()
+      setTimedOut(false)
+      setError(null)
 
-      if (response.ok && data.success) {
-        setOrders(data.orders)
-      }
-    } catch (error) {
-      console.error('Error cargando órdenes:', error)
-    } finally {
+      const result = await apiCall('/api/buyer/orders', {
+        timeout: 5000,
+        onTimeout: () => setTimedOut(true)
+      })
+
       setLoading(false)
+
+      if (result.success) {
+        setOrders(result.data.orders)
+      } else {
+        setError(result.error || 'Error cargando órdenes')
+      }
+    } catch (err) {
+      setLoading(false)
+      setError(getErrorMessage(err))
     }
   }
 
@@ -97,36 +110,109 @@ export default function OrdersPage() {
     setExpandedOrder(expandedOrder === orderId ? null : orderId)
   }
 
-  const handleCancelOrder = async (orderId: string) => {
+  // ✅ confirmOrder CON TIMEOUT
+  const confirmOrder = async (orderId: string) => {
+    if (!confirm('¿Confirmar esta orden?')) return
+
     try {
-      const response = await fetch(`/api/orders/${orderId}/cancel`, {
+      const result = await apiCall(`/api/orders/${orderId}/placed`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          idempotencyKey: uuidv4()
-        })
+        body: JSON.stringify({ idempotencyKey: uuidv4() }),
+        timeout: 5000,
       })
 
-      const result = await response.json()
-
       if (result.success) {
-        alert('✅ Orden cancelada exitosamente')
-        fetchOrders() // Recargar órdenes
+        alert('✅ Orden confirmada exitosamente')
+        fetchOrders()
       } else {
-        alert('❌ Error: ' + (result.error || 'No se pudo cancelar'))
+        alert(result.error || 'Error confirmando orden')
       }
-    } catch (error) {
-      console.error('Error cancelando orden:', error)
-      alert('❌ Error de conexión al cancelar')
+    } catch (err) {
+      alert(getErrorMessage(err))
     }
   }
 
+  // ✅ cancelOrder CON TIMEOUT
+  const cancelOrder = async (orderId: string) => {
+    const reason = prompt('Motivo de cancelación (opcional):')
+    if (reason === null) return
+
+    try {
+      const result = await apiCall(`/api/orders/${orderId}/cancel`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          idempotencyKey: uuidv4(),
+          reason 
+        }),
+        timeout: 5000,
+      })
+
+      if (result.success) {
+        alert('✅ Orden cancelada')
+        fetchOrders()
+      } else {
+        alert(result.error || 'Error cancelando orden')
+      }
+    } catch (err) {
+      alert(getErrorMessage(err))
+    }
+  }
+
+  // ✅ ESTADO DE LOADING
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <Loader2 className="animate-spin h-12 w-12 text-purple-600 mx-auto mb-4" />
           <p className="text-gray-600">Cargando órdenes...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ✅ ESTADO DE TIMEOUT
+  if (timedOut) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6 flex items-center justify-center">
+        <div className="max-w-md bg-white rounded-2xl shadow-lg p-8 border border-yellow-200">
+          <div className="flex items-center gap-3 mb-4">
+            <Clock className="h-8 w-8 text-yellow-600" />
+            <h2 className="text-xl font-bold text-yellow-900">
+              Tiempo de espera excedido
+            </h2>
+          </div>
+          <p className="text-gray-700 mb-6">
+            La carga de órdenes está tardando más de lo esperado.
+          </p>
+          <button
+            onClick={fetchOrders}
+            className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ✅ ESTADO DE ERROR
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6 flex items-center justify-center">
+        <div className="max-w-md bg-white rounded-2xl shadow-lg p-8 border border-red-200">
+          <div className="flex items-center gap-3 mb-4">
+            <AlertCircle className="h-8 w-8 text-red-600" />
+            <h2 className="text-xl font-bold text-red-900">Error</h2>
+          </div>
+          <p className="text-gray-700 mb-6">{error}</p>
+          <button
+            onClick={fetchOrders}
+            className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     )
@@ -144,33 +230,33 @@ export default function OrdersPage() {
                 Mis Órdenes
               </h1>
               <p className="text-gray-600 mt-1">
-                Historial completo de tus pedidos
+                {orders.length} {orders.length === 1 ? 'orden' : 'órdenes'}
               </p>
             </div>
             <button
               onClick={() => router.push('/buyer/catalog')}
-              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
             >
-              Nuevo Pedido
+              Nueva orden
             </button>
           </div>
         </div>
 
         {/* Lista de órdenes */}
         {orders.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-            <ShoppingBag className="mx-auto text-gray-400 mb-4" size={64} />
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">
-              No tienes órdenes aún
-            </h3>
-            <p className="text-gray-500 mb-6">
-              Comienza agregando productos al carrito y finaliza tu primer pedido
+          <div className="bg-white rounded-2xl shadow-lg p-12 text-center border border-purple-100">
+            <Package className="mx-auto text-gray-400 mb-4" size={64} />
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              No tienes órdenes
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Comienza a hacer tus pedidos desde el catálogo
             </p>
             <button
               onClick={() => router.push('/buyer/catalog')}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all"
+              className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
             >
-              Ir al catálogo
+              Ver catálogo
             </button>
           </div>
         ) : (
@@ -225,7 +311,7 @@ export default function OrdersPage() {
                       <OrderCountdown
                         orderId={order.id}
                         deadline={order.confirmationDeadline}
-                        onCancel={handleCancelOrder}
+                        onCancel={cancelOrder}
                         onExpired={() => fetchOrders()}
                       />
                     </div>
@@ -305,6 +391,30 @@ export default function OrdersPage() {
                             Notas
                           </p>
                           <p className="text-sm text-gray-600">{order.notes}</p>
+                        </div>
+                      )}
+
+                      {/* Botones de acción */}
+                      {order.status === 'PENDING' && (
+                        <div className="flex gap-3 mt-4">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              confirmOrder(order.id)
+                            }}
+                            className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                          >
+                            Confirmar orden
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              cancelOrder(order.id)
+                            }}
+                            className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors font-semibold"
+                          >
+                            Cancelar orden
+                          </button>
                         </div>
                       )}
                     </div>

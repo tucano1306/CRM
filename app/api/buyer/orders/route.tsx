@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { PrismaClient } from '@prisma/client'
+import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
 import { eventEmitter } from '@/lib/events/eventEmitter'
 import { EventType } from '@/lib/events/types/event.types'
 import { validateOrderTime, getNextAvailableOrderTime } from '@/lib/scheduleValidation'
@@ -9,6 +10,7 @@ import logger, { LogCategory } from '@/lib/logger'
 const prisma = new PrismaClient()
 
 // POST /api/buyer/orders - Crear orden desde el carrito
+// ✅ CON TIMEOUT DE 5 SEGUNDOS
 export async function POST(request: Request) {
   try {
     logger.debug(LogCategory.API, 'POST /api/buyer/orders - Creating order from cart')
@@ -26,25 +28,30 @@ export async function POST(request: Request) {
     // return previously created order with the same key.
     const idempotencyKey: string | undefined = body.idempotencyKey
 
+    // ✅ Verificar idempotencia CON TIMEOUT
     if (idempotencyKey) {
-      const existing = await prisma.order.findFirst({ where: { idempotencyKey } })
+      const existing = await withPrismaTimeout(
+        () => prisma.order.findFirst({ where: { idempotencyKey } })
+      )
       if (existing) {
         logger.info(LogCategory.API, 'Order already processed (idempotent)', { orderId: existing.id, idempotencyKey })
         return NextResponse.json({ success: true, order: existing, message: 'Order already processed (idempotent)' })
       }
     }
 
-    // Obtener carrito con items
-    const cart = await prisma.cart.findFirst({
-      where: { userId },
-      include: {
-        items: {
-          include: {
-            product: true,
+    // ✅ Obtener carrito con items CON TIMEOUT
+    const cart = await withPrismaTimeout(
+      () => prisma.cart.findFirst({
+        where: { userId },
+        include: {
+          items: {
+            include: {
+              product: true,
+            },
           },
         },
-      },
-    })
+      })
+    )
 
     if (!cart || cart.items.length === 0) {
       logger.warn(LogCategory.API, 'Empty cart', { userId })
@@ -89,10 +96,12 @@ export async function POST(request: Request) {
       itemCount: cart.items.length
     })
 
-    // Primero buscar o crear el authenticated_users
-    let authUser = await prisma.authenticated_users.findFirst({
-      where: { authId: userId }
-    })
+    // ✅ Buscar o crear authenticated_users CON TIMEOUT
+    let authUser = await withPrismaTimeout(
+      () => prisma.authenticated_users.findFirst({
+        where: { authId: userId }
+      })
+    )
 
     if (!authUser) {
       logger.info(LogCategory.AUTH, 'Creating authenticated_users record', { userId })
@@ -107,46 +116,54 @@ export async function POST(request: Request) {
         )
       }
       
-      authUser = await prisma.authenticated_users.create({
-        data: {
-          id: crypto.randomUUID(),
-          authId: userId,
-          email: user.emailAddresses[0]?.emailAddress || '',
-          name: user.firstName || user.username || 'Usuario',
-          role: 'CLIENT',
-          updatedAt: new Date()
-        }
-      })
+      // ✅ Crear authUser CON TIMEOUT
+      authUser = await withPrismaTimeout(
+        () => prisma.authenticated_users.create({
+          data: {
+            id: crypto.randomUUID(),
+            authId: userId,
+            email: user.emailAddresses[0]?.emailAddress || '',
+            name: user.firstName || user.username || 'Usuario',
+            role: 'CLIENT',
+            updatedAt: new Date()
+          }
+        })
+      )
       logger.info(LogCategory.AUTH, 'Authenticated user created', { authUserId: authUser.id, userId })
     }
 
-    // Ahora buscar o crear el cliente
-    let client = await prisma.client.findFirst({
-      where: {
-        authenticated_users: {
-          some: {
-            authId: userId
-          }
-        }
-      }
-    })
-
-    if (!client) {
-      logger.info(LogCategory.API, 'Creating client automatically', { userId })
-      client = await prisma.client.create({
-        data: {
-          name: authUser.name || 'Cliente Nuevo',
-          businessName: authUser.name || 'Mi Negocio',
-          address: 'Dirección por definir',
-          phone: 'Teléfono por definir',
-          email: authUser.email,
-          orderConfirmationEnabled: true,
-          notificationsEnabled: true,
+    // ✅ Buscar o crear cliente CON TIMEOUT
+    let client = await withPrismaTimeout(
+      () => prisma.client.findFirst({
+        where: {
           authenticated_users: {
-            connect: { id: authUser.id }
+            some: {
+              authId: userId
+            }
           }
         }
       })
+    )
+
+    if (!client) {
+      logger.info(LogCategory.API, 'Creating client automatically', { userId })
+      // ✅ Crear cliente CON TIMEOUT
+      client = await withPrismaTimeout(
+        () => prisma.client.create({
+          data: {
+            name: authUser!.name || 'Cliente Nuevo',
+            businessName: authUser!.name || 'Mi Negocio',
+            address: 'Dirección por definir',
+            phone: 'Teléfono por definir',
+            email: authUser!.email,
+            orderConfirmationEnabled: true,
+            notificationsEnabled: true,
+            authenticated_users: {
+              connect: { id: authUser!.id }
+            }
+          }
+        })
+      )
       logger.info(LogCategory.API, 'Client created', { clientId: client.id })
     }
 
@@ -155,9 +172,12 @@ export async function POST(request: Request) {
 
     if (!sellerId) {
       logger.warn(LogCategory.API, 'Client without seller, finding available seller', { clientId: client.id })
-      const availableSeller = await prisma.seller.findFirst({
-        where: { isActive: true }
-      })
+      // ✅ Buscar seller disponible CON TIMEOUT
+      const availableSeller = await withPrismaTimeout(
+        () => prisma.seller.findFirst({
+          where: { isActive: true }
+        })
+      )
       
       if (!availableSeller) {
         logger.error(LogCategory.API, 'No available sellers', new Error('No sellers available'))
@@ -169,11 +189,13 @@ export async function POST(request: Request) {
       
       sellerId = availableSeller.id
       
-      // Actualizar el cliente con el seller
-      await prisma.client.update({
-        where: { id: client.id },
-        data: { sellerId: sellerId }
-      })
+      // ✅ Actualizar cliente con seller CON TIMEOUT
+      await withPrismaTimeout(
+        () => prisma.client.update({
+          where: { id: client!.id },
+          data: { sellerId: sellerId }
+        })
+      )
       
       logger.info(LogCategory.API, 'Seller assigned to client', { sellerId, clientId: client.id })
     }
@@ -216,59 +238,62 @@ export async function POST(request: Request) {
     const confirmationDeadline = new Date()
     confirmationDeadline.setHours(confirmationDeadline.getHours() + 24)
 
-    // Ahora crear la orden con el sellerId válido
-    const order = await prisma.$transaction(async (tx) => {
-      const newOrder = await tx.order.create({
-        data: {
-          orderNumber: `ORD-${Date.now()}`,
-          clientId: client.id,
-          sellerId: sellerId,  // Ahora garantizado que existe
-          status: 'PENDING',
-          totalAmount: totalAmount,
-          notes: notes,
-          idempotencyKey: idempotencyKey || null,
-          confirmationDeadline: client.orderConfirmationEnabled ? confirmationDeadline : null,
-        }
-      })
-
-      // Crear los items de la orden
-      for (const item of cart.items) {
-        await tx.orderItem.create({
+    // ✅ Crear orden con transacción CON TIMEOUT
+    const order = await withPrismaTimeout(
+      () => prisma.$transaction(async (tx) => {
+        const newOrder = await tx.order.create({
           data: {
-            orderId: newOrder.id,
-            productId: item.productId,
-            productName: item.product.name,
-            quantity: item.quantity,
-            pricePerUnit: item.price,
-            subtotal: item.price * item.quantity,
-          },
+            orderNumber: `ORD-${Date.now()}`,
+            clientId: client!.id,
+            sellerId: sellerId!,  // Ahora garantizado que existe
+            status: 'PENDING',
+            totalAmount: totalAmount,
+            notes: notes,
+            idempotencyKey: idempotencyKey || null,
+            confirmationDeadline: client!.orderConfirmationEnabled ? confirmationDeadline : null,
+          }
         })
 
-        // Actualizar stock
-        await tx.product.update({
-          where: { id: item.productId },
-          data: {
-            stock: {
-              decrement: item.quantity,
+        // Crear los items de la orden
+        for (const item of cart!.items) {
+          await tx.orderItem.create({
+            data: {
+              orderId: newOrder.id,
+              productId: item.productId,
+              productName: item.product.name,
+              quantity: item.quantity,
+              pricePerUnit: item.price,
+              subtotal: item.price * item.quantity,
             },
-          },
+          })
+
+          // Actualizar stock
+          await tx.product.update({
+            where: { id: item.productId },
+            data: {
+              stock: {
+                decrement: item.quantity,
+              },
+            },
+          })
+        }
+
+        // Vaciar carrito
+        await tx.cartItem.deleteMany({
+          where: { cartId: cart!.id },  // CORRECTO
         })
-      }
 
-      // Vaciar carrito
-      await tx.cartItem.deleteMany({
-        where: { cartId: cart.id },  // CORRECTO
-      })
-
-      // Retornar orden completa
-      return await tx.order.findUnique({
-        where: { id: newOrder.id },
-        include: {
-          orderItems: true,  // Cambiado de items a orderItems
-          client: true
+        // Retornar orden completa
+        return await tx.order.findUnique({
+          where: { id: newOrder.id },
+          include: {
+            orderItems: true,  // Cambiado de items a orderItems
+            client: true
         },
       })
-    })
+    }),
+    8000 // ✅ 8 segundos para transacción compleja
+    )
 
     // Emitir evento ORDER_CREATED
     await eventEmitter.emit({
@@ -289,7 +314,17 @@ export async function POST(request: Request) {
       message: 'Orden creada exitosamente',
     })
   } catch (error) {
-    console.error('Error creando orden:', error)
+    logger.error(LogCategory.API, 'Error creating order', error instanceof Error ? error : new Error(String(error)))
+    
+    // ✅ MANEJO ESPECÍFICO DE TIMEOUT
+    if (error instanceof TimeoutError) {
+      const timeoutResponse = handleTimeoutError(error)
+      return NextResponse.json(
+        { success: false, ...timeoutResponse },
+        { status: timeoutResponse.status }
+      )
+    }
+
     return NextResponse.json(
       { error: 'Error creando orden: ' + (error as Error).message },
       { status: 500 }
@@ -300,6 +335,7 @@ export async function POST(request: Request) {
 }
 
 // GET /api/buyer/orders - Obtener órdenes del usuario
+// ✅ CON TIMEOUT DE 5 SEGUNDOS
 export async function GET() {
   try {
     const { userId } = await auth()
@@ -308,61 +344,78 @@ export async function GET() {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // Primero buscar o crear el authenticated_users (para consistencia, aunque en GET solo se necesita lectura)
-    let authUser = await prisma.authenticated_users.findFirst({
-      where: { authId: userId }
-    })
+    // ✅ Buscar authUser CON TIMEOUT
+    let authUser = await withPrismaTimeout(
+      () => prisma.authenticated_users.findFirst({
+        where: { authId: userId }
+      })
+    )
 
     if (!authUser) {
       // En GET, si no existe authUser, no creamos automáticamente (solo lectura). Retornar error o manejar según lógica de negocio.
       return NextResponse.json(
-        { error: 'Usuario no encontrado' },
-        { status: 404 }
+        { success: true, orders: [] },
+        { status: 200 }
       )
     }
 
-    // Buscar cliente por authId a través de la relación (para obtener client.id)
-    const client = await prisma.client.findFirst({
-      where: {
-        authenticated_users: {
-          some: {
-            authId: userId
+    // ✅ Buscar cliente CON TIMEOUT
+    const client = await withPrismaTimeout(
+      () => prisma.client.findFirst({
+        where: {
+          authenticated_users: {
+            some: {
+              authId: userId
+            }
           }
         }
-      }
-    })
+      })
+    )
 
     if (!client) {
       return NextResponse.json(
-        { error: 'Cliente no encontrado' },
-        { status: 404 }
+        { success: true, orders: [] },
+        { status: 200 }
       )
     }
 
-    const orders = await prisma.order.findMany({
-      where: { 
-        // clerkUserId: userId,  // ELIMINADO
-        clientId: client.id  // Usado clientId
-      },
-      include: {
-        orderItems: {  // Cambiado de items a orderItems
-          include: {
-            product: true,
-          },
+    // ✅ Obtener órdenes CON TIMEOUT
+    const orders = await withPrismaTimeout(
+      () => prisma.order.findMany({
+        where: { 
+          // clerkUserId: userId,  // ELIMINADO
+          clientId: client.id  // Usado clientId
         },
-        client: true,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    })
+        include: {
+          orderItems: {  // Cambiado de items a orderItems
+            include: {
+              product: true,
+            },
+          },
+          client: true,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      })
+    )
 
     return NextResponse.json({
       success: true,
       orders,
     })
   } catch (error) {
-    console.error('Error obteniendo órdenes:', error)
+    logger.error(LogCategory.API, 'Error fetching orders', error instanceof Error ? error : new Error(String(error)))
+    
+    // ✅ MANEJO ESPECÍFICO DE TIMEOUT
+    if (error instanceof TimeoutError) {
+      const timeoutResponse = handleTimeoutError(error)
+      return NextResponse.json(
+        { success: false, ...timeoutResponse },
+        { status: timeoutResponse.status }
+      )
+    }
+
     return NextResponse.json(
       { error: 'Error obteniendo órdenes: ' + (error as Error).message },
       { status: 500 }

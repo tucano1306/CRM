@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { v4 as uuidv4 } from 'uuid'
+import { apiCall, getErrorMessage } from '@/lib/api-client'
 import {
   ShoppingCart,
   Plus,
@@ -10,6 +12,9 @@ import {
   Package,
   ArrowRight,
   DollarSign,
+  Loader2,
+  Clock,
+  AlertCircle,
 } from 'lucide-react'
 
 type CartItem = {
@@ -33,12 +38,12 @@ type Cart = {
   items: CartItem[]
 }
 
-import { v4 as uuidv4 } from 'uuid'
-
 export default function CartPage() {
   const router = useRouter()
   const [cart, setCart] = useState<Cart | null>(null)
   const [loading, setLoading] = useState(true)
+  const [timedOut, setTimedOut] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [updating, setUpdating] = useState<string | null>(null)
   const [creatingOrder, setCreatingOrder] = useState(false)
 
@@ -48,82 +53,102 @@ export default function CartPage() {
     fetchCart()
   }, [])
 
+  // ✅ fetchCart CON TIMEOUT
   const fetchCart = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/buyer/cart')
-      const data = await response.json()
+      setTimedOut(false)
+      setError(null)
 
-      if (response.ok && data.success) {
-        setCart(data.cart)
-      }
-    } catch (error) {
-      console.error('Error cargando carrito:', error)
-    } finally {
+      const result = await apiCall('/api/buyer/cart', {
+        timeout: 5000,
+        onTimeout: () => setTimedOut(true)
+      })
+
       setLoading(false)
+
+      if (result.success) {
+        setCart(result.data.cart)
+      } else {
+        setError(result.error || 'Error cargando carrito')
+      }
+    } catch (err) {
+      setLoading(false)
+      setError(getErrorMessage(err))
     }
   }
 
+  // ✅ updateQuantity CON TIMEOUT
   const updateQuantity = async (itemId: string, newQuantity: number) => {
     if (newQuantity < 1) return
 
     try {
       setUpdating(itemId)
-      const response = await fetch(`/api/buyer/cart/items/${itemId}`, {
+
+      const result = await apiCall(`/api/buyer/cart/items/${itemId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quantity: newQuantity }),
+        timeout: 5000,
       })
 
-      if (response.ok) {
+      if (result.success) {
         await fetchCart()
       } else {
-        const data = await response.json()
-        alert(data.error || 'Error actualizando cantidad')
+        alert(result.error || 'Error actualizando cantidad')
       }
-    } catch (error) {
-      console.error('Error actualizando cantidad:', error)
-      alert('Error actualizando cantidad')
+    } catch (err) {
+      alert(getErrorMessage(err))
     } finally {
       setUpdating(null)
     }
   }
 
+  // ✅ removeItem CON TIMEOUT
   const removeItem = async (itemId: string) => {
     if (!confirm('¿Eliminar este producto del carrito?')) return
 
     try {
       setUpdating(itemId)
-      const response = await fetch(`/api/buyer/cart/items/${itemId}`, {
+
+      const result = await apiCall(`/api/buyer/cart/items/${itemId}`, {
         method: 'DELETE',
+        timeout: 5000,
       })
 
-      if (response.ok) {
+      if (result.success) {
         await fetchCart()
+      } else {
+        alert(result.error || 'Error eliminando item')
       }
-    } catch (error) {
-      console.error('Error eliminando item:', error)
+    } catch (err) {
+      alert(getErrorMessage(err))
     } finally {
       setUpdating(null)
     }
   }
 
+  // ✅ clearCart CON TIMEOUT
   const clearCart = async () => {
     if (!confirm('¿Vaciar todo el carrito?')) return
 
     try {
-      const response = await fetch('/api/buyer/cart', {
+      const result = await apiCall('/api/buyer/cart', {
         method: 'DELETE',
+        timeout: 5000,
       })
 
-      if (response.ok) {
+      if (result.success) {
         await fetchCart()
+      } else {
+        alert(result.error || 'Error vaciando carrito')
       }
-    } catch (error) {
-      console.error('Error vaciando carrito:', error)
+    } catch (err) {
+      alert(getErrorMessage(err))
     }
   }
 
+  // ✅ createOrder CON TIMEOUT y RETRY
   const createOrder = async () => {
     if (!cart || cart.items.length === 0) {
       alert('El carrito está vacío')
@@ -136,26 +161,30 @@ export default function CartPage() {
 
     try {
       setCreatingOrder(true)
-      const response = await fetch('/api/buyer/orders', {
+      
+      const result = await apiCall('/api/buyer/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           notes: null,
-          idempotencyKey: uuidv4()  // agregando idempotencyKey
+          idempotencyKey: uuidv4()
         }),
+        timeout: 8000, // ✅ 8 segundos para crear orden (operación compleja)
+        retries: 2, // ✅ 2 reintentos
+        retryDelay: 1500,
+        onRetry: (attempt) => {
+          console.log(`Reintentando crear orden... (${attempt} reintentos restantes)`)
+        }
       })
 
-      const data = await response.json()
-
-      if (response.ok && data.success) {
+      if (result.success) {
         alert('✅ ¡Pedido creado exitosamente!')
         router.push('/buyer/orders')
       } else {
-        alert(data.error || 'Error creando el pedido')
+        alert(result.error || 'Error creando el pedido')
       }
-    } catch (error) {
-      console.error('Error creando orden:', error)
-      alert('Error creando el pedido')
+    } catch (err) {
+      alert(getErrorMessage(err))
     } finally {
       setCreatingOrder(false)
     }
@@ -170,12 +199,60 @@ export default function CartPage() {
   const tax = subtotal * TAX_RATE
   const total = subtotal + tax
 
+  // ✅ ESTADO DE LOADING
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+          <Loader2 className="animate-spin h-12 w-12 text-purple-600 mx-auto mb-4" />
           <p className="text-gray-600">Cargando carrito...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ✅ ESTADO DE TIMEOUT
+  if (timedOut) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6 flex items-center justify-center">
+        <div className="max-w-md bg-white rounded-2xl shadow-lg p-8 border border-yellow-200">
+          <div className="flex items-center gap-3 mb-4">
+            <Clock className="h-8 w-8 text-yellow-600" />
+            <h2 className="text-xl font-bold text-yellow-900">
+              Tiempo de espera excedido
+            </h2>
+          </div>
+          <p className="text-gray-700 mb-6">
+            La carga del carrito está tardando más de lo esperado. 
+            Esto puede ser temporal.
+          </p>
+          <button
+            onClick={fetchCart}
+            className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ✅ ESTADO DE ERROR
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6 flex items-center justify-center">
+        <div className="max-w-md bg-white rounded-2xl shadow-lg p-8 border border-red-200">
+          <div className="flex items-center gap-3 mb-4">
+            <AlertCircle className="h-8 w-8 text-red-600" />
+            <h2 className="text-xl font-bold text-red-900">Error</h2>
+          </div>
+          <p className="text-gray-700 mb-6">{error}</p>
+          <button
+            onClick={fetchCart}
+            className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
+          >
+            Reintentar
+          </button>
         </div>
       </div>
     )
@@ -194,14 +271,15 @@ export default function CartPage() {
               </h1>
               <p className="text-gray-600 mt-1">
                 {cart?.items.length || 0}{' '}
-                {cart?.items.length === 1 ? 'producto' : 'productos'} en tu carrito
+                {cart?.items.length === 1 ? 'producto' : 'productos'}
               </p>
             </div>
             {cart && cart.items.length > 0 && (
               <button
                 onClick={clearCart}
-                className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="text-red-600 hover:text-red-700 font-medium flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors"
               >
+                <Trash2 size={18} />
                 Vaciar carrito
               </button>
             )}
@@ -209,169 +287,156 @@ export default function CartPage() {
         </div>
 
         {/* Carrito vacío */}
-        {!cart || cart.items.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
-            <ShoppingCart className="mx-auto text-gray-400 mb-4" size={64} />
-            <h3 className="text-xl font-semibold text-gray-700 mb-2">
+        {(!cart || cart.items.length === 0) && (
+          <div className="bg-white rounded-2xl shadow-lg p-12 text-center border border-purple-100">
+            <Package className="mx-auto text-gray-400 mb-4" size={64} />
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
               Tu carrito está vacío
-            </h3>
-            <p className="text-gray-500 mb-6">
-              Agrega productos desde el catálogo para comenzar tu pedido
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Agrega productos desde el catálogo para comenzar
             </p>
             <button
               onClick={() => router.push('/buyer/catalog')}
-              className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all"
+              className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold inline-flex items-center gap-2"
             >
-              Ir al catálogo
+              Ver catálogo
+              <ArrowRight size={20} />
             </button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Lista de productos */}
+        )}
+
+        {/* Items del carrito */}
+        {cart && cart.items.length > 0 && (
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* Lista de items */}
             <div className="lg:col-span-2 space-y-4">
               {cart.items.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100"
+                  className="bg-white rounded-xl shadow-md p-6 border border-purple-100 hover:shadow-lg transition-shadow"
                 >
-                  <div className="flex gap-4">
-                    {/* Imagen */}
-                    <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      {item.product.imageUrl ? (
-                        <img
-                          src={item.product.imageUrl}
-                          alt={item.product.name}
-                          className="w-full h-full object-cover rounded-lg"
-                        />
-                      ) : (
-                        <Package className="text-purple-300" size={40} />
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-gray-800">
+                        {item.product.name}
+                      </h3>
+                      {item.product.description && (
+                        <p className="text-sm text-gray-600 mt-1">
+                          {item.product.description}
+                        </p>
                       )}
+                      <div className="flex items-center gap-4 mt-3">
+                        <span className="text-purple-600 font-bold text-lg">
+                          ${item.price.toFixed(2)}
+                        </span>
+                        <span className="text-gray-500 text-sm">
+                          / {item.product.unit}
+                        </span>
+                        {item.product.stock < 10 && (
+                          <span className="text-orange-600 text-sm font-medium">
+                            Solo {item.product.stock} disponibles
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Info */}
-                    <div className="flex-1">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="font-bold text-lg text-gray-800">
-                            {item.product.name}
-                          </h3>
-                          {item.product.sku && (
-                            <p className="text-xs text-gray-500">
-                              SKU: {item.product.sku}
-                            </p>
-                          )}
-                          <p className="text-sm text-gray-600 mt-1">
-                            ${item.price.toFixed(2)} / {item.product.unit}
-                          </p>
+                    <div className="flex items-center gap-4">
+                      {/* Controles de cantidad */}
+                      <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                        <button
+                          onClick={() =>
+                            updateQuantity(item.id, item.quantity - 1)
+                          }
+                          disabled={updating === item.id || item.quantity <= 1}
+                          className="bg-white rounded p-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <Minus size={16} />
+                        </button>
+                        <span className="w-12 text-center font-bold">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() =>
+                            updateQuantity(item.id, item.quantity + 1)
+                          }
+                          disabled={
+                            updating === item.id ||
+                            item.quantity >= item.product.stock
+                          }
+                          className="bg-white rounded p-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
+
+                      {/* Subtotal y eliminar */}
+                      <div className="text-right min-w-[100px]">
+                        <div className="text-lg font-bold text-gray-800">
+                          ${(item.price * item.quantity).toFixed(2)}
                         </div>
                         <button
                           onClick={() => removeItem(item.id)}
                           disabled={updating === item.id}
-                          className="text-red-600 hover:bg-red-50 p-2 rounded-lg transition-colors"
+                          className="text-red-600 hover:text-red-700 text-sm mt-1 disabled:opacity-50"
                         >
-                          <Trash2 size={18} />
+                          Eliminar
                         </button>
                       </div>
-
-                      {/* Controles de cantidad */}
-                      <div className="flex items-center justify-between mt-4">
-                        <div className="flex items-center gap-3 bg-gray-100 rounded-lg p-2">
-                          <button
-                            onClick={() =>
-                              updateQuantity(item.id, item.quantity - 1)
-                            }
-                            disabled={item.quantity <= 1 || updating === item.id}
-                            className="p-1 hover:bg-white rounded transition-colors disabled:opacity-50"
-                          >
-                            <Minus size={16} />
-                          </button>
-                          <span className="font-semibold min-w-[2rem] text-center">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() =>
-                              updateQuantity(item.id, item.quantity + 1)
-                            }
-                            disabled={
-                              item.quantity >= item.product.stock ||
-                              updating === item.id
-                            }
-                            className="p-1 hover:bg-white rounded transition-colors disabled:opacity-50"
-                          >
-                            <Plus size={16} />
-                          </button>
-                        </div>
-
-                        <div className="text-right">
-                          <p className="text-sm text-gray-600">Subtotal</p>
-                          <p className="text-xl font-bold text-purple-600">
-                            ${(item.price * item.quantity).toFixed(2)}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Stock disponible */}
-                      <p className="text-xs text-gray-500 mt-2">
-                        Stock disponible: {item.product.stock}
-                      </p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Resumen */}
+            {/* Resumen del pedido */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100 sticky top-6">
-                <h2 className="text-xl font-bold text-gray-800 mb-4">
-                  Resumen del Pedido
+              <div className="bg-white rounded-xl shadow-lg p-6 border border-purple-100 sticky top-6">
+                <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                  <DollarSign size={24} className="text-purple-600" />
+                  Resumen del pedido
                 </h2>
 
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-gray-600">
-                    <span>Subtotal</span>
-                    <span className="font-semibold">${subtotal.toFixed(2)}</span>
+                    <span>Subtotal:</span>
+                    <span className="font-semibold">
+                      ${subtotal.toFixed(2)}
+                    </span>
                   </div>
                   <div className="flex justify-between text-gray-600">
-                    <span>Impuestos (10%)</span>
+                    <span>Impuestos ({(TAX_RATE * 100).toFixed(0)}%):</span>
                     <span className="font-semibold">${tax.toFixed(2)}</span>
                   </div>
-                  <div className="border-t border-gray-200 pt-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-lg font-bold text-gray-800">
-                        Total
-                      </span>
-                      <span className="text-2xl font-bold text-purple-600">
-                        ${total.toFixed(2)}
-                      </span>
-                    </div>
+                  <div className="border-t pt-3 flex justify-between text-lg font-bold text-gray-800">
+                    <span>Total:</span>
+                    <span className="text-purple-600">
+                      ${total.toFixed(2)}
+                    </span>
                   </div>
                 </div>
 
                 <button
                   onClick={createOrder}
-                  disabled={creatingOrder || !cart || cart.items.length === 0}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-4 rounded-lg font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={creatingOrder}
+                  className="w-full bg-purple-600 text-white py-4 rounded-lg hover:bg-purple-700 transition-colors font-bold text-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {creatingOrder ? (
                     <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <Loader2 className="animate-spin" size={20} />
                       Procesando...
                     </>
                   ) : (
                     <>
-                      Finalizar Pedido
+                      Confirmar pedido
                       <ArrowRight size={20} />
                     </>
                   )}
                 </button>
 
-                <button
-                  onClick={() => router.push('/buyer/catalog')}
-                  className="w-full mt-3 border-2 border-purple-600 text-purple-600 py-3 rounded-lg font-semibold hover:bg-purple-50 transition-colors"
-                >
-                  Continuar comprando
-                </button>
+                <p className="text-xs text-gray-500 text-center mt-4">
+                  Al confirmar, aceptas los términos y condiciones
+                </p>
               </div>
             </div>
           </div>

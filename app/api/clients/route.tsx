@@ -9,6 +9,7 @@ import {
   paginationSchema 
 } from '@/lib/validations'
 import logger, { LogCategory, createRequestLogger } from '@/lib/logger'
+import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
 
 export async function GET(request: NextRequest) {
   const requestLogger = createRequestLogger({
@@ -52,19 +53,25 @@ export async function GET(request: NextRequest) {
     } : {}
 
     const [clients, total] = await Promise.all([
-      prisma.client.findMany({
-        where,
-        skip,
-        take: limit,
-        include: {
-          seller: true,
-          _count: {
-            select: { orders: true }
-          }
-        },
-        orderBy: { createdAt: 'desc' }
-      }),
-      prisma.client.count({ where })
+      withPrismaTimeout(
+        () => prisma.client.findMany({
+          where,
+          skip,
+          take: limit,
+          include: {
+            seller: true,
+            _count: {
+              select: { orders: true }
+            }
+          },
+          orderBy: { createdAt: 'desc' }
+        }),
+        5000
+      ),
+      withPrismaTimeout(
+        () => prisma.client.count({ where }),
+        5000
+      )
     ])
 
     requestLogger.end('/api/clients', 'GET', 200)
@@ -86,6 +93,16 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
+    // Manejo de timeout
+    if (error instanceof TimeoutError) {
+      const { error: errorMsg, code, status } = handleTimeoutError(error)
+      logger.error(LogCategory.API, 'Timeout fetching clients', error, {
+        endpoint: '/api/clients',
+        method: 'GET'
+      })
+      return NextResponse.json({ error: errorMsg, code }, { status })
+    }
+
     requestLogger.error('/api/clients', 'GET', error)
     logger.error(LogCategory.API, 'Failed to fetch clients', error, {
       endpoint: '/api/clients',
@@ -129,9 +146,12 @@ export async function POST(request: NextRequest) {
     const validatedData = validation.data
 
     // Verificar email duplicado
-    const existingClient = await prisma.client.findFirst({
-      where: { email: validatedData.email }
-    })
+    const existingClient = await withPrismaTimeout(
+      () => prisma.client.findFirst({
+        where: { email: validatedData.email }
+      }),
+      5000
+    )
 
     if (existingClient) {
       return NextResponse.json(
@@ -143,22 +163,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const newClient = await prisma.client.create({
-      data: {
-        name: validatedData.name,
-        businessName: validatedData.businessName,
-        address: validatedData.address,
-        phone: validatedData.phone,
-        email: validatedData.email,
-        orderConfirmationEnabled: validatedData.orderConfirmationEnabled,
-        orderConfirmationMethod: validatedData.orderConfirmationMethod,
-        notificationsEnabled: validatedData.notificationsEnabled,
-        ...(validatedData.sellerId && { sellerId: validatedData.sellerId })
-      },
-      include: {
-        seller: true
-      }
-    })
+    const newClient = await withPrismaTimeout(
+      () => prisma.client.create({
+        data: {
+          name: validatedData.name,
+          businessName: validatedData.businessName,
+          address: validatedData.address,
+          phone: validatedData.phone,
+          email: validatedData.email,
+          orderConfirmationEnabled: validatedData.orderConfirmationEnabled,
+          orderConfirmationMethod: validatedData.orderConfirmationMethod,
+          notificationsEnabled: validatedData.notificationsEnabled,
+          ...(validatedData.sellerId && { sellerId: validatedData.sellerId })
+        },
+        include: {
+          seller: true
+        }
+      }),
+      5000
+    )
 
     // Emitir evento CLIENT_CREATED
     await eventEmitter.emit({
@@ -184,6 +207,16 @@ export async function POST(request: NextRequest) {
       data: newClient
     }, { status: 201 })
   } catch (error) {
+    // Manejo de timeout
+    if (error instanceof TimeoutError) {
+      const { error: errorMsg, code, status } = handleTimeoutError(error)
+      logger.error(LogCategory.API, 'Timeout creating client', error, {
+        endpoint: '/api/clients',
+        method: 'POST'
+      })
+      return NextResponse.json({ error: errorMsg, code }, { status })
+    }
+
     requestLogger.error('/api/clients', 'POST', error)
     logger.error(LogCategory.API, 'Failed to create client', error, {
       endpoint: '/api/clients',

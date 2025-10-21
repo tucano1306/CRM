@@ -191,11 +191,11 @@ export const generalRateLimiter = new RateLimiter({
   blockDurationMs: 5 * 60 * 1000, // 5 minutos de bloqueo
 })
 
-// Auth endpoints: 10 requests por 15 minutos (más restrictivo)
+// Auth endpoints: 50 requests por 15 minutos (más permisivo en desarrollo)
 export const authRateLimiter = new RateLimiter({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  maxRequests: 10,
-  blockDurationMs: 60 * 60 * 1000, // 1 hora de bloqueo
+  maxRequests: 50, // Aumentado de 10 a 50
+  blockDurationMs: 15 * 60 * 1000, // 15 minutos de bloqueo (reducido de 1 hora)
 })
 
 // API pública (sin auth): 20 requests por minuto

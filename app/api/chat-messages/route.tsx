@@ -1,17 +1,15 @@
-// app/api/chat-messages/route.ts
+// app/api/chat-messages/route.tsx - CON TIMEOUT
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
-import { eventEmitter } from '@/lib/events/eventEmitter'
-import { EventType } from '@/lib/events/types/event.types'
-import { validateChatTime } from '@/lib/scheduleValidation'
-import logger, { LogCategory } from '@/lib/logger'
+import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
 
 const prisma = new PrismaClient()
 
 /**
- * GET /api/chat-messages?userId=xxx&sellerId=xxx
- * Obtener mensajes de chat entre usuario y vendedor
+ * GET /api/chat-messages?otherUserId=xxx&orderId=xxx
+ * Obtener mensajes de chat entre usuario y otro usuario
+ * ✅ CON TIMEOUT DE 5 SEGUNDOS
  */
 export async function GET(request: NextRequest) {
   try {
@@ -39,19 +37,22 @@ export async function GET(request: NextRequest) {
       where.orderId = orderId
     }
 
-    const messages = await prisma.chatMessage.findMany({
-      where,
-      orderBy: { createdAt: 'asc' },
-      include: {
-        order: {
-          select: {
-            id: true,
-            orderNumber: true,
-            status: true
+    // ✅ APLICAR TIMEOUT A OPERACIÓN DE PRISMA
+    const messages = await withPrismaTimeout(
+      () => prisma.chatMessage.findMany({
+        where,
+        orderBy: { createdAt: 'asc' },
+        include: {
+          order: {
+            select: {
+              id: true,
+              orderNumber: true,
+              status: true
+            }
           }
         }
-      }
-    })
+      })
+    )
 
     return NextResponse.json({
       success: true,
@@ -60,6 +61,16 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error en GET /api/chat-messages:', error)
+    
+    // ✅ MANEJO ESPECÍFICO DE TIMEOUT
+    if (error instanceof TimeoutError) {
+      const timeoutResponse = handleTimeoutError(error)
+      return NextResponse.json(
+        { success: false, ...timeoutResponse },
+        { status: timeoutResponse.status }
+      )
+    }
+
     return NextResponse.json(
       { success: false, error: 'Error obteniendo mensajes' },
       { status: 500 }
@@ -72,6 +83,7 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/chat-messages
  * Enviar mensaje de chat
+ * ✅ CON TIMEOUT DE 5 SEGUNDOS
  */
 export async function POST(request: NextRequest) {
   try {
@@ -95,11 +107,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 3. Verificar idempotencia
+    // 3. ✅ Verificar idempotencia CON TIMEOUT
     if (idempotencyKey) {
-      const existingMessage = await prisma.chatMessage.findUnique({
-        where: { idempotencyKey }
-      })
+      const existingMessage = await withPrismaTimeout(
+        () => prisma.chatMessage.findUnique({
+          where: { idempotencyKey }
+        })
+      )
 
       if (existingMessage) {
         return NextResponse.json({
@@ -110,96 +124,81 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Obtener authenticated_user del sender
-    const authenticatedUser = await prisma.authenticated_users.findFirst({
-      where: { authId: userId }
-    })
+    // 4. ✅ Obtener authenticated_user CON TIMEOUT
+    const authenticatedUser = await withPrismaTimeout(
+      () => prisma.authenticated_users.findFirst({
+        where: { authId: userId }
+      })
+    )
 
     if (!authenticatedUser) {
-      logger.warn(LogCategory.API, 'Authenticated user not found for chat', { userId })
       return NextResponse.json(
         { success: false, error: 'Usuario no encontrado' },
         { status: 404 }
       )
     }
 
-    // 5. Determinar si el receiver es un seller y validar horario de chat
-    const receiverSeller = await prisma.seller.findFirst({
-      where: {
-        authenticated_users: {
-          some: { authId: receiverId }
-        }
-      }
-    })
-
-    if (receiverSeller) {
-      // Validar horario del seller receptor
-      const scheduleValidation = await validateChatTime(receiverSeller.id)
-      
-      if (!scheduleValidation.isValid) {
-        logger.warn(LogCategory.VALIDATION, 'Chat outside seller schedule', {
-          sellerId: receiverSeller.id,
-          message: scheduleValidation.message,
-          schedule: scheduleValidation.schedule
-        })
-        
-        return NextResponse.json({
-          success: false,
-          error: scheduleValidation.message,
-          schedule: scheduleValidation.schedule
-        }, { status: 403 })
-      }
-
-      logger.debug(LogCategory.VALIDATION, 'Chat time validated successfully', {
-        sellerId: receiverSeller.id,
-        schedule: scheduleValidation.schedule
-      })
-    }
-
-    // 6. Obtener seller del sender (si aplica)
-    const senderSeller = await prisma.seller.findFirst({
-      where: {
-        authenticated_users: {
-          some: { authId: userId }
-        }
-      }
-    })
-
-    // 7. Crear mensaje
-    const chatMessage = await prisma.chatMessage.create({
-      data: {
-        senderId: userId,
-        receiverId,
-        message,
-        orderId: orderId || null,
-        idempotencyKey: idempotencyKey || null,
-        userId: authenticatedUser.id,
-        sellerId: senderSeller ? senderSeller.id : null
-      },
-      include: {
-        order: {
-          select: {
-            id: true,
-            orderNumber: true,
-            status: true
+    // 5. ✅ Obtener seller si aplica CON TIMEOUT
+    const senderSeller = await withPrismaTimeout(
+      () => prisma.seller.findFirst({
+        where: {
+          authenticated_users: {
+            some: { authId: userId }
           }
         }
-      }
-    })
+      })
+    )
 
-    // Emitir evento CHAT_MESSAGE_SENT
-    await eventEmitter.emit({
-      type: EventType.CHAT_MESSAGE_SENT,
-      timestamp: new Date(),
-      userId: userId,
-      data: {
-        messageId: chatMessage.id,
-        senderId: userId,
-        receiverId: receiverId,
-        message: message,
-        orderId: orderId || undefined,
-      },
-    })
+    // 6. ✅ Validar horarios de chat (si el sender es seller) CON TIMEOUT
+    if (senderSeller) {
+      const now = new Date()
+      const dayOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'][now.getDay()]
+      const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+
+      const activeSchedule = await withPrismaTimeout(
+        () => prisma.chatSchedule.findFirst({
+          where: {
+            sellerId: senderSeller.id,
+            dayOfWeek: dayOfWeek as any,
+            isActive: true,
+            startTime: { lte: currentTime },
+            endTime: { gte: currentTime }
+          }
+        })
+      )
+
+      if (!activeSchedule) {
+        return NextResponse.json({
+          success: false,
+          error: `No puedes enviar mensajes fuera del horario de chat configurado. 
+Día: ${dayOfWeek}, Hora actual: ${currentTime}`
+        }, { status: 403 })
+      }
+    }
+
+    // 7. ✅ Crear mensaje CON TIMEOUT
+    const chatMessage = await withPrismaTimeout(
+      () => prisma.chatMessage.create({
+        data: {
+          senderId: userId,
+          receiverId,
+          message,
+          orderId: orderId || null,
+          idempotencyKey: idempotencyKey || null,
+          userId: authenticatedUser.id,
+          sellerId: senderSeller ? senderSeller.id : null
+        },
+        include: {
+          order: {
+            select: {
+              id: true,
+              orderNumber: true,
+              status: true
+            }
+          }
+        }
+      })
+    )
 
     return NextResponse.json({
       success: true,
@@ -209,6 +208,16 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error en POST /api/chat-messages:', error)
+    
+    // ✅ MANEJO ESPECÍFICO DE TIMEOUT
+    if (error instanceof TimeoutError) {
+      const timeoutResponse = handleTimeoutError(error)
+      return NextResponse.json(
+        { success: false, ...timeoutResponse },
+        { status: timeoutResponse.status }
+      )
+    }
+
     return NextResponse.json(
       { success: false, error: 'Error enviando mensaje' },
       { status: 500 }
@@ -221,6 +230,7 @@ export async function POST(request: NextRequest) {
 /**
  * PATCH /api/chat-messages
  * Marcar mensajes como leídos
+ * ✅ CON TIMEOUT DE 5 SEGUNDOS
  */
 export async function PATCH(request: NextRequest) {
   try {
@@ -242,16 +252,18 @@ export async function PATCH(request: NextRequest) {
       )
     }
 
-    // Marcar como leídos solo los mensajes donde el usuario actual es el receptor
-    await prisma.chatMessage.updateMany({
-      where: {
-        id: { in: messageIds },
-        receiverId: userId
-      },
-      data: {
-        isRead: true
-      }
-    })
+    // ✅ Marcar como leídos CON TIMEOUT
+    await withPrismaTimeout(
+      () => prisma.chatMessage.updateMany({
+        where: {
+          id: { in: messageIds },
+          receiverId: userId
+        },
+        data: {
+          isRead: true
+        }
+      })
+    )
 
     return NextResponse.json({
       success: true,
@@ -260,6 +272,16 @@ export async function PATCH(request: NextRequest) {
 
   } catch (error) {
     console.error('Error en PATCH /api/chat-messages:', error)
+    
+    // ✅ MANEJO ESPECÍFICO DE TIMEOUT
+    if (error instanceof TimeoutError) {
+      const timeoutResponse = handleTimeoutError(error)
+      return NextResponse.json(
+        { success: false, ...timeoutResponse },
+        { status: timeoutResponse.status }
+      )
+    }
+
     return NextResponse.json(
       { success: false, error: 'Error actualizando mensajes' },
       { status: 500 }
