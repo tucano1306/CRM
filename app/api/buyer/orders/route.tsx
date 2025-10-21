@@ -1,15 +1,22 @@
 import { NextResponse } from 'next/server'
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { PrismaClient } from '@prisma/client'
+import { eventEmitter } from '@/lib/events/eventEmitter'
+import { EventType } from '@/lib/events/types/event.types'
+import { validateOrderTime, getNextAvailableOrderTime } from '@/lib/scheduleValidation'
+import logger, { LogCategory } from '@/lib/logger'
 
 const prisma = new PrismaClient()
 
 // POST /api/buyer/orders - Crear orden desde el carrito
 export async function POST(request: Request) {
   try {
+    logger.debug(LogCategory.API, 'POST /api/buyer/orders - Creating order from cart')
+
     const { userId } = await auth()
 
     if (!userId) {
+      logger.warn(LogCategory.AUTH, 'Unauthorized access attempt to create order')
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
@@ -22,6 +29,7 @@ export async function POST(request: Request) {
     if (idempotencyKey) {
       const existing = await prisma.order.findFirst({ where: { idempotencyKey } })
       if (existing) {
+        logger.info(LogCategory.API, 'Order already processed (idempotent)', { orderId: existing.id, idempotencyKey })
         return NextResponse.json({ success: true, order: existing, message: 'Order already processed (idempotent)' })
       }
     }
@@ -39,6 +47,7 @@ export async function POST(request: Request) {
     })
 
     if (!cart || cart.items.length === 0) {
+      logger.warn(LogCategory.API, 'Empty cart', { userId })
       return NextResponse.json(
         { error: 'El carrito está vacío' },
         { status: 400 }
@@ -48,6 +57,12 @@ export async function POST(request: Request) {
     // Verificar stock de todos los productos
     for (const item of cart.items) {
       if (item.product.stock < item.quantity) {
+        logger.warn(LogCategory.API, 'Insufficient stock', {
+          productId: item.productId,
+          productName: item.product.name,
+          requested: item.quantity,
+          available: item.product.stock
+        })
         return NextResponse.json(
           { 
             error: `Stock insuficiente para ${item.product.name}. Disponible: ${item.product.stock}` 
@@ -66,21 +81,26 @@ export async function POST(request: Request) {
     const tax = subtotal * TAX_RATE
     const totalAmount = subtotal + tax
 
-    console.log('userId:', userId)
+    logger.debug(LogCategory.API, 'Cart totals calculated', {
+      userId,
+      subtotal,
+      tax,
+      totalAmount,
+      itemCount: cart.items.length
+    })
 
     // Primero buscar o crear el authenticated_users
     let authUser = await prisma.authenticated_users.findFirst({
       where: { authId: userId }
     })
 
-    console.log('AuthUser encontrado:', authUser ? 'SÍ' : 'NO')
-
     if (!authUser) {
-      console.log('Creando authenticated_users...')
+      logger.info(LogCategory.AUTH, 'Creating authenticated_users record', { userId })
       // Obtener datos del usuario de Clerk
       const user = await currentUser()
       
       if (!user) {
+        logger.warn(LogCategory.AUTH, 'User not authenticated')
         return NextResponse.json(
           { error: 'Usuario no autenticado' },
           { status: 401 }
@@ -97,7 +117,7 @@ export async function POST(request: Request) {
           updatedAt: new Date()
         }
       })
-      console.log('AuthUser creado:', authUser.id)
+      logger.info(LogCategory.AUTH, 'Authenticated user created', { authUserId: authUser.id, userId })
     }
 
     // Ahora buscar o crear el cliente
@@ -111,10 +131,8 @@ export async function POST(request: Request) {
       }
     })
 
-    console.log('Cliente encontrado:', client ? 'SÍ' : 'NO')
-
     if (!client) {
-      console.log('Creando cliente automáticamente...')
+      logger.info(LogCategory.API, 'Creating client automatically', { userId })
       client = await prisma.client.create({
         data: {
           name: authUser.name || 'Cliente Nuevo',
@@ -129,19 +147,20 @@ export async function POST(request: Request) {
           }
         }
       })
-      console.log('Cliente creado:', client.id)
+      logger.info(LogCategory.API, 'Client created', { clientId: client.id })
     }
 
     // Asegurar que el cliente tenga un seller válido
     let sellerId = client.sellerId
 
     if (!sellerId) {
-      console.log('Cliente sin seller, buscando uno disponible...')
+      logger.warn(LogCategory.API, 'Client without seller, finding available seller', { clientId: client.id })
       const availableSeller = await prisma.seller.findFirst({
         where: { isActive: true }
       })
       
       if (!availableSeller) {
+        logger.error(LogCategory.API, 'No available sellers', new Error('No sellers available'))
         return NextResponse.json(
           { error: 'No hay vendedores disponibles' },
           { status: 400 }
@@ -156,8 +175,46 @@ export async function POST(request: Request) {
         data: { sellerId: sellerId }
       })
       
-      console.log('Seller asignado:', sellerId)
+      logger.info(LogCategory.API, 'Seller assigned to client', { sellerId, clientId: client.id })
     }
+
+    // ========================================================================
+    // VALIDAR HORARIO DEL VENDEDOR
+    // ========================================================================
+    const scheduleValidation = await validateOrderTime(sellerId)
+    
+    if (!scheduleValidation.isValid) {
+      logger.warn(LogCategory.VALIDATION, 'Order outside seller schedule', {
+        sellerId,
+        message: scheduleValidation.message,
+        schedule: scheduleValidation.schedule
+      })
+
+      // Obtener próximo horario disponible
+      const nextAvailable = await getNextAvailableOrderTime(sellerId)
+      
+      const errorMessage = nextAvailable
+        ? `${scheduleValidation.message}. Próximo horario disponible: ${nextAvailable.dayOfWeek} a las ${nextAvailable.startTime}`
+        : scheduleValidation.message
+
+      return NextResponse.json(
+        { 
+          error: errorMessage,
+          schedule: scheduleValidation.schedule,
+          nextAvailable
+        },
+        { status: 400 }
+      )
+    }
+
+    logger.info(LogCategory.VALIDATION, 'Order time validated successfully', {
+      sellerId,
+      schedule: scheduleValidation.schedule
+    })
+
+    // Calcular confirmationDeadline (24 horas desde ahora)
+    const confirmationDeadline = new Date()
+    confirmationDeadline.setHours(confirmationDeadline.getHours() + 24)
 
     // Ahora crear la orden con el sellerId válido
     const order = await prisma.$transaction(async (tx) => {
@@ -170,6 +227,7 @@ export async function POST(request: Request) {
           totalAmount: totalAmount,
           notes: notes,
           idempotencyKey: idempotencyKey || null,
+          confirmationDeadline: client.orderConfirmationEnabled ? confirmationDeadline : null,
         }
       })
 
@@ -210,6 +268,19 @@ export async function POST(request: Request) {
           client: true
         },
       })
+    })
+
+    // Emitir evento ORDER_CREATED
+    await eventEmitter.emit({
+      type: EventType.ORDER_CREATED,
+      timestamp: new Date(),
+      userId: userId,
+      data: {
+        orderId: order!.id,
+        clientId: order!.clientId,
+        amount: order!.totalAmount,
+        status: order!.status,
+      },
     })
 
     return NextResponse.json({

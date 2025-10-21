@@ -2,6 +2,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
+import { eventEmitter } from '@/lib/events/eventEmitter'
+import { EventType } from '@/lib/events/types/event.types'
+import { validateChatTime } from '@/lib/scheduleValidation'
+import logger, { LogCategory } from '@/lib/logger'
 
 const prisma = new PrismaClient()
 
@@ -112,13 +116,47 @@ export async function POST(request: NextRequest) {
     })
 
     if (!authenticatedUser) {
+      logger.warn(LogCategory.API, 'Authenticated user not found for chat', { userId })
       return NextResponse.json(
         { success: false, error: 'Usuario no encontrado' },
         { status: 404 }
       )
     }
 
-    // 5. Verificar horario de chat si el sender es seller
+    // 5. Determinar si el receiver es un seller y validar horario de chat
+    const receiverSeller = await prisma.seller.findFirst({
+      where: {
+        authenticated_users: {
+          some: { authId: receiverId }
+        }
+      }
+    })
+
+    if (receiverSeller) {
+      // Validar horario del seller receptor
+      const scheduleValidation = await validateChatTime(receiverSeller.id)
+      
+      if (!scheduleValidation.isValid) {
+        logger.warn(LogCategory.VALIDATION, 'Chat outside seller schedule', {
+          sellerId: receiverSeller.id,
+          message: scheduleValidation.message,
+          schedule: scheduleValidation.schedule
+        })
+        
+        return NextResponse.json({
+          success: false,
+          error: scheduleValidation.message,
+          schedule: scheduleValidation.schedule
+        }, { status: 403 })
+      }
+
+      logger.debug(LogCategory.VALIDATION, 'Chat time validated successfully', {
+        sellerId: receiverSeller.id,
+        schedule: scheduleValidation.schedule
+      })
+    }
+
+    // 6. Obtener seller del sender (si aplica)
     const senderSeller = await prisma.seller.findFirst({
       where: {
         authenticated_users: {
@@ -127,31 +165,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    if (senderSeller) {
-      const now = new Date()
-      const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase()
-      const currentTime = now.toTimeString().slice(0, 5) // "HH:MM"
-
-      const chatSchedule = await prisma.chatSchedule.findFirst({
-        where: {
-          sellerId: senderSeller.id,
-          dayOfWeek: dayOfWeek as any,
-          isActive: true,
-          startTime: { lte: currentTime },
-          endTime: { gte: currentTime }
-        }
-      })
-
-      if (!chatSchedule) {
-        return NextResponse.json({
-          success: false,
-          error: 'Fuera del horario de chat',
-          details: `El chat está disponible según los horarios configurados. Día: ${dayOfWeek}, Hora actual: ${currentTime}`
-        }, { status: 403 })
-      }
-    }
-
-    // 6. Crear mensaje
+    // 7. Crear mensaje
     const chatMessage = await prisma.chatMessage.create({
       data: {
         senderId: userId,
@@ -171,6 +185,20 @@ export async function POST(request: NextRequest) {
           }
         }
       }
+    })
+
+    // Emitir evento CHAT_MESSAGE_SENT
+    await eventEmitter.emit({
+      type: EventType.CHAT_MESSAGE_SENT,
+      timestamp: new Date(),
+      userId: userId,
+      data: {
+        messageId: chatMessage.id,
+        senderId: userId,
+        receiverId: receiverId,
+        message: message,
+        orderId: orderId || undefined,
+      },
     })
 
     return NextResponse.json({
