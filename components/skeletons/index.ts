@@ -1,0 +1,5 @@
+export { ProductCardSkeleton } from './ProductCardSkeleton'
+export { OrderCardSkeleton } from './OrderCardSkeleton'
+export { ClientCardSkeleton } from './ClientCardSkeleton'
+export { TableSkeleton } from './TableSkeleton'
+export { DashboardStatsSkeleton } from './DashboardStatsSkeleton'

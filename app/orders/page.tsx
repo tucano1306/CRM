@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import {
   Package,
   Clock,
-  Loader,
+  Loader2,
   CheckCircle,
   XCircle,
   User,
@@ -12,12 +12,17 @@ import {
   Mail,
   Calendar,
   DollarSign,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
   Filter,
 } from 'lucide-react'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { apiCall } from '@/lib/api-client'
+import { OrderCardSkeleton } from '@/components/skeletons'
 
 type OrderStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELED'
 
@@ -26,7 +31,7 @@ type OrderItem = {
   quantity: number
   pricePerUnit: number
   subtotal: number
-  productName: string
+  itemNote?: string
   product: {
     id: string
     name: string
@@ -133,6 +138,8 @@ export default function OrdersManagementPage() {
     cancelled: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [timedOut, setTimedOut] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
   const [updatingOrder, setUpdatingOrder] = useState<string | null>(null)
@@ -144,19 +151,25 @@ export default function OrdersManagementPage() {
   const fetchOrders = async () => {
     try {
       setLoading(true)
+      setTimedOut(false)
+      setError(null)
+      
       const url = filterStatus === 'all' 
         ? '/api/orders'
         : `/api/orders?status=${filterStatus}`
       
-      const response = await fetch(url)
-      const data = await response.json()
+      const data = await apiCall(url, {
+        timeout: 5000,
+        onTimeout: () => setTimedOut(true),
+      })
 
-      if (response.ok && data.success) {
-        setOrders(data.orders)
-        setStats(data.stats)
+      if (data.success && data.data) {
+        setOrders(data.data.orders)
+        setStats(data.data.stats)
       }
-    } catch (error) {
-      console.error('Error cargando órdenes:', error)
+    } catch (err: any) {
+      console.error('Error cargando órdenes:', err)
+      setError(err.message || 'Error cargando órdenes')
     } finally {
       setLoading(false)
     }
@@ -205,11 +218,60 @@ export default function OrdersManagementPage() {
   if (loading) {
     return (
       <MainLayout>
+        <PageHeader 
+          title="Gestión de Órdenes" 
+          description="Administra y actualiza el estado de las órdenes"
+        />
+        <div className="space-y-4 mt-6">
+          <OrderCardSkeleton />
+          <OrderCardSkeleton />
+          <OrderCardSkeleton />
+          <OrderCardSkeleton />
+          <OrderCardSkeleton />
+        </div>
+      </MainLayout>
+    )
+  }
+
+  if (timedOut) {
+    return (
+      <MainLayout>
         <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Cargando órdenes...</p>
-          </div>
+          <Card className="max-w-md w-full">
+            <CardContent className="text-center py-12">
+              <Clock className="mx-auto text-yellow-500 mb-4" size={64} />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                La solicitud está tardando más de lo esperado
+              </h3>
+              <p className="text-gray-600 mb-6">
+                El servidor puede estar ocupado. Intenta nuevamente.
+              </p>
+              <Button onClick={fetchOrders} className="bg-blue-600 hover:bg-blue-700">
+                Reintentar
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </MainLayout>
+    )
+  }
+
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-screen">
+          <Card className="max-w-md w-full">
+            <CardContent className="text-center py-12">
+              <AlertCircle className="mx-auto text-red-500 mb-4" size={64} />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Error al cargar órdenes
+              </h3>
+              <p className="text-gray-600 mb-6">{error}</p>
+              <Button onClick={fetchOrders} className="bg-blue-600 hover:bg-blue-700">
+                Reintentar
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </MainLayout>
     )
@@ -448,7 +510,7 @@ export default function OrdersManagementPage() {
                                 >
                                   {updatingOrder === order.id ? (
                                     <>
-                                      <Loader className="animate-spin mr-2" size={16} />
+                                      <Loader2 className="animate-spin mr-2" size={16} />
                                       Actualizando...
                                     </>
                                   ) : (

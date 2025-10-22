@@ -17,6 +17,7 @@ import {
   AlertCircle,
 } from 'lucide-react'
 import OrderCountdown from '@/components/buyer/OrderCountdown'
+import { OrderCardSkeleton } from '@/components/skeletons'
 
 type OrderItem = {
   id: string
@@ -163,10 +164,21 @@ export default function OrdersPage() {
   // ✅ ESTADO DE LOADING
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="animate-spin h-12 w-12 text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600">Cargando órdenes...</p>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+              <ShoppingBag className="text-purple-600" size={32} />
+              Mis Órdenes
+            </h1>
+            <p className="text-gray-600 mt-1">Cargando órdenes...</p>
+          </div>
+          <div className="space-y-4">
+            <OrderCardSkeleton />
+            <OrderCardSkeleton />
+            <OrderCardSkeleton />
+            <OrderCardSkeleton />
+          </div>
         </div>
       </div>
     )

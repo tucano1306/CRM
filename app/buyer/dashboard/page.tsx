@@ -9,6 +9,7 @@ import {
   TrendingUp, Store, Heart, MessageCircle 
 } from 'lucide-react'
 import Link from 'next/link'
+import { DashboardStatsSkeleton } from '@/components/skeletons'
 
 interface BuyerStats {
   totalOrders: number
@@ -62,8 +63,18 @@ export default function BuyerDashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-purple-50 to-pink-50">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600"></div>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+        <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-xl">
+          <div className="container mx-auto px-6 py-8">
+            <h1 className="text-4xl font-bold mb-2">
+              ¡Hola, Comprador! 👋
+            </h1>
+            <p className="text-purple-100 text-lg">Cargando tu panel de compras...</p>
+          </div>
+        </div>
+        <div className="container mx-auto px-6 py-8">
+          <DashboardStatsSkeleton />
+        </div>
       </div>
     )
   }

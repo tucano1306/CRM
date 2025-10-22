@@ -16,6 +16,7 @@ import {
   Clock,
   AlertCircle,
 } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
 
 type CartItem = {
   id: string
@@ -202,10 +203,33 @@ export default function CartPage() {
   // ✅ ESTADO DE LOADING
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="animate-spin h-12 w-12 text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600">Cargando carrito...</p>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+              <ShoppingCart className="text-purple-600" size={32} />
+              Mi Carrito
+            </h1>
+            <p className="text-gray-600 mt-1">Cargando productos...</p>
+          </div>
+          <div className="grid lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-4">
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full" />
+            </div>
+            <div>
+              <div className="bg-white rounded-2xl shadow-lg p-6">
+                <Skeleton className="h-8 w-32 mb-4" />
+                <div className="space-y-3">
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-6 w-full" />
+                </div>
+                <Skeleton className="h-12 w-full mt-6" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     )
