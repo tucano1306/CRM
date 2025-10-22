@@ -1,62 +1,130 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 import { auth } from '@clerk/nextjs/server'
-import { PrismaClient, OrderStatus } from '@prisma/client'
+import { changeOrderStatus, isStatusTransitionAllowed } from '@/lib/orderStatusAudit'
+import { OrderStatus } from '@prisma/client'
 
-const prisma = new PrismaClient()
+const VALID_STATUSES = [
+  'PENDING',
+  'CONFIRMED',
+  'PREPARING',
+  'READY_FOR_PICKUP',
+  'IN_DELIVERY',
+  'DELIVERED',
+  'PARTIALLY_DELIVERED',
+  'COMPLETED',
+  'CANCELED',
+  'PAYMENT_PENDING',
+  'PAID'
+] as const
 
-// PATCH /api/orders/[id]/status - Actualizar estado de orden
+/**
+ * PATCH /api/orders/[id]/status
+ * Actualizar estado de orden con auditoría automática
+ * 
+ * Body: { status: OrderStatus, notes?: string }
+ */
 export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { userId } = await auth()
+    // Resolver params async (Next.js 15)
+    const resolvedParams = await params
+    const orderId = resolvedParams.id
+
+    // Autenticación
+    const authResult = await auth()
+    const userId = authResult.userId
 
     if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+      return NextResponse.json(
+        { success: false, error: 'No autorizado' },
+        { status: 401 }
+      )
     }
 
-    const { status } = await request.json()
+    // Parsear body
+    const body = await request.json()
+    const { status, notes } = body
 
-    // Validar que el estado sea válido
-    const validStatuses = [
-      'PENDING',
-      'CONFIRMED',
-      'PREPARING',
-      'READY_FOR_PICKUP',
-      'IN_DELIVERY',
-      'DELIVERED',
-      'PARTIALLY_DELIVERED',
-      'COMPLETED',
-      'CANCELED',
-      'PAYMENT_PENDING',
-      'PAID'
-    ]
-
-    if (!validStatuses.includes(status)) {
+    // Validar estado
+    if (!status || !VALID_STATUSES.includes(status)) {
       return NextResponse.json(
-        { error: 'Estado inválido' },
+        { success: false, error: 'Estado inválido' },
         { status: 400 }
       )
     }
 
-    // Actualizar el estado de la orden
-    const updatedOrder = await prisma.order.update({
-      where: { id: params.id },
-      data: { status: status as OrderStatus },
-      include: {
-        orderItems: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                name: true,
-                sku: true,
-                unit: true,
-              },
-            },
-          },
+    // Verificar que la orden existe
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+      select: { 
+        id: true, 
+        status: true, 
+        sellerId: true, 
+        clientId: true 
+      }
+    })
+
+    if (!order) {
+      return NextResponse.json(
+        { success: false, error: 'Orden no encontrada' },
+        { status: 404 }
+      )
+    }
+
+    // Obtener información del usuario desde la BD
+    const user = await prisma.authenticated_users.findFirst({
+      where: { authId: userId },
+      select: { name: true, role: true }
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'Usuario no encontrado en el sistema' },
+        { status: 404 }
+      )
+    }
+
+    // Validar que la transición de estado sea permitida
+    const validation = isStatusTransitionAllowed(
+      order.status,
+      status as OrderStatus,
+      user.role
+    )
+
+    if (!validation.allowed) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: validation.reason || 'Transición de estado no permitida' 
         },
+        { status: 403 }
+      )
+    }
+
+    // Actualizar el estado usando la función de auditoría
+    const result = await changeOrderStatus({
+      orderId: orderId,
+      newStatus: status as OrderStatus,
+      changedBy: userId,
+      changedByName: user.name,
+      changedByRole: user.role,
+      notes: notes || null,
+    })
+
+    if (!result.updated) {
+      return NextResponse.json({
+        success: false,
+        message: result.message
+      })
+    }
+
+    // Obtener la orden actualizada con todas las relaciones
+    const updatedOrder = await prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
         client: {
           select: {
             id: true,
@@ -65,7 +133,7 @@ export async function PATCH(
             email: true,
             phone: true,
             address: true,
-          },
+          }
         },
         seller: {
           select: {
@@ -73,23 +141,40 @@ export async function PATCH(
             name: true,
             email: true,
             phone: true,
-          },
+          }
         },
-      },
+        orderItems: {
+          include: {
+            product: {
+              select: {
+                id: true,
+                name: true,
+                sku: true,
+                unit: true,
+                price: true,
+              }
+            }
+          }
+        }
+      }
     })
 
     return NextResponse.json({
       success: true,
-      order: updatedOrder,
-      message: 'Estado actualizado correctamente'
+      message: 'Estado actualizado correctamente con auditoría registrada',
+      data: updatedOrder,
+      history: result.auditEntry
     })
+
   } catch (error) {
     console.error('Error actualizando estado de orden:', error)
     return NextResponse.json(
-      { error: 'Error actualizando el estado' },
+      { 
+        success: false, 
+        error: 'Error al actualizar el estado',
+        details: error instanceof Error ? error.message : 'Error desconocido'
+      },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }

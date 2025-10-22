@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { eventEmitter } from '@/lib/events/eventEmitter'
 import { EventType } from '@/lib/events/types/event.types'
+import { changeOrderStatus } from '@/lib/orderStatusAudit'
 
 /**
  * Vercel Cron Job: Auto-confirmar órdenes PENDING que pasaron su deadline
  * Ejecuta cada 5 minutos
  * 
- * PENDING → PLACED (si confirmationDeadline <= now)
+ * PENDING → CONFIRMED (si confirmationDeadline <= now)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Actualizar órdenes a PLACED
+    // Actualizar órdenes a CONFIRMED
     const confirmedOrders = []
 
     for (const order of expiredOrders) {
@@ -77,28 +78,36 @@ export async function GET(request: NextRequest) {
       }
 
       try {
-        // Actualizar orden
-        const updatedOrder = await prisma.order.update({
-          where: { id: order.id },
-          data: {
-            status: 'PLACED',
-            confirmedAt: now,
-            updatedAt: now,
-          },
+        // Actualizar orden con auditoría
+        const result = await changeOrderStatus({
+          orderId: order.id,
+          newStatus: 'CONFIRMED',
+          changedBy: 'SYSTEM',
+          changedByName: 'Sistema de Auto-confirmación',
+          changedByRole: 'ADMIN',
+          notes: `Auto-confirmada por deadline vencido (${now.toISOString()})`,
         })
 
-        // Registrar actualización de estado
+        if (!result.updated) {
+          console.log(`⚠️ [CRON] Orden ${order.orderNumber} - ${result.message}`)
+          continue
+        }
+
+        // Registrar también en la tabla antigua (para compatibilidad)
         await prisma.orderStatusUpdate.create({
           data: {
             orderId: order.id,
             oldStatus: 'PENDING',
-            newStatus: 'PLACED',
+            newStatus: 'CONFIRMED',
             idempotencyKey: `auto-confirm-${order.id}-${now.getTime()}`,
           },
         })
 
         console.log(`✅ [CRON] Orden ${order.orderNumber} confirmada automáticamente`)
-        confirmedOrders.push(updatedOrder)
+        
+        if (result.order) {
+          confirmedOrders.push(result.order)
+        }
 
         // Emitir evento ORDER_UPDATED
         await eventEmitter.emit({
@@ -108,7 +117,7 @@ export async function GET(request: NextRequest) {
             orderId: order.id,
             clientId: order.clientId,
             amount: Number(order.totalAmount),
-            status: 'PLACED',
+            status: 'CONFIRMED',
           },
         })
 
@@ -134,9 +143,9 @@ export async function GET(request: NextRequest) {
       message: `${confirmedOrders.length} órdenes confirmadas automáticamente`,
       confirmedCount: confirmedOrders.length,
       orders: confirmedOrders.map(o => ({
-        orderNumber: o.orderNumber,
-        totalAmount: o.totalAmount,
-        confirmedAt: o.confirmedAt,
+        orderNumber: o?.orderNumber,
+        totalAmount: o?.totalAmount,
+        confirmedAt: o?.confirmedAt,
       })),
       timestamp: now.toISOString(),
     })

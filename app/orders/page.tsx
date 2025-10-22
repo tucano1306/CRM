@@ -28,6 +28,7 @@ import {
   PackageCheck,
   CreditCard,
   Banknote,
+  Box,
 } from 'lucide-react'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
@@ -36,6 +37,7 @@ import { Button } from '@/components/ui/button'
 import { apiCall } from '@/lib/api-client'
 import { downloadInvoice, openInvoiceInNewTab, type InvoiceData } from '@/lib/invoiceGenerator'
 import OrderStatusChanger from '@/components/orders/OrderStatusChanger'
+import OrderStatusHistory from '@/components/orders/OrderStatusHistory'
 
 type OrderStatus = 
   | 'PENDING' 
@@ -104,7 +106,7 @@ const statusConfig = {
   },
   PREPARING: {
     label: 'Preparando',
-    icon: Package,
+    icon: Box,
     color: 'text-indigo-600',
     bg: 'bg-indigo-50',
     border: 'border-indigo-200',
@@ -112,7 +114,7 @@ const statusConfig = {
   },
   READY_FOR_PICKUP: {
     label: 'Listo para Recoger',
-    icon: CheckCircle,
+    icon: Package,
     color: 'text-cyan-600',
     bg: 'bg-cyan-50',
     border: 'border-cyan-200',
@@ -120,7 +122,7 @@ const statusConfig = {
   },
   IN_DELIVERY: {
     label: 'En Entrega',
-    icon: Package,
+    icon: Truck,
     color: 'text-purple-600',
     bg: 'bg-purple-50',
     border: 'border-purple-200',
@@ -182,6 +184,7 @@ export default function OrdersManagementPage() {
   const [error, setError] = useState<string | null>(null)
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
   const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null)
+  const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0) // Para refrescar historial
 
   // Estados de búsqueda y filtros
   const [searchQuery, setSearchQuery] = useState('')
@@ -295,12 +298,12 @@ export default function OrdersManagementPage() {
     }
   }
 
-  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
+  const handleStatusChange = async (orderId: string, newStatus: OrderStatus, notes?: string) => {
     try {
       const response = await fetch(`/api/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: newStatus, notes })
       })
 
       const result = await response.json()
@@ -314,6 +317,9 @@ export default function OrdersManagementPage() {
               : order
           )
         )
+        
+        // Refrescar el historial de la orden expandida
+        setHistoryRefreshTrigger(prev => prev + 1)
       } else {
         alert(result.error || 'Error al actualizar el estado')
       }
@@ -739,7 +745,7 @@ export default function OrdersManagementPage() {
                           <OrderStatusChanger
                             orderId={order.id}
                             currentStatus={order.status}
-                            onStatusChange={(newStatus) => handleStatusChange(order.id, newStatus)}
+                            onStatusChange={(newStatus, notes) => handleStatusChange(order.id, newStatus, notes)}
                           />
                         </div>
                       </div>
@@ -876,6 +882,14 @@ export default function OrdersManagementPage() {
                           <p className="text-sm text-yellow-800">{order.notes}</p>
                         </div>
                       )}
+
+                      {/* Status History */}
+                      <div className="mt-4">
+                        <OrderStatusHistory 
+                          orderId={order.id} 
+                          refreshTrigger={historyRefreshTrigger}
+                        />
+                      </div>
                     </div>
                   )}
                 </Card>

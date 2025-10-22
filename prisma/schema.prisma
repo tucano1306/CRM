@@ -122,6 +122,7 @@ model Order {
   orderItems              OrderItem[]
   chatMessages            ChatMessage[]
   orderStatusUpdates      OrderStatusUpdate[]
+  statusHistory           OrderStatusHistory[]
 
   createdAt               DateTime            @default(now())
   updatedAt               DateTime            @updatedAt
@@ -234,6 +235,26 @@ model OrderStatusUpdate {
   @@index([orderId])
   @@index([idempotencyKey])
   @@map("order_status_updates")
+}
+
+model OrderStatusHistory {
+  id             String       @id @default(uuid())
+  orderId        String
+  previousStatus OrderStatus?
+  newStatus      OrderStatus
+  changedBy      String
+  changedByName  String
+  changedByRole  String
+  notes          String?
+  createdAt      DateTime     @default(now())
+  
+  order          Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@index([changedBy])
+  @@index([createdAt])
+  @@index([newStatus])
+  @@map("order_status_history")
 }
 
 model Cart {
