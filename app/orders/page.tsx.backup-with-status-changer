@@ -35,7 +35,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { apiCall } from '@/lib/api-client'
 import { downloadInvoice, openInvoiceInNewTab, type InvoiceData } from '@/lib/invoiceGenerator'
-import OrderStatusChanger from '@/components/orders/OrderStatusChanger'
 
 type OrderStatus = 
   | 'PENDING' 
@@ -103,32 +102,32 @@ const statusConfig = {
     buttonColor: 'bg-blue-600'
   },
   PREPARING: {
-    label: 'Preparando',
-    icon: Package,
+    label: 'En Preparación',
+    icon: ChefHat,
+    color: 'text-orange-600',
+    bg: 'bg-orange-50',
+    border: 'border-orange-200',
+    buttonColor: 'bg-orange-600'
+  },
+  READY_FOR_PICKUP: {
+    label: 'Lista para Recoger',
+    icon: ShoppingBag,
     color: 'text-indigo-600',
     bg: 'bg-indigo-50',
     border: 'border-indigo-200',
     buttonColor: 'bg-indigo-600'
   },
-  READY_FOR_PICKUP: {
-    label: 'Listo para Recoger',
-    icon: CheckCircle,
-    color: 'text-cyan-600',
-    bg: 'bg-cyan-50',
-    border: 'border-cyan-200',
-    buttonColor: 'bg-cyan-600'
-  },
   IN_DELIVERY: {
     label: 'En Entrega',
-    icon: Package,
+    icon: Truck,
     color: 'text-purple-600',
     bg: 'bg-purple-50',
     border: 'border-purple-200',
     buttonColor: 'bg-purple-600'
   },
   DELIVERED: {
-    label: 'Entregado',
-    icon: CheckCircle,
+    label: 'Entregada',
+    icon: PackageCheck,
     color: 'text-teal-600',
     bg: 'bg-teal-50',
     border: 'border-teal-200',
@@ -136,11 +135,11 @@ const statusConfig = {
   },
   PARTIALLY_DELIVERED: {
     label: 'Entrega Parcial',
-    icon: AlertCircle,
-    color: 'text-orange-600',
-    bg: 'bg-orange-50',
-    border: 'border-orange-200',
-    buttonColor: 'bg-orange-600'
+    icon: Package,
+    color: 'text-amber-600',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
+    buttonColor: 'bg-amber-600'
   },
   COMPLETED: {
     label: 'Completada',
@@ -160,15 +159,15 @@ const statusConfig = {
   },
   PAYMENT_PENDING: {
     label: 'Pago Pendiente',
-    icon: DollarSign,
-    color: 'text-amber-600',
-    bg: 'bg-amber-50',
-    border: 'border-amber-200',
-    buttonColor: 'bg-amber-600'
+    icon: CreditCard,
+    color: 'text-rose-600',
+    bg: 'bg-rose-50',
+    border: 'border-rose-200',
+    buttonColor: 'bg-rose-600'
   },
   PAID: {
-    label: 'Pagado',
-    icon: DollarSign,
+    label: 'Pagada',
+    icon: Banknote,
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',
     border: 'border-emerald-200',
@@ -292,34 +291,6 @@ export default function OrdersManagementPage() {
       alert('Error al generar la factura')
     } finally {
       setGeneratingInvoice(null)
-    }
-  }
-
-  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
-    try {
-      const response = await fetch(`/api/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        // Actualizar la orden en el estado local
-        setOrders(prevOrders =>
-          prevOrders.map(order =>
-            order.id === orderId
-              ? { ...order, status: newStatus }
-              : order
-          )
-        )
-      } else {
-        alert(result.error || 'Error al actualizar el estado')
-      }
-    } catch (error) {
-      console.error('Error:', error)
-      alert('Error de conexión al actualizar el estado')
     }
   }
 
@@ -725,25 +696,6 @@ export default function OrdersManagementPage() {
                   {/* Expanded Content */}
                   {isExpanded && (
                     <div className="border-t bg-gray-50 p-6">
-                      {/* Status Changer */}
-                      <div className="bg-white rounded-lg p-4 mb-4 border border-blue-200">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-semibold text-gray-800 mb-1">
-                              Cambiar Estado de la Orden
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              Actualiza el estado según el progreso de la orden
-                            </p>
-                          </div>
-                          <OrderStatusChanger
-                            orderId={order.id}
-                            currentStatus={order.status}
-                            onStatusChange={(newStatus) => handleStatusChange(order.id, newStatus)}
-                          />
-                        </div>
-                      </div>
-
                       {/* Client Info */}
                       <div className="bg-white rounded-lg p-4 mb-4">
                         <h4 className="font-semibold text-gray-800 mb-3">Información del Cliente</h4>

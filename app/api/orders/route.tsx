@@ -26,28 +26,46 @@ export async function GET(request: Request) {
       whereClause.status = status
     }
 
-    // ✅ Obtener órdenes CON TIMEOUT
+    // ✅ Obtener órdenes CON TIMEOUT (incluye campos para factura)
     const orders = await withPrismaTimeout(
       () => prisma.order.findMany({
         where: whereClause,
         include: {
           orderItems: {
             include: {
-              product: true,
+              product: {
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  price: true,
+                  sku: true,
+                  unit: true,  // ← Para factura
+                  imageUrl: true,
+                  isActive: true,
+                  stock: true,
+                  createdAt: true,
+                  updatedAt: true,
+                },
+              },
             },
           },
           client: {
             select: {
               id: true,
               name: true,
+              businessName: true,  // ← Para factura
               email: true,
               phone: true,
+              address: true,  // ← Para factura
             },
           },
           seller: {
             select: {
               id: true,
               name: true,
+              email: true,  // ← Para factura
+              phone: true,  // ← Para factura
             },
           },
         },

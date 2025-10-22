@@ -336,11 +336,17 @@ enum ProductUnit {
 }
 
 enum OrderStatus {
-  PENDING
-  PLACED
-  CONFIRMED
-  COMPLETED
-  CANCELED
+  PENDING              // Pendiente (inicial)
+  CONFIRMED            // Confirmada por el vendedor
+  PREPARING            // Preparando el pedido
+  READY_FOR_PICKUP     // Listo para recoger
+  IN_DELIVERY          // En entrega
+  DELIVERED            // Entregado
+  PARTIALLY_DELIVERED  // Entrega parcial
+  COMPLETED            // Completada (final exitoso)
+  CANCELED             // Cancelada (final fallido)
+  PAYMENT_PENDING      // Pago pendiente
+  PAID                 // Pagado
 }
 
 enum PaymentStatus {
