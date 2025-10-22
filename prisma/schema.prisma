@@ -12,6 +12,7 @@ model Client {
   name                     String
   businessName             String?
   address                  String
+  zipCode                  String?
   phone                    String
   email                    String
   orderConfirmationMethod  OrderConfirmationMethod @default(MANUAL) // ⬅️ NUEVA LÍNEA

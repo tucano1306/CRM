@@ -30,6 +30,9 @@ export const createClientSchema = z.object({
   name: z.string().min(2, 'Nombre es requerido (mínimo 2 caracteres)'),
   businessName: z.string().optional(),
   address: z.string().min(5, 'Dirección es requerida (mínimo 5 caracteres)'),
+  zipCode: z.string()
+    .regex(/^\d{5}(-\d{4})?$/, 'Código postal inválido (formato: 12345 o 12345-6789)')
+    .optional(),
   phone: z.string()
     .min(8, 'Teléfono es requerido (mínimo 8 dígitos)')
     .regex(/^[0-9+\-\s()]+$/, 'Teléfono debe contener solo números, +, -, (), espacios'),

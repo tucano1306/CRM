@@ -6,9 +6,25 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Package, Plus, Edit, Trash2, TrendingUp, AlertTriangle, DollarSign, ShoppingCart } from 'lucide-react'
+import { apiCall } from '@/lib/api-client'
+import { 
+  Package, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  TrendingUp, 
+  AlertTriangle, 
+  DollarSign, 
+  ShoppingCart,
+  Search,
+  X,
+  Box,
+  Clock,
+  AlertCircle
+} from 'lucide-react'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
+import { ProductCardSkeleton } from '@/components/skeletons'
 
 interface Product {
   id: string
@@ -38,6 +54,9 @@ export default function ProductsPage() {
   const [productStats, setProductStats] = useState<ProductStats[]>([])
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [timedOut, setTimedOut] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
@@ -54,32 +73,62 @@ export default function ProductsPage() {
   }, [])
 
   const fetchProducts = async () => {
+    setLoading(true)
+    setError(null)
+    setTimedOut(false)
+
+    const timeoutId = setTimeout(() => {
+      if (loading) setTimedOut(true)
+    }, 5000)
+
     try {
-      const response = await fetch('/api/products')
-      if (response.ok) {
-        const result = await response.json()
-        if (result.success) {
-          setProducts(result.data)
-        }
+      console.log('🔍 Llamando a /api/products...')
+      
+      const result = await apiCall('/api/products?page=1&limit=100', {
+        timeout: 10000,
+      })
+
+      console.log('📦 Respuesta completa del API:', result)
+      console.log('✅ result.success:', result.success)
+      console.log('📊 result.data:', result.data)
+      console.log('📊 Es array?', Array.isArray(result.data))
+
+      clearTimeout(timeoutId)
+
+      if (result.success) {
+        const productsData = result.data?.data || result.data || []
+        const productsArray = Array.isArray(productsData) ? productsData : []
+        console.log('✅ Productos a guardar:', productsArray)
+        console.log('✅ Cantidad de productos:', productsArray.length)
+        setProducts(productsArray)
+      } else {
+        console.error('❌ Error del API:', result.error)
+        setError(result.error || 'Error al cargar productos')
       }
-    } catch (error) {
-      console.error('Error al cargar productos:', error)
+    } catch (err) {
+      console.error('❌ Error de conexión:', err)
+      clearTimeout(timeoutId)
+      setError('Error de conexión')
     } finally {
       setLoading(false)
+      setTimedOut(false)
     }
   }
 
   const fetchProductStats = async () => {
     try {
-      const response = await fetch('/api/analytics/products')
-      if (response.ok) {
-        const result = await response.json()
-        if (result.success) {
-          setProductStats(result.data.topSelling || [])
-        }
+      console.log('📊 Llamando a /api/products/stats...')
+      const result = await apiCall('/api/products/stats', {
+        timeout: 10000,
+      })
+
+      if (result.success) {
+        const statsArray = Array.isArray(result.data) ? result.data : []
+        console.log('✅ Estadísticas cargadas:', statsArray.length)
+        setProductStats(statsArray)
       }
     } catch (error) {
-      console.error('Error al cargar estadísticas:', error)
+      console.error('❌ Error al cargar estadísticas:', error)
     }
   }
 
@@ -90,7 +139,7 @@ export default function ProductsPage() {
       const url = editingId ? `/api/products/${editingId}` : '/api/products'
       const method = editingId ? 'PUT' : 'POST'
       
-      const response = await fetch(url, {
+      const result = await apiCall(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -98,18 +147,22 @@ export default function ProductsPage() {
           price: parseFloat(formData.price),
           stock: parseInt(formData.stock),
           sku: formData.sku || null  // ← AGREGADO
-        })
+        }),
+        timeout: 5000,
       })
 
-      if (response.ok) {
+      if (result.success) {
         setShowForm(false)
         setEditingId(null)
         setFormData({ name: '', description: '', unit: 'pk', price: '', stock: '', sku: '' })  // ← ACTUALIZADO
         fetchProducts()
         fetchProductStats()
+      } else {
+        alert(result.error || 'Error al guardar producto')
       }
     } catch (error) {
       console.error('Error al guardar producto:', error)
+      alert('Error al guardar producto')
     }
   }
 
@@ -137,29 +190,124 @@ export default function ProductsPage() {
     if (!confirm('¿Estás seguro de eliminar este producto?')) return
 
     try {
-      const response = await fetch(`/api/products/${id}`, { method: 'DELETE' })
-      if (response.ok) {
+      const result = await apiCall(`/api/products/${id}`, {
+        method: 'DELETE',
+        timeout: 5000,
+      })
+
+      if (result.success) {
         fetchProducts()
         fetchProductStats()
+      } else {
+        alert(result.error || 'Error al eliminar producto')
       }
     } catch (error) {
       console.error('Error al eliminar producto:', error)
+      alert('Error al eliminar producto')
     }
   }
 
-  const productsWithStats: ProductWithStats[] = products.map(product => {
+  // Filtrar productos por búsqueda
+  console.log('🔎 Estado de products antes de filtrar:', products)
+  console.log('🔎 Cantidad en state:', products.length)
+  console.log('🔎 Query de búsqueda actual:', searchQuery)
+
+  const filteredProducts = Array.isArray(products)
+    ? products.filter((product) => {
+        const searchLower = searchQuery.toLowerCase().trim()
+        if (!searchLower) return true
+
+        const name = (product.name || '').toLowerCase()
+        const description = (product.description || '').toLowerCase()
+        const sku = (product.sku || '').toLowerCase()
+        const unit = (product.unit || '').toLowerCase()
+
+        const match = (
+          name.includes(searchLower) ||
+          description.includes(searchLower) ||
+          sku.includes(searchLower) ||
+          unit.includes(searchLower)
+        )
+
+        console.log('🔍 Comparando:', {
+          searchLower,
+          productData: { name, description, sku, unit },
+          match
+        })
+
+        return match
+      })
+    : []
+
+  console.log('✅ Productos filtrados:', filteredProducts.length)
+
+  const productsWithStats: ProductWithStats[] = filteredProducts.map(product => {
     const stats = productStats.find(s => s.productId === product.id)
     return { ...product, stats }
   })
 
+  const clearSearch = () => {
+    setSearchQuery('')
+  }
+
+  // Loading state con skeletons
   if (loading) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Cargando productos...</p>
+        <PageHeader
+          title="Gestión de Productos"
+          description="Cargando productos..."
+        />
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <ProductCardSkeleton key={i} />
+          ))}
+        </div>
+      </MainLayout>
+    )
+  }
+
+  // Timeout state
+  if (timedOut) {
+    return (
+      <MainLayout>
+        <div className="max-w-md mx-auto mt-8 bg-yellow-50 border border-yellow-200 p-6 rounded-lg">
+          <div className="flex items-center gap-3 mb-4">
+            <Clock className="h-8 w-8 text-yellow-600" />
+            <h2 className="text-xl font-bold text-yellow-900">
+              Tiempo de espera excedido
+            </h2>
           </div>
+          <p className="text-gray-700 mb-4">
+            La carga de productos está tardando más de lo esperado.
+          </p>
+          <button
+            onClick={fetchProducts}
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+          >
+            Reintentar
+          </button>
+        </div>
+      </MainLayout>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <MainLayout>
+        <div className="max-w-md mx-auto mt-8 bg-red-50 border border-red-200 p-6 rounded-lg">
+          <div className="flex items-center gap-3 mb-4">
+            <AlertCircle className="h-8 w-8 text-red-600" />
+            <h2 className="text-xl font-bold text-red-900">Error</h2>
+          </div>
+          <p className="text-gray-700 mb-4">{error}</p>
+          <button
+            onClick={fetchProducts}
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+          >
+            Reintentar
+          </button>
         </div>
       </MainLayout>
     )
@@ -171,7 +319,7 @@ export default function ProductsPage() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <PageHeader 
             title="Gestión de Productos" 
-            description="Administra tu catálogo de productos"
+            description={`${products.length} productos en catálogo`}
           />
           <Button 
             onClick={() => setShowForm(!showForm)}
@@ -180,6 +328,55 @@ export default function ProductsPage() {
             <Plus className="h-4 w-4" />
             Nuevo Producto
           </Button>
+        </div>
+
+        {/* Barra de búsqueda */}
+        <div className="mb-6">
+          <div className="relative max-w-2xl">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Buscar por nombre, descripción, SKU o unidad..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={clearSearch}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+          
+          {/* Indicador de resultados */}
+          {searchQuery && (
+            <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+              <Box className="h-4 w-4" />
+              <span>
+                {filteredProducts.length === 0 ? (
+                  'No se encontraron productos'
+                ) : (
+                  <>
+                    Mostrando {filteredProducts.length} de {products.length} producto
+                    {filteredProducts.length !== 1 ? 's' : ''}
+                  </>
+                )}
+              </span>
+              {filteredProducts.length > 0 && searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="ml-2 text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Ver todos
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Formulario */}
@@ -279,13 +476,43 @@ export default function ProductsPage() {
 
         {/* Lista de Productos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {productsWithStats.map((product) => {
-            const hasLowStock = product.stock < 10
-            const hasStats = product.stats && product.stats.totalSold > 0
-            
-            return (
-              <Card key={product.id} className="shadow-lg hover:shadow-xl transition-all duration-200 border-0">
-                <CardContent className="p-6">
+          {productsWithStats.length === 0 ? (
+            <div className="col-span-full">
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                    {searchQuery ? 'No se encontraron productos' : 'No hay productos registrados'}
+                  </h3>
+                  <p className="text-gray-500">
+                    {searchQuery
+                      ? 'Intenta con otro término de búsqueda'
+                      : 'Comienza agregando tu primer producto al catálogo'}
+                  </p>
+                  {searchQuery ? (
+                    <button
+                      onClick={clearSearch}
+                      className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
+                    >
+                      Limpiar búsqueda
+                    </button>
+                  ) : (
+                    <Button onClick={() => setShowForm(true)} className="gap-2 mt-4">
+                      <Plus className="h-4 w-4" />
+                      Agregar Primer Producto
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
+            productsWithStats.map((product) => {
+              const hasLowStock = product.stock < 10
+              const hasStats = product.stats && product.stats.totalSold > 0
+              
+              return (
+                <Card key={product.id} className="shadow-lg hover:shadow-xl transition-all duration-200 border-0">
+                  <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -400,22 +627,9 @@ export default function ProductsPage() {
                 </CardContent>
               </Card>
             )
-          })}
+          })
+          )}
         </div>
-
-        {products.length === 0 && (
-          <Card className="shadow-lg border-0">
-            <CardContent className="text-center py-12">
-              <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-lg font-medium text-gray-900 mb-2">No hay productos registrados</p>
-              <p className="text-gray-600 mb-4">Comienza agregando tu primer producto al catálogo</p>
-              <Button onClick={() => setShowForm(true)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Agregar Primer Producto
-              </Button>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </MainLayout>
   )

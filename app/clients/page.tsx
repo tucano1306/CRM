@@ -26,6 +26,7 @@ interface ClientWithStats {
   email: string
   phone: string | null
   address: string
+  zipCode: string | null
   clerkUserId: string
   createdAt: string
   stats?: {
@@ -47,6 +48,7 @@ export default function ClientsPage() {
     email: '',
     phone: '',
     address: '',
+    zipCode: '',
   })
 
   useEffect(() => {
@@ -63,18 +65,35 @@ export default function ClientsPage() {
     }, 5000)
 
     try {
-      const result = await apiCall('/api/clients', {
+      console.log('🔍 Llamando a /api/clients...')
+      
+      // Agregar parámetros de paginación requeridos por el endpoint
+      const result = await apiCall('/api/clients?page=1&limit=100', {
         timeout: 10000,
       })
+
+      console.log('📦 Respuesta completa del API:', result)
+      console.log('✅ result.success:', result.success)
+      console.log('📊 result.data:', result.data)
+      console.log('📊 Tipo de result.data:', typeof result.data)
+      console.log('📊 Es array?', Array.isArray(result.data))
 
       clearTimeout(timeoutId)
 
       if (result.success) {
-        setClients(Array.isArray(result.data) ? result.data : [])
+        // El endpoint devuelve { success, data: { success, data: [...], pagination }, pagination }
+        // Los clientes están en result.data.data
+        const clientsData = result.data?.data || result.data || []
+        const clientsArray = Array.isArray(clientsData) ? clientsData : []
+        console.log('✅ Clientes a guardar:', clientsArray)
+        console.log('✅ Cantidad de clientes:', clientsArray.length)
+        setClients(clientsArray)
       } else {
+        console.error('❌ Error del API:', result.error)
         setError(result.error || 'Error al cargar clientes')
       }
     } catch (err) {
+      console.error('❌ Error de conexión:', err)
       clearTimeout(timeoutId)
       setError('Error de conexión')
     } finally {
@@ -90,6 +109,7 @@ export default function ClientsPage() {
       email: client.email,
       phone: client.phone || '',
       address: client.address,
+      zipCode: client.zipCode || '',
     })
     setShowForm(true)
   }
@@ -97,7 +117,7 @@ export default function ClientsPage() {
   const cancelEdit = () => {
     setShowForm(false)
     setEditingId(null)
-    setFormData({ name: '', email: '', phone: '', address: '' })
+    setFormData({ name: '', email: '', phone: '', address: '', zipCode: '' })
   }
 
   const saveClient = async () => {
@@ -139,19 +159,41 @@ export default function ClientsPage() {
   }
 
   // Filtrar clientes por búsqueda
-  const filteredClients = Array.isArray(clients)
+  console.log('🔎 Estado de clients antes de filtrar:', clients)
+  console.log('🔎 Cantidad en state:', clients.length)
+  console.log('🔎 Query de búsqueda actual:', searchQuery)
+  
+  const filteredClients = Array.isArray(clients) 
     ? clients.filter((client) => {
         const searchLower = searchQuery.toLowerCase().trim()
         if (!searchLower) return true
 
-        return (
-          client.name.toLowerCase().includes(searchLower) ||
-          client.email.toLowerCase().includes(searchLower) ||
-          (client.phone && client.phone.toLowerCase().includes(searchLower)) ||
-          client.address.toLowerCase().includes(searchLower)
+        // Buscar en todos los campos, manejando valores null/undefined
+        const name = (client.name || '').toLowerCase()
+        const email = (client.email || '').toLowerCase()
+        const phone = (client.phone || '').toLowerCase()
+        const address = (client.address || '').toLowerCase()
+        const zipCode = (client.zipCode || '').toLowerCase()
+
+        const match = (
+          name.includes(searchLower) ||
+          email.includes(searchLower) ||
+          phone.includes(searchLower) ||
+          address.includes(searchLower) ||
+          zipCode.includes(searchLower)
         )
+
+        console.log('🔍 Comparando:', {
+          searchLower,
+          clientData: { name, email, phone, address, zipCode },
+          match
+        })
+
+        return match
       })
     : []
+
+  console.log('✅ Clientes filtrados:', filteredClients.length)
 
   const clearSearch = () => {
     setSearchQuery('')
@@ -334,6 +376,16 @@ export default function ClientsPage() {
               }
               className="border rounded-lg px-4 py-2"
             />
+            <input
+              type="text"
+              placeholder="Código Postal (ej: 12345)"
+              value={formData.zipCode}
+              onChange={(e) =>
+                setFormData({ ...formData, zipCode: e.target.value })
+              }
+              maxLength={10}
+              className="border rounded-lg px-4 py-2"
+            />
           </div>
           <div className="flex gap-2 mt-4">
             <button
@@ -415,6 +467,12 @@ export default function ClientsPage() {
                       <MapPin size={16} className="text-red-600" />
                       <span className="break-words">{client.address}</span>
                     </div>
+                    {client.zipCode && (
+                      <div className="flex items-center gap-2">
+                        <MapPin size={16} className="text-purple-600" />
+                        <span>CP: {client.zipCode}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Stats */}
