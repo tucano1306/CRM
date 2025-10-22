@@ -1,28 +1,47 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { apiCall, getErrorMessage } from '@/lib/api-client'
-import { Users, Plus, Mail, Phone, Loader2, Clock, AlertCircle } from 'lucide-react'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
-import { ClientCardSkeleton } from '@/components/skeletons'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { apiCall } from '@/lib/api-client'
+import { 
+  Plus, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Edit, 
+  Trash2, 
+  Clock, 
+  AlertCircle,
+  Search,
+  X,
+  Users
+} from 'lucide-react'
 
-type Client = {
+interface ClientWithStats {
   id: string
   name: string
   email: string
   phone: string | null
   address: string
-  businessName: string
+  clerkUserId: string
   createdAt: string
+  stats?: {
+    totalOrders: number
+    totalSpent: number
+  }
 }
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState<Client[]>([])
+  const [clients, setClients] = useState<ClientWithStats[]>([])
   const [loading, setLoading] = useState(true)
-  const [timedOut, setTimedOut] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [timedOut, setTimedOut] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -34,59 +53,72 @@ export default function ClientsPage() {
     fetchClients()
   }, [])
 
-  // ✅ fetchClients CON TIMEOUT
   const fetchClients = async () => {
+    setLoading(true)
+    setError(null)
+    setTimedOut(false)
+
+    const timeoutId = setTimeout(() => {
+      if (loading) setTimedOut(true)
+    }, 5000)
+
     try {
-      setLoading(true)
+      const result = await apiCall('/api/clients', {
+        timeout: 10000,
+      })
+
+      clearTimeout(timeoutId)
+
+      if (result.success) {
+        setClients(Array.isArray(result.data) ? result.data : [])
+      } else {
+        setError(result.error || 'Error al cargar clientes')
+      }
+    } catch (err) {
+      clearTimeout(timeoutId)
+      setError('Error de conexión')
+    } finally {
+      setLoading(false)
       setTimedOut(false)
-      setError(null)
-
-      const result = await apiCall('/api/clients', {
-        timeout: 5000,
-        onTimeout: () => setTimedOut(true)
-      })
-
-      setLoading(false)
-
-      if (result.success) {
-        setClients(result.data.data || [])
-      } else {
-        setError(result.error || 'Error cargando clientes')
-      }
-    } catch (err) {
-      setLoading(false)
-      setError(getErrorMessage(err))
     }
   }
 
-  // ✅ saveClient CON TIMEOUT
+  const startEdit = (client: ClientWithStats) => {
+    setEditingId(client.id)
+    setFormData({
+      name: client.name,
+      email: client.email,
+      phone: client.phone || '',
+      address: client.address,
+    })
+    setShowForm(true)
+  }
+
+  const cancelEdit = () => {
+    setShowForm(false)
+    setEditingId(null)
+    setFormData({ name: '', email: '', phone: '', address: '' })
+  }
+
   const saveClient = async () => {
-    if (!formData.name || !formData.email || !formData.phone || !formData.address) {
-      alert('Todos los campos son requeridos')
-      return
-    }
+    const url = editingId ? `/api/clients/${editingId}` : '/api/clients'
+    const method = editingId ? 'PUT' : 'POST'
 
-    try {
-      const result = await apiCall('/api/clients', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-        timeout: 5000,
-      })
+    const result = await apiCall(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData),
+      timeout: 5000,
+    })
 
-      if (result.success) {
-        setShowForm(false)
-        setFormData({ name: '', email: '', phone: '', address: '' })
-        fetchClients()
-      } else {
-        alert(result.error || 'Error al crear cliente')
-      }
-    } catch (err) {
-      alert(getErrorMessage(err))
+    if (result.success) {
+      fetchClients()
+      cancelEdit()
+    } else {
+      alert(result.error || 'Error al guardar cliente')
     }
   }
 
-  // ✅ deleteClient CON TIMEOUT
   const deleteClient = async (id: string) => {
     if (!confirm('¿Eliminar este cliente?')) return
 
@@ -102,11 +134,30 @@ export default function ClientsPage() {
         alert(result.error || 'Error al eliminar cliente')
       }
     } catch (err) {
-      alert(getErrorMessage(err))
+      alert('Error al eliminar cliente')
     }
   }
 
-  // ✅ UI States
+  // Filtrar clientes por búsqueda
+  const filteredClients = Array.isArray(clients)
+    ? clients.filter((client) => {
+        const searchLower = searchQuery.toLowerCase().trim()
+        if (!searchLower) return true
+
+        return (
+          client.name.toLowerCase().includes(searchLower) ||
+          client.email.toLowerCase().includes(searchLower) ||
+          (client.phone && client.phone.toLowerCase().includes(searchLower)) ||
+          client.address.toLowerCase().includes(searchLower)
+        )
+      })
+    : []
+
+  const clearSearch = () => {
+    setSearchQuery('')
+  }
+
+  // Loading state
   if (loading) {
     return (
       <MainLayout>
@@ -115,24 +166,30 @@ export default function ClientsPage() {
           description="Cargando clientes..."
         />
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-          <ClientCardSkeleton />
-          <ClientCardSkeleton />
-          <ClientCardSkeleton />
-          <ClientCardSkeleton />
-          <ClientCardSkeleton />
-          <ClientCardSkeleton />
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-6 bg-gray-200 rounded mb-4" />
+                <div className="h-4 bg-gray-200 rounded mb-2" />
+                <div className="h-4 bg-gray-200 rounded" />
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </MainLayout>
     )
   }
 
+  // Timeout state
   if (timedOut) {
     return (
       <MainLayout>
         <div className="max-w-md mx-auto mt-8 bg-yellow-50 border border-yellow-200 p-6 rounded-lg">
           <div className="flex items-center gap-3 mb-4">
             <Clock className="h-8 w-8 text-yellow-600" />
-            <h2 className="text-xl font-bold text-yellow-900">Tiempo de espera excedido</h2>
+            <h2 className="text-xl font-bold text-yellow-900">
+              Tiempo de espera excedido
+            </h2>
           </div>
           <p className="text-gray-700 mb-4">
             La carga de clientes está tardando más de lo esperado.
@@ -148,6 +205,7 @@ export default function ClientsPage() {
     )
   }
 
+  // Error state
   if (error) {
     return (
       <MainLayout>
@@ -184,37 +242,96 @@ export default function ClientsPage() {
         }
       />
 
+      {/* Barra de búsqueda moderna */}
+      <div className="mb-6">
+        <div className="relative max-w-2xl">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar por nombre, email, teléfono o dirección..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
+          />
+          {searchQuery && (
+            <button
+              onClick={clearSearch}
+              className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
+        </div>
+        
+        {/* Indicador de resultados */}
+        {searchQuery && (
+          <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+            <Users className="h-4 w-4" />
+            <span>
+              {filteredClients.length === 0 ? (
+                'No se encontraron clientes'
+              ) : (
+                <>
+                  Mostrando {filteredClients.length} de {clients.length} cliente
+                  {filteredClients.length !== 1 ? 's' : ''}
+                </>
+              )}
+            </span>
+            {filteredClients.length > 0 && searchQuery && (
+              <button
+                onClick={clearSearch}
+                className="ml-2 text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Ver todos
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Formulario */}
       {showForm && (
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h3 className="text-xl font-bold mb-4">Nuevo Cliente</h3>
+          <h3 className="text-xl font-bold mb-4">
+            {editingId ? 'Editar Cliente' : 'Nuevo Cliente'}
+          </h3>
           <div className="grid md:grid-cols-2 gap-4">
             <input
               type="text"
               placeholder="Nombre"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
               className="border rounded-lg px-4 py-2"
             />
             <input
               type="email"
               placeholder="Email"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               className="border rounded-lg px-4 py-2"
             />
             <input
               type="tel"
               placeholder="Teléfono"
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, phone: e.target.value })
+              }
               className="border rounded-lg px-4 py-2"
             />
             <input
               type="text"
               placeholder="Dirección"
               value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, address: e.target.value })
+              }
               className="border rounded-lg px-4 py-2"
             />
           </div>
@@ -223,13 +340,10 @@ export default function ClientsPage() {
               onClick={saveClient}
               className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
             >
-              Guardar
+              {editingId ? 'Actualizar' : 'Guardar'}
             </button>
             <button
-              onClick={() => {
-                setShowForm(false)
-                setFormData({ name: '', email: '', phone: '', address: '' })
-              }}
+              onClick={cancelEdit}
               className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400"
             >
               Cancelar
@@ -240,30 +354,113 @@ export default function ClientsPage() {
 
       {/* Lista de clientes */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {clients.map((client) => (
-          <div key={client.id} className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-bold mb-2">{client.name}</h3>
-            <div className="space-y-2 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <Mail size={16} />
-                <span>{client.email}</span>
-              </div>
-              {client.phone && (
-                <div className="flex items-center gap-2">
-                  <Phone size={16} />
-                  <span>{client.phone}</span>
-                </div>
-              )}
-              <p className="text-gray-500">{client.address}</p>
-            </div>
-            <button
-              onClick={() => deleteClient(client.id)}
-              className="mt-4 text-red-600 text-sm hover:text-red-700"
-            >
-              Eliminar
-            </button>
+        {filteredClients.length === 0 ? (
+          <div className="col-span-full">
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                  {searchQuery ? 'No se encontraron clientes' : 'No hay clientes'}
+                </h3>
+                <p className="text-gray-500">
+                  {searchQuery
+                    ? 'Intenta con otro término de búsqueda'
+                    : 'Comienza agregando tu primer cliente'}
+                </p>
+                {searchQuery && (
+                  <button
+                    onClick={clearSearch}
+                    className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    Limpiar búsqueda
+                  </button>
+                )}
+              </CardContent>
+            </Card>
           </div>
-        ))}
+        ) : (
+          filteredClients.map((client) => {
+            const hasOrders = client.stats && client.stats.totalOrders > 0
+            const isActive = hasOrders && client.stats!.totalOrders >= 3
+
+            return (
+              <Card
+                key={client.id}
+                className="shadow-lg hover:shadow-xl transition-all duration-200 border-0"
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold mb-1">{client.name}</h3>
+                      {isActive && (
+                        <span className="inline-block px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">
+                          Cliente Activo
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 text-sm text-gray-600 mb-4">
+                    <div className="flex items-center gap-2">
+                      <Mail size={16} className="text-blue-600" />
+                      <span className="break-all">{client.email}</span>
+                    </div>
+                    {client.phone && (
+                      <div className="flex items-center gap-2">
+                        <Phone size={16} className="text-green-600" />
+                        <span>{client.phone}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <MapPin size={16} className="text-red-600" />
+                      <span className="break-words">{client.address}</span>
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  {client.stats && (
+                    <div className="grid grid-cols-2 gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <p className="text-xs text-gray-500">Órdenes</p>
+                        <p className="text-lg font-bold text-blue-600">
+                          {client.stats.totalOrders}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Total Gastado</p>
+                        <p className="text-lg font-bold text-green-600">
+                          ${client.stats.totalSpent.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Botones de Acción */}
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 gap-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
+                      onClick={() => startEdit(client)}
+                    >
+                      <Edit className="h-3 w-3" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => deleteClient(client.id)}
+                      className="gap-1"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      Eliminar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })
+        )}
       </div>
     </MainLayout>
   )
