@@ -38,7 +38,10 @@ import { apiCall } from '@/lib/api-client'
 import { downloadInvoice, openInvoiceInNewTab, type InvoiceData } from '@/lib/invoiceGenerator'
 import OrderStatusChanger from '@/components/orders/OrderStatusChanger'
 import OrderStatusHistory from '@/components/orders/OrderStatusHistory'
-import OrderDetailModal from '@/components/orders/OrderDetailModal'
+import OrderItemNotes from '@/components/orders/OrderItemNotes'
+import DeliveryInstructions from '@/components/orders/DeliveryInstructions'
+import DeliveryTracking from '@/components/delivery/DeliveryTracking'
+import DeliveryTrackingControl from '@/components/delivery/DeliveryTrackingControl'
 
 type OrderStatus = 
   | 'PENDING' 
@@ -81,7 +84,7 @@ interface OrderWithItems {
     quantity: number
     pricePerUnit: number
     subtotal: number
-    itemNote?: string | null
+    itemNote: string | null
     product: {
       id: string
       sku: string | null
@@ -185,7 +188,7 @@ export default function OrdersManagementPage() {
   const [orders, setOrders] = useState<OrderWithItems[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null)
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
   const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null)
   const [historyRefreshTrigger, setHistoryRefreshTrigger] = useState(0) // Para refrescar historial
 
@@ -222,8 +225,8 @@ export default function OrdersManagementPage() {
     }
   }
 
-  const openOrderModal = (order: OrderWithItems) => {
-    setSelectedOrder(order)
+  const toggleExpand = (orderId: string) => {
+    setExpandedOrder(expandedOrder === orderId ? null : orderId)
   }
 
   const prepareInvoiceData = (order: OrderWithItems): InvoiceData => {
@@ -309,6 +312,17 @@ export default function OrdersManagementPage() {
         body: JSON.stringify({ status: newStatus, notes })
       })
 
+      if (!response.ok) {
+        alert('Error al cambiar el estado')
+        return
+      }
+
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        alert('Error: respuesta del servidor no válida')
+        return
+      }
+
       const result = await response.json()
 
       if (result.success) {
@@ -329,6 +343,75 @@ export default function OrdersManagementPage() {
     } catch (error) {
       console.error('Error:', error)
       alert('Error de conexión al actualizar el estado')
+    }
+  }
+
+  const handleSaveItemNote = async (itemId: string, note: string) => {
+    try {
+      const response = await fetch(`/api/orders/items/${itemId}/note`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note })
+      })
+
+      if (!response.ok) return
+
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) return
+
+      const result = await response.json()
+
+      if (result.success) {
+        // Actualizar la nota del item en el estado local
+        setOrders(prevOrders =>
+          prevOrders.map(order => ({
+            ...order,
+            orderItems: order.orderItems.map(item =>
+              item.id === itemId
+                ? { ...item, itemNote: note }
+                : item
+            )
+          }))
+        )
+      } else {
+        alert(result.error || 'Error al guardar la nota')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error de conexión al guardar la nota')
+    }
+  }
+
+  const handleSaveDeliveryInstructions = async (orderId: string, instructions: string) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}/delivery-instructions`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instructions })
+      })
+
+      if (!response.ok) return
+
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) return
+
+      const result = await response.json()
+
+      if (result.success) {
+        // Actualizar las instrucciones en el estado local
+        setOrders(prevOrders =>
+          prevOrders.map(order =>
+            order.id === orderId
+              ? { ...order, deliveryInstructions: instructions }
+              : order
+          )
+        )
+      } else {
+        alert(result.error || 'Error al guardar las instrucciones')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Error de conexión al guardar las instrucciones')
     }
   }
 
@@ -668,6 +751,7 @@ export default function OrdersManagementPage() {
             filteredOrders.map((order) => {
               const config = statusConfig[order.status]
               const StatusIcon = config.icon
+              const isExpanded = expandedOrder === order.id
               const isGenerating = generatingInvoice === order.id
 
               return (
@@ -675,7 +759,7 @@ export default function OrdersManagementPage() {
                   {/* Order Header */}
                   <div 
                     className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => openOrderModal(order)}
+                    onClick={() => toggleExpand(order.id)}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -717,24 +801,238 @@ export default function OrdersManagementPage() {
                             {order.orderItems.length} producto{order.orderItems.length !== 1 ? 's' : ''}
                           </p>
                         </div>
+
+                        {/* Expand Icon */}
+                        <div>
+                          {isExpanded ? (
+                            <ChevronUp className="text-gray-400" size={24} />
+                          ) : (
+                            <ChevronDown className="text-gray-400" size={24} />
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
 
+                  {/* Expanded Content */}
+                  {isExpanded && (
+                    <div className="border-t bg-gray-50 p-6">
+                      {/* Status Changer */}
+                      <div className="bg-white rounded-lg p-4 mb-4 border border-blue-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-semibold text-gray-800 mb-1">
+                              Cambiar Estado de la Orden
+                            </h4>
+                            <p className="text-sm text-gray-600">
+                              Actualiza el estado según el progreso de la orden
+                            </p>
+                          </div>
+                          <OrderStatusChanger
+                            orderId={order.id}
+                            currentStatus={order.status}
+                            onStatusChange={(newStatus, notes) => handleStatusChange(order.id, newStatus, notes)}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Client Info */}
+                      <div className="bg-white rounded-lg p-4 mb-4">
+                        <h4 className="font-semibold text-gray-800 mb-3">Información del Cliente</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <div className="flex items-center gap-2">
+                            <User size={16} className="text-gray-400" />
+                            <span className="text-gray-600">Nombre:</span>
+                            <span className="font-medium">{order.client.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Mail size={16} className="text-gray-400" />
+                            <span className="text-gray-600">Email:</span>
+                            <span className="font-medium">{order.client.email}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Phone size={16} className="text-gray-400" />
+                            <span className="text-gray-600">Teléfono:</span>
+                            <span className="font-medium">{order.client.phone}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Package size={16} className="text-gray-400" />
+                            <span className="text-gray-600">Dirección:</span>
+                            <span className="font-medium">{order.client.address}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Products */}
+                      <h4 className="font-semibold text-gray-800 mb-3">Productos</h4>
+                      <div className="space-y-2 mb-4">
+                        {order.orderItems.map((item) => (
+                          <div key={item.id} className="bg-white p-4 rounded-lg border">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <p className="font-semibold text-gray-900">{item.productName}</p>
+                                {item.product.sku && (
+                                  <p className="text-xs text-gray-500 font-mono">SKU: {item.product.sku}</p>
+                                )}
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {item.quantity} {item.product.unit} × ${Number(item.pricePerUnit).toFixed(2)}
+                                </p>
+                                
+                                {/* Componente de Notas por Item */}
+                                <OrderItemNotes
+                                  itemId={item.id}
+                                  productName={item.productName}
+                                  currentNote={item.itemNote}
+                                  onSave={handleSaveItemNote}
+                                  editable={true}
+                                />
+                              </div>
+                              <div className="text-right">
+                                <p className="text-lg font-bold text-gray-900">
+                                  ${Number(item.subtotal).toFixed(2)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Totals */}
+                      <div className="bg-white p-4 rounded-lg border mb-4">
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Subtotal:</span>
+                            <span className="font-semibold">
+                              ${(Number(order.totalAmount) / 1.1).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">Impuestos (10%):</span>
+                            <span className="font-semibold">
+                              ${(Number(order.totalAmount) - Number(order.totalAmount) / 1.1).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="border-t pt-2 flex justify-between">
+                            <span className="font-bold text-gray-900">Total:</span>
+                            <span className="font-bold text-green-600 text-lg">
+                              ${Number(order.totalAmount).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Delivery Instructions */}
+                      <div className="mb-4">
+                        <DeliveryInstructions
+                          orderId={order.id}
+                          currentInstructions={order.deliveryInstructions}
+                          onSave={handleSaveDeliveryInstructions}
+                          editable={true}
+                        />
+                      </div>
+
+                      {/* Invoice Buttons */}
+                      <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="font-semibold text-gray-800 flex items-center gap-2">
+                              <FileText className="h-5 w-5 text-blue-600" />
+                              Factura
+                            </h4>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Genera y descarga la factura profesional en PDF
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="default"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleViewInvoice(order)
+                              }}
+                              disabled={isGenerating}
+                              className="gap-2"
+                            >
+                              {isGenerating ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                              Ver Factura
+                            </Button>
+                            <Button
+                              variant="default"
+                              size="default"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                handleDownloadInvoice(order)
+                              }}
+                              disabled={isGenerating}
+                              className="gap-2"
+                            >
+                              {isGenerating ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Download className="h-4 w-4" />
+                              )}
+                              Descargar PDF
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Notes */}
+                      {order.notes && (
+                        <div className="mt-4 bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+                          <h4 className="font-semibold text-yellow-900 mb-2">Notas:</h4>
+                          <p className="text-sm text-yellow-800">{order.notes}</p>
+                        </div>
+                      )}
+
+                      {/* Status History */}
+                      <div className="mt-4">
+                        <OrderStatusHistory 
+                          orderId={order.id} 
+                          refreshTrigger={historyRefreshTrigger}
+                        />
+                      </div>
+
+                      {/* Tracking de Entrega */}
+                      {['IN_DELIVERY', 'DELIVERED'].includes(order.status) && (
+                        <div className="mt-6">
+                          <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                            <Truck className="h-5 w-5 text-purple-600" />
+                            Seguimiento de Entrega
+                          </h4>
+                          <DeliveryTracking 
+                            orderId={order.id}
+                            showAddress={true}
+                          />
+                        </div>
+                      )}
+
+                      {/* Panel de Control */}
+                      {['IN_DELIVERY', 'DELIVERED'].includes(order.status) && (
+                        <div className="mt-6">
+                          <h4 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                            <Truck className="h-5 w-5 text-blue-600" />
+                            Panel de Control de Entrega
+                          </h4>
+                          <DeliveryTrackingControl 
+                            orderId={order.id}
+                            currentTracking={null}
+                            onUpdate={() => fetchOrders()}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </Card>
               )
             })
           )}
         </div>
-
-        {/* Order Detail Modal */}
-        {selectedOrder && (
-          <OrderDetailModal
-            order={selectedOrder}
-            isOpen={!!selectedOrder}
-            onClose={() => setSelectedOrder(null)}
-          />
-        )}
       </div>
     </MainLayout>
   )

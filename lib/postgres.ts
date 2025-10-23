@@ -62,7 +62,7 @@ export interface Order {
   id: string;
   client_id: string;
   seller_id: string;
-  status: 'PENDING' | 'PLACED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELED';
+  status: 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY_FOR_PICKUP' | 'IN_DELIVERY' | 'DELIVERED' | 'PARTIALLY_DELIVERED' | 'COMPLETED' | 'CANCELED' | 'PAYMENT_PENDING' | 'PAID';
   total_amount: number;
   items?: OrderItem[];
   created_at?: Date;

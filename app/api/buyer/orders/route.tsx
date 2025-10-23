@@ -393,6 +393,7 @@ export async function GET() {
             },
           },
           client: true,
+          seller: true,
         },
         orderBy: {
           createdAt: 'desc',

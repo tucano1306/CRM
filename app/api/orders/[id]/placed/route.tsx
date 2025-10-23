@@ -98,13 +98,13 @@ export async function PUT(
       )
     }
 
-    // 7. Actualizar orden a PLACED usando transacción
+    // 7. Actualizar orden a CONFIRMED usando transacción
     const updatedOrder = await prisma.$transaction(async (tx) => {
       // Actualizar orden
       const updated = await tx.order.update({
         where: { id: orderId },
         data: {
-          status: 'PLACED',
+          status: 'CONFIRMED',
           confirmedAt: new Date()
         },
         include: {
@@ -125,7 +125,7 @@ export async function PUT(
             idempotencyKey,
             orderId,
             oldStatus: 'PENDING',
-            newStatus: 'PLACED'
+            newStatus: 'CONFIRMED'
           }
         })
       }

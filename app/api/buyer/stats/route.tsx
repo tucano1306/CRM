@@ -47,10 +47,10 @@ export async function GET() {
     const totalOrders = orders.length
     
     const pendingOrders = orders.filter(
-      (o) => o.status === 'PENDING' || o.status === 'PLACED' || o.status === 'CONFIRMED'
+      (o) => o.status === 'PENDING' || o.status === 'CONFIRMED' || o.status === 'PREPARING'
     ).length
     
-    const completedOrders = orders.filter((o) => o.status === 'COMPLETED').length
+    const completedOrders = orders.filter((o) => o.status === 'COMPLETED' || o.status === 'DELIVERED').length
     
     const totalSpent = orders
       .filter((o) => o.status === 'COMPLETED')

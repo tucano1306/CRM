@@ -81,18 +81,30 @@ export default function BuyerDashboardPage() {
 
   const statusColors: Record<string, string> = {
     PENDING: 'bg-yellow-100 text-yellow-800',
-    PLACED: 'bg-blue-100 text-blue-800',
-    CONFIRMED: 'bg-green-100 text-green-800',
+    CONFIRMED: 'bg-blue-100 text-blue-800',
+    PREPARING: 'bg-indigo-100 text-indigo-800',
+    READY_FOR_PICKUP: 'bg-cyan-100 text-cyan-800',
+    IN_DELIVERY: 'bg-purple-100 text-purple-800',
+    DELIVERED: 'bg-teal-100 text-teal-800',
+    PARTIALLY_DELIVERED: 'bg-orange-100 text-orange-800',
     COMPLETED: 'bg-emerald-100 text-emerald-800',
     CANCELED: 'bg-red-100 text-red-800',
+    PAYMENT_PENDING: 'bg-amber-100 text-amber-800',
+    PAID: 'bg-green-100 text-green-800',
   }
 
   const statusLabels: Record<string, string> = {
     PENDING: 'Pendiente',
-    PLACED: 'Realizada',
     CONFIRMED: 'Confirmada',
+    PREPARING: 'Preparando',
+    READY_FOR_PICKUP: 'Listo para Recoger',
+    IN_DELIVERY: 'En Entrega',
+    DELIVERED: 'Entregado',
+    PARTIALLY_DELIVERED: 'Entrega Parcial',
     COMPLETED: 'Completada',
     CANCELED: 'Cancelada',
+    PAYMENT_PENDING: 'Pago Pendiente',
+    PAID: 'Pagado',
   }
 
   return (

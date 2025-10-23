@@ -40,7 +40,7 @@ export async function GET(request: Request) {
           gte: startDate,
         },
         status: {
-          in: ["COMPLETED", "CONFIRMED", "PLACED", "PENDING"]
+          in: ["COMPLETED", "CONFIRMED", "DELIVERED", "PENDING", "PREPARING", "READY_FOR_PICKUP", "IN_DELIVERY"]
         }
       },
       select: {

@@ -20,20 +20,7 @@ import {
 } from 'lucide-react'
 import OrderCountdown from '@/components/buyer/OrderCountdown'
 import { OrderCardSkeleton } from '@/components/skeletons'
-import OrderDetailModal from '@/components/orders/OrderDetailModal'
-
-type OrderStatus = 
-  | 'PENDING' 
-  | 'CONFIRMED' 
-  | 'PREPARING'
-  | 'READY_FOR_PICKUP'
-  | 'IN_DELIVERY'
-  | 'DELIVERED'
-  | 'PARTIALLY_DELIVERED'
-  | 'COMPLETED' 
-  | 'CANCELED'
-  | 'PAYMENT_PENDING'
-  | 'PAID'
+import DeliveryTracking from '@/components/delivery/DeliveryTracking'
 
 type OrderItem = {
   id: string
@@ -42,33 +29,17 @@ type OrderItem = {
   pricePerUnit: number
   subtotal: number
   productId: string
-  itemNote?: string | null
-  product: {
-    sku?: string | null
-    unit: string
-  }
 }
 
 type Order = {
   id: string
   orderNumber: string
-  status: OrderStatus
+  status: string
   totalAmount: number
   notes: string | null
-  deliveryInstructions: string | null
   createdAt: string
   confirmationDeadline?: string
   orderItems: OrderItem[]
-  client: {
-    name: string
-    email: string
-    phone: string
-    address: string
-  }
-  seller: {
-    name: string
-    email: string
-  }
 }
 
 const statusConfig = {
@@ -185,7 +156,7 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [timedOut, setTimedOut] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
 
   useEffect(() => {
     fetchOrders()
@@ -216,8 +187,8 @@ export default function OrdersPage() {
     }
   }
 
-  const openOrderModal = (order: Order) => {
-    setSelectedOrder(order)
+  const toggleExpand = (orderId: string) => {
+    setExpandedOrder(expandedOrder === orderId ? null : orderId)
   }
 
   // ✅ confirmOrder CON TIMEOUT
@@ -385,6 +356,7 @@ export default function OrdersPage() {
             {orders.map((order) => {
               const config = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.PENDING
               const StatusIcon = config.icon
+              const isExpanded = expandedOrder === order.id
               
               // Calcular subtotal e impuestos
               const subtotal = order.orderItems?.reduce((sum, item) => sum + Number(item.subtotal), 0) || 0
@@ -398,7 +370,7 @@ export default function OrdersPage() {
                   {/* Header de la orden */}
                   <div
                     className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => openOrderModal(order)}
+                    onClick={() => toggleExpand(order.id)}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
@@ -449,19 +421,110 @@ export default function OrdersPage() {
                     </div>
                   </div>
 
+                  {/* Detalles expandidos */}
+                  {isExpanded && (
+                    <div className="border-t border-gray-200 p-6 bg-gray-50">
+                      <h4 className="font-semibold text-gray-800 mb-4">
+                        Productos
+                      </h4>
+                      <div className="space-y-3 mb-6">
+                        {order.orderItems?.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex items-center justify-between bg-white p-4 rounded-lg"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-16 h-16 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg flex items-center justify-center">
+                                <Package className="text-purple-300" size={32} />
+                              </div>
+                              <div>
+                                <p className="font-semibold text-gray-800">
+                                  {item.productName}
+                                </p>
+                                <p className="text-sm text-gray-600">
+                                  ${Number(item.pricePerUnit).toFixed(2)} × {item.quantity}
+                                </p>
+                              </div>
+                            </div>
+                            <p className="font-bold text-purple-600">
+                              ${Number(item.subtotal).toFixed(2)}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Resumen */}
+                      <div className="bg-white p-4 rounded-lg space-y-2">
+                        <div className="flex justify-between text-gray-600">
+                          <span>Subtotal</span>
+                          <span className="font-semibold">
+                            ${Number(subtotal).toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-gray-600">
+                          <span>Impuestos (10%)</span>
+                          <span className="font-semibold">
+                            ${Number(tax).toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="border-t border-gray-200 pt-2 flex justify-between items-center">
+                          <span className="text-lg font-bold text-gray-800">
+                            Total
+                          </span>
+                          <span className="text-2xl font-bold text-purple-600">
+                            ${Number(order.totalAmount).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {order.notes && (
+                        <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                          <p className="text-sm font-semibold text-gray-700 mb-1">
+                            Notas
+                          </p>
+                          <p className="text-sm text-gray-600">{order.notes}</p>
+                        </div>
+                      )}
+
+                      {/* Tracking de entrega */}
+                      {['IN_DELIVERY', 'DELIVERED'].includes(order.status) && (
+                        <div className="mt-6">
+                          <DeliveryTracking 
+                            orderId={order.id}
+                            showAddress={false}
+                          />
+                        </div>
+                      )}
+
+                      {/* Botones de acción */}
+                      {order.status === 'PENDING' && (
+                        <div className="flex gap-3 mt-4">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              confirmOrder(order.id)
+                            }}
+                            className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold"
+                          >
+                            Confirmar orden
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              cancelOrder(order.id)
+                            }}
+                            className="flex-1 bg-red-600 text-white py-2 rounded-lg hover:bg-red-700 transition-colors font-semibold"
+                          >
+                            Cancelar orden
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             })}
           </div>
-        )}
-
-        {/* Order Detail Modal */}
-        {selectedOrder && (
-          <OrderDetailModal
-            order={selectedOrder}
-            isOpen={!!selectedOrder}
-            onClose={() => setSelectedOrder(null)}
-          />
         )}
       </div>
     </div>

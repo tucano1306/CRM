@@ -7,7 +7,7 @@ const prisma = new PrismaClient()
 
 /**
  * PUT /api/orders/[id]/confirm
- * Confirmar orden por el vendedor (PLACED → CONFIRMED)
+ * Confirmar orden por el vendedor (PENDING → CONFIRMED)
  * Solo el vendedor asignado puede confirmar
  */
 export async function PUT(
@@ -76,12 +76,12 @@ export async function PUT(
       )
     }
 
-    // 5. Verificar que la orden esté en estado PLACED
-    if (order.status !== 'PLACED') {
+    // 5. Verificar que la orden esté en estado PENDING
+    if (order.status !== 'PENDING') {
       return NextResponse.json(
         { 
           success: false, 
-          error: `No se puede confirmar. Estado actual: ${order.status}. Debe estar en PLACED.` 
+          error: `No se puede confirmar. Estado actual: ${order.status}. Debe estar en PENDING.` 
         },
         { status: 400 }
       )
@@ -112,7 +112,7 @@ export async function PUT(
           data: {
             idempotencyKey,
             orderId,
-            oldStatus: 'PLACED',
+            oldStatus: 'PENDING',
             newStatus: 'CONFIRMED'
           }
         })

@@ -32,7 +32,7 @@ interface Order {
   id: string;
   clientId: string;
   sellerId: string;
-  status: 'PENDING' | 'PLACED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELED';
+  status: 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY_FOR_PICKUP' | 'IN_DELIVERY' | 'DELIVERED' | 'PARTIALLY_DELIVERED' | 'COMPLETED' | 'CANCELED' | 'PAYMENT_PENDING' | 'PAID';
   items: OrderItem[];
   totalAmount: number;
   createdAt: string;

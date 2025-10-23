@@ -81,7 +81,7 @@ export const createOrderSchema = z.object({
 })
 
 export const updateOrderStatusSchema = z.object({
-  status: z.enum(['PENDING', 'PLACED', 'CONFIRMED', 'CANCELED', 'COMPLETED'], {
+  status: z.enum(['PENDING', 'CONFIRMED', 'PREPARING', 'READY_FOR_PICKUP', 'IN_DELIVERY', 'DELIVERED', 'PARTIALLY_DELIVERED', 'COMPLETED', 'CANCELED', 'PAYMENT_PENDING', 'PAID'], {
     message: 'Status inválido'
   }),
   notes: z.string().max(500).optional(),
