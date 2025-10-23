@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 
+// Prisma client con modelos: Quote, QuoteItem, QuoteStatus
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }

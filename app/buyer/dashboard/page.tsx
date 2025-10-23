@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { 
   ShoppingCart, Package, Clock, CheckCircle, 
-  TrendingUp, Store, Heart, MessageCircle 
+  TrendingUp, Store, Heart, MessageCircle, RefreshCw 
 } from 'lucide-react'
 import Link from 'next/link'
 import { DashboardStatsSkeleton } from '@/components/skeletons'
@@ -219,6 +219,18 @@ export default function BuyerDashboardPage() {
                     <div>
                       <h3 className="font-semibold text-purple-900">Mis Órdenes</h3>
                       <p className="text-sm text-purple-700">Ver historial</p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+
+              <Link href="/buyer/recurring-orders">
+                <div className="p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <RefreshCw className="h-6 w-6 text-orange-600" />
+                    <div>
+                      <h3 className="font-semibold text-orange-900">Órdenes Recurrentes</h3>
+                      <p className="text-sm text-orange-700">Automatiza tus pedidos</p>
                     </div>
                   </div>
                 </div>

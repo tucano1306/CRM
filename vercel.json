@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/confirm-orders",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/execute-recurring-orders",
+      "schedule": "0 6 * * *"
     }
   ]
 }

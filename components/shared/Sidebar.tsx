@@ -13,7 +13,11 @@ import {
   PanelLeftOpen,
   Settings,
   X,
-  MessageCircle
+  MessageCircle,
+  RefreshCw,
+  FileText,
+  RotateCcw,
+  DollarSign
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import ThemeToggle from './ThemeToggle'
@@ -38,6 +42,21 @@ const menuItems = [
     title: 'Órdenes',
     href: '/orders',
     icon: ShoppingCart
+  },
+  {
+    title: 'Cotizaciones',
+    href: '/quotes',
+    icon: FileText
+  },
+  {
+    title: 'Órdenes Recurrentes',
+    href: '/recurring-orders',
+    icon: RefreshCw
+  },
+  {
+    title: 'Devoluciones',
+    href: '/returns',
+    icon: RotateCcw
   },
   {
     title: 'Chat',

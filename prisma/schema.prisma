@@ -25,6 +25,10 @@ model Client {
   orders                   Order[]
   pending_orders           pending_orders[]
   authenticated_users      authenticated_users[]   @relation("ClientUsers")
+  recurringOrders          RecurringOrder[]
+  quotes                   Quote[]
+  returns                  Return[]
+  creditNotes              CreditNote[]
 
   @@index([email])
   @@index([sellerId])
@@ -51,6 +55,9 @@ model Seller {
   products            ProductSeller[]
   schedules           schedules[]
   authenticated_users authenticated_users[] @relation("SellerUsers")
+  quotes              Quote[]
+  returns             Return[]
+  creditNotes         CreditNote[]
 
   @@index([email])
   @@index([isActive])
@@ -69,11 +76,14 @@ model Product {
   sku         String?         @unique
   imageUrl    String?
   isActive    Boolean         @default(true)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
-  sellers     ProductSeller[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  cartItems           CartItem[]
+  orderItems          OrderItem[]
+  sellers             ProductSeller[]
+  recurringOrderItems RecurringOrderItem[]
+  quoteItems          QuoteItem[]
+  returnItems         ReturnItem[]
 
   @@index([name])
   @@index([unit])
@@ -123,6 +133,10 @@ model Order {
   chatMessages            ChatMessage[]
   orderStatusUpdates      OrderStatusUpdate[]
   statusHistory           OrderStatusHistory[]
+  recurringExecution      RecurringOrderExecution?
+  convertedFromQuote      Quote?
+  returns                 Return[]
+  creditNoteUsages        CreditNoteUsage[]
 
   createdAt               DateTime            @default(now())
   updatedAt               DateTime            @updatedAt
@@ -152,6 +166,8 @@ model OrderItem {
   
   productId    String
   product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  returnItems  ReturnItem[]
 
   createdAt    DateTime @default(now())
 
@@ -402,4 +418,277 @@ enum UserRole {
   ADMIN
   SELLER
   CLIENT
+}
+
+enum RecurringFrequency {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  CUSTOM
+}
+
+model RecurringOrder {
+  id                   String              @id @default(uuid())
+  clientId             String
+  name                 String
+  frequency            RecurringFrequency
+  customDays           Int?
+  dayOfWeek            Int?
+  dayOfMonth           Int?
+  startDate            DateTime            @default(now())
+  endDate              DateTime?
+  nextExecutionDate    DateTime
+  lastExecutionDate    DateTime?
+  notes                String?
+  deliveryInstructions String?
+  totalAmount          Float
+  isActive             Boolean             @default(true)
+  executionCount       Int                 @default(0)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  
+  client               Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  items                RecurringOrderItem[]
+  executions           RecurringOrderExecution[]
+
+  @@index([clientId])
+  @@index([nextExecutionDate])
+  @@index([isActive])
+  @@map("recurring_orders")
+}
+
+model RecurringOrderItem {
+  id               String         @id @default(uuid())
+  recurringOrderId String
+  productId        String
+  productName      String
+  quantity         Int
+  pricePerUnit     Float
+  subtotal         Float
+  notes            String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  
+  recurringOrder   RecurringOrder @relation(fields: [recurringOrderId], references: [id], onDelete: Cascade)
+  product          Product        @relation(fields: [productId], references: [id])
+
+  @@index([recurringOrderId])
+  @@index([productId])
+  @@map("recurring_order_items")
+}
+
+model RecurringOrderExecution {
+  id               String         @id @default(uuid())
+  recurringOrderId String
+  orderId          String         @unique
+  executedAt       DateTime       @default(now())
+  status           String         @default("SUCCESS")
+  errorMessage     String?
+  createdAt        DateTime       @default(now())
+  
+  recurringOrder   RecurringOrder @relation(fields: [recurringOrderId], references: [id], onDelete: Cascade)
+  order            Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([recurringOrderId])
+  @@index([executedAt])
+  @@map("recurring_order_executions")
+}
+
+// ============================================
+// QUOTES SYSTEM MODELS
+// ============================================
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  VIEWED
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CONVERTED
+}
+
+model Quote {
+  id                  String       @id @default(uuid())
+  quoteNumber         String       @unique @map("quote_number")
+  sellerId            String       @map("seller_id")
+  clientId            String       @map("client_id")
+  title               String
+  description         String?
+  status              QuoteStatus  @default(DRAFT)
+  subtotal            Float
+  discount            Float        @default(0)
+  tax                 Float
+  totalAmount         Float        @map("total_amount")
+  validUntil          DateTime     @map("valid_until")
+  notes               String?
+  termsAndConditions  String?      @map("terms_and_conditions")
+  sentAt              DateTime?    @map("sent_at")
+  convertedOrderId    String?      @unique @map("converted_order_id")
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+  
+  seller              Seller       @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  client              Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  items               QuoteItem[]
+  convertedOrder      Order?       @relation(fields: [convertedOrderId], references: [id], onDelete: SetNull)
+
+  @@index([sellerId])
+  @@index([clientId])
+  @@index([status])
+  @@index([quoteNumber])
+  @@index([createdAt])
+  @@index([validUntil])
+  @@index([convertedOrderId])
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id           String   @id @default(uuid())
+  quoteId      String   @map("quote_id")
+  productId    String   @map("product_id")
+  productName  String   @map("product_name")
+  description  String?
+  quantity     Int
+  pricePerUnit Float    @map("price_per_unit")
+  discount     Float    @default(0)
+  subtotal     Float
+  notes        String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  
+  quote        Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([quoteId])
+  @@index([productId])
+  @@map("quote_items")
+}
+
+// ============================================
+// RETURNS AND CREDIT NOTES SYSTEM
+// ============================================
+
+enum ReturnStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum RefundType {
+  REFUND
+  CREDIT
+  REPLACEMENT
+}
+
+enum ReturnReason {
+  DAMAGED
+  EXPIRED
+  WRONG_PRODUCT
+  QUALITY_ISSUE
+  NOT_AS_DESCRIBED
+  OTHER
+}
+
+model Return {
+  id                  String        @id @default(uuid())
+  returnNumber        String        @unique @map("return_number")
+  orderId             String        @map("order_id")
+  clientId            String        @map("client_id")
+  sellerId            String        @map("seller_id")
+  status              ReturnStatus  @default(PENDING)
+  reason              ReturnReason
+  reasonDescription   String?       @map("reason_description")
+  refundType          RefundType    @default(CREDIT) @map("refund_type")
+  totalReturnAmount   Float         @default(0) @map("total_return_amount")
+  restockFee          Float         @default(0) @map("restock_fee")
+  finalRefundAmount   Float         @default(0) @map("final_refund_amount")
+  approvedBy          String?       @map("approved_by")
+  approvedAt          DateTime?     @map("approved_at")
+  completedAt         DateTime?     @map("completed_at")
+  notes               String?
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+  
+  order               Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  client              Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  seller              Seller        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  items               ReturnItem[]
+  creditNote          CreditNote?
+
+  @@index([orderId])
+  @@index([clientId])
+  @@index([sellerId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("returns")
+}
+
+model ReturnItem {
+  id               String    @id @default(uuid())
+  returnId         String    @map("return_id")
+  orderItemId      String    @map("order_item_id")
+  productId        String    @map("product_id")
+  productName      String    @map("product_name")
+  quantityReturned Int       @map("quantity_returned")
+  pricePerUnit     Float     @map("price_per_unit")
+  subtotal         Float
+  restocked        Boolean   @default(false)
+  restockedAt      DateTime? @map("restocked_at")
+  notes            String?
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+  
+  return           Return    @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  orderItem        OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Restrict)
+  product          Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([returnId])
+  @@index([orderItemId])
+  @@index([productId])
+  @@map("return_items")
+}
+
+model CreditNote {
+  id               String            @id @default(uuid())
+  creditNoteNumber String            @unique @map("credit_note_number")
+  returnId         String            @unique @map("return_id")
+  clientId         String            @map("client_id")
+  sellerId         String            @map("seller_id")
+  amount           Float
+  balance          Float
+  usedAmount       Float             @default(0) @map("used_amount")
+  expiresAt        DateTime?         @map("expires_at")
+  isActive         Boolean           @default(true) @map("is_active")
+  notes            String?
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  
+  return           Return            @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  client           Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  seller           Seller            @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  usage            CreditNoteUsage[]
+
+  @@index([returnId])
+  @@index([clientId])
+  @@index([sellerId])
+  @@index([isActive])
+  @@map("credit_notes")
+}
+
+model CreditNoteUsage {
+  id            String     @id @default(uuid())
+  creditNoteId  String     @map("credit_note_id")
+  orderId       String     @map("order_id")
+  amountUsed    Float      @map("amount_used")
+  usedAt        DateTime   @default(now()) @map("used_at")
+  notes         String?
+  
+  creditNote    CreditNote @relation(fields: [creditNoteId], references: [id], onDelete: Cascade)
+  order         Order      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([creditNoteId])
+  @@index([orderId])
+  @@map("credit_note_usage")
 }
