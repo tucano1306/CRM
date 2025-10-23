@@ -13,7 +13,7 @@ export async function GET(
         clientId: params.id
       },
       include: {
-        items: {
+        orderItems: {
           include: {
             product: true
           }
