@@ -6,6 +6,7 @@ import PageHeader from '@/components/shared/PageHeader'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { apiCall } from '@/lib/api-client'
+import ClientsViewWithOrders from '@/components/orders/ClientsViewWithOrders'
 import { 
   Plus, 
   Mail, 
@@ -17,7 +18,9 @@ import {
   AlertCircle,
   Search,
   X,
-  Users
+  Users,
+  List,
+  Grid
 } from 'lucide-react'
 
 interface ClientWithStats {
@@ -37,12 +40,14 @@ interface ClientWithStats {
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<ClientWithStats[]>([])
+  const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [timedOut, setTimedOut] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [viewMode, setViewMode] = useState<'cards' | 'orders'>('orders')
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -53,6 +58,7 @@ export default function ClientsPage() {
 
   useEffect(() => {
     fetchClients()
+    fetchOrders()
   }, [])
 
   const fetchClients = async () => {
@@ -99,6 +105,25 @@ export default function ClientsPage() {
     } finally {
       setLoading(false)
       setTimedOut(false)
+    }
+  }
+
+  const fetchOrders = async () => {
+    try {
+      console.log('🔍 Obteniendo órdenes...')
+      const result = await apiCall('/api/orders', {
+        timeout: 10000,
+      })
+
+      if (result.success) {
+        const ordersData = result.data?.orders || result.data || []
+        console.log('✅ Órdenes obtenidas:', ordersData.length)
+        setOrders(ordersData)
+      } else {
+        console.error('❌ Error obteniendo órdenes:', result.error)
+      }
+    } catch (err) {
+      console.error('❌ Error de conexión al obtener órdenes:', err)
     }
   }
 
@@ -274,13 +299,41 @@ export default function ClientsPage() {
         title="Clientes"
         description={`${clients.length} clientes registrados`}
         action={
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-          >
-            <Plus size={20} />
-            Nuevo Cliente
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Toggle de vista */}
+            <div className="flex items-center bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('orders')}
+                className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
+                  viewMode === 'orders'
+                    ? 'bg-white text-purple-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <List className="h-4 w-4" />
+                <span className="text-sm font-medium">Con Órdenes</span>
+              </button>
+              <button
+                onClick={() => setViewMode('cards')}
+                className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
+                  viewMode === 'cards'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <Grid className="h-4 w-4" />
+                <span className="text-sm font-medium">Tarjetas</span>
+              </button>
+            </div>
+
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+            >
+              <Plus size={20} />
+              Nuevo Cliente
+            </button>
+          </div>
         }
       />
 
@@ -404,17 +457,51 @@ export default function ClientsPage() {
         </div>
       )}
 
-      {/* Lista de clientes */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredClients.length === 0 ? (
-          <div className="col-span-full">
-            <Card>
-              <CardContent className="p-12 text-center">
-                <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                  {searchQuery ? 'No se encontraron clientes' : 'No hay clientes'}
-                </h3>
-                <p className="text-gray-500">
+      {/* Vista de Clientes con Órdenes */}
+      {viewMode === 'orders' && (
+        <>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Clock className="h-8 w-8 text-gray-400 animate-spin mr-3" />
+              <p className="text-gray-600">Cargando órdenes...</p>
+            </div>
+          ) : orders.length > 0 ? (
+            <ClientsViewWithOrders 
+              orders={orders}
+              userRole="SELLER"
+            />
+          ) : (
+            <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+              <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No hay órdenes disponibles
+              </h3>
+              <p className="text-gray-500 mb-4">
+                Una vez que los clientes realicen pedidos, aparecerán aquí organizados por cliente
+              </p>
+              <button
+                onClick={() => setViewMode('cards')}
+                className="text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Ver lista de clientes
+              </button>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Vista de Tarjetas tradicional */}
+      {viewMode === 'cards' && (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredClients.length === 0 ? (
+            <div className="col-span-full">
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-700 mb-2">
+                    {searchQuery ? 'No se encontraron clientes' : 'No hay clientes'}
+                  </h3>
+                  <p className="text-gray-500">
                   {searchQuery
                     ? 'Intenta con otro término de búsqueda'
                     : 'Comienza agregando tu primer cliente'}
@@ -519,7 +606,8 @@ export default function ClientsPage() {
             )
           })
         )}
-      </div>
+        </div>
+      )}
     </MainLayout>
   )
 }

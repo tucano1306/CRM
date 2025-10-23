@@ -1,0 +1,233 @@
+// components/orders/OrdersListImproved.tsx
+'use client'
+
+import { useState } from 'react'
+import { 
+  Package, 
+  Clock, 
+  CheckCircle, 
+  XCircle,
+  Truck,
+  DollarSign,
+  Calendar,
+  ChevronDown,
+  ChevronUp
+} from 'lucide-react'
+import { Card } from '@/components/ui/card'
+
+interface Client {
+  id: string
+  name: string
+  email: string
+  phone?: string
+  address?: string
+}
+
+interface Order {
+  id: string
+  orderNumber: string
+  status: string
+  totalAmount: number
+  createdAt: string
+  clientId: string
+  client: Client
+  orderItems?: any[]
+}
+
+interface OrdersListImprovedProps {
+  orders: Order[]
+  userRole: 'SELLER' | 'CLIENT'
+  onOrderClick?: (order: Order) => void
+}
+
+const statusConfig: Record<string, { label: string; color: string; bg: string; icon: any }> = {
+  PENDING: { 
+    label: 'Pendiente', 
+    color: 'text-yellow-600', 
+    bg: 'bg-yellow-50',
+    icon: Clock 
+  },
+  CONFIRMED: { 
+    label: 'Confirmada', 
+    color: 'text-blue-600', 
+    bg: 'bg-blue-50',
+    icon: CheckCircle 
+  },
+  PREPARING: { 
+    label: 'Preparando', 
+    color: 'text-indigo-600', 
+    bg: 'bg-indigo-50',
+    icon: Package 
+  },
+  IN_DELIVERY: { 
+    label: 'En Entrega', 
+    color: 'text-purple-600', 
+    bg: 'bg-purple-50',
+    icon: Truck 
+  },
+  DELIVERED: { 
+    label: 'Entregado', 
+    color: 'text-green-600', 
+    bg: 'bg-green-50',
+    icon: CheckCircle 
+  },
+  COMPLETED: { 
+    label: 'Completada', 
+    color: 'text-emerald-600', 
+    bg: 'bg-emerald-50',
+    icon: CheckCircle 
+  },
+  CANCELED: { 
+    label: 'Cancelada', 
+    color: 'text-red-600', 
+    bg: 'bg-red-50',
+    icon: XCircle 
+  },
+}
+
+export default function OrdersListImproved({ 
+  orders, 
+  userRole,
+  onOrderClick 
+}: OrdersListImprovedProps) {
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
+
+  if (orders.length === 0) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-12 text-center">
+        <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          No hay órdenes
+        </h3>
+        <p className="text-gray-500">
+          Este cliente aún no ha realizado ninguna orden
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      {orders.map((order) => {
+        const config = statusConfig[order.status] || statusConfig.PENDING
+        const StatusIcon = config.icon
+        const isExpanded = expandedOrder === order.id
+
+        return (
+          <Card key={order.id} className="overflow-hidden hover:shadow-md transition-shadow">
+            <div 
+              className="p-4 cursor-pointer"
+              onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 flex-1">
+                  {/* Ícono de estado */}
+                  <div className={`p-3 rounded-lg ${config.bg}`}>
+                    <StatusIcon className={`h-5 w-5 ${config.color}`} />
+                  </div>
+
+                  {/* Información de la orden */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-1">
+                      <h4 className="font-semibold text-gray-900">
+                        Orden #{order.orderNumber}
+                      </h4>
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${config.color} ${config.bg}`}>
+                        {config.label}
+                      </span>
+                    </div>
+                    
+                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                      <div className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        {new Date(order.createdAt).toLocaleDateString('es-ES', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </div>
+                      
+                      {order.orderItems && order.orderItems.length > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Package className="h-4 w-4" />
+                          {order.orderItems.length} producto{order.orderItems.length !== 1 ? 's' : ''}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Total */}
+                  <div className="text-right">
+                    <div className="flex items-center gap-1 text-lg font-bold text-gray-900">
+                      <DollarSign className="h-5 w-5 text-green-600" />
+                      {Number(order.totalAmount).toFixed(2)}
+                    </div>
+                  </div>
+
+                  {/* Expand icon */}
+                  <div>
+                    {isExpanded ? (
+                      <ChevronUp className="h-5 w-5 text-gray-400" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-gray-400" />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Detalles expandidos */}
+              {isExpanded && order.orderItems && order.orderItems.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <h5 className="font-semibold text-gray-900 mb-3 text-sm">Productos:</h5>
+                  <div className="space-y-2">
+                    {order.orderItems.map((item: any, index: number) => (
+                      <div 
+                        key={item.id || index} 
+                        className="flex items-center justify-between bg-gray-50 rounded-lg p-3"
+                      >
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 text-sm">
+                            {item.productName || item.product?.name || 'Producto'}
+                          </p>
+                          <p className="text-xs text-gray-600">
+                            {item.quantity} × ${Number(item.pricePerUnit || 0).toFixed(2)}
+                          </p>
+                        </div>
+                        <p className="font-semibold text-gray-900">
+                          ${Number(item.subtotal || 0).toFixed(2)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Total en detalle expandido */}
+                  <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
+                    <span className="font-semibold text-gray-900">Total:</span>
+                    <span className="text-xl font-bold text-green-600">
+                      ${Number(order.totalAmount).toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Botón Ver Detalles Completos */}
+                  {onOrderClick && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onOrderClick(order)
+                        }}
+                        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                      >
+                        Ver Detalles Completos
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </Card>
+        )
+      })}
+    </div>
+  )
+}
