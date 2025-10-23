@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { v4 as uuidv4 } from 'uuid'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
+import { downloadInvoice, openInvoiceInNewTab, type InvoiceData } from '@/lib/invoiceGenerator'
 import {
   Package,
   Clock,
@@ -186,6 +187,7 @@ export default function OrdersPage() {
   const [timedOut, setTimedOut] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null)
 
   useEffect(() => {
     fetchOrders()
@@ -213,6 +215,85 @@ export default function OrdersPage() {
     } catch (err) {
       setLoading(false)
       setError(getErrorMessage(err))
+    }
+  }
+
+  const prepareInvoiceData = (order: Order): InvoiceData => {
+    const subtotal = order.orderItems.reduce((sum, item) => sum + Number(item.subtotal), 0)
+    const taxRate = 0.10
+    const taxAmount = subtotal * taxRate
+    const total = subtotal + taxAmount
+
+    const invoiceDate = new Date(order.createdAt)
+    const dueDate = new Date(invoiceDate)
+    dueDate.setDate(dueDate.getDate() + 30)
+
+    return {
+      invoiceNumber: order.orderNumber,
+      invoiceDate,
+      dueDate,
+      
+      // Información del vendedor
+      sellerName: order.seller?.name || 'Food Orders CRM',
+      sellerAddress: '123 Main Street, Miami, FL 33139',
+      sellerPhone: '(305) 555-0123',
+      sellerEmail: order.seller?.email || 'ventas@foodorders.com',
+      sellerTaxId: '12-3456789',
+      
+      // Información del comprador (yo como buyer)
+      clientName: order.client?.name || 'Cliente',
+      clientAddress: order.client?.address || '',
+      clientPhone: order.client?.phone || '',
+      clientEmail: order.client?.email || '',
+      clientTaxId: '',
+      
+      items: order.orderItems.map(item => ({
+        sku: item.product?.sku || '',
+        name: item.productName,
+        description: item.productName,
+        quantity: item.quantity,
+        unit: item.product?.unit || 'und',
+        unitPrice: Number(item.pricePerUnit),
+        pricePerUnit: Number(item.pricePerUnit),
+        subtotal: Number(item.subtotal),
+        total: Number(item.subtotal)
+      })),
+      
+      subtotal,
+      taxRate,
+      taxAmount,
+      total,
+      
+      paymentMethod: 'Transferencia Bancaria',
+      paymentTerms: 'Pago a 30 días.',
+      notes: order.notes || undefined,
+      termsAndConditions: 'Productos sujetos a disponibilidad. Devoluciones dentro de 24 horas.'
+    }
+  }
+
+  const handleDownloadInvoice = async (order: Order) => {
+    try {
+      setGeneratingInvoice(order.id)
+      const invoiceData = prepareInvoiceData(order)
+      downloadInvoice(invoiceData, `Factura-${order.orderNumber}.pdf`)
+    } catch (error) {
+      console.error('Error generando factura:', error)
+      alert('Error al generar la factura')
+    } finally {
+      setGeneratingInvoice(null)
+    }
+  }
+
+  const handleViewInvoice = async (order: Order) => {
+    try {
+      setGeneratingInvoice(order.id)
+      const invoiceData = prepareInvoiceData(order)
+      openInvoiceInNewTab(invoiceData)
+    } catch (error) {
+      console.error('Error generando factura:', error)
+      alert('Error al generar la factura')
+    } finally {
+      setGeneratingInvoice(null)
     }
   }
 
@@ -458,9 +539,13 @@ export default function OrdersPage() {
         {/* Order Detail Modal */}
         {selectedOrder && (
           <OrderDetailModal
-            order={selectedOrder}
+            order={selectedOrder as any}
             isOpen={!!selectedOrder}
             onClose={() => setSelectedOrder(null)}
+            userRole="buyer"
+            onDownloadInvoice={handleDownloadInvoice as any}
+            onViewInvoice={handleViewInvoice as any}
+            isGeneratingInvoice={generatingInvoice === selectedOrder.id}
           />
         )}
       </div>

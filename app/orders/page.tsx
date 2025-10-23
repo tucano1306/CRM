@@ -733,6 +733,11 @@ export default function OrdersManagementPage() {
             order={selectedOrder}
             isOpen={!!selectedOrder}
             onClose={() => setSelectedOrder(null)}
+            userRole="seller"
+            onStatusChange={handleStatusChange}
+            onDownloadInvoice={(order) => handleDownloadInvoice(order as OrderWithItems)}
+            onViewInvoice={(order) => handleViewInvoice(order as OrderWithItems)}
+            isGeneratingInvoice={generatingInvoice === selectedOrder.id}
           />
         )}
       </div>

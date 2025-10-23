@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Package, ShoppingCart, Truck, History, FileText } from 'lucide-react'
+import { X, Package, ShoppingCart, Truck, History, FileText, Download, Eye, Loader2 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import OrderStatusHistory from '@/components/orders/OrderStatusHistory'
+import OrderStatusChanger from '@/components/orders/OrderStatusChanger'
 
 type OrderStatus = 
   | 'PENDING' 
@@ -21,12 +22,14 @@ type OrderStatus =
 
 interface OrderItem {
   id: string
+  productId?: string
   productName: string
   quantity: number
   pricePerUnit: number
   subtotal: number
   itemNote?: string | null
   product: {
+    id?: string
     sku?: string | null
     unit: string
   }
@@ -41,14 +44,18 @@ interface Order {
   deliveryInstructions: string | null
   createdAt: string
   client?: {
+    id?: string
     name: string
+    businessName?: string
     email: string
     phone: string
     address: string
   }
   seller?: {
+    id?: string
     name: string
     email: string
+    phone?: string
   }
   orderItems: OrderItem[]
 }
@@ -57,11 +64,25 @@ interface OrderDetailModalProps {
   order: Order
   isOpen: boolean
   onClose: () => void
+  userRole?: 'seller' | 'buyer'
+  onStatusChange?: (orderId: string, newStatus: OrderStatus, notes?: string) => Promise<void>
+  onDownloadInvoice?: (order: Order) => Promise<void>
+  onViewInvoice?: (order: Order) => Promise<void>
+  isGeneratingInvoice?: boolean
 }
 
 type TabType = 'details' | 'products' | 'delivery' | 'history' | 'invoice'
 
-export default function OrderDetailModal({ order, isOpen, onClose }: OrderDetailModalProps) {
+export default function OrderDetailModal({ 
+  order, 
+  isOpen, 
+  onClose,
+  userRole = 'buyer',
+  onStatusChange,
+  onDownloadInvoice,
+  onViewInvoice,
+  isGeneratingInvoice = false
+}: OrderDetailModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('details')
 
   if (!isOpen) return null
@@ -141,6 +162,27 @@ export default function OrderDetailModal({ order, isOpen, onClose }: OrderDetail
             {/* TAB: Detalles */}
             {activeTab === 'details' && (
               <div className="space-y-4">
+                {/* Status Changer - Solo para vendedores */}
+                {userRole === 'seller' && onStatusChange && (
+                  <div className="bg-white rounded-lg p-4 border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold text-gray-800 mb-1">
+                          Cambiar Estado de la Orden
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          Actualiza el estado según el progreso de la orden
+                        </p>
+                      </div>
+                      <OrderStatusChanger
+                        orderId={order.id}
+                        currentStatus={order.status}
+                        onStatusChange={(newStatus, notes) => onStatusChange(order.id, newStatus, notes)}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {order.client && (
                   <div className="bg-white rounded-lg shadow-sm p-6 border">
                     <h3 className="text-lg font-semibold mb-4">Información del Cliente</h3>
@@ -276,12 +318,88 @@ export default function OrderDetailModal({ order, isOpen, onClose }: OrderDetail
 
             {/* TAB: Factura */}
             {activeTab === 'invoice' && (
-              <div className="bg-gray-50 rounded-lg p-8 text-center border-2 border-dashed border-gray-300">
-                <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-600 mb-4">Funcionalidad de factura próximamente</p>
-                <Button variant="outline">
-                  Generar Factura
-                </Button>
+              <div className="space-y-4">
+                {onDownloadInvoice && onViewInvoice ? (
+                  <>
+                    {/* Resumen de la Orden */}
+                    <div className="bg-white rounded-lg shadow-sm p-6 border">
+                      <h3 className="text-lg font-semibold mb-4">Resumen de la Orden</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Subtotal:</span>
+                          <span className="font-semibold">
+                            ${(Number(order.totalAmount) / 1.1).toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Impuestos (10%):</span>
+                          <span className="font-semibold">
+                            ${(Number(order.totalAmount) - Number(order.totalAmount) / 1.1).toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="border-t pt-2 flex justify-between">
+                          <span className="font-bold text-gray-900">Total:</span>
+                          <span className="font-bold text-green-600 text-lg">
+                            ${Number(order.totalAmount).toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Invoice Buttons */}
+                    <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
+                      <div className="flex flex-col gap-4">
+                        <div>
+                          <h4 className="font-semibold text-gray-800 flex items-center gap-2 mb-2">
+                            <FileText className="h-5 w-5 text-blue-600" />
+                            Factura Profesional
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            Genera y descarga la factura en formato PDF
+                          </p>
+                        </div>
+                        <div className="flex gap-3">
+                          <Button
+                            variant="outline"
+                            size="default"
+                            onClick={() => onViewInvoice(order)}
+                            disabled={isGeneratingInvoice}
+                            className="flex-1 gap-2"
+                          >
+                            {isGeneratingInvoice ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                            Ver Factura
+                          </Button>
+                          <Button
+                            variant="default"
+                            size="default"
+                            onClick={() => onDownloadInvoice(order)}
+                            disabled={isGeneratingInvoice}
+                            className="flex-1 gap-2"
+                          >
+                            {isGeneratingInvoice ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Download className="h-4 w-4" />
+                            )}
+                            Descargar PDF
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="bg-gray-50 rounded-lg p-8 text-center border-2 border-dashed border-gray-300">
+                    <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <p className="text-gray-600 mb-4">Funcionalidad de factura próximamente</p>
+                    <Button variant="outline" disabled>
+                      Generar Factura
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>
