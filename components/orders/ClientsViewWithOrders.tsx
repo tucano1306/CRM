@@ -1,4 +1,3 @@
-// components/orders/ClientsViewWithOrders.tsx
 'use client'
 
 import { useState, useMemo } from 'react'
@@ -17,6 +16,21 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import OrdersListImproved from './OrdersListImproved'
+import OrdersTimelineView from './OrdersTimelineView'
+import OrderDetailModal from './OrderDetailModal'
+
+type OrderStatus = 
+  | 'PENDING' 
+  | 'CONFIRMED' 
+  | 'PREPARING'
+  | 'READY_FOR_PICKUP'
+  | 'IN_DELIVERY'
+  | 'DELIVERED'
+  | 'PARTIALLY_DELIVERED'
+  | 'COMPLETED' 
+  | 'CANCELED'
+  | 'PAYMENT_PENDING'
+  | 'PAID'
 
 interface Client {
   id: string
@@ -29,12 +43,14 @@ interface Client {
 interface Order {
   id: string
   orderNumber: string
-  status: string
+  status: OrderStatus
   totalAmount: number
   createdAt: string
+  notes: string | null
+  deliveryInstructions: string | null
   clientId: string
   client: Client
-  orderItems?: any[]
+  orderItems: any[]
 }
 
 interface ClientWithOrders {
@@ -47,16 +63,23 @@ interface ClientWithOrders {
 
 interface ClientsViewWithOrdersProps {
   orders: Order[]
-  userRole: 'SELLER' | 'CLIENT'
-  onOrderClick?: (order: Order) => void
+  userRole: 'seller' | 'buyer'
+  onStatusChange?: (orderId: string, newStatus: OrderStatus, notes?: string) => Promise<void>
+  onDownloadInvoice?: (order: any) => Promise<void>
+  onViewInvoice?: (order: any) => Promise<void>
+  isGeneratingInvoice?: string
 }
 
 export default function ClientsViewWithOrders({ 
   orders, 
   userRole,
-  onOrderClick
+  onStatusChange,
+  onDownloadInvoice,
+  onViewInvoice,
+  isGeneratingInvoice
 }: ClientsViewWithOrdersProps) {
   const [selectedClient, setSelectedClient] = useState<ClientWithOrders | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
 
   // Agrupar órdenes por cliente
@@ -161,13 +184,23 @@ export default function ClientsViewWithOrders({
             <div className="col-span-full bg-white rounded-lg shadow-sm p-12 text-center">
               <User className="h-16 w-16 text-gray-300 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                No se encontraron clientes
+                {searchTerm ? 'No se encontraron clientes' : 'No hay clientes con órdenes'}
               </h3>
-              <p className="text-gray-500">
+              <p className="text-gray-500 mb-4">
                 {searchTerm 
-                  ? 'Intenta cambiar los términos de búsqueda' 
-                  : 'No hay clientes con órdenes registradas'}
+                  ? 'Esta vista solo muestra clientes que tienen órdenes. Si buscas un cliente nuevo sin pedidos, cambia a la vista "Tarjetas".' 
+                  : 'No hay clientes con órdenes registradas. Los clientes aparecerán aquí una vez que realicen su primera orden.'}
               </p>
+              {searchTerm && (
+                <div className="flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors font-medium"
+                  >
+                    Limpiar búsqueda
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             filteredClients.map((clientData) => (
@@ -323,14 +356,27 @@ export default function ClientsViewWithOrders({
                 </p>
               </div>
 
-              <OrdersListImproved 
+              <OrdersTimelineView 
                 orders={selectedClient.orders}
-                userRole={userRole}
-                onOrderClick={onOrderClick}
+                onOrderClick={(order) => setSelectedOrder(order as Order)}
               />
             </div>
           </div>
         </>
+      )}
+
+      {/* Modal de Detalles de Orden */}
+      {selectedOrder && (
+        <OrderDetailModal
+          order={selectedOrder as any}
+          isOpen={!!selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+          userRole={userRole}
+          onStatusChange={onStatusChange}
+          onDownloadInvoice={onDownloadInvoice}
+          onViewInvoice={onViewInvoice}
+          isGeneratingInvoice={isGeneratingInvoice === selectedOrder.id}
+        />
       )}
 
       <style jsx global>{`

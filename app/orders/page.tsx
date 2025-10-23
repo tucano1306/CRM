@@ -8,7 +8,6 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { apiCall } from '@/lib/api-client'
 import { downloadInvoice, openInvoiceInNewTab, type InvoiceData } from '@/lib/invoiceGenerator'
-import OrderDetailModal from '@/components/orders/OrderDetailModal'
 import ClientsViewWithOrders from '@/components/orders/ClientsViewWithOrders'
 
 type OrderStatus = 
@@ -66,7 +65,6 @@ export default function OrdersManagementPage() {
   const [orders, setOrders] = useState<OrderWithItems[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null)
   const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null)
 
   useEffect(() => {
@@ -193,11 +191,6 @@ export default function OrdersManagementPage() {
           )
         )
         
-        // Si hay una orden seleccionada, actualizarla también
-        if (selectedOrder && selectedOrder.id === orderId) {
-          setSelectedOrder({ ...selectedOrder, status: newStatus })
-        }
-        
         // Recargar órdenes para obtener datos frescos
         await fetchOrders()
       } else {
@@ -250,23 +243,12 @@ export default function OrdersManagementPage() {
         {/* Componente principal de vista por clientes */}
         <ClientsViewWithOrders 
           orders={orders}
-          userRole="SELLER"
-          onOrderClick={(order) => setSelectedOrder(order as OrderWithItems)}
+          userRole="seller"
+          onStatusChange={handleStatusChange}
+          onDownloadInvoice={(order) => handleDownloadInvoice(order as OrderWithItems)}
+          onViewInvoice={(order) => handleViewInvoice(order as OrderWithItems)}
+          isGeneratingInvoice={generatingInvoice || undefined}
         />
-
-        {/* Modal de Detalle de Orden */}
-        {selectedOrder && (
-          <OrderDetailModal
-            order={selectedOrder}
-            isOpen={!!selectedOrder}
-            onClose={() => setSelectedOrder(null)}
-            userRole="seller"
-            onStatusChange={handleStatusChange}
-            onDownloadInvoice={(order) => handleDownloadInvoice(order as OrderWithItems)}
-            onViewInvoice={(order) => handleViewInvoice(order as OrderWithItems)}
-            isGeneratingInvoice={generatingInvoice === selectedOrder.id}
-          />
-        )}
       </div>
     </MainLayout>
   )

@@ -345,7 +345,10 @@ export default function ClientsPage() {
           </div>
           <input
             type="text"
-            placeholder="Buscar por nombre, email, teléfono o dirección..."
+            placeholder={viewMode === 'cards' 
+              ? "Buscar por nombre, email, teléfono o dirección..." 
+              : "Buscar clientes con órdenes (por nombre o email)..."
+            }
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
@@ -361,7 +364,7 @@ export default function ClientsPage() {
         </div>
         
         {/* Indicador de resultados */}
-        {searchQuery && (
+        {viewMode === 'cards' && searchQuery && (
           <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
             <Users className="h-4 w-4" />
             <span>
@@ -382,6 +385,22 @@ export default function ClientsPage() {
                 Ver todos
               </button>
             )}
+          </div>
+        )}
+        
+        {/* Info sobre vista actual */}
+        {viewMode === 'orders' && (
+          <div className="mt-3 bg-purple-50 border border-purple-200 rounded-lg p-3 text-sm text-purple-800">
+            <div className="flex items-start gap-2">
+              <Users className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <p>
+                <strong>Vista "Con Órdenes":</strong> Solo muestra clientes que tienen pedidos realizados. 
+                Si buscas un cliente nuevo sin órdenes, cambia a la vista <button 
+                  onClick={() => setViewMode('cards')}
+                  className="underline font-semibold hover:text-purple-900"
+                >"Tarjetas"</button>.
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -468,7 +487,7 @@ export default function ClientsPage() {
           ) : orders.length > 0 ? (
             <ClientsViewWithOrders 
               orders={orders}
-              userRole="SELLER"
+              userRole="seller"
             />
           ) : (
             <div className="bg-white rounded-lg shadow-sm p-12 text-center">
