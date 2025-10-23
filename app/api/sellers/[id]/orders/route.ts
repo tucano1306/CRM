@@ -29,7 +29,7 @@ export async function GET(
             phone: true
           }
         },
-        items: {
+        orderItems: {
           include: {
             product: {
               select: {
@@ -41,7 +41,7 @@ export async function GET(
           }
         },
         _count: {
-          select: { items: true }
+          select: { orderItems: true }
         }
       },
       orderBy: { createdAt: 'desc' }
