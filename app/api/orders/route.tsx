@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
-
-const prisma = new PrismaClient()
 
 // GET /api/orders - Obtener todas las órdenes (para vendedor)
 // ✅ CON TIMEOUT DE 5 SEGUNDOS
+// Soporta: ?status=PENDING&limit=10&recent=true
 export async function GET(request: Request) {
   try {
     const { userId } = await auth()
@@ -18,6 +17,11 @@ export async function GET(request: Request) {
     // Obtener parámetros de búsqueda
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
+    const limitParam = searchParams.get('limit')
+    const recentParam = searchParams.get('recent')
+    
+    const limit = limitParam ? parseInt(limitParam, 10) : undefined
+    const isRecent = recentParam === 'true'
 
     // Construir filtro
     const whereClause: any = {}
@@ -72,8 +76,27 @@ export async function GET(request: Request) {
         orderBy: {
           createdAt: 'desc',
         },
+        ...(limit ? { take: limit } : {}),
       })
     )
+
+    // Si se solicita formato "recent" simplificado
+    if (isRecent) {
+      const recentOrders = orders.map(order => ({
+        id: order.id,
+        orderNumber: order.orderNumber,
+        clientName: order.client?.name || 'Cliente no disponible',
+        totalAmount: order.totalAmount,
+        status: order.status,
+        createdAt: order.createdAt.toISOString(),
+        itemCount: order.orderItems.length,
+      }))
+
+      return NextResponse.json({
+        success: true,
+        orders: recentOrders,
+      })
+    }
 
     // Estadísticas rápidas
     const stats = {
@@ -105,7 +128,5 @@ export async function GET(request: Request) {
       { error: 'Error obteniendo órdenes: ' + (error as Error).message },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }

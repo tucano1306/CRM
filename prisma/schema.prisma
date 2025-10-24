@@ -73,6 +73,7 @@ model Product {
   name        String
   description String?
   unit        ProductUnit     @default(case)
+  category    ProductCategory @default(OTROS)
   price       Float           @default(0)
   stock       Int             @default(0)
   sku         String?         @unique
@@ -88,11 +89,36 @@ model Product {
   returnItems         ReturnItem[]
   history             ProductHistory[]
   productTags         ProductTag[]
+  variants            ProductVariant[]
 
   @@index([name])
   @@index([unit])
+  @@index([category])
   @@index([isActive])
   @@map("products")
+
+
+// ...existing code...
+
+model ProductVariant {
+  id          String   @id @default(uuid())
+  productId   String
+  size        String
+  type        String
+  price       Float
+  stock       Int
+  sku         String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([size])
+  @@index([type])
+  @@index([isActive])
+  @@map("product_variants")
 }
 
 model ProductSeller {
@@ -407,6 +433,18 @@ model schedules {
   @@unique([sellerId, dayOfWeek, timeSlot])
   @@index([dayOfWeek])
   @@index([sellerId])
+}
+
+enum ProductCategory {
+  CARNES
+  EMBUTIDOS
+  SALSAS
+  LACTEOS
+  GRANOS
+  VEGETALES
+  CONDIMENTOS
+  BEBIDAS
+  OTROS
 }
 
 enum ProductUnit {

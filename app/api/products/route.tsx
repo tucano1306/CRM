@@ -5,10 +5,14 @@ import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeo
 
 // GET /api/products - Obtener todos los productos
 // ✅ CON TIMEOUT DE 5 SEGUNDOS
+// Soporta: ?search=nombre&lowStock=true
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search')
+    const lowStockParam = searchParams.get('lowStock')
+    
+    const lowStock = lowStockParam === 'true'
 
     // Construir filtro
     const whereClause: any = {}
@@ -19,6 +23,11 @@ export async function GET(request: Request) {
         { description: { contains: search, mode: 'insensitive' } },
         { sku: { contains: search, mode: 'insensitive' } },
       ]
+    }
+
+    // Filtrar por stock bajo (menos de 10 unidades por defecto)
+    if (lowStock) {
+      whereClause.stock = { lt: 10 }
     }
 
     // ✅ Obtener productos CON TIMEOUT
@@ -33,7 +42,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      data: products,
+      products: products,
     })
   } catch (error) {
     console.error('Error obteniendo productos:', error)
@@ -54,8 +63,6 @@ export async function GET(request: Request) {
       },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }
 
@@ -70,7 +77,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, description, unit, price, stock, sku } = body
+    const { name, description, unit, category, price, stock, sku } = body
 
     // Validación
     if (!name || !unit || price === undefined || stock === undefined) {
@@ -87,6 +94,7 @@ export async function POST(request: Request) {
           name,
           description: description || '',
           unit,
+          category: category || 'OTROS',
           price: parseFloat(price),
           stock: parseInt(stock),
           sku: sku || null,
@@ -118,7 +126,5 @@ export async function POST(request: Request) {
       },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }

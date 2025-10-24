@@ -24,7 +24,9 @@ import {
   CheckCircle,
   TrendingDown,
   Tag as TagIcon,
-  SlidersHorizontal
+  SlidersHorizontal,
+  List,
+  Edit2
 } from 'lucide-react'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
@@ -44,6 +46,7 @@ interface Product {
   name: string
   description: string
   unit: string
+  category?: string
   price: number
   stock: number
   isActive: boolean
@@ -83,6 +86,15 @@ export default function ProductsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [availableTags, setAvailableTags] = useState<string[]>([])
   const [showFilters, setShowFilters] = useState(false)
+  const [activeCategory, setActiveCategory] = useState<string>('TODOS')
+  
+  // Estados para vista de tabla y acciones masivas
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
+  const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set())
+  const [showBulkActions, setShowBulkActions] = useState(false)
+  const [bulkCategory, setBulkCategory] = useState('')
+  const [bulkPriceChange, setBulkPriceChange] = useState({ type: 'increase', value: '0' })
+  
   const [filters, setFilters] = useState<Filters>({
     stock: 'all',
     priceRange: [0, 1000],
@@ -92,10 +104,25 @@ export default function ProductsPage() {
     name: '',
     description: '',
     unit: 'pk',
+    category: 'OTROS',
     price: '',
     stock: '',
     sku: ''
   })
+
+  // Categorías con emojis
+  const categories = [
+    { id: 'TODOS', label: 'Todos', icon: '📦' },
+    { id: 'CARNES', label: 'Carnes', icon: '🥩' },
+    { id: 'EMBUTIDOS', label: 'Embutidos', icon: '🌭' },
+    { id: 'SALSAS', label: 'Salsas', icon: '🍯' },
+    { id: 'LACTEOS', label: 'Lácteos', icon: '🥛' },
+    { id: 'GRANOS', label: 'Granos', icon: '🌾' },
+    { id: 'VEGETALES', label: 'Vegetales', icon: '🥬' },
+    { id: 'CONDIMENTOS', label: 'Condimentos', icon: '🧂' },
+    { id: 'BEBIDAS', label: 'Bebidas', icon: '🥤' },
+    { id: 'OTROS', label: 'Otros', icon: '📋' }
+  ]
 
   useEffect(() => {
     fetchProducts()
@@ -213,7 +240,7 @@ export default function ProductsPage() {
       if (result.success) {
         setShowForm(false)
         setEditingId(null)
-        setFormData({ name: '', description: '', unit: 'pk', price: '', stock: '', sku: '' })  // ← ACTUALIZADO
+        setFormData({ name: '', description: '', unit: 'pk', category: 'OTROS', price: '', stock: '', sku: '' })
         fetchProducts()
         fetchProductStats()
       } else {
@@ -231,9 +258,10 @@ export default function ProductsPage() {
       name: product.name,
       description: product.description,
       unit: product.unit,
+      category: product.category || 'OTROS',
       price: product.price.toString(),
       stock: product.stock.toString(),
-      sku: product.sku || ''  // ← AGREGADO
+      sku: product.sku || ''
     })
     setShowForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -241,8 +269,131 @@ export default function ProductsPage() {
 
   const cancelEdit = () => {
     setEditingId(null)
-    setFormData({ name: '', description: '', unit: 'pk', price: '', stock: '', sku: '' })  // ← ACTUALIZADO
+    setFormData({ name: '', description: '', unit: 'pk', category: 'OTROS', price: '', stock: '', sku: '' })
     setShowForm(false)
+  }
+
+  // Funciones de selección múltiple
+  const toggleSelectProduct = (productId: string) => {
+    const newSelected = new Set(selectedProducts)
+    if (newSelected.has(productId)) {
+      newSelected.delete(productId)
+    } else {
+      newSelected.add(productId)
+    }
+    setSelectedProducts(newSelected)
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedProducts.size === filteredProducts.length) {
+      setSelectedProducts(new Set())
+    } else {
+      setSelectedProducts(new Set(filteredProducts.map(p => p.id)))
+    }
+  }
+
+  const clearSelection = () => {
+    setSelectedProducts(new Set())
+    setShowBulkActions(false)
+  }
+
+  // Acciones masivas
+  const bulkDelete = async () => {
+    if (!confirm(`¿Eliminar ${selectedProducts.size} producto(s)?`)) return
+
+    try {
+      const deletePromises = Array.from(selectedProducts).map(id =>
+        apiCall(`/api/products/${id}`, { method: 'DELETE', timeout: 5000 })
+      )
+      
+      await Promise.all(deletePromises)
+      alert('Productos eliminados exitosamente')
+      clearSelection()
+      fetchProducts()
+      fetchProductStats()
+    } catch (error) {
+      alert('Error al eliminar productos')
+    }
+  }
+
+  const bulkUpdateCategory = async () => {
+    if (!bulkCategory) {
+      alert('Selecciona una categoría')
+      return
+    }
+
+    try {
+      const updatePromises = Array.from(selectedProducts).map(id =>
+        apiCall(`/api/products/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category: bulkCategory }),
+          timeout: 5000
+        })
+      )
+      
+      await Promise.all(updatePromises)
+      alert(`${selectedProducts.size} producto(s) actualizados`)
+      clearSelection()
+      fetchProducts()
+    } catch (error) {
+      alert('Error al actualizar categoría')
+    }
+  }
+
+  const bulkUpdatePrices = async () => {
+    if (!bulkPriceChange.value || parseFloat(bulkPriceChange.value) <= 0) {
+      alert('Ingresa un valor válido')
+      return
+    }
+
+    try {
+      const selectedProductsList = products.filter(p => selectedProducts.has(p.id))
+      const updatePromises = selectedProductsList.map(product => {
+        let newPrice = product.price
+        const changeValue = parseFloat(bulkPriceChange.value)
+        
+        if (bulkPriceChange.type === 'increase') {
+          newPrice += changeValue
+        } else if (bulkPriceChange.type === 'decrease') {
+          newPrice = Math.max(0, newPrice - changeValue)
+        } else if (bulkPriceChange.type === 'percentage') {
+          newPrice = newPrice * (1 + changeValue / 100)
+        }
+
+        return apiCall(`/api/products/${product.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ price: newPrice }),
+          timeout: 5000
+        })
+      })
+      
+      await Promise.all(updatePromises)
+      alert(`Precios de ${selectedProducts.size} producto(s) actualizados`)
+      clearSelection()
+      fetchProducts()
+    } catch (error) {
+      alert('Error al actualizar precios')
+    }
+  }
+
+  const exportSelected = () => {
+    const selectedProductsList = products.filter(p => selectedProducts.has(p.id))
+    const csvContent = [
+      ['Nombre', 'Categoría', 'Precio', 'Stock', 'Unidad', 'SKU'].join(','),
+      ...selectedProductsList.map(p => 
+        [p.name, p.category, p.price, p.stock, p.unit, p.sku || ''].join(',')
+      )
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `productos-${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+    window.URL.revokeObjectURL(url)
   }
   
   const deleteProduct = async (id: string) => {
@@ -282,6 +433,9 @@ export default function ProductsPage() {
           (product.unit || '').toLowerCase().includes(searchLower)
         )
 
+        // Filtro de categoría
+        const categoryMatch = activeCategory === 'TODOS' || product.category === activeCategory
+
         // Filtro de stock
         const stockMatch = (() => {
           if (filters.stock === 'all') return true
@@ -297,11 +451,12 @@ export default function ProductsPage() {
         // Filtro de tags
         const tagMatch = filters.tag === '' || product.productTags?.some(t => t.label === filters.tag)
 
-        const match = searchMatch && stockMatch && priceMatch && tagMatch
+        const match = searchMatch && categoryMatch && stockMatch && priceMatch && tagMatch
 
         console.log('🔍 Comparando:', {
           productName: product.name,
           searchMatch,
+          categoryMatch,
           stockMatch,
           priceMatch,
           tagMatch,
@@ -459,6 +614,55 @@ export default function ProductsPage() {
             </div>
           </div>
         </div>
+
+        {/* Tabs de Categorías */}
+        <div className="bg-white rounded-lg shadow-md p-4">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300">
+            {categories.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                className={`
+                  flex items-center gap-2 px-4 py-2 rounded-lg font-medium
+                  whitespace-nowrap transition-all transform hover:scale-105
+                  ${activeCategory === cat.id
+                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }
+                `}
+              >
+                <span className="text-xl">{cat.icon}</span>
+                <span>{cat.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Stats Rápidas por Categoría */}
+        {activeCategory !== 'TODOS' && (
+          <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <p className="text-2xl font-bold text-purple-600">
+                  {filteredProducts.length}
+                </p>
+                <p className="text-sm text-gray-600">Productos</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-green-600">
+                  ${filteredProducts.reduce((sum, p) => sum + p.price, 0).toFixed(2)}
+                </p>
+                <p className="text-sm text-gray-600">Valor Total</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-blue-600">
+                  {filteredProducts.reduce((sum, p) => sum + p.stock, 0)}
+                </p>
+                <p className="text-sm text-gray-600">Stock Total</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Panel de Filtros Avanzados */}
         <div className="bg-white rounded-lg shadow">
@@ -620,6 +824,24 @@ export default function ProductsPage() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Categoría */}
+                  <div>
+                    <Label htmlFor="category">Categoría *</Label>
+                    <select
+                      id="category"
+                      value={formData.category || 'OTROS'}
+                      onChange={(e) => setFormData({...formData, category: e.target.value})}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    >
+                      {categories.filter(c => c.id !== 'TODOS').map(cat => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.icon} {cat.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div>
                     <Label htmlFor="name">Nombre del Producto</Label>
                     <Input
@@ -706,8 +928,166 @@ export default function ProductsPage() {
           </Card>
         )}
 
-        {/* Lista de Productos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {/* Toggle Vista Cards/Tabla */}
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-gray-900">
+            {productsWithStats.length} Producto{productsWithStats.length !== 1 ? 's' : ''}
+          </h2>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setViewMode('cards')}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
+                viewMode === 'cards'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              <Package size={18} />
+              Cards
+            </button>
+            <button
+              onClick={() => setViewMode('table')}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-all ${
+                viewMode === 'table'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              <List size={18} />
+              Tabla
+            </button>
+          </div>
+        </div>
+
+        {/* Vista Tabla */}
+        {viewMode === 'table' ? (
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-blue-50 to-purple-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left">
+                      <input
+                        type="checkbox"
+                        checked={productsWithStats.length > 0 && selectedProducts.size === productsWithStats.length}
+                        onChange={toggleSelectAll}
+                        className="w-4 h-4 cursor-pointer"
+                      />
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">SKU</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Nombre</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Categoría</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Precio</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Stock</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Unidad</th>
+                    <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {productsWithStats.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-12 text-center">
+                        <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-500">
+                          {searchQuery ? 'No se encontraron productos' : 'No hay productos registrados'}
+                        </p>
+                      </td>
+                    </tr>
+                  ) : (
+                    productsWithStats.map((product) => (
+                      <tr
+                        key={product.id}
+                        className={`hover:bg-gray-50 transition-colors ${
+                          selectedProducts.has(product.id) ? 'bg-blue-50' : ''
+                        }`}
+                      >
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedProducts.has(product.id)}
+                            onChange={() => toggleSelectProduct(product.id)}
+                            className="w-4 h-4 cursor-pointer"
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {product.sku || '-'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <Package className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                            <div>
+                              <p className="font-medium text-gray-900">{product.name}</p>
+                              {product.productTags && product.productTags.length > 0 && (
+                                <div className="flex gap-1 mt-1">
+                                  {product.productTags.slice(0, 2).map((tag) => (
+                                    <span
+                                      key={tag.id}
+                                      className="text-xs px-1.5 py-0.5 rounded text-white"
+                                      style={{ backgroundColor: tag.color }}
+                                    >
+                                      {tag.label}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm">
+                            {categories.find(c => c.id === product.category)?.icon}{' '}
+                            {product.category}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="font-semibold text-green-600">
+                            ${product.price.toFixed(2)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`px-2 py-1 rounded text-sm font-medium ${
+                              product.stock < 10
+                                ? 'bg-red-100 text-red-700'
+                                : product.stock < 50
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-green-100 text-green-700'
+                            }`}
+                          >
+                            {product.stock}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {product.unit}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex justify-center gap-2">
+                            <button
+                              onClick={() => startEdit(product)}
+                              className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                              title="Editar"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => deleteProduct(product.id)}
+                              className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                              title="Eliminar"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          /* Vista Cards */
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {productsWithStats.length === 0 ? (
             <div className="col-span-full">
               <Card>
@@ -894,7 +1274,85 @@ export default function ProductsPage() {
             )
           })
           )}
-        </div>
+          </div>
+        )}
+
+        {/* Panel de Acciones Masivas */}
+        {selectedProducts.size > 0 && (
+          <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white shadow-2xl rounded-xl p-4 z-50 border-2 border-blue-200">
+            <div className="flex items-center gap-4 flex-wrap">
+              <span className="font-bold text-blue-600">
+                {selectedProducts.size} seleccionado{selectedProducts.size !== 1 ? 's' : ''}
+              </span>
+              <button
+                onClick={() => setShowBulkActions(true)}
+                className="px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+              >
+                Cambiar Categoría
+              </button>
+              <button
+                onClick={bulkDelete}
+                className="px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+              >
+                Eliminar
+              </button>
+              <button
+                onClick={exportSelected}
+                className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+              >
+                Exportar CSV
+              </button>
+              <button
+                onClick={clearSelection}
+                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Limpiar selección"
+              >
+                <X size={18} className="text-gray-600" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Modal de Cambio de Categoría Masivo */}
+        {showBulkActions && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100]">
+            <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl">
+              <h3 className="text-xl font-bold mb-4">Cambiar Categoría</h3>
+              <p className="text-gray-600 mb-4">
+                Aplicar a {selectedProducts.size} producto{selectedProducts.size !== 1 ? 's' : ''}
+              </p>
+              <div className="mb-6">
+                <Label>Nueva Categoría</Label>
+                <select
+                  value={bulkCategory}
+                  onChange={(e) => setBulkCategory(e.target.value)}
+                  className="w-full mt-2 px-3 py-2 border rounded-lg"
+                >
+                  <option value="">Seleccionar...</option>
+                  {categories.filter(c => c.id !== 'TODOS').map(cat => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.icon} {cat.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowBulkActions(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={bulkUpdateCategory}
+                  disabled={!bulkCategory}
+                >
+                  Aplicar Cambios
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Product Modal con Tags */}
         {selectedProduct && (
