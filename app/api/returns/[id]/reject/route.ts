@@ -2,6 +2,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { notifyReturnRejected } from '@/lib/notifications'
+import logger, { LogCategory } from '@/lib/logger'
 
 const prisma = new PrismaClient()
 
@@ -56,6 +58,33 @@ export async function POST(
         order: true
       }
     })
+
+    // 🔔 ENVIAR NOTIFICACIÓN AL COMPRADOR sobre rechazo de devolución
+    try {
+      await notifyReturnRejected(
+        updatedReturn.clientId,
+        updatedReturn.id,
+        updatedReturn.returnNumber,
+        body.rejectionReason || 'No se especificó motivo'
+      )
+      
+      logger.info(
+        LogCategory.API,
+        'Return rejection notification sent to client',
+        {
+          clientId: updatedReturn.clientId,
+          returnId: id,
+          returnNumber: updatedReturn.returnNumber
+        }
+      )
+    } catch (notifError) {
+      // No bloquear la respuesta si falla la notificación
+      logger.error(
+        LogCategory.API,
+        'Error sending return rejection notification',
+        notifError
+      )
+    }
 
     return NextResponse.json({
       success: true,

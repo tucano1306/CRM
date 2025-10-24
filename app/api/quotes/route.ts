@@ -2,6 +2,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { notifyQuoteCreated } from '@/lib/notifications'
+import logger, { LogCategory } from '@/lib/logger'
 
 // GET - Obtener cotizaciones
 export async function GET() {
@@ -127,6 +129,32 @@ export async function POST(request: Request) {
         client: true
       }
     })
+
+    // 🔔 ENVIAR NOTIFICACIÓN AL COMPRADOR
+    try {
+      await notifyQuoteCreated(
+        body.clientId,
+        quote.id,
+        quoteNumber,
+        Number(totalAmount)
+      )
+      logger.info(
+        LogCategory.API,
+        'Quote creation notification sent to client',
+        {
+          clientId: body.clientId,
+          quoteId: quote.id,
+          quoteNumber
+        }
+      )
+    } catch (notifError) {
+      // No bloquear la respuesta si falla la notificación
+      logger.error(
+        LogCategory.API,
+        'Error sending quote creation notification',
+        notifError
+      )
+    }
 
     return NextResponse.json({
       success: true,

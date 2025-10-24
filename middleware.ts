@@ -203,7 +203,8 @@ export default clerkMiddleware(async (auth, req) => {
     if (userRole === 'CLIENT') {
       return NextResponse.redirect(new URL('/buyer/dashboard', req.url))
     } else {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+      // Vendedor/Admin → Redirigir a products con sistema de tags
+      return NextResponse.redirect(new URL('/products', req.url))
     }
   }
 

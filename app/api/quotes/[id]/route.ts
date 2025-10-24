@@ -2,6 +2,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { notifyQuoteUpdated } from '@/lib/notifications'
+import logger, { LogCategory } from '@/lib/logger'
 
 // GET - Obtener cotización específica
 export async function GET(
@@ -130,6 +132,40 @@ export async function PATCH(
         client: true
       }
     })
+
+    // 🔔 ENVIAR NOTIFICACIÓN AL COMPRADOR sobre cambios en la cotización
+    try {
+      // Detectar qué cambió
+      const changes: string[] = []
+      if (body.title !== undefined) changes.push('Título modificado')
+      if (body.validUntil !== undefined) changes.push('Fecha de validez actualizada')
+      if (body.items) changes.push('Items actualizados')
+      if (body.discount !== undefined) changes.push('Descuento modificado')
+      
+      await notifyQuoteUpdated(
+        updatedQuote.clientId,
+        updatedQuote.id,
+        updatedQuote.quoteNumber,
+        changes.length > 0 ? changes : ['Cotización actualizada']
+      )
+      
+      logger.info(
+        LogCategory.API,
+        'Quote update notification sent to client',
+        {
+          clientId: updatedQuote.clientId,
+          quoteId: id,
+          changes
+        }
+      )
+    } catch (notifError) {
+      // No bloquear la respuesta si falla la notificación
+      logger.error(
+        LogCategory.API,
+        'Error sending quote update notification',
+        notifError
+      )
+    }
 
     return NextResponse.json({
       success: true,

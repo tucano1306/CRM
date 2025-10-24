@@ -3,6 +3,12 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@clerk/nextjs/server'
 import { changeOrderStatus, isStatusTransitionAllowed } from '@/lib/orderStatusAudit'
 import { OrderStatus } from '@prisma/client'
+import { 
+  notifyOrderStatusChanged, 
+  notifyOrderConfirmed, 
+  notifyOrderCompleted 
+} from '@/lib/notifications'
+import logger, { LogCategory } from '@/lib/logger'
 
 const VALID_STATUSES = [
   'PENDING',
@@ -158,6 +164,52 @@ export async function PATCH(
         }
       }
     })
+
+    // 🔔 ENVIAR NOTIFICACIÓN AL COMPRADOR sobre el cambio de estado
+    try {
+      // Notificación genérica de cambio de estado
+      await notifyOrderStatusChanged(
+        order.clientId,
+        orderId,
+        updatedOrder?.orderNumber || 'N/A',
+        order.status,
+        status as OrderStatus
+      )
+
+      // Notificaciones específicas adicionales
+      if (status === 'CONFIRMED') {
+        await notifyOrderConfirmed(
+          order.clientId,
+          orderId,
+          updatedOrder?.orderNumber || 'N/A',
+          '2-3 días hábiles' // Estimación opcional
+        )
+      } else if (status === 'COMPLETED') {
+        await notifyOrderCompleted(
+          order.clientId,
+          orderId,
+          updatedOrder?.orderNumber || 'N/A'
+        )
+      }
+
+      logger.info(
+        LogCategory.API,
+        'Notification sent to client about order status change',
+        {
+          clientId: order.clientId,
+          orderId,
+          oldStatus: order.status,
+          newStatus: status
+        }
+      )
+    } catch (notifError) {
+      // No bloquear la respuesta si falla la notificación
+      logger.error(
+        LogCategory.API,
+        'Error sending status change notification to client',
+        notifError
+      )
+    }
 
     return NextResponse.json({
       success: true,

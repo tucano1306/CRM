@@ -49,36 +49,66 @@ Write-Host "  Abriendo navegadores                         " -ForegroundColor Cy
 Write-Host "================================================" -ForegroundColor Cyan
 Write-Host ""
 
-# URL del CRM
+# URLs del CRM
 $url = "http://localhost:3000/sign-in"
 
-# VENDEDOR en Microsoft Edge
 Write-Host "[1/2] Abriendo Microsoft Edge para VENDEDOR..." -ForegroundColor Blue
+Write-Host "      Despues de login ira a: /products (Sistema con Tags)" -ForegroundColor Cyan
+
+# Intentar abrir Edge
+$edgeOpened = $false
 try {
-    $edgePath = "msedge"
-    Start-Process $edgePath $url -ErrorAction Stop
-    Write-Host "      Edge abierto exitosamente" -ForegroundColor Green
+    $edgeExe = "${env:ProgramFiles(x86)}\Microsoft\Edge\Application\msedge.exe"
+    if (Test-Path $edgeExe) {
+        Start-Process -FilePath $edgeExe -ArgumentList "--new-window", $url
+        Write-Host "      Edge abierto exitosamente" -ForegroundColor Green
+        $edgeOpened = $true
+    }
 } catch {
-    Write-Host "      Edge no encontrado, intentando Chrome..." -ForegroundColor Yellow
+    Write-Host "      Error abriendo Edge: $_" -ForegroundColor Red
+}
+
+# Si Edge no funcionó, intentar con Start-Process directo
+if (-not $edgeOpened) {
     try {
-        Start-Process chrome $url -ErrorAction Stop
-        Write-Host "      Chrome abierto como alternativa" -ForegroundColor Green
+        Start-Process "microsoft-edge:$url"
+        Write-Host "      Edge abierto (protocolo)" -ForegroundColor Green
     } catch {
-        Write-Host "      ERROR: No se pudo abrir ningun navegador" -ForegroundColor Red
-        Write-Host "      Abre manualmente: $url" -ForegroundColor Yellow
+        Write-Host "      No se pudo abrir Edge, abre manualmente: $url" -ForegroundColor Yellow
     }
 }
 
 Start-Sleep -Seconds 3
 
-# COMPRADOR en Chrome Incognito
 Write-Host "[2/2] Abriendo Chrome Incognito para COMPRADOR..." -ForegroundColor Magenta
+Write-Host "      Despues de login ira a: /buyer/dashboard" -ForegroundColor Cyan
+
+# Intentar abrir Chrome Incognito
+$chromeOpened = $false
 try {
-    Start-Process chrome "--incognito $url" -ErrorAction Stop
-    Write-Host "      Chrome incognito abierto exitosamente" -ForegroundColor Green
+    $chromeExe = "${env:ProgramFiles}\Google\Chrome\Application\chrome.exe"
+    if (Test-Path $chromeExe) {
+        Start-Process -FilePath $chromeExe -ArgumentList "--incognito", "--new-window", $url
+        Write-Host "      Chrome incognito abierto exitosamente" -ForegroundColor Green
+        $chromeOpened = $true
+    }
 } catch {
-    Write-Host "      ERROR: No se pudo abrir Chrome" -ForegroundColor Red
-    Write-Host "      Abre manualmente en modo incognito: $url" -ForegroundColor Yellow
+    Write-Host "      Error abriendo Chrome: $_" -ForegroundColor Red
+}
+
+# Si Chrome no funcionó, intentar ubicación alternativa
+if (-not $chromeOpened) {
+    try {
+        $chromeExeAlt = "${env:LOCALAPPDATA}\Google\Chrome\Application\chrome.exe"
+        if (Test-Path $chromeExeAlt) {
+            Start-Process -FilePath $chromeExeAlt -ArgumentList "--incognito", "--new-window", $url
+            Write-Host "      Chrome incognito abierto exitosamente (alt)" -ForegroundColor Green
+        } else {
+            Write-Host "      No se pudo abrir Chrome, abre manualmente: $url" -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "      No se pudo abrir Chrome, abre manualmente: $url" -ForegroundColor Yellow
+    }
 }
 
 Write-Host ""
@@ -91,7 +121,12 @@ Write-Host ""
 $finalCheck = Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue
 if ($finalCheck) {
     Write-Host "Estado del servidor: CORRIENDO" -ForegroundColor Green
-    Write-Host "URL: http://localhost:3000" -ForegroundColor Cyan
+    Write-Host ""
+    Write-Host "URLs Abiertas:" -ForegroundColor Cyan
+    Write-Host "  VENDEDOR:  http://localhost:3000/products-modern" -ForegroundColor Blue
+    Write-Host "  COMPRADOR: http://localhost:3000/buyer" -ForegroundColor Magenta
+    Write-Host ""
+    Write-Host "Servidor principal: http://localhost:3000" -ForegroundColor Gray
 } else {
     Write-Host "Estado del servidor: NO DETECTADO" -ForegroundColor Red
     Write-Host "Si ves errores arriba, ejecuta manualmente: npm run dev" -ForegroundColor Yellow
@@ -106,21 +141,22 @@ Write-Host "IMPORTANTE: Debes iniciar sesion con usuarios DIFERENTES" -Foregroun
 Write-Host ""
 Write-Host "Microsoft Edge (VENDEDOR):" -ForegroundColor Blue
 Write-Host "  Email: tucano0109@gmail.com" -ForegroundColor White
-Write-Host "  Deberia ir a: /dashboard (interfaz azul)" -ForegroundColor Gray
+Write-Host "  Ira automaticamente a: /products (CON SISTEMA DE TAGS)" -ForegroundColor Green
 Write-Host ""
 Write-Host "Chrome Incognito (COMPRADOR):" -ForegroundColor Magenta
 Write-Host "  Email: l3oyucon1978@gmail.com" -ForegroundColor White
-Write-Host "  Deberia ir a: /buyer/dashboard (interfaz morada)" -ForegroundColor Gray
+Write-Host "  Ira a: /buyer/dashboard (interfaz morada)" -ForegroundColor Gray
 Write-Host ""
-Write-Host "Si ambos muestran la misma interfaz:" -ForegroundColor Red
-Write-Host "  - Verifica que estes usando correos DIFERENTES" -ForegroundColor Yellow
-Write-Host "  - Cierra TODO y vuelve a ejecutar el script" -ForegroundColor Yellow
+Write-Host "NUEVO: Sistema de Tags en /products" -ForegroundColor Cyan
+Write-Host "  - Haz clic en 'Detalles & Tags' en cualquier producto" -ForegroundColor Gray
+Write-Host "  - Tab 'Promociones' para gestionar etiquetas" -ForegroundColor Gray
+Write-Host "  - 17 etiquetas predefinidas + etiquetas personalizadas" -ForegroundColor Gray
+Write-Host "  - Sugerencias automaticas basadas en stock/precio/fecha" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Si los navegadores NO se abrieron:" -ForegroundColor Red
-Write-Host "  - Abre manualmente: http://localhost:3000/sign-in" -ForegroundColor Yellow
-Write-Host "  - Usa Edge para vendedor, Chrome incognito para comprador" -ForegroundColor Yellow
+Write-Host "  Abre manualmente: http://localhost:3000/sign-in" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "================================================" -ForegroundColor Green
-Write-Host "Presiona Ctrl+C en la ventana del servidor para detener" -ForegroundColor Gray
+Write-Host "Servidor corriendo. Ctrl+C en ventana del servidor para detener" -ForegroundColor Gray
 Write-Host "================================================" -ForegroundColor Green
 Write-Host ""

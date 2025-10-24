@@ -5,6 +5,7 @@ import { Home, Package, ShoppingCart, User, Menu, X, Store, RefreshCw, RotateCcw
 import Link from 'next/link'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
+import NotificationBell from '@/components/shared/NotificationBell'
 
 export default function BuyerLayout({ children }: { children: React.ReactNode }) {
   const { user } = useUser()
@@ -63,6 +64,7 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
                 <p className="text-sm font-medium text-white truncate">{user?.firstName}</p>
                 <p className="text-xs text-purple-300">{user?.primaryEmailAddress?.emailAddress}</p>
               </div>
+              <NotificationBell />
             </div>
           </div>
         </div>
@@ -74,7 +76,10 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
             <Menu className="h-6 w-6" />
           </button>
           <h1 className="font-bold">Food CRM</h1>
-          <UserButton />
+          <div className="flex items-center gap-3">
+            <NotificationBell />
+            <UserButton />
+          </div>
         </header>
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>

@@ -29,6 +29,7 @@ model Client {
   quotes                   Quote[]
   returns                  Return[]
   creditNotes              CreditNote[]
+  notifications            Notification[]
 
   @@index([email])
   @@index([sellerId])
@@ -58,6 +59,7 @@ model Seller {
   quotes              Quote[]
   returns             Return[]
   creditNotes         CreditNote[]
+  notifications       Notification[]
 
   @@index([email])
   @@index([isActive])
@@ -84,6 +86,8 @@ model Product {
   recurringOrderItems RecurringOrderItem[]
   quoteItems          QuoteItem[]
   returnItems         ReturnItem[]
+  history             ProductHistory[]
+  productTags         ProductTag[]
 
   @@index([name])
   @@index([unit])
@@ -193,6 +197,48 @@ model OrderSchedule {
   @@index([sellerId])
   @@index([dayOfWeek])
   @@map("order_schedules")
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  sellerId    String?          // Opcional - para notificaciones a vendedor
+  clientId    String?          // Opcional - para notificaciones a comprador
+  type        NotificationType
+  title       String
+  message     String
+  isRead      Boolean          @default(false)
+  orderId     String?
+  relatedId   String?          // ID relacionado (cotización, devolución, etc.)
+  metadata    Json?            // Datos adicionales flexibles
+  createdAt   DateTime         @default(now())
+  readAt      DateTime?
+
+  seller      Seller?          @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  client      Client?          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([sellerId])
+  @@index([clientId])
+  @@index([isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+enum NotificationType {
+  NEW_ORDER              // Comprador → Vendedor
+  ORDER_MODIFIED         // Comprador → Vendedor
+  ORDER_CANCELLED        // Comprador → Vendedor
+  ORDER_STATUS_CHANGED   // Vendedor → Comprador
+  ORDER_CONFIRMED        // Vendedor → Comprador
+  ORDER_COMPLETED        // Vendedor → Comprador
+  PAYMENT_RECEIVED       // Vendedor → Comprador
+  CHAT_MESSAGE           // Bidireccional
+  RETURN_REQUEST         // Comprador → Vendedor
+  RETURN_APPROVED        // Vendedor → Comprador
+  RETURN_REJECTED        // Vendedor → Comprador
+  QUOTE_CREATED          // Vendedor → Comprador
+  QUOTE_UPDATED          // Vendedor → Comprador
+  CREDIT_NOTE_ISSUED     // Vendedor → Comprador
+  LOW_STOCK_ALERT        // Sistema → Vendedor
 }
 
 model ChatSchedule {
@@ -691,4 +737,35 @@ model CreditNoteUsage {
   @@index([creditNoteId])
   @@index([orderId])
   @@map("credit_note_usage")
+}
+
+model ProductHistory {
+  id          String   @id @default(uuid())
+  productId   String   @map("product_id")
+  changeType  String   @map("change_type") // 'PRICE', 'STOCK', 'NAME', 'DESCRIPTION', etc.
+  oldValue    String?  @map("old_value")
+  newValue    String?  @map("new_value")
+  changedBy   String?  @map("changed_by") // userId or 'SYSTEM'
+  changedAt   DateTime @default(now()) @map("changed_at")
+  
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([changeType])
+  @@index([changedAt])
+  @@map("product_history")
+}
+
+model ProductTag {
+  id        String   @id @default(uuid())
+  label     String
+  color     String?  @default("#6B7280") // Color por defecto (gray)
+  productId String   @map("product_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([label])
+  @@map("product_tags")
 }

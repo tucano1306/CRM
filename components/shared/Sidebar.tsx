@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import ThemeToggle from './ThemeToggle'
+import NotificationBell from './NotificationBell'
 
 const menuItems = [
   {
@@ -120,7 +121,12 @@ export default function Sidebar() {
             </div>
           )}
           <div className="flex items-center gap-2">
-            {!isCollapsed && <ThemeToggle />}
+            {!isCollapsed && (
+              <>
+                <NotificationBell />
+                <ThemeToggle />
+              </>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -188,6 +194,7 @@ export default function Sidebar() {
             <span className="text-xl font-bold text-gray-900 dark:text-white">Food CRM</span>
           </div>
           <div className="flex items-center gap-2">
+            <NotificationBell />
             <ThemeToggle />
             <Button
               variant="ghost"

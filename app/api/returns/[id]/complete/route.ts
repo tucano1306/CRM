@@ -2,6 +2,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { notifyCreditNoteIssued } from '@/lib/notifications'
+import logger, { LogCategory } from '@/lib/logger'
 
 const prisma = new PrismaClient()
 
@@ -81,6 +83,33 @@ export async function POST(
           notes: `Crédito generado por devolución ${returnRecord.returnNumber}`
         }
       })
+
+      // 🔔 ENVIAR NOTIFICACIÓN AL COMPRADOR sobre emisión de nota de crédito
+      try {
+        await notifyCreditNoteIssued(
+          returnRecord.clientId,
+          creditNote.id,
+          creditNoteNumber,
+          Number(returnRecord.finalRefundAmount)
+        )
+        
+        logger.info(
+          LogCategory.API,
+          'Credit note notification sent to client',
+          {
+            clientId: returnRecord.clientId,
+            creditNoteId: creditNote.id,
+            creditNoteNumber
+          }
+        )
+      } catch (notifError) {
+        // No bloquear la respuesta si falla la notificación
+        logger.error(
+          LogCategory.API,
+          'Error sending credit note notification',
+          notifError
+        )
+      }
     }
 
     // Actualizar estado
