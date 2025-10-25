@@ -28,12 +28,12 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
     <NotificationProvider>
       <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-purple-700 to-pink-600 shadow-2xl transition-transform lg:translate-x-0 lg:static`}>
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-slate-800 to-blue-900 shadow-2xl transition-transform lg:translate-x-0 lg:static`}>
         <div className="flex h-full flex-col">
-          <div className="flex h-20 items-center justify-between px-6 border-b border-purple-500">
+          <div className="flex h-20 items-center justify-between px-6 border-b border-slate-700">
             <div>
               <h1 className="text-2xl font-bold text-white">Food CRM</h1>
-              <p className="text-xs text-purple-200">Comprador</p>
+              <p className="text-xs text-slate-300">Comprador</p>
             </div>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white">
               <X className="h-6 w-6" />
@@ -49,7 +49,7 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
                   key={item.name}
                   href={item.href}
                   className={`flex items-center gap-3 rounded-xl px-4 py-3 font-medium transition ${
-                    isActive ? 'bg-white text-purple-700 shadow-lg' : 'text-purple-100 hover:bg-purple-600'
+                    isActive ? 'bg-white text-slate-800 shadow-lg' : 'text-slate-200 hover:bg-slate-700'
                   }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -59,12 +59,12 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
             })}
           </nav>
 
-          <div className="border-t border-purple-500 p-4 bg-purple-800">
+          <div className="border-t border-slate-700 p-4 bg-slate-900">
             <div className="flex items-center gap-3">
               <UserButton afterSignOutUrl="/sign-in" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">{user?.firstName}</p>
-                <p className="text-xs text-purple-300">{user?.primaryEmailAddress?.emailAddress}</p>
+                <p className="text-xs text-slate-400">{user?.primaryEmailAddress?.emailAddress}</p>
               </div>
               <NotificationBell />
             </div>
