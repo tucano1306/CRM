@@ -813,27 +813,26 @@ export default function CatalogPage() {
 
       {/* Botón flotante de comparación */}
       {compareList.length > 0 && (
-        <button 
-          onClick={() => {
-            const compareProducts = products.filter(p => compareList.includes(p.id))
-            // Aquí podrías abrir un modal de comparación
-            alert(`Comparando ${compareList.length} productos:\n${compareProducts.map(p => `• ${p.name} - $${p.price}`).join('\n')}`)
-          }}
-          className="fixed bottom-6 right-6 bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2 z-40 animate-bounce"
-        >
-          <Package className="w-5 h-5" />
-          Comparar ({compareList.length})
+        <div className="fixed bottom-6 right-6 z-40 flex items-center gap-2">
           <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setCompareList([])
-            }}
-            className="ml-2 bg-blue-700 hover:bg-blue-800 rounded-full p-1"
+            onClick={() => setCompareList([])}
+            className="bg-red-500 text-white p-2 rounded-full shadow-lg hover:bg-red-600 transition-all"
             title="Limpiar comparación"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
-        </button>
+          <button 
+            onClick={() => {
+              const compareProducts = products.filter(p => compareList.includes(p.id))
+              // Aquí podrías abrir un modal de comparación
+              alert(`Comparando ${compareList.length} productos:\n${compareProducts.map(p => `• ${p.name} - $${p.price}`).join('\n')}`)
+            }}
+            className="bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2 animate-bounce"
+          >
+            <Package className="w-5 h-5" />
+            Comparar ({compareList.length})
+          </button>
+        </div>
       )}
 
       {/* Carrito Lateral (Slide-in) */}
