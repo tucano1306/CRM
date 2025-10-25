@@ -14,6 +14,8 @@ import {
   AlertCircle,
   X,
   Heart,
+  Grid,
+  List,
 } from 'lucide-react'
 import { ProductCardSkeleton } from '@/components/skeletons'
 
@@ -42,6 +44,9 @@ export default function CatalogPage() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const [sortBy, setSortBy] = useState('relevant')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [compareList, setCompareList] = useState<string[]>([])
 
   // Toggle favorite
   const toggleFavorite = (productId: string) => {
@@ -56,7 +61,22 @@ export default function CatalogPage() {
     })
   }
 
-  // Categorías con contador
+  // Add/remove from compare
+  const toggleCompare = (productId: string) => {
+    setCompareList(prev => {
+      if (prev.includes(productId)) {
+        return prev.filter(id => id !== productId)
+      } else {
+        if (prev.length >= 4) {
+          alert('⚠️ Puedes comparar hasta 4 productos a la vez')
+          return prev
+        }
+        return [...prev, productId]
+      }
+    })
+  }
+
+  // Categories configuration
   const categories = [
     { id: 'all', name: 'Todos', emoji: '📦' },
     { id: 'carnes', name: 'Carnes', emoji: '🥩' },
@@ -125,6 +145,28 @@ export default function CatalogPage() {
     const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase())
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory
     return matchesSearch && matchesCategory
+  })
+
+  // Sort products
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    switch (sortBy) {
+      case 'price-asc':
+        return a.price - b.price
+      case 'price-desc':
+        return b.price - a.price
+      case 'stock':
+        return b.stock - a.stock
+      case 'new':
+        if (a.isNew && !b.isNew) return -1
+        if (!a.isNew && b.isNew) return 1
+        return 0
+      case 'relevant':
+      default:
+        // Priorizar: ofertas > nuevos > stock alto
+        const scoreA = (a.isOffer ? 100 : 0) + (a.isNew ? 50 : 0) + (a.stock > 50 ? 25 : 0)
+        const scoreB = (b.isOffer ? 100 : 0) + (b.isNew ? 50 : 0) + (b.stock > 50 ? 25 : 0)
+        return scoreB - scoreA
+    }
   })
 
   const getCategoryCount = (categoryId: string) => {
@@ -215,7 +257,7 @@ export default function CatalogPage() {
                 Catálogo de Productos
               </h1>
               <p className="text-gray-600 mt-1">
-                {filteredProducts.length} productos disponibles
+                {sortedProducts.length} productos disponibles
               </p>
             </div>
             <button
@@ -227,22 +269,64 @@ export default function CatalogPage() {
             </button>
           </div>
 
-          {/* Búsqueda */}
-          <div className="mt-6 relative">
-            <Search
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-              size={20}
-            />
-            <input
-              type="text"
-              placeholder="Buscar productos..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+          {/* Buscador, Ordenamiento y Vista */}
+          <div className="mt-6 flex flex-col md:flex-row gap-4">
+            {/* Buscador */}
+            <div className="flex-1 relative">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={20}
+              />
+              <input
+                type="text"
+                placeholder="Buscar productos..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            {/* Ordenamiento */}
+            <select 
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            >
+              <option value="relevant">Más relevantes</option>
+              <option value="price-asc">Menor precio</option>
+              <option value="price-desc">Mayor precio</option>
+              <option value="new">Nuevos primero</option>
+              <option value="stock">Stock disponible</option>
+            </select>
+
+            {/* Toggle Vista Grid/Lista */}
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded transition-colors ${
+                  viewMode === 'grid' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Vista en cuadrícula"
+              >
+                <Grid className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded transition-colors ${
+                  viewMode === 'list' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Vista en lista"
+              >
+                <List className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
-          {/* Filtros de Categorías */}
+          {/* Filtros de categoría */}
           <div className="mt-6 flex gap-2 overflow-x-auto pb-2">
             {categories.map((category) => (
               <button
@@ -260,16 +344,39 @@ export default function CatalogPage() {
           </div>
         </div>
 
-        {/* Grid de productos */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
+        {/* Grid/Lista de productos */}
+        <div className={
+          viewMode === 'grid' 
+            ? 'grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+            : 'flex flex-col gap-4'
+        }>
+          {sortedProducts.map((product) => (
             <div
               key={product.id}
-              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all cursor-pointer group"
+              className={`bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all group ${
+                viewMode === 'grid' ? 'cursor-pointer' : 'cursor-pointer flex flex-row'
+              }`}
               onClick={() => setSelectedProduct(product)}
             >
               {/* Imagen del producto con tags */}
-              <div className="relative h-48 bg-gray-100 rounded-t-lg overflow-hidden">
+              <div className={`relative bg-gray-100 overflow-hidden ${
+                viewMode === 'grid' ? 'h-48 rounded-t-lg' : 'w-48 h-48'
+              }`}>
+                {/* Checkbox de comparación */}
+                <div className="absolute top-2 left-2 z-20">
+                  <input 
+                    type="checkbox"
+                    checked={compareList.includes(product.id)}
+                    onChange={(e) => {
+                      e.stopPropagation()
+                      toggleCompare(product.id)
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-5 h-5 rounded border-2 border-white shadow-lg cursor-pointer accent-blue-600"
+                    title="Agregar a comparación"
+                  />
+                </div>
+
                 <img 
                   src={product.imageUrl || '/placeholder-food.jpg'} 
                   alt={product.name}
@@ -288,7 +395,7 @@ export default function CatalogPage() {
                 />
                 
                 {/* Tags */}
-                <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
+                <div className="absolute top-2 left-12 flex flex-col gap-1 z-10">
                   {product.isOffer && (
                     <span className="bg-red-500 text-white text-xs px-2 py-1 rounded shadow-md backdrop-blur-sm">
                       🔥 Oferta
@@ -320,7 +427,7 @@ export default function CatalogPage() {
                 </button>
               </div>
 
-              <div className="p-6">
+              <div className={viewMode === 'grid' ? 'p-6' : 'flex-1 p-6'}>
                 <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2">
                   {product.name}
                 </h3>
@@ -412,6 +519,31 @@ export default function CatalogPage() {
           </div>
         )}
       </div>
+
+      {/* Botón flotante de comparación */}
+      {compareList.length > 0 && (
+        <button 
+          onClick={() => {
+            const compareProducts = products.filter(p => compareList.includes(p.id))
+            // Aquí podrías abrir un modal de comparación
+            alert(`Comparando ${compareList.length} productos:\n${compareProducts.map(p => `• ${p.name} - $${p.price}`).join('\n')}`)
+          }}
+          className="fixed bottom-6 right-6 bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2 z-40 animate-bounce"
+        >
+          <Package className="w-5 h-5" />
+          Comparar ({compareList.length})
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setCompareList([])
+            }}
+            className="ml-2 bg-blue-700 hover:bg-blue-800 rounded-full p-1"
+            title="Limpiar comparación"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </button>
+      )}
 
       {/* Modal de detalles del producto */}
       {selectedProduct && (
