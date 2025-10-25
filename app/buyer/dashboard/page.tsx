@@ -115,7 +115,13 @@ export default function BuyerDashboardPage() {
 
       if (ordersRes.ok) {
         const result = await ordersRes.json()
-        if (result.success) setRecentOrders(result.data.orders || result.data)
+        if (result.success && result.data) {
+          // Manejar diferentes estructuras de respuesta de la API
+          const orders = Array.isArray(result.data) ? result.data : result.data.orders || []
+          setRecentOrders(orders)
+        } else {
+          setRecentOrders([])
+        }
       }
     } catch (error) {
       console.error('Error:', error)
