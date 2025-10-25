@@ -188,7 +188,13 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Proteger rutas de comprador
   if (isBuyerRoute(req)) {
-    if (userRole !== 'CLIENT') {
+    // ✅ PERMITIR a SELLERS ver el catálogo (solo lectura)
+    const allowedSellerRoutes = ['/buyer/catalog', '/buyer/dashboard']
+    const isAllowedForSeller = allowedSellerRoutes.some(route => 
+      req.nextUrl.pathname.startsWith(route)
+    )
+    
+    if (userRole !== 'CLIENT' && !isAllowedForSeller) {
       logger.warn(LogCategory.AUTH, 'Unauthorized buyer route access attempt', {
         userId: userId || undefined,
         userRole,

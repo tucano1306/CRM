@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Calendar, Package, CheckCircle, ArrowRight, ArrowLeft } from 'lucide-react'
+import { X, Calendar, Package, CheckCircle, ArrowRight, ArrowLeft, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface CreateRecurringOrderModalProps {
@@ -17,6 +17,7 @@ interface Product {
   price: number
   unit: string
   stock: number
+  category: string
 }
 
 interface OrderItem {
@@ -37,6 +38,18 @@ const DAYS_OF_WEEK = [
   { value: 6, label: 'Sábado' }
 ]
 
+const CATEGORIES = [
+  { value: 'CARNES', label: '🥩 Carnes', icon: '🥩' },
+  { value: 'EMBUTIDOS', label: '🌭 Embutidos', icon: '🌭' },
+  { value: 'SALSAS', label: '🍅 Salsas', icon: '🍅' },
+  { value: 'LACTEOS', label: '🥛 Lácteos', icon: '🥛' },
+  { value: 'GRANOS', label: '🌾 Granos', icon: '🌾' },
+  { value: 'VEGETALES', label: '🥗 Vegetales', icon: '🥗' },
+  { value: 'CONDIMENTOS', label: '🧂 Condimentos', icon: '🧂' },
+  { value: 'BEBIDAS', label: '🥤 Bebidas', icon: '🥤' },
+  { value: 'OTROS', label: '📦 Otros', icon: '📦' }
+]
+
 export default function CreateRecurringOrderModal({
   isOpen,
   onClose,
@@ -45,6 +58,8 @@ export default function CreateRecurringOrderModal({
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
+  const [selectedCategory, setSelectedCategory] = useState('CARNES')
+  const [searchTerm, setSearchTerm] = useState('')
   
   // Step 1: Configuración
   const [name, setName] = useState('')
@@ -69,11 +84,14 @@ export default function CreateRecurringOrderModal({
     try {
       const response = await fetch('/api/products')
       const result = await response.json()
-      if (result.success) {
+      if (result.success && Array.isArray(result.data)) {
         setProducts(result.data)
+      } else {
+        setProducts([])
       }
     } catch (error) {
       console.error('Error fetching products:', error)
+      setProducts([])
     }
   }
 
@@ -87,6 +105,19 @@ export default function CreateRecurringOrderModal({
       pricePerUnit: product.price,
       unit: product.unit
     }])
+  }
+
+  // Filtrar productos por categoría y búsqueda
+  const filteredProducts = products.filter(product => {
+    const matchesCategory = product.category === selectedCategory
+    const matchesSearch = searchTerm === '' || 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    return matchesCategory && matchesSearch
+  })
+
+  // Contar productos por categoría
+  const getCategoryCount = (category: string) => {
+    return products.filter(p => p.category === category).length
   }
 
   const removeProduct = (productId: string) => {
@@ -313,54 +344,147 @@ export default function CreateRecurringOrderModal({
             {/* STEP 2: Productos */}
             {step === 2 && (
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Seleccionar Productos
+                {/* Header con búsqueda */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    Seleccionar Productos por Categoría
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    {products.map(product => (
-                      <div
-                        key={product.id}
-                        onClick={() => addProduct(product)}
-                        className="p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 cursor-pointer transition-all"
-                      >
-                        <h4 className="font-semibold text-gray-900">{product.name}</h4>
-                        <p className="text-sm text-gray-600">${product.price.toFixed(2)} / {product.unit}</p>
-                        <p className="text-xs text-gray-500">Stock: {product.stock}</p>
-                      </div>
-                    ))}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Buscar producto..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 w-64"
+                    />
                   </div>
                 </div>
 
+                {/* Tabs de categorías */}
+                <div className="border-b border-gray-200">
+                  <div className="flex overflow-x-auto gap-2 pb-2">
+                    {CATEGORIES.map((category) => {
+                      const count = getCategoryCount(category.value)
+                      return (
+                        <button
+                          key={category.value}
+                          onClick={() => {
+                            setSelectedCategory(category.value)
+                            setSearchTerm('')
+                          }}
+                          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition-all ${
+                            selectedCategory === category.value
+                              ? 'bg-purple-600 text-white shadow-md'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          }`}
+                        >
+                          <span className="text-lg">{category.icon}</span>
+                          <span>{category.label.split(' ')[1]}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${
+                            selectedCategory === category.value
+                              ? 'bg-purple-500 text-white'
+                              : 'bg-gray-200 text-gray-600'
+                          }`}>
+                            {count}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Grid de productos filtrados */}
+                <div className="max-h-96 overflow-y-auto">
+                  {filteredProducts.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {filteredProducts.map(product => {
+                        const isSelected = selectedItems.find(item => item.productId === product.id)
+                        return (
+                          <div
+                            key={product.id}
+                            onClick={() => !isSelected && addProduct(product)}
+                            className={`p-4 border-2 rounded-xl transition-all cursor-pointer ${
+                              isSelected
+                                ? 'border-green-500 bg-green-50'
+                                : 'border-gray-200 hover:border-purple-400 hover:bg-purple-50'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <h4 className="font-semibold text-gray-900 flex-1">{product.name}</h4>
+                              {isSelected && (
+                                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
+                              )}
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-purple-600 font-bold">${product.price.toFixed(2)}</span>
+                              <span className="text-gray-500">/ {product.unit}</span>
+                            </div>
+                            <div className="mt-2 text-xs text-gray-500">
+                              Stock: {product.stock} {product.unit}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 text-gray-500">
+                      <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg font-medium">
+                        {searchTerm 
+                          ? `No se encontraron productos que coincidan con "${searchTerm}"`
+                          : 'No hay productos en esta categoría'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Productos seleccionados */}
                 {selectedItems.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Productos Seleccionados
-                    </h3>
-                    <div className="space-y-3">
+                  <div className="border-t pt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Productos Seleccionados ({selectedItems.length})
+                      </h3>
+                      <button
+                        onClick={() => setSelectedItems([])}
+                        className="text-sm text-red-600 hover:text-red-700 font-medium"
+                      >
+                        Limpiar todo
+                      </button>
+                    </div>
+                    <div className="space-y-3 max-h-60 overflow-y-auto">
                       {selectedItems.map(item => (
-                        <div key={item.productId} className="flex items-center gap-4 p-4 bg-purple-50 rounded-lg">
+                        <div key={item.productId} className="flex items-center gap-4 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200 hover:shadow-md transition-shadow">
                           <div className="flex-1">
                             <h4 className="font-semibold text-gray-900">{item.productName}</h4>
-                            <p className="text-sm text-gray-600">${item.pricePerUnit.toFixed(2)} / {item.unit}</p>
+                            <p className="text-sm text-purple-600">${item.pricePerUnit.toFixed(2)} / {item.unit}</p>
                           </div>
-                          <input
-                            type="number"
-                            min="1"
-                            value={item.quantity}
-                            onChange={(e) => updateQuantity(item.productId, Number(e.target.value))}
-                            className="w-20 px-3 py-2 border border-gray-300 rounded-lg"
-                          />
+                          <div className="flex items-center gap-2">
+                            <label className="text-sm text-gray-600">Cant:</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) => updateQuantity(item.productId, Number(e.target.value))}
+                              className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-center font-semibold"
+                            />
+                          </div>
+                          <div className="text-right min-w-[80px]">
+                            <p className="text-sm font-bold text-purple-700">
+                              ${(item.quantity * item.pricePerUnit).toFixed(2)}
+                            </p>
+                          </div>
                           <button
                             onClick={() => removeProduct(item.productId)}
-                            className="text-red-600 hover:text-red-700 font-medium"
+                            className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
                           >
-                            Eliminar
+                            <X className="w-4 h-4" />
                           </button>
                         </div>
                       ))}
                     </div>
-                    <div className="mt-4 p-4 bg-green-50 rounded-lg">
+                    <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg">
                       <div className="flex justify-between items-center">
                         <span className="font-semibold text-gray-900">Total por ejecución:</span>
                         <span className="text-2xl font-bold text-green-600">${calculateTotal().toFixed(2)}</span>

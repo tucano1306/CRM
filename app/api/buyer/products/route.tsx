@@ -10,19 +10,19 @@ export async function GET(request: Request) {
   try {
     const { userId } = await auth()
 
-    if (!userId) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
-
+    // ✅ PERMITIR ACCESO SIN AUTENTICACIÓN (para catálogo público)
+    // O autenticado como cualquier rol (SELLER puede ver catálogo también)
+    
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search') || ''
 
     console.log('🔍 [BUYER PRODUCTS] Buscando productos...')
-    console.log('   - Usuario:', userId)
+    console.log('   - Usuario:', userId || 'ANÓNIMO')
     console.log('   - Búsqueda:', search || 'ninguna')
 
-    // ✅ SIMPLIFICADO: Solo verificar stock > 0
+    // ✅ Filtrar productos activos y con stock
     const whereConditions: any = {
+      isActive: true,
       stock: { gt: 0 },
     }
 
@@ -34,25 +34,23 @@ export async function GET(request: Request) {
       ]
     }
 
-    // Obtener productos
-    const products = await withPrismaTimeout(
-      () => prisma.product.findMany({
-        where: whereConditions,
-        orderBy: { name: 'asc' },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          price: true,
-          stock: true,
-          unit: true,
-          imageUrl: true,
-          sku: true,
-          isActive: true,
-          createdAt: true,
-        },
-      })
-    )
+    // Obtener productos - SIN timeout, solo campos necesarios
+    const products = await prisma.product.findMany({
+      where: whereConditions,
+      orderBy: { name: 'asc' },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        price: true,
+        stock: true,
+        unit: true,
+        category: true,
+        imageUrl: true,
+        sku: true,
+        isActive: true,
+      },
+    })
 
     console.log(`✅ [BUYER PRODUCTS] Encontrados ${products.length} productos`)
     
@@ -85,8 +83,10 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      data: products,
-      total: products.length,
+      data: {
+        data: products,
+        total: products.length,
+      }
     })
 
   } catch (error) {

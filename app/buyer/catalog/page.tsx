@@ -61,7 +61,7 @@ export default function CatalogPage() {
   const [showCart, setShowCart] = useState(false)
   
   // Filtros avanzados
-  const [priceRange, setPriceRange] = useState([0, 100])
+  const [priceRange, setPriceRange] = useState([0, 10000]) // Rango amplio por defecto
   const [onlyInStock, setOnlyInStock] = useState(false)
   const [selectedUnits, setSelectedUnits] = useState<string[]>([])
 
@@ -158,28 +158,85 @@ export default function CatalogPage() {
     }
   }
 
-  // ✅ fetchProducts CON TIMEOUT
+  // ✅ fetchProducts CON TIMEOUT EXTENDIDO
   const fetchProducts = async () => {
     try {
       setLoading(true)
       setTimedOut(false)
       setError(null)
 
+      console.log('🚀 [CATALOG] Iniciando carga de productos...')
+      console.log('🌐 [CATALOG] URL:', '/api/buyer/products')
+
       const result = await apiCall('/api/buyer/products', {
-        timeout: 5000,
+        timeout: 30000, // 30 segundos - más tiempo para queries grandes
         onTimeout: () => setTimedOut(true)
       })
+
+      console.log('📦 [CATALOG] API Response completa:', JSON.stringify(result, null, 2))
+      console.log('📦 [CATALOG] result.success:', result.success)
+      console.log('📦 [CATALOG] result.status:', result.status)
+      console.log('📦 [CATALOG] result.data type:', typeof result.data)
+      console.log('📦 [CATALOG] result.data:', result.data)
 
       setLoading(false)
 
       if (result.success) {
-        setProducts(result.data.data || [])
+        // Manejar diferentes estructuras de respuesta
+        let productData = []
+        
+        console.log('📦 [CATALOG] result.data tipo:', typeof result.data)
+        console.log('📦 [CATALOG] result.data:', result.data)
+        
+        // La API puede devolver doble estructura debido a apiCall wrapper
+        let apiData = result.data
+        
+        // Si result.data tiene un campo 'success', es una doble envoltura
+        if (apiData && apiData.success && apiData.data) {
+          console.log('⚠️ [CATALOG] Detectada doble envoltura, extrayendo...')
+          apiData = apiData.data
+        }
+        
+        console.log('📦 [CATALOG] apiData después de unwrap:', apiData)
+        
+        // Ahora extraer el array de productos
+        if (apiData && apiData.data && Array.isArray(apiData.data)) {
+          // Estructura: { data: [...], total: X }
+          console.log('✅ [CATALOG] Estructura: apiData.data (array)')
+          productData = apiData.data
+        } else if (Array.isArray(apiData)) {
+          // Estructura: [...]
+          console.log('✅ [CATALOG] Estructura: apiData (direct array)')
+          productData = apiData
+        }
+
+        console.log('📦 [CATALOG] productData final:', {
+          type: typeof productData,
+          isArray: Array.isArray(productData),
+          length: Array.isArray(productData) ? productData.length : 'N/A'
+        })
+        
+        if (Array.isArray(productData)) {
+          console.log('✅ [CATALOG] Products loaded:', productData.length)
+          if (productData.length > 0) {
+            console.log('📦 [CATALOG] First 3 products:', productData.slice(0, 3))
+          }
+          setProducts(productData)
+        } else {
+          console.error('❌ [CATALOG] No se encontró array de productos')
+          console.error('❌ [CATALOG] apiData completo:', apiData)
+          setProducts([])
+        }
       } else {
+        console.error('❌ [CATALOG] Error en success=false:', result.error)
         setError(result.error || 'Error cargando productos')
+        setProducts([])
       }
     } catch (err) {
+      console.error('❌ [CATALOG] Exception capturada:', err)
       setLoading(false)
       setError(getErrorMessage(err))
+      setProducts([])
     }
   }
 
@@ -294,7 +351,7 @@ export default function CatalogPage() {
   const handleSearchChange = (value: string) => {
     setSearch(value)
     
-    if (value.trim().length >= 2) {
+    if (value.trim().length >= 2 && Array.isArray(products)) {
       const filtered = products
         .filter(p => p.name.toLowerCase().includes(value.toLowerCase()))
         .slice(0, 5)
@@ -312,17 +369,54 @@ export default function CatalogPage() {
     setSelectedProduct(product)
   }
 
-  const filteredProducts = products.filter((product) => {
+  // Asegurar que products siempre sea un array antes de filtrar
+  const safeProducts = Array.isArray(products) ? products : []
+
+  console.log('🔍 [CATALOG FILTER] Total products:', safeProducts.length)
+  console.log('🔍 [CATALOG FILTER] selectedCategory value:', selectedCategory)
+  console.log('🔍 [CATALOG FILTER] selectedCategory type:', typeof selectedCategory)
+  console.log('🔍 [CATALOG FILTER] selectedCategory === "all":', selectedCategory === 'all')
+  console.log('🔍 [CATALOG FILTER] Filters:', { search, selectedCategory, priceRange, onlyInStock })
+
+  const filteredProducts = safeProducts.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase())
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory
+    
+    // ✅ FIX: Comparación case-insensitive para categorías
+    const matchesCategory = selectedCategory === 'all' || 
+      (product.category && product.category.toUpperCase() === selectedCategory.toUpperCase())
+    
+    // Debug primera iteración
+    if (product.name === 'Fresh Salmon' || product.name === 'Mi salchicha') {
+      console.log(`🐟 [FILTER DEBUG] ${product.name}:`, {
+        'product.category': product.category,
+        'selectedCategory': selectedCategory,
+        'selectedCategory === "all"': selectedCategory === 'all',
+        'categories match (case-insensitive)': product.category && product.category.toUpperCase() === selectedCategory.toUpperCase(),
+        'matchesCategory': matchesCategory
+      })
+    }
     
     // Filtros avanzados
     const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1]
     const matchesStock = !onlyInStock || product.stock > 0
     const matchesUnit = selectedUnits.length === 0 || selectedUnits.includes(product.unit)
     
-    return matchesSearch && matchesCategory && matchesPrice && matchesStock && matchesUnit
+    const matches = matchesSearch && matchesCategory && matchesPrice && matchesStock && matchesUnit
+    
+    if (!matches) {
+      console.log(`❌ [FILTER] ${product.name} filtered out:`, {
+        matchesSearch,
+        matchesCategory,
+        matchesPrice: `${product.price} in [${priceRange[0]}, ${priceRange[1]}]`,
+        matchesStock,
+        matchesUnit
+      })
+    }
+    
+    return matches
   })
+
+  console.log('✅ [CATALOG FILTER] Filtered products:', filteredProducts.length)
 
   // Sort products
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -348,7 +442,7 @@ export default function CatalogPage() {
 
   const getCategoryCount = (categoryId: string) => {
     if (categoryId === 'all') return products.length
-    return products.filter(p => p.category === categoryId).length
+    return products.filter(p => p.category && p.category.toUpperCase() === categoryId.toUpperCase()).length
   }
 
   // ✅ UI States

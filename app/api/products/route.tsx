@@ -42,7 +42,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      products: products,
+      data: products,
     })
   } catch (error) {
     console.error('Error obteniendo productos:', error)
@@ -79,36 +79,77 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { name, description, unit, category, price, stock, sku } = body
 
+    console.log('📦 [CREATE PRODUCT] Datos recibidos:', { name, description, unit, category, price, stock, sku })
+
     // Validación
     if (!name || !unit || price === undefined || stock === undefined) {
+      console.error('❌ [CREATE PRODUCT] Validación fallida - campos faltantes')
       return NextResponse.json(
-        { error: 'Faltan campos requeridos' },
+        { error: 'Faltan campos requeridos: name, unit, price, stock son obligatorios' },
         { status: 400 }
       )
     }
+
+    // Validar que price y stock sean números válidos
+    const priceNum = parseFloat(price)
+    const stockNum = parseInt(stock)
+
+    if (isNaN(priceNum) || priceNum < 0) {
+      console.error('❌ [CREATE PRODUCT] Precio inválido:', price)
+      return NextResponse.json(
+        { error: 'El precio debe ser un número válido mayor o igual a 0' },
+        { status: 400 }
+      )
+    }
+
+    if (isNaN(stockNum) || stockNum < 0) {
+      console.error('❌ [CREATE PRODUCT] Stock inválido:', stock)
+      return NextResponse.json(
+        { error: 'El stock debe ser un número entero válido mayor o igual a 0' },
+        { status: 400 }
+      )
+    }
+
+    // Validar categoría
+    const validCategories = ['CARNES', 'EMBUTIDOS', 'SALSAS', 'LACTEOS', 'GRANOS', 'VEGETALES', 'CONDIMENTOS', 'BEBIDAS', 'OTROS']
+    const productCategory = category || 'OTROS'
+    
+    if (!validCategories.includes(productCategory)) {
+      console.error('❌ [CREATE PRODUCT] Categoría inválida:', category)
+      return NextResponse.json(
+        { error: `Categoría inválida. Debe ser una de: ${validCategories.join(', ')}` },
+        { status: 400 }
+      )
+    }
+
+    console.log('✅ [CREATE PRODUCT] Validaciones pasadas, creando producto...')
 
     // ✅ Crear producto CON TIMEOUT
     const product = await withPrismaTimeout(
       () => prisma.product.create({
         data: {
-          name,
-          description: description || '',
+          name: name.trim(),
+          description: description?.trim() || '',
           unit,
-          category: category || 'OTROS',
-          price: parseFloat(price),
-          stock: parseInt(stock),
-          sku: sku || null,
+          category: productCategory,
+          price: priceNum,
+          stock: stockNum,
+          sku: sku?.trim() || null,
           isActive: true,
         },
       })
     )
 
+    console.log('✅ [CREATE PRODUCT] Producto creado exitosamente:', product.id)
+
     return NextResponse.json({
       success: true,
       data: product,
     })
-  } catch (error) {
-    console.error('Error creando producto:', error)
+  } catch (error: any) {
+    console.error('❌ [CREATE PRODUCT] Error completo:', error)
+    console.error('❌ [CREATE PRODUCT] Error message:', error.message)
+    console.error('❌ [CREATE PRODUCT] Error stack:', error.stack)
     
     // ✅ MANEJO ESPECÍFICO DE TIMEOUT
     if (error instanceof TimeoutError) {
@@ -119,10 +160,22 @@ export async function POST(request: Request) {
       )
     }
 
+    // Manejo de errores de Prisma
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Ya existe un producto con ese SKU. Por favor, usa un SKU diferente.',
+        },
+        { status: 409 }
+      )
+    }
+
     return NextResponse.json(
       {
         success: false,
-        error: 'Error creando producto',
+        error: error.message || 'Error creando producto',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
       },
       { status: 500 }
     )
