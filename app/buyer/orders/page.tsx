@@ -27,12 +27,14 @@ type OrderStatus =
   | 'PENDING' 
   | 'CONFIRMED' 
   | 'PREPARING'
+  | 'PROCESSING'
   | 'READY_FOR_PICKUP'
   | 'IN_DELIVERY'
   | 'DELIVERED'
   | 'PARTIALLY_DELIVERED'
   | 'COMPLETED' 
   | 'CANCELED'
+  | 'CANCELLED'
   | 'PAYMENT_PENDING'
   | 'PAID'
 
@@ -188,6 +190,7 @@ export default function OrdersPage() {
   const [error, setError] = useState<string | null>(null)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null)
+  const [filterStatus, setFilterStatus] = useState<'ALL' | OrderStatus>('ALL')
 
   useEffect(() => {
     fetchOrders()
@@ -444,6 +447,72 @@ export default function OrdersPage() {
           </div>
         </div>
 
+        {/* Tabs de filtrado */}
+        <div className="bg-white rounded-2xl shadow-lg p-4 mb-6 border border-purple-100">
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            <button
+              onClick={() => setFilterStatus('ALL')}
+              className={`px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                filterStatus === 'ALL'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Todas ({orders.length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('PENDING')}
+              className={`px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                filterStatus === 'PENDING'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Pendientes ({orders.filter(o => o.status === 'PENDING').length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('CONFIRMED')}
+              className={`px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                filterStatus === 'CONFIRMED'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Confirmadas ({orders.filter(o => o.status === 'CONFIRMED').length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('PREPARING')}
+              className={`px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                filterStatus === 'PREPARING'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              En Preparación ({orders.filter(o => o.status === 'PREPARING' || o.status === 'PROCESSING').length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('DELIVERED')}
+              className={`px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                filterStatus === 'DELIVERED'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Entregadas ({orders.filter(o => o.status === 'DELIVERED' || o.status === 'COMPLETED').length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('CANCELED')}
+              className={`px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                filterStatus === 'CANCELED'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Canceladas ({orders.filter(o => o.status === 'CANCELED' || o.status === 'CANCELLED').length})
+            </button>
+          </div>
+        </div>
+
         {/* Lista de órdenes */}
         {orders.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-lg p-12 text-center border border-purple-100">
@@ -463,7 +532,15 @@ export default function OrdersPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {orders.map((order) => {
+            {orders
+              .filter(order => {
+                if (filterStatus === 'ALL') return true
+                if (filterStatus === 'CANCELED') return order.status === 'CANCELED' || order.status === 'CANCELLED'
+                if (filterStatus === 'DELIVERED') return order.status === 'DELIVERED' || order.status === 'COMPLETED'
+                if (filterStatus === 'PREPARING') return order.status === 'PREPARING' || order.status === 'PROCESSING'
+                return order.status === filterStatus
+              })
+              .map((order) => {
               const config = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.PENDING
               const StatusIcon = config.icon
               
@@ -533,6 +610,29 @@ export default function OrdersPage() {
                 </div>
               )
             })}
+            {orders.filter(order => {
+              if (filterStatus === 'ALL') return true
+              if (filterStatus === 'CANCELED') return order.status === 'CANCELED' || order.status === 'CANCELLED'
+              if (filterStatus === 'DELIVERED') return order.status === 'DELIVERED' || order.status === 'COMPLETED'
+              if (filterStatus === 'PREPARING') return order.status === 'PREPARING' || order.status === 'PROCESSING'
+              return order.status === filterStatus
+            }).length === 0 && (
+              <div className="bg-white rounded-2xl shadow-lg p-12 text-center border border-purple-100">
+                <Package className="mx-auto text-gray-400 mb-4" size={64} />
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  No hay órdenes en este estado
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Prueba con otro filtro o haz una nueva orden
+                </p>
+                <button
+                  onClick={() => setFilterStatus('ALL')}
+                  className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
+                >
+                  Ver todas
+                </button>
+              </div>
+            )}
           </div>
         )}
 
