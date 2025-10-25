@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { v4 as uuidv4 } from 'uuid'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
 import { downloadInvoice, openInvoiceInNewTab, type InvoiceData } from '@/lib/invoiceGenerator'
@@ -25,6 +26,8 @@ import {
   FileText,
   RotateCcw,
   MapPin,
+  MessageCircle,
+  Star,
 } from 'lucide-react'
 import OrderCountdown from '@/components/buyer/OrderCountdown'
 import { OrderCardSkeleton } from '@/components/skeletons'
@@ -77,7 +80,10 @@ type Order = {
   seller: {
     name: string
     email: string
+    id?: string
   }
+  rating?: number | null
+  ratingComment?: string | null
 }
 
 const statusConfig = {
@@ -204,6 +210,9 @@ export default function OrdersPage() {
   const [dateTo, setDateTo] = useState('')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [ratingOrder, setRatingOrder] = useState<string | null>(null)
+  const [selectedRating, setSelectedRating] = useState(0)
+  const [hoveredRating, setHoveredRating] = useState(0)
 
   useEffect(() => {
     fetchOrders()
@@ -397,6 +406,38 @@ export default function OrdersPage() {
   const handleQuickInvoice = async (order: Order, e: React.MouseEvent) => {
     e.stopPropagation()
     await handleViewInvoice(order)
+  }
+
+  const handleContactSeller = (order: Order, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    // Redirigir al chat con el vendedor
+    if (order.seller?.id) {
+      router.push(`/chat?seller=${order.seller.id}&order=${order.id}`)
+    } else {
+      alert('No se puede contactar al vendedor en este momento')
+    }
+  }
+
+  const handleRateOrder = async (orderId: string, rating: number) => {
+    try {
+      const result = await apiCall(`/api/orders/${orderId}/rate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating }),
+        timeout: 5000,
+      })
+
+      if (result.success) {
+        alert('✅ Gracias por tu calificación!')
+        setRatingOrder(null)
+        setSelectedRating(0)
+        fetchOrders()
+      } else {
+        alert(result.error || 'Error al calificar la orden')
+      }
+    } catch (err) {
+      alert(getErrorMessage(err))
+    }
   }
 
   // ✅ ESTADO DE LOADING
@@ -708,20 +749,20 @@ export default function OrdersPage() {
 
         {/* Lista de órdenes */}
         {orders.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-lg p-12 text-center border border-purple-100">
-            <Package className="mx-auto text-gray-400 mb-4" size={64} />
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              No tienes órdenes
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Comienza a hacer tus pedidos desde el catálogo
+          <div className="text-center py-16 bg-white rounded-2xl shadow-lg border border-purple-100">
+            <ShoppingBag className="w-24 h-24 mx-auto text-gray-300 mb-4" />
+            <h3 className="text-2xl font-bold text-gray-700 mb-2">
+              No tienes órdenes aún
+            </h3>
+            <p className="text-gray-500 mb-6">
+              Explora el catálogo y realiza tu primera compra
             </p>
-            <button
-              onClick={() => router.push('/buyer/catalog')}
-              className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
-            >
-              Ver catálogo
-            </button>
+            <Link href="/buyer/catalog">
+              <button className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold inline-flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5" />
+                Ir al Catálogo
+              </button>
+            </Link>
           </div>
         ) : (
           <div className={viewMode === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : 'space-y-4'}>
@@ -817,6 +858,49 @@ export default function OrdersPage() {
                       Detalles
                     </button>
                   </div>
+
+                  {/* Botón contactar vendedor */}
+                  <div className="mt-4 pt-4 border-t border-gray-100">
+                    <button 
+                      onClick={(e) => handleContactSeller(order, e)}
+                      className="w-full flex items-center justify-center gap-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 py-2 rounded-lg transition-colors font-medium text-sm"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      Contactar vendedor
+                    </button>
+                  </div>
+
+                  {/* Sistema de calificación */}
+                  {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && !order.rating && (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
+                      <p className="font-medium mb-3 text-gray-900">¿Cómo fue tu experiencia?</p>
+                      <div className="flex gap-2 justify-center">
+                        {[1, 2, 3, 4, 5].map(star => (
+                          <button 
+                            key={star}
+                            onClick={() => handleRateOrder(order.id, star)}
+                            onMouseEnter={() => setHoveredRating(star)}
+                            onMouseLeave={() => setHoveredRating(0)}
+                            className="text-3xl hover:scale-110 transition-transform"
+                          >
+                            {star <= (hoveredRating || selectedRating) ? '⭐' : '☆'}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-600 text-center mt-2">
+                        Haz clic en las estrellas para calificar
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Mostrar calificación existente */}
+                  {order.rating && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-4">
+                      <p className="text-sm text-gray-700 text-center">
+                        Tu calificación: {Array(order.rating).fill('⭐').join('')}
+                      </p>
+                    </div>
+                  )}
                 </div>
               ) : (
                 // Vista LIST (Fila)
@@ -901,8 +985,46 @@ export default function OrdersPage() {
                       >
                         Detalles
                       </button>
+
+                      <button 
+                        onClick={(e) => handleContactSeller(order, e)}
+                        className="bg-purple-50 text-purple-600 p-2 rounded-lg hover:bg-purple-100 transition-colors"
+                        title="Contactar vendedor"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                      </button>
                     </div>
                   </div>
+
+                  {/* Rating en vista lista (más compacto) */}
+                  {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && !order.rating && (
+                    <div className="bg-yellow-50 border-t border-yellow-200 px-4 py-3 mt-2">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium text-sm text-gray-900">¿Cómo fue tu experiencia?</p>
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <button 
+                              key={star}
+                              onClick={() => handleRateOrder(order.id, star)}
+                              onMouseEnter={() => setHoveredRating(star)}
+                              onMouseLeave={() => setHoveredRating(0)}
+                              className="text-xl hover:scale-110 transition-transform"
+                            >
+                              {star <= (hoveredRating || selectedRating) ? '⭐' : '☆'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {order.rating && (
+                    <div className="bg-green-50 border-t border-green-200 px-4 py-2 mt-2">
+                      <p className="text-xs text-gray-700 text-center">
+                        Calificación: {Array(order.rating).fill('⭐').join('')}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )
             })}
@@ -1123,10 +1245,55 @@ export default function OrdersPage() {
 
                     {/* Información del vendedor */}
                     <div className="bg-gray-50 rounded-xl p-4">
-                      <h4 className="font-semibold text-gray-900 mb-2">Vendedor:</h4>
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold text-gray-900">Vendedor:</h4>
+                        <button
+                          onClick={() => handleContactSeller(selectedOrder)}
+                          className="flex items-center gap-2 text-purple-600 hover:text-purple-700 text-sm font-medium"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          Contactar
+                        </button>
+                      </div>
                       <p className="text-gray-700">{selectedOrder.seller?.name}</p>
                       <p className="text-sm text-gray-600">{selectedOrder.seller?.email}</p>
                     </div>
+
+                    {/* Sistema de calificación en modal */}
+                    {(selectedOrder.status === 'DELIVERED' || selectedOrder.status === 'COMPLETED') && !selectedOrder.rating && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                        <p className="font-medium mb-3 text-gray-900">¿Cómo fue tu experiencia con esta orden?</p>
+                        <div className="flex gap-2 justify-center">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <button 
+                              key={star}
+                              onClick={() => handleRateOrder(selectedOrder.id, star)}
+                              onMouseEnter={() => setHoveredRating(star)}
+                              onMouseLeave={() => setHoveredRating(0)}
+                              className="text-4xl hover:scale-110 transition-transform"
+                            >
+                              {star <= (hoveredRating || selectedRating) ? '⭐' : '☆'}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="text-xs text-gray-600 text-center mt-2">
+                          Tu opinión nos ayuda a mejorar el servicio
+                        </p>
+                      </div>
+                    )}
+
+                    {selectedOrder.rating && (
+                      <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                        <p className="text-center text-gray-700">
+                          <span className="font-semibold">Tu calificación:</span> {Array(selectedOrder.rating).fill('⭐').join('')}
+                        </p>
+                        {selectedOrder.ratingComment && (
+                          <p className="text-sm text-gray-600 text-center mt-2">
+                            "{selectedOrder.ratingComment}"
+                          </p>
+                        )}
+                      </div>
+                    )}
 
                     {/* Acciones */}
                     <div className="flex gap-3">
