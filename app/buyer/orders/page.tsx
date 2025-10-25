@@ -18,10 +18,10 @@ import {
   AlertCircle,
   Truck,
   PackageCheck,
+  X,
 } from 'lucide-react'
 import OrderCountdown from '@/components/buyer/OrderCountdown'
 import { OrderCardSkeleton } from '@/components/skeletons'
-import OrderDetailModal from '@/components/orders/OrderDetailModal'
 
 type OrderStatus = 
   | 'PENDING' 
@@ -191,6 +191,8 @@ export default function OrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState<'ALL' | OrderStatus>('ALL')
+  const [showOrderModal, setShowOrderModal] = useState(false)
+  const [activeTab, setActiveTab] = useState<'productos' | 'estado' | 'seguimiento'>('productos')
 
   useEffect(() => {
     fetchOrders()
@@ -302,6 +304,13 @@ export default function OrdersPage() {
 
   const openOrderModal = (order: Order) => {
     setSelectedOrder(order)
+    setShowOrderModal(true)
+    setActiveTab('productos')
+  }
+
+  const closeOrderModal = () => {
+    setShowOrderModal(false)
+    setSelectedOrder(null)
   }
 
   // ✅ confirmOrder CON TIMEOUT
@@ -531,7 +540,7 @@ export default function OrdersPage() {
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {orders
               .filter(order => {
                 if (filterStatus === 'ALL') return true
@@ -543,70 +552,55 @@ export default function OrdersPage() {
               .map((order) => {
               const config = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.PENDING
               const StatusIcon = config.icon
-              
-              // Calcular subtotal e impuestos
-              const subtotal = order.orderItems?.reduce((sum, item) => sum + Number(item.subtotal), 0) || 0
-              const tax = subtotal * 0.10
 
               return (
                 <div
                   key={order.id}
-                  className="bg-white rounded-2xl shadow-lg border border-purple-100 overflow-hidden"
+                  className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 border-l-4 border-purple-500 cursor-pointer"
+                  onClick={() => openOrderModal(order)}
                 >
-                  {/* Header de la orden */}
-                  <div
-                    className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => openOrderModal(order)}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-3 rounded-lg ${config.bg}`}>
-                          <StatusIcon className={config.color} size={24} />
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-500">
-                            Orden #{order.orderNumber || order.id.slice(0, 8)}
-                          </p>
-                          <p className={`font-semibold ${config.color}`}>
-                            {config.label}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold text-purple-600">
-                          ${Number(order.totalAmount).toFixed(2)}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {order.orderItems?.length || 0}{' '}
-                          {order.orderItems?.length === 1 ? 'producto' : 'productos'}           
-                        </p>
-                      </div>
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="font-bold text-lg text-gray-900">
+                        {order.orderNumber || `#${order.id.slice(0, 8)}`}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {new Date(order.createdAt).toLocaleDateString('es-ES', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </p>
                     </div>
-
-                  {/* Countdown para órdenes PENDING con deadline */}
-                  {order.status === 'PENDING' && order.confirmationDeadline && (
-                    <div className="px-6 py-4 border-t border-gray-100">
-                      <OrderCountdown
-                        orderId={order.id}
-                        deadline={order.confirmationDeadline}
-                        onCancel={cancelOrder}
-                        onExpired={() => fetchOrders()}
-                      />
-                    </div>
-                  )}
-
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Calendar size={16} />
-                      {new Date(order.createdAt).toLocaleDateString('es-ES', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </div>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${config.bg} ${config.color}`}>
+                      {config.label}
+                    </span>
                   </div>
-
+                  
+                  {/* Productos */}
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-600 flex items-center gap-2">
+                      <Package className="w-4 h-4" />
+                      {order.orderItems?.length || 0} {order.orderItems?.length === 1 ? 'producto' : 'productos'}
+                    </p>
+                  </div>
+                  
+                  {/* Total */}
+                  <div className="flex items-center justify-between pt-4 border-t">
+                    <span className="text-2xl font-bold text-purple-600">
+                      ${Number(order.totalAmount).toFixed(2)}
+                    </span>
+                    <button 
+                      className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        openOrderModal(order)
+                      }}
+                    >
+                      Ver detalles
+                    </button>
+                  </div>
                 </div>
               )
             })}
@@ -617,7 +611,7 @@ export default function OrdersPage() {
               if (filterStatus === 'PREPARING') return order.status === 'PREPARING' || order.status === 'PROCESSING'
               return order.status === filterStatus
             }).length === 0 && (
-              <div className="bg-white rounded-2xl shadow-lg p-12 text-center border border-purple-100">
+              <div className="col-span-full bg-white rounded-2xl shadow-lg p-12 text-center border border-purple-100">
                 <Package className="mx-auto text-gray-400 mb-4" size={64} />
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
                   No hay órdenes en este estado
@@ -637,16 +631,279 @@ export default function OrdersPage() {
         )}
 
         {/* Order Detail Modal */}
-        {selectedOrder && (
-          <OrderDetailModal
-            order={selectedOrder as any}
-            isOpen={!!selectedOrder}
-            onClose={() => setSelectedOrder(null)}
-            userRole="buyer"
-            onDownloadInvoice={handleDownloadInvoice as any}
-            onViewInvoice={handleViewInvoice as any}
-            isGeneratingInvoice={generatingInvoice === selectedOrder.id}
-          />
+        {showOrderModal && selectedOrder && (
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={closeOrderModal}
+          >
+            <div 
+              className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 rounded-t-2xl sticky top-0 z-10">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold">
+                      {selectedOrder.orderNumber || `#${selectedOrder.id.slice(0, 8)}`}
+                    </h2>
+                    <p className="text-purple-100">
+                      {new Date(selectedOrder.createdAt).toLocaleDateString('es-ES', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
+                  </div>
+                  <button 
+                    onClick={closeOrderModal} 
+                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+              
+              {/* Tabs */}
+              <div className="flex border-b sticky top-[120px] bg-white z-10">
+                <button 
+                  onClick={() => setActiveTab('productos')}
+                  className={`px-6 py-3 font-medium transition-colors ${
+                    activeTab === 'productos' 
+                      ? 'border-b-2 border-purple-600 text-purple-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Productos
+                </button>
+                <button 
+                  onClick={() => setActiveTab('estado')}
+                  className={`px-6 py-3 font-medium transition-colors ${
+                    activeTab === 'estado' 
+                      ? 'border-b-2 border-purple-600 text-purple-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Estado
+                </button>
+                <button 
+                  onClick={() => setActiveTab('seguimiento')}
+                  className={`px-6 py-3 font-medium transition-colors ${
+                    activeTab === 'seguimiento' 
+                      ? 'border-b-2 border-purple-600 text-purple-600' 
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Seguimiento
+                </button>
+              </div>
+              
+              {/* Contenido */}
+              <div className="p-6">
+                {/* Tab: Productos */}
+                {activeTab === 'productos' && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">
+                      Productos de la orden
+                    </h3>
+                    {selectedOrder.orderItems?.map((item) => (
+                      <div 
+                        key={item.id} 
+                        className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="flex-shrink-0 w-16 h-16 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <Package className="w-8 h-8 text-purple-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900">
+                            {item.productName}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            {item.quantity} {item.product?.unit || 'und'} × ${Number(item.pricePerUnit).toFixed(2)}
+                          </p>
+                          {item.itemNote && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Nota: {item.itemNote}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-purple-600">
+                            ${Number(item.subtotal).toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {/* Resumen de totales */}
+                    <div className="mt-6 pt-4 border-t space-y-2">
+                      <div className="flex justify-between text-gray-600">
+                        <span>Subtotal:</span>
+                        <span>
+                          ${(selectedOrder.orderItems?.reduce((sum, item) => sum + Number(item.subtotal), 0) || 0).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-gray-600">
+                        <span>Impuestos (10%):</span>
+                        <span>
+                          ${((selectedOrder.orderItems?.reduce((sum, item) => sum + Number(item.subtotal), 0) || 0) * 0.1).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xl font-bold text-purple-600 pt-2 border-t">
+                        <span>Total:</span>
+                        <span>${Number(selectedOrder.totalAmount).toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    {/* Notas de la orden */}
+                    {selectedOrder.notes && (
+                      <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <h4 className="font-semibold text-yellow-900 mb-2">Notas:</h4>
+                        <p className="text-yellow-800 text-sm">{selectedOrder.notes}</p>
+                      </div>
+                    )}
+
+                    {/* Instrucciones de entrega */}
+                    {selectedOrder.deliveryInstructions && (
+                      <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                        <h4 className="font-semibold text-blue-900 mb-2">Instrucciones de entrega:</h4>
+                        <p className="text-blue-800 text-sm">{selectedOrder.deliveryInstructions}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Tab: Estado */}
+                {activeTab === 'estado' && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 mb-4">
+                        Estado actual
+                      </h3>
+                      {(() => {
+                        const config = statusConfig[selectedOrder.status as keyof typeof statusConfig] || statusConfig.PENDING
+                        const StatusIcon = config.icon
+                        return (
+                          <div className={`p-6 rounded-xl ${config.bg} border ${config.border}`}>
+                            <div className="flex items-center gap-4">
+                              <div className="flex-shrink-0">
+                                <StatusIcon className={`w-12 h-12 ${config.color}`} />
+                              </div>
+                              <div>
+                                <h4 className={`text-xl font-bold ${config.color}`}>
+                                  {config.label}
+                                </h4>
+                                <p className="text-gray-700 mt-1">
+                                  {config.description}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })()}
+                    </div>
+
+                    {/* Countdown para órdenes pendientes */}
+                    {selectedOrder.status === 'PENDING' && selectedOrder.confirmationDeadline && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                        <OrderCountdown
+                          orderId={selectedOrder.id}
+                          deadline={selectedOrder.confirmationDeadline}
+                          onCancel={cancelOrder}
+                          onExpired={() => {
+                            fetchOrders()
+                            closeOrderModal()
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Información del vendedor */}
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <h4 className="font-semibold text-gray-900 mb-2">Vendedor:</h4>
+                      <p className="text-gray-700">{selectedOrder.seller?.name}</p>
+                      <p className="text-sm text-gray-600">{selectedOrder.seller?.email}</p>
+                    </div>
+
+                    {/* Acciones */}
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => handleViewInvoice(selectedOrder)}
+                        disabled={generatingInvoice === selectedOrder.id}
+                        className="flex-1 bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold disabled:opacity-50"
+                      >
+                        {generatingInvoice === selectedOrder.id ? 'Generando...' : 'Ver Factura'}
+                      </button>
+                      <button
+                        onClick={() => handleDownloadInvoice(selectedOrder)}
+                        disabled={generatingInvoice === selectedOrder.id}
+                        className="flex-1 bg-gray-600 text-white px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors font-semibold disabled:opacity-50"
+                      >
+                        Descargar PDF
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tab: Seguimiento */}
+                {activeTab === 'seguimiento' && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">
+                      Historial de la orden
+                    </h3>
+                    
+                    {/* Timeline de estados */}
+                    <div className="relative pl-8 space-y-6">
+                      {/* Línea vertical */}
+                      <div className="absolute left-2 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                      
+                      {/* Estado actual */}
+                      <div className="relative">
+                        <div className="absolute -left-6 w-4 h-4 bg-purple-600 rounded-full border-4 border-white"></div>
+                        <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                          <p className="font-semibold text-purple-900">
+                            {statusConfig[selectedOrder.status as keyof typeof statusConfig]?.label || selectedOrder.status}
+                          </p>
+                          <p className="text-sm text-gray-600 mt-1">Estado actual</p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            {new Date(selectedOrder.createdAt).toLocaleString('es-ES')}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Orden creada */}
+                      <div className="relative">
+                        <div className="absolute -left-6 w-4 h-4 bg-gray-400 rounded-full border-4 border-white"></div>
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <p className="font-semibold text-gray-900">Orden creada</p>
+                          <p className="text-sm text-gray-600 mt-1">Esperando confirmación</p>
+                          <p className="text-xs text-gray-500 mt-2">
+                            {new Date(selectedOrder.createdAt).toLocaleString('es-ES')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Información de entrega */}
+                    <div className="mt-6 bg-blue-50 rounded-xl p-4 border border-blue-200">
+                      <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                        <Truck className="w-5 h-5" />
+                        Información de entrega
+                      </h4>
+                      <p className="text-sm text-blue-800">
+                        <strong>Dirección:</strong> {selectedOrder.client?.address || 'No especificada'}
+                      </p>
+                      <p className="text-sm text-blue-800 mt-1">
+                        <strong>Teléfono:</strong> {selectedOrder.client?.phone || 'No especificado'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
