@@ -18,8 +18,16 @@ import {
   List,
   Filter,
   Trash2,
+  Info,
+  CheckCircle,
 } from 'lucide-react'
 import { ProductCardSkeleton } from '@/components/skeletons'
+
+type ToastMessage = {
+  id: string
+  message: string
+  type: 'success' | 'error' | 'info'
+}
 
 type Product = {
   id: string
@@ -56,6 +64,22 @@ export default function CatalogPage() {
   const [priceRange, setPriceRange] = useState([0, 100])
   const [onlyInStock, setOnlyInStock] = useState(false)
   const [selectedUnits, setSelectedUnits] = useState<string[]>([])
+
+  // Búsqueda con sugerencias
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [suggestions, setSuggestions] = useState<Product[]>([])
+
+  // Notificaciones Toast
+  const [toasts, setToasts] = useState<ToastMessage[]>([])
+
+  // Mostrar toast
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    const id = Date.now().toString()
+    setToasts(prev => [...prev, { id, message, type }])
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id))
+    }, 3000)
+  }
 
   // Toggle favorite
   const toggleFavorite = (productId: string) => {
@@ -135,12 +159,15 @@ export default function CatalogPage() {
 
       if (result.success) {
         setCart({ ...cart, [productId]: quantity })
-        alert('✅ Agregado al carrito')
+        const product = products.find(p => p.id === productId)
+        if (product) {
+          showToast(`✅ ${product.name} agregado al carrito`, 'success')
+        }
       } else {
-        alert(result.error || 'Error al agregar al carrito')
+        showToast(result.error || 'Error al agregar al carrito', 'error')
       }
     } catch (err) {
-      alert(getErrorMessage(err))
+      showToast(getErrorMessage(err), 'error')
     }
   }
 
@@ -151,9 +178,13 @@ export default function CatalogPage() {
   }
 
   const removeFromCart = (productId: string) => {
+    const product = products.find(p => p.id === productId)
     const newCart = { ...cart }
     delete newCart[productId]
     setCart(newCart)
+    if (product) {
+      showToast(`${product.name} eliminado del carrito`, 'info')
+    }
   }
 
   const getTotalCartPrice = () => {
@@ -170,6 +201,28 @@ export default function CatalogPage() {
         return product ? { ...product, quantity } : null
       })
       .filter(item => item !== null)
+  }
+
+  // Actualizar sugerencias de búsqueda
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
+    
+    if (value.trim().length >= 2) {
+      const filtered = products
+        .filter(p => p.name.toLowerCase().includes(value.toLowerCase()))
+        .slice(0, 5)
+      setSuggestions(filtered)
+      setShowSuggestions(true)
+    } else {
+      setSuggestions([])
+      setShowSuggestions(false)
+    }
+  }
+
+  const selectSuggestion = (product: Product) => {
+    setSearch(product.name)
+    setShowSuggestions(false)
+    setSelectedProduct(product)
   }
 
   const filteredProducts = products.filter((product) => {
@@ -308,19 +361,49 @@ export default function CatalogPage() {
 
           {/* Buscador, Ordenamiento y Vista */}
           <div className="mt-6 flex flex-col md:flex-row gap-4">
-            {/* Buscador */}
+            {/* Buscador con sugerencias */}
             <div className="flex-1 relative">
               <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10"
                 size={20}
               />
               <input
                 type="text"
                 placeholder="Buscar productos..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                onFocus={() => search.length >= 2 && setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+              
+              {/* Sugerencias */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 bg-white shadow-lg rounded-b-lg mt-1 z-20 border border-gray-200">
+                  <div className="p-2">
+                    <p className="text-xs text-gray-500 mb-2 px-2">Sugerencias</p>
+                    {suggestions.map((product) => (
+                      <button
+                        key={product.id}
+                        onClick={() => selectSuggestion(product)}
+                        className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded flex items-center gap-3 transition-colors"
+                      >
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-slate-100 rounded flex items-center justify-center flex-shrink-0">
+                          <Package className="w-5 h-5 text-slate-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-800 truncate">
+                            {product.name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            ${product.price.toFixed(2)} / {product.unit}
+                          </p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Botón de filtros */}
@@ -602,9 +685,26 @@ export default function CatalogPage() {
                   <span className="text-2xl font-bold text-blue-600">
                     ${product.price.toFixed(2)}
                   </span>
-                  <span className="text-sm text-gray-500">
-                    / {product.unit}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-gray-500">
+                      / {product.unit}
+                    </span>
+                    {/* Tooltip informativo */}
+                    <div className="group relative">
+                      <Info className="w-4 h-4 text-gray-400 cursor-help" />
+                      <div className="hidden group-hover:block absolute z-30 bg-gray-900 text-white text-xs p-2 rounded shadow-lg -top-2 right-0 transform -translate-y-full w-48">
+                        <p className="mb-1">Precio por {product.unit}</p>
+                        {product.stock < 10 && product.stock > 0 && (
+                          <p className="text-yellow-300">⚠️ Stock limitado</p>
+                        )}
+                        {product.sku && (
+                          <p className="text-gray-300 mt-1">SKU: {product.sku}</p>
+                        )}
+                        {/* Flecha del tooltip */}
+                        <div className="absolute bottom-0 right-4 transform translate-y-1/2 rotate-45 w-2 h-2 bg-gray-900"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Indicador visual de stock */}
@@ -682,6 +782,33 @@ export default function CatalogPage() {
         )}
           </div>
         </div>
+      </div>
+
+      {/* Notificaciones Toast */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-slide-in min-w-[300px] ${
+              toast.type === 'success' 
+                ? 'bg-emerald-500 text-white' 
+                : toast.type === 'error'
+                ? 'bg-red-500 text-white'
+                : 'bg-blue-500 text-white'
+            }`}
+          >
+            {toast.type === 'success' && <CheckCircle className="w-5 h-5" />}
+            {toast.type === 'error' && <AlertCircle className="w-5 h-5" />}
+            {toast.type === 'info' && <Info className="w-5 h-5" />}
+            <span className="flex-1">{toast.message}</span>
+            <button
+              onClick={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+              className="hover:bg-white/20 rounded p-1 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
       </div>
 
       {/* Botón flotante de comparación */}
