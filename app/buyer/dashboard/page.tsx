@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { 
   ShoppingCart, Package, Clock, CheckCircle, 
   TrendingUp, Store, Heart, MessageCircle, RefreshCw,
-  ArrowUpRight, DollarSign
+  ArrowUpRight, DollarSign, Plus, CreditCard, FileText, AlertCircle
 } from 'lucide-react'
 import Link from 'next/link'
 import { DashboardStatsSkeleton } from '@/components/skeletons'
@@ -35,6 +35,15 @@ export default function BuyerDashboardPage() {
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [chartPeriod, setChartPeriod] = useState<'6months' | 'year' | 'all'>('6months')
+  const [activeTab, setActiveTab] = useState<'shop' | 'manage' | 'support'>('shop')
+
+  // Productos destacados simulados (en producción vendrían de la API)
+  const featuredProducts = [
+    { id: 1, name: 'Pizza Margarita', price: 12.99, image: '/placeholder-pizza.jpg', discount: 20 },
+    { id: 2, name: 'Hamburguesa Clásica', price: 8.99, image: '/placeholder-burger.jpg', discount: 15 },
+    { id: 3, name: 'Ensalada Caesar', price: 6.99, image: '/placeholder-salad.jpg', discount: 10 },
+    { id: 4, name: 'Pasta Carbonara', price: 10.99, image: '/placeholder-pasta.jpg', discount: 20 },
+  ]
 
   // Calcular datos mensuales para el gráfico
   const getMonthlyData = () => {
@@ -295,77 +304,243 @@ export default function BuyerDashboardPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Acciones Rápidas */}
-          <Card className="shadow-xl border-0">
-            <CardHeader className="bg-gradient-to-r from-purple-500 to-pink-500 text-white">
-              <CardTitle>Acciones Rápidas</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 space-y-3">
-              <Link href="/buyer/catalog">
+        {/* Productos Destacados */}
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 mb-8 shadow-lg">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-900">✨ Productos Destacados</h3>
+            <Link href="/buyer/catalog" className="text-purple-600 hover:text-purple-700 font-medium text-sm flex items-center gap-1">
+              Ver todos <ArrowUpRight className="w-4 h-4" />
+            </Link>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {featuredProducts.map(product => (
+              <div key={product.id} className="bg-white rounded-xl p-4 shadow-md hover:shadow-xl transition-all cursor-pointer group">
+                <div className="relative h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-3 overflow-hidden flex items-center justify-center">
+                  <Package className="w-16 h-16 text-purple-300 group-hover:scale-110 transition-transform" />
+                  {product.discount > 0 && (
+                    <span className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
+                      -{product.discount}%
+                    </span>
+                  )}
+                </div>
+                <h4 className="font-medium text-sm mb-2 text-gray-900 line-clamp-2">{product.name}</h4>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-purple-600 font-bold text-lg">${product.price}</span>
+                    {product.discount > 0 && (
+                      <span className="text-gray-400 text-xs line-through ml-1">
+                        ${(product.price / (1 - product.discount / 100)).toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                  <button className="p-2 bg-purple-100 rounded-lg hover:bg-purple-200 transition-colors">
+                    <Plus className="w-4 h-4 text-purple-600" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Acciones Rápidas con Tabs */}
+        <div className="bg-white rounded-2xl shadow-lg mb-8 overflow-hidden">
+          <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-6">
+            <h2 className="text-2xl font-bold text-white">Acciones Rápidas</h2>
+          </div>
+          
+          <div className="flex border-b">
+            <button 
+              onClick={() => setActiveTab('shop')}
+              className={`flex-1 py-4 font-medium transition-colors ${
+                activeTab === 'shop' 
+                  ? 'border-b-2 border-purple-600 text-purple-600 bg-purple-50' 
+                  : 'text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              🛒 Comprar
+            </button>
+            <button 
+              onClick={() => setActiveTab('manage')}
+              className={`flex-1 py-4 font-medium transition-colors ${
+                activeTab === 'manage' 
+                  ? 'border-b-2 border-purple-600 text-purple-600 bg-purple-50' 
+                  : 'text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              📋 Gestionar
+            </button>
+            <button 
+              onClick={() => setActiveTab('support')}
+              className={`flex-1 py-4 font-medium transition-colors ${
+                activeTab === 'support' 
+                  ? 'border-b-2 border-purple-600 text-purple-600 bg-purple-50' 
+                  : 'text-gray-500 hover:bg-gray-50'
+              }`}
+            >
+              💬 Soporte
+            </button>
+          </div>
+          
+          <div className="p-6">
+            {/* Tab: Comprar */}
+            {activeTab === 'shop' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Link href="/buyer/catalog">
+                  <div className="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <Store className="h-8 w-8 text-blue-600" />
+                      <div>
+                        <h3 className="font-semibold text-blue-900">Ver Catálogo</h3>
+                        <p className="text-sm text-blue-700">Explora productos disponibles</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link href="/buyer/cart">
+                  <div className="p-4 bg-green-50 hover:bg-green-100 rounded-xl transition cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <ShoppingCart className="h-8 w-8 text-green-600" />
+                      <div>
+                        <h3 className="font-semibold text-green-900">Mi Carrito</h3>
+                        <p className="text-sm text-green-700">Ver productos en carrito</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link href="/buyer/recurring-orders">
+                  <div className="p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <RefreshCw className="h-8 w-8 text-orange-600" />
+                      <div>
+                        <h3 className="font-semibold text-orange-900">Órdenes Recurrentes</h3>
+                        <p className="text-sm text-orange-700">Automatiza tus pedidos</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link href="/buyer/catalog?featured=true">
+                  <div className="p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <Heart className="h-8 w-8 text-purple-600" />
+                      <div>
+                        <h3 className="font-semibold text-purple-900">Favoritos</h3>
+                        <p className="text-sm text-purple-700">Productos que te gustan</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            )}
+
+            {/* Tab: Gestionar */}
+            {activeTab === 'manage' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Link href="/buyer/orders">
+                  <div className="p-4 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <Package className="h-8 w-8 text-indigo-600" />
+                      <div>
+                        <h3 className="font-semibold text-indigo-900">Mis Órdenes</h3>
+                        <p className="text-sm text-indigo-700">Ver historial de pedidos</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link href="/buyer/returns">
+                  <div className="p-4 bg-red-50 hover:bg-red-100 rounded-xl transition cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <RefreshCw className="h-8 w-8 text-red-600" />
+                      <div>
+                        <h3 className="font-semibold text-red-900">Devoluciones</h3>
+                        <p className="text-sm text-red-700">Gestionar devoluciones</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link href="/buyer/credit-notes">
+                  <div className="p-4 bg-teal-50 hover:bg-teal-100 rounded-xl transition cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <FileText className="h-8 w-8 text-teal-600" />
+                      <div>
+                        <h3 className="font-semibold text-teal-900">Notas de Crédito</h3>
+                        <p className="text-sm text-teal-700">Ver tus créditos</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link href="/buyer/orders">
+                  <div className="p-4 bg-amber-50 hover:bg-amber-100 rounded-xl transition cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <CreditCard className="h-8 w-8 text-amber-600" />
+                      <div>
+                        <h3 className="font-semibold text-amber-900">Pagos</h3>
+                        <p className="text-sm text-amber-700">Historial de pagos</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            )}
+
+            {/* Tab: Soporte */}
+            {activeTab === 'support' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Link href="/buyer/chat">
+                  <div className="p-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl transition cursor-pointer">
+                    <div className="flex items-center gap-3">
+                      <MessageCircle className="h-8 w-8 text-white" />
+                      <div>
+                        <h3 className="font-semibold text-white">Chat con Vendedor</h3>
+                        <p className="text-sm text-purple-100">Envía mensajes directos</p>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+
                 <div className="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition cursor-pointer">
                   <div className="flex items-center gap-3">
-                    <Store className="h-6 w-6 text-blue-600" />
+                    <MessageCircle className="h-8 w-8 text-blue-600" />
                     <div>
-                      <h3 className="font-semibold text-blue-900">Ver Catálogo</h3>
-                      <p className="text-sm text-blue-700">Explora productos</p>
+                      <h3 className="font-semibold text-blue-900">Centro de Ayuda</h3>
+                      <p className="text-sm text-blue-700">Preguntas frecuentes</p>
                     </div>
                   </div>
                 </div>
-              </Link>
 
-              <Link href="/buyer/cart">
                 <div className="p-4 bg-green-50 hover:bg-green-100 rounded-xl transition cursor-pointer">
                   <div className="flex items-center gap-3">
-                    <ShoppingCart className="h-6 w-6 text-green-600" />
+                    <Package className="h-8 w-8 text-green-600" />
                     <div>
-                      <h3 className="font-semibold text-green-900">Mi Carrito</h3>
-                      <p className="text-sm text-green-700">Ver mi carrito</p>
+                      <h3 className="font-semibold text-green-900">Rastreo de Envío</h3>
+                      <p className="text-sm text-green-700">Sigue tus pedidos</p>
                     </div>
                   </div>
                 </div>
-              </Link>
 
-              <Link href="/buyer/orders">
-                <div className="p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition cursor-pointer">
+                <div className="p-4 bg-yellow-50 hover:bg-yellow-100 rounded-xl transition cursor-pointer">
                   <div className="flex items-center gap-3">
-                    <Package className="h-6 w-6 text-purple-600" />
+                    <AlertCircle className="h-8 w-8 text-yellow-600" />
                     <div>
-                      <h3 className="font-semibold text-purple-900">Mis Órdenes</h3>
-                      <p className="text-sm text-purple-700">Ver historial</p>
+                      <h3 className="font-semibold text-yellow-900">Reportar Problema</h3>
+                      <p className="text-sm text-yellow-700">Ayúdanos a mejorar</p>
                     </div>
                   </div>
                 </div>
-              </Link>
+              </div>
+            )}
+          </div>
+        </div>
 
-              <Link href="/buyer/recurring-orders">
-                <div className="p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <RefreshCw className="h-6 w-6 text-orange-600" />
-                    <div>
-                      <h3 className="font-semibold text-orange-900">Órdenes Recurrentes</h3>
-                      <p className="text-sm text-orange-700">Automatiza tus pedidos</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-
-              <Link href="/buyer/chat">
-                <div className="p-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl transition cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <MessageCircle className="h-6 w-6 text-white" />
-                    <div>
-                      <h3 className="font-semibold text-white">Chat con Vendedor</h3>
-                      <p className="text-sm text-purple-100">Envía mensajes</p>
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* Órdenes Recientes */}
-          <Card className="shadow-xl border-0 lg:col-span-2">
+        {/* Órdenes Recientes */}
+        <div className="grid grid-cols-1 gap-6">
+          <Card className="shadow-xl border-0">
             <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
               <CardTitle className="flex items-center justify-between">
                 <span>Órdenes Recientes</span>
