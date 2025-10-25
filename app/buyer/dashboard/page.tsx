@@ -205,19 +205,19 @@ export default function BuyerDashboardPage() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-xl">
+      <div className="bg-gradient-to-r from-slate-800 to-blue-900 text-white shadow-xl">
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold mb-2">
                 ¡Hola, {user?.firstName || 'Comprador'}! 👋
               </h1>
-              <p className="text-purple-100 text-lg">Bienvenido a tu panel de compras</p>
+              <p className="text-slate-200 text-lg">Bienvenido a tu panel de compras</p>
             </div>
             <Link href="/buyer/cart">
-              <Button className="bg-white text-purple-600 hover:bg-purple-50 font-semibold px-6 py-3">
+              <Button className="bg-white text-slate-800 hover:bg-slate-100 font-semibold px-6 py-3">
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 Mi Carrito
               </Button>
@@ -275,18 +275,18 @@ export default function BuyerDashboardPage() {
         )}
 
         {/* Programa de Fidelidad */}
-        <div className="bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl p-6 text-white shadow-xl">
+        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-xl">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-2xl font-bold mb-2">🎁 Programa de Fidelidad</h3>
-              <p className="text-amber-100 mb-4">Acumula puntos con cada compra</p>
+              <p className="text-emerald-100 mb-4">Acumula puntos con cada compra</p>
               <div className="flex items-baseline gap-2">
                 <span className="text-5xl font-bold">{loyaltyData.currentPoints.toLocaleString()}</span>
                 <span className="text-xl">puntos</span>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-sm text-amber-100 mb-2">Próxima recompensa en</p>
+              <p className="text-sm text-emerald-100 mb-2">Próxima recompensa en</p>
               <p className="text-3xl font-bold">{loyaltyData.pointsToNextReward}</p>
               <p className="text-sm">puntos</p>
             </div>
@@ -300,7 +300,7 @@ export default function BuyerDashboardPage() {
                 style={{ width: `${loyaltyData.progressPercentage}%` }} 
               />
             </div>
-            <p className="text-sm text-amber-100 mt-2">
+            <p className="text-sm text-emerald-100 mt-2">
               {loyaltyData.progressPercentage}% hacia tu siguiente nivel ({loyaltyData.nextLevel})
             </p>
           </div>
@@ -309,56 +309,56 @@ export default function BuyerDashboardPage() {
         {/* Stats Cards Interactivas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Link href="/buyer/orders?status=all">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
+            <div className="bg-gradient-to-br from-slate-700 to-slate-800 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
               <div className="flex items-center justify-between mb-4">
                 <Package className="w-12 h-12 opacity-80" />
                 <ArrowUpRight className="w-6 h-6" />
               </div>
               <p className="text-4xl font-bold mb-2">{stats?.totalOrders || 0}</p>
-              <p className="text-blue-100">Total Órdenes</p>
-              <p className="text-xs text-blue-200 mt-2">
+              <p className="text-slate-200">Total Órdenes</p>
+              <p className="text-xs text-slate-300 mt-2">
                 {stats?.totalOrders && stats.totalOrders > 0 ? `↗️ Ver todas` : 'Aún no tienes órdenes'}
               </p>
             </div>
           </Link>
 
           <Link href="/buyer/orders?status=PENDING">
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
+            <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
               <div className="flex items-center justify-between mb-4">
                 <Clock className="w-12 h-12 opacity-80" />
                 <ArrowUpRight className="w-6 h-6" />
               </div>
               <p className="text-4xl font-bold mb-2">{stats?.pendingOrders || 0}</p>
-              <p className="text-orange-100">En Proceso</p>
-              <p className="text-xs text-orange-200 mt-2">
+              <p className="text-amber-100">En Proceso</p>
+              <p className="text-xs text-amber-200 mt-2">
                 {stats?.pendingOrders && stats.pendingOrders > 0 ? `↗️ ${stats.pendingOrders} pendientes` : 'Todo al día'}
               </p>
             </div>
           </Link>
 
           <Link href="/buyer/orders?status=COMPLETED">
-            <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
               <div className="flex items-center justify-between mb-4">
                 <CheckCircle className="w-12 h-12 opacity-80" />
                 <ArrowUpRight className="w-6 h-6" />
               </div>
               <p className="text-4xl font-bold mb-2">{stats?.completedOrders || 0}</p>
-              <p className="text-green-100">Completadas</p>
-              <p className="text-xs text-green-200 mt-2">
+              <p className="text-emerald-100">Completadas</p>
+              <p className="text-xs text-emerald-200 mt-2">
                 {stats?.completedOrders && stats.completedOrders > 0 ? `↗️ ${stats.completedOrders} exitosas` : 'Sin completar aún'}
               </p>
             </div>
           </Link>
 
           <Link href="/buyer/orders">
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
+            <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
               <div className="flex items-center justify-between mb-4">
                 <DollarSign className="w-12 h-12 opacity-80" />
                 <ArrowUpRight className="w-6 h-6" />
               </div>
               <p className="text-3xl font-bold mb-2">${stats?.totalSpent?.toFixed(2) || '0.00'}</p>
-              <p className="text-purple-100">Total Gastado</p>
-              <p className="text-xs text-purple-200 mt-2">
+              <p className="text-blue-100">Total Gastado</p>
+              <p className="text-xs text-blue-200 mt-2">
                 {stats?.totalSpent && stats.totalSpent > 0 ? `↗️ Ver detalles` : 'Comienza a comprar'}
               </p>
             </div>
@@ -401,7 +401,7 @@ export default function BuyerDashboardPage() {
                         <div className="text-xs text-gray-300">{month.count} órdenes</div>
                       </div>
                       <div 
-                        className="w-full bg-gradient-to-t from-purple-500 to-pink-500 rounded-t-lg hover:from-purple-600 hover:to-pink-600 transition-all cursor-pointer"
+                        className="w-full bg-gradient-to-t from-blue-500 to-teal-500 rounded-t-lg hover:from-blue-600 hover:to-teal-600 transition-all cursor-pointer"
                         style={{ 
                           height: `${Math.max(month.percentage, 5)}%`,
                           minHeight: month.amount > 0 ? '20px' : '5px'
@@ -416,19 +416,19 @@ export default function BuyerDashboardPage() {
               {/* Resumen del gráfico */}
               <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <p className="text-2xl font-bold text-purple-600">
+                  <p className="text-2xl font-bold text-blue-600">
                     ${getMonthlyData().reduce((sum, m) => sum + m.amount, 0).toFixed(2)}
                   </p>
                   <p className="text-sm text-gray-600 mt-1">Total del período</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-2xl font-bold text-slate-700">
                     {getMonthlyData().reduce((sum, m) => sum + m.count, 0)}
                   </p>
                   <p className="text-sm text-gray-600 mt-1">Órdenes realizadas</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-2xl font-bold text-emerald-600">
                     ${(getMonthlyData().reduce((sum, m) => sum + m.amount, 0) / Math.max(getMonthlyData().reduce((sum, m) => sum + m.count, 0), 1)).toFixed(2)}
                   </p>
                   <p className="text-sm text-gray-600 mt-1">Promedio por orden</p>
@@ -439,10 +439,10 @@ export default function BuyerDashboardPage() {
         </div>
 
         {/* Productos Destacados */}
-        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 mb-8 shadow-lg">
+        <div className="bg-gradient-to-r from-blue-50 to-slate-50 rounded-2xl p-6 mb-8 shadow-lg">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-bold text-gray-900">✨ Productos Destacados</h3>
-            <Link href="/buyer/catalog" className="text-purple-600 hover:text-purple-700 font-medium text-sm flex items-center gap-1">
+            <Link href="/buyer/catalog" className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center gap-1">
               Ver todos <ArrowUpRight className="w-4 h-4" />
             </Link>
           </div>
@@ -450,8 +450,8 @@ export default function BuyerDashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {featuredProducts.map(product => (
               <div key={product.id} className="bg-white rounded-xl p-4 shadow-md hover:shadow-xl transition-all cursor-pointer group">
-                <div className="relative h-32 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mb-3 overflow-hidden flex items-center justify-center">
-                  <Package className="w-16 h-16 text-purple-300 group-hover:scale-110 transition-transform" />
+                <div className="relative h-32 bg-gradient-to-br from-blue-100 to-slate-100 rounded-lg mb-3 overflow-hidden flex items-center justify-center">
+                  <Package className="w-16 h-16 text-slate-400 group-hover:scale-110 transition-transform" />
                   {product.discount > 0 && (
                     <span className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
                       -{product.discount}%
@@ -461,15 +461,15 @@ export default function BuyerDashboardPage() {
                 <h4 className="font-medium text-sm mb-2 text-gray-900 line-clamp-2">{product.name}</h4>
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="text-purple-600 font-bold text-lg">${product.price}</span>
+                    <span className="text-blue-600 font-bold text-lg">${product.price}</span>
                     {product.discount > 0 && (
                       <span className="text-gray-400 text-xs line-through ml-1">
                         ${(product.price / (1 - product.discount / 100)).toFixed(2)}
                       </span>
                     )}
                   </div>
-                  <button className="p-2 bg-purple-100 rounded-lg hover:bg-purple-200 transition-colors">
-                    <Plus className="w-4 h-4 text-purple-600" />
+                  <button className="p-2 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors">
+                    <Plus className="w-4 h-4 text-blue-600" />
                   </button>
                 </div>
               </div>
@@ -483,14 +483,14 @@ export default function BuyerDashboardPage() {
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {frequentProducts.map(product => (
-              <div key={product.id} className="border border-gray-200 rounded-xl p-4 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer">
+              <div key={product.id} className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer">
                 <div className="w-full h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center">
                   <Package className="w-12 h-12 text-gray-400" />
                 </div>
                 <p className="text-sm font-medium mb-2 line-clamp-2 text-gray-900">{product.name}</p>
-                <p className="text-purple-600 font-bold mb-1">${product.price}</p>
+                <p className="text-blue-600 font-bold mb-1">${product.price}</p>
                 <p className="text-xs text-gray-500 mb-3">Ordenado {product.orderCount} veces</p>
-                <button className="w-full bg-purple-100 text-purple-600 py-2 rounded-lg hover:bg-purple-200 text-sm font-medium transition-colors">
+                <button className="w-full bg-blue-100 text-blue-700 py-2 rounded-lg hover:bg-blue-200 text-sm font-medium transition-colors">
                   Reordenar
                 </button>
               </div>
@@ -520,7 +520,7 @@ export default function BuyerDashboardPage() {
 
         {/* Acciones Rápidas con Tabs */}
         <div className="bg-white rounded-2xl shadow-lg mb-8 overflow-hidden">
-          <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-6">
+          <div className="bg-gradient-to-r from-slate-700 to-blue-800 p-6">
             <h2 className="text-2xl font-bold text-white">Acciones Rápidas</h2>
           </div>
           
@@ -529,7 +529,7 @@ export default function BuyerDashboardPage() {
               onClick={() => setActiveTab('shop')}
               className={`flex-1 py-4 font-medium transition-colors ${
                 activeTab === 'shop' 
-                  ? 'border-b-2 border-purple-600 text-purple-600 bg-purple-50' 
+                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50' 
                   : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
@@ -539,7 +539,7 @@ export default function BuyerDashboardPage() {
               onClick={() => setActiveTab('manage')}
               className={`flex-1 py-4 font-medium transition-colors ${
                 activeTab === 'manage' 
-                  ? 'border-b-2 border-purple-600 text-purple-600 bg-purple-50' 
+                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50' 
                   : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
@@ -549,7 +549,7 @@ export default function BuyerDashboardPage() {
               onClick={() => setActiveTab('support')}
               className={`flex-1 py-4 font-medium transition-colors ${
                 activeTab === 'support' 
-                  ? 'border-b-2 border-purple-600 text-purple-600 bg-purple-50' 
+                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50' 
                   : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
@@ -668,12 +668,12 @@ export default function BuyerDashboardPage() {
             {activeTab === 'support' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link href="/buyer/chat">
-                  <div className="p-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl transition cursor-pointer">
+                  <div className="p-4 bg-gradient-to-r from-slate-700 to-blue-700 hover:from-slate-800 hover:to-blue-800 rounded-xl transition cursor-pointer">
                     <div className="flex items-center gap-3">
                       <MessageCircle className="h-8 w-8 text-white" />
                       <div>
                         <h3 className="font-semibold text-white">Chat con Vendedor</h3>
-                        <p className="text-sm text-purple-100">Envía mensajes directos</p>
+                        <p className="text-sm text-slate-200">Envía mensajes directos</p>
                       </div>
                     </div>
                   </div>
@@ -737,12 +737,12 @@ export default function BuyerDashboardPage() {
               {recentOrders.slice(0, 5).map((order) => (
                 <Link key={order.id} href="/buyer/orders">
                   <div 
-                    className="border border-gray-200 rounded-xl p-4 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer"
+                    className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <ShoppingBag className="w-6 h-6 text-purple-600" />
+                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <ShoppingBag className="w-6 h-6 text-blue-600" />
                         </div>
                         <div>
                           <p className="font-bold text-gray-900">#{order.orderNumber}</p>
@@ -758,7 +758,7 @@ export default function BuyerDashboardPage() {
                     <div className="mb-3">
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
-                          className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all"
+                          className="bg-gradient-to-r from-blue-500 to-teal-500 h-2 rounded-full transition-all"
                           style={{ width: `${getOrderProgress(order.status)}%` }}
                         />
                       </div>
@@ -772,7 +772,7 @@ export default function BuyerDashboardPage() {
                           year: 'numeric' 
                         })}
                       </p>
-                      <p className="text-lg font-bold text-purple-600">
+                      <p className="text-lg font-bold text-blue-600">
                         ${Number(order.totalAmount).toFixed(2)}
                       </p>
                     </div>
@@ -788,7 +788,7 @@ export default function BuyerDashboardPage() {
       <div className="fixed bottom-6 right-6 z-50">
         <button 
           onClick={() => setShowQuickActions(!showQuickActions)}
-          className="w-14 h-14 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full shadow-2xl flex items-center justify-center text-white hover:scale-110 transition-transform"
+          className="w-14 h-14 bg-gradient-to-r from-slate-700 to-blue-700 rounded-full shadow-2xl flex items-center justify-center text-white hover:scale-110 transition-transform"
         >
           {showQuickActions ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
         </button>
