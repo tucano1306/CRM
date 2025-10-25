@@ -53,13 +53,22 @@ export async function GET() {
     const completedOrders = orders.filter((o) => o.status === 'COMPLETED' || o.status === 'DELIVERED').length
     
     const totalSpent = orders
-      .filter((o) => o.status === 'COMPLETED')
+      .filter((o) => o.status === 'COMPLETED' || o.status === 'DELIVERED')
       .reduce((sum, o) => sum + Number(o.totalAmount), 0) // ✅ CORREGIDO: Number()
 
     const lastOrderDate = orders.length > 0 ? orders[0].createdAt : null
 
     // Productos favoritos (por ahora en 0, se puede expandir)
     const favoriteProducts = 0
+
+    console.log('📊 [BUYER STATS] Calculated stats:', {
+      totalOrders,
+      pendingOrders,
+      completedOrders,
+      totalSpent,
+      lastOrderDate,
+      clientId: client.id
+    })
 
     return NextResponse.json({
       success: true,

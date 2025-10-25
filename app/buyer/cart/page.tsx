@@ -598,10 +598,10 @@ export default function CartPage() {
                         </p>
                       </div>
                       <button 
-                        onClick={() => router.push('/buyer/catalog')}
+                        onClick={() => addToCart(product.id)}
                         className="w-full mt-3 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
                       >
-                        Ver producto
+                        + Agregar
                       </button>
                     </div>
                   ))}

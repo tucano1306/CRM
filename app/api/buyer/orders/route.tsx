@@ -437,9 +437,15 @@ export async function GET() {
       })
     )
 
+    // Agregar itemsCount a cada orden
+    const ordersWithCount = orders.map(order => ({
+      ...order,
+      itemsCount: order.orderItems.length
+    }))
+
     return NextResponse.json({
       success: true,
-      orders,
+      orders: ordersWithCount,
     })
   } catch (error) {
     logger.error(LogCategory.API, 'Error fetching orders', error instanceof Error ? error : new Error(String(error)))

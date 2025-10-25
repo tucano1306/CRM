@@ -37,14 +37,9 @@ export default function BuyerDashboardPage() {
   const [chartPeriod, setChartPeriod] = useState<'6months' | 'year' | 'all'>('6months')
   const [activeTab, setActiveTab] = useState<'shop' | 'manage' | 'support'>('shop')
   const [showQuickActions, setShowQuickActions] = useState(false)
-
-  // Productos destacados simulados (en producción vendrían de la API)
-  const featuredProducts = [
-    { id: 1, name: 'Pizza Margarita', price: 12.99, image: '/placeholder-pizza.jpg', discount: 20 },
-    { id: 2, name: 'Hamburguesa Clásica', price: 8.99, image: '/placeholder-burger.jpg', discount: 15 },
-    { id: 3, name: 'Ensalada Caesar', price: 6.99, image: '/placeholder-salad.jpg', discount: 10 },
-    { id: 4, name: 'Pasta Carbonara', price: 10.99, image: '/placeholder-pasta.jpg', discount: 20 },
-  ]
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([])
+  const [frequentProducts, setFrequentProducts] = useState<any[]>([])
+  const [addingToCart, setAddingToCart] = useState<string | null>(null)
 
   // Datos del programa de fidelidad (en producción vendrían de la API)
   const loyaltyData = {
@@ -55,15 +50,6 @@ export default function BuyerDashboardPage() {
     currentLevel: 'Gold',
     nextLevel: 'Platinum'
   }
-
-  // Productos frecuentes/favoritos (en producción vendrían de la API basados en historial)
-  const frequentProducts = [
-    { id: 1, name: 'Pizza Margarita Grande', price: 12.99, orderCount: 15 },
-    { id: 2, name: 'Hamburguesa Doble', price: 9.99, orderCount: 12 },
-    { id: 3, name: 'Ensalada Caesar', price: 7.99, orderCount: 10 },
-    { id: 4, name: 'Pasta Carbonara', price: 11.99, orderCount: 8 },
-    { id: 5, name: 'Tacos al Pastor', price: 8.99, orderCount: 7 },
-  ]
 
 
   // Calcular datos mensuales para el gráfico
@@ -99,7 +85,82 @@ export default function BuyerDashboardPage() {
 
   useEffect(() => {
     fetchBuyerData()
+    loadFeaturedProducts()
+    loadFrequentProducts()
   }, [])
+
+  const loadFeaturedProducts = async () => {
+    try {
+      const response = await fetch('/api/products/popular')
+      const result = await response.json()
+      console.log('🌟 Featured products:', result)
+      if (result.success && result.data && Array.isArray(result.data)) {
+        // Eliminar duplicados usando Map por ID
+        const uniqueProducts = Array.from(
+          new Map(result.data.map((p: any) => [p.id, p])).values()
+        ).slice(0, 4)
+        setFeaturedProducts(uniqueProducts)
+      }
+    } catch (error) {
+      console.error('Error loading featured products:', error)
+    }
+  }
+
+  const loadFrequentProducts = async () => {
+    try {
+      const response = await fetch('/api/products/suggested')
+      const result = await response.json()
+      console.log('🔁 Frequent products:', result)
+      if (result.success && result.data && Array.isArray(result.data)) {
+        // Eliminar duplicados usando Map por ID
+        const uniqueProducts = Array.from(
+          new Map(result.data.map((p: any) => [p.id, p])).values()
+        ).slice(0, 5)
+        setFrequentProducts(uniqueProducts)
+      }
+    } catch (error) {
+      console.error('Error loading frequent products:', error)
+    }
+  }
+
+  const addToCart = async (productId: string) => {
+    try {
+      setAddingToCart(productId)
+      
+      console.log('🛒 Adding product to cart:', productId)
+      
+      const response = await fetch('/api/buyer/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, quantity: 1 })
+      })
+
+      console.log('🛒 Response status:', response.status, response.statusText)
+      
+      // Verificar si la respuesta es JSON
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text()
+        console.error('❌ Server returned non-JSON response:', text.substring(0, 200))
+        alert('❌ Error del servidor. Por favor, verifica que estés autenticado.')
+        return
+      }
+
+      const result = await response.json()
+      console.log('🛒 Cart API result:', result)
+
+      if (result.success) {
+        alert('✅ Producto agregado al carrito')
+      } else {
+        alert('❌ ' + (result.error || 'Error al agregar producto'))
+      }
+    } catch (error) {
+      console.error('❌ Error adding to cart:', error)
+      alert('❌ Error al agregar producto al carrito. Verifica tu conexión.')
+    } finally {
+      setAddingToCart(null)
+    }
+  }
 
   const fetchBuyerData = async () => {
     try {
@@ -110,14 +171,17 @@ export default function BuyerDashboardPage() {
 
       if (statsRes.ok) {
         const result = await statsRes.json()
+        console.log('📊 Stats response:', result)
         if (result.success) setStats(result.data)
       }
 
       if (ordersRes.ok) {
         const result = await ordersRes.json()
-        if (result.success && result.data) {
-          // Manejar diferentes estructuras de respuesta de la API
-          const orders = Array.isArray(result.data) ? result.data : result.data.orders || []
+        console.log('📦 Orders response:', result)
+        if (result.success) {
+          // La API retorna { success: true, orders: [...] }
+          const orders = result.orders || []
+          console.log('📦 Processed orders:', orders.length, orders)
           setRecentOrders(orders)
         } else {
           setRecentOrders([])
@@ -447,55 +511,76 @@ export default function BuyerDashboardPage() {
             </Link>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {featuredProducts.map(product => (
-              <div key={product.id} className="bg-white rounded-xl p-4 shadow-md hover:shadow-xl transition-all cursor-pointer group">
-                <div className="relative h-32 bg-gradient-to-br from-blue-100 to-slate-100 rounded-lg mb-3 overflow-hidden flex items-center justify-center">
-                  <Package className="w-16 h-16 text-slate-400 group-hover:scale-110 transition-transform" />
-                  {product.discount > 0 && (
-                    <span className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold">
-                      -{product.discount}%
-                    </span>
-                  )}
-                </div>
-                <h4 className="font-medium text-sm mb-2 text-gray-900 line-clamp-2">{product.name}</h4>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-blue-600 font-bold text-lg">${product.price}</span>
-                    {product.discount > 0 && (
-                      <span className="text-gray-400 text-xs line-through ml-1">
-                        ${(product.price / (1 - product.discount / 100)).toFixed(2)}
-                      </span>
-                    )}
+          {featuredProducts.length === 0 ? (
+            <div className="text-center py-8">
+              <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm">No hay productos destacados disponibles</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {featuredProducts.map(product => (
+                <div key={product.id} className="bg-white rounded-xl p-4 shadow-md hover:shadow-xl transition-all group">
+                  <div className="relative h-32 bg-gradient-to-br from-blue-100 to-slate-100 rounded-lg mb-3 overflow-hidden flex items-center justify-center">
+                    <Package className="w-16 h-16 text-slate-400 group-hover:scale-110 transition-transform" />
                   </div>
-                  <button className="p-2 bg-blue-100 rounded-lg hover:bg-blue-200 transition-colors">
-                    <Plus className="w-4 h-4 text-blue-600" />
+                  <h4 className="font-medium text-sm mb-2 text-gray-900 line-clamp-2">{product.name}</h4>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-blue-600 font-bold text-lg">${Number(product.price).toFixed(2)}</span>
+                  </div>
+                  <button 
+                    onClick={() => addToCart(product.id)}
+                    disabled={addingToCart === product.id}
+                    className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+                  >
+                    {addingToCart === product.id ? (
+                      <>Agregando...</>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4" />
+                        Agregar
+                      </>
+                    )}
                   </button>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Compra Nuevamente - Productos Frecuentes */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
           <h3 className="text-xl font-bold text-gray-900 mb-6">🔁 Compra Nuevamente</h3>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {frequentProducts.map(product => (
-              <div key={product.id} className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer">
-                <div className="w-full h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center">
-                  <Package className="w-12 h-12 text-gray-400" />
+          {frequentProducts.length === 0 ? (
+            <div className="text-center py-8">
+              <RefreshCw className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm">Realiza tu primera compra para ver recomendaciones</p>
+              <Link href="/buyer/catalog">
+                <Button className="mt-4 bg-blue-600 hover:bg-blue-700">
+                  Explorar Catálogo
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {frequentProducts.map(product => (
+                <div key={product.id} className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-md transition-all">
+                  <div className="w-full h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center">
+                    <Package className="w-12 h-12 text-gray-400" />
+                  </div>
+                  <p className="text-sm font-medium mb-2 line-clamp-2 text-gray-900">{product.name}</p>
+                  <p className="text-blue-600 font-bold mb-1">${Number(product.price).toFixed(2)}</p>
+                  <button 
+                    onClick={() => addToCart(product.id)}
+                    disabled={addingToCart === product.id}
+                    className="w-full bg-blue-100 text-blue-700 py-2 rounded-lg hover:bg-blue-200 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {addingToCart === product.id ? 'Agregando...' : 'Agregar'}
+                  </button>
                 </div>
-                <p className="text-sm font-medium mb-2 line-clamp-2 text-gray-900">{product.name}</p>
-                <p className="text-blue-600 font-bold mb-1">${product.price}</p>
-                <p className="text-xs text-gray-500 mb-3">Ordenado {product.orderCount} veces</p>
-                <button className="w-full bg-blue-100 text-blue-700 py-2 rounded-lg hover:bg-blue-200 text-sm font-medium transition-colors">
-                  Reordenar
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Tips/Ayuda Contextual */}
