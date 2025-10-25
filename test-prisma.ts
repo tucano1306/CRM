@@ -2,7 +2,7 @@ import { prisma } from './lib/prisma.js'
 
 async function main() {
   // Test: Obtener todos los usuarios
-  const users = await prisma.authenticatedUser.findMany({
+  const users = await prisma.authenticated_users.findMany({
     take: 5,
   })
   console.log('👤 Usuarios:', users)

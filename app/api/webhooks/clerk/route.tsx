@@ -61,14 +61,14 @@ export async function POST(req: Request) {
       const role = (public_metadata?.role as string) || 'CLIENT'
 
       // Verificar si ya existe
-      const existingUser = await prisma.authenticatedUser.findUnique({
+      const existingUser = await prisma.authenticated_users.findUnique({
         where: { email: userEmail },
       })
 
       if (existingUser) {
         // Si ya existe, actualizar en lugar de crear
         console.log(`⚠️ Usuario ya existe, actualizando: ${userEmail}`)
-        await prisma.authenticatedUser.update({
+        await prisma.authenticated_users.update({
           where: { email: userEmail },
           data: {
             authId: id,
@@ -79,7 +79,7 @@ export async function POST(req: Request) {
         console.log(`✅ Usuario actualizado: ${userEmail} (${role})`)
       } else {
         // Crear nuevo usuario
-        await prisma.authenticatedUser.create({
+        await prisma.authenticated_users.create({
           data: {
             authId: id,
             email: userEmail,
@@ -100,12 +100,12 @@ export async function POST(req: Request) {
       const role = (public_metadata?.role as string) || 'CLIENT'
 
       // Intentar actualizar por authId
-      const user = await prisma.authenticatedUser.findUnique({
+      const user = await prisma.authenticated_users.findUnique({
         where: { authId: id },
       })
 
       if (user) {
-        await prisma.authenticatedUser.update({
+        await prisma.authenticated_users.update({
           where: { authId: id },
           data: {
             email: userEmail,
@@ -117,7 +117,7 @@ export async function POST(req: Request) {
       } else {
         console.log(`⚠️ Usuario no encontrado en BD, creando: ${userEmail}`)
         // Si no existe, crearlo
-        await prisma.authenticatedUser.create({
+        await prisma.authenticated_users.create({
           data: {
             authId: id,
             email: userEmail,
@@ -134,12 +134,12 @@ export async function POST(req: Request) {
       const { id } = evt.data as { id: string }
 
       // Verificar si existe antes de eliminar
-      const user = await prisma.authenticatedUser.findUnique({
+      const user = await prisma.authenticated_users.findUnique({
         where: { authId: id },
       })
 
       if (user) {
-        await prisma.authenticatedUser.delete({
+        await prisma.authenticated_users.delete({
           where: { authId: id },
         })
         console.log(`✅ Usuario eliminado de BD: ${user.email}`)

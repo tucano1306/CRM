@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     // Intentar contar usuarios
-    const userCount = await prisma.authenticatedUser.count()
+    const userCount = await prisma.authenticated_users.count()
     const clientCount = await prisma.client.count()
     const productCount = await prisma.product.count()
     const orderCount = await prisma.order.count()

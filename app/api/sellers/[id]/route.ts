@@ -90,7 +90,7 @@ export async function GET(
           pendingOrders,
           totalRevenue: stats._sum.totalAmount || 0,
           commission: seller.commission 
-            ? (stats._sum.totalAmount || 0) * (seller.commission / 100)
+            ? Number(stats._sum.totalAmount || 0) * (seller.commission / 100)
             : 0
         }
       }
