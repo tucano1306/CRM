@@ -12,6 +12,7 @@ import {
   Loader2,
   Clock,
   AlertCircle,
+  X,
 } from 'lucide-react'
 import { ProductCardSkeleton } from '@/components/skeletons'
 
@@ -24,6 +25,9 @@ type Product = {
   unit: string
   imageUrl: string | null
   sku: string | null
+  category?: string
+  isNew?: boolean
+  isOffer?: boolean
 }
 
 export default function CatalogPage() {
@@ -34,6 +38,17 @@ export default function CatalogPage() {
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState<{ [key: string]: number }>({})
+  const [selectedCategory, setSelectedCategory] = useState('all')
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+
+  // Categorías con contador
+  const categories = [
+    { id: 'all', name: 'Todos', emoji: '📦' },
+    { id: 'carnes', name: 'Carnes', emoji: '🥩' },
+    { id: 'embutidos', name: 'Embutidos', emoji: '🌭' },
+    { id: 'salsas', name: 'Salsas', emoji: '🍯' },
+    { id: 'vegetales', name: 'Vegetales', emoji: '🥬' },
+  ]
 
   useEffect(() => {
     fetchProducts()
@@ -91,18 +106,25 @@ export default function CatalogPage() {
     setCart({ ...cart, [productId]: newQuantity })
   }
 
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase())
+    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory
+    return matchesSearch && matchesCategory
+  })
+
+  const getCategoryCount = (categoryId: string) => {
+    if (categoryId === 'all') return products.length
+    return products.filter(p => p.category === categoryId).length
+  }
 
   // ✅ UI States
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
             <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-              <Package className="text-purple-600" size={32} />
+              <Package className="text-blue-600" size={32} />
               Catálogo de Productos
             </h1>
             <p className="text-gray-600 mt-1">Cargando productos...</p>
@@ -124,11 +146,11 @@ export default function CatalogPage() {
 
   if (timedOut) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6">
-        <div className="max-w-md mx-auto mt-8 bg-yellow-50 border border-yellow-200 p-6 rounded-lg">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50 p-6">
+        <div className="max-w-md mx-auto mt-8 bg-amber-50 border border-amber-200 p-6 rounded-lg">
           <div className="flex items-center gap-3 mb-4">
-            <Clock className="h-8 w-8 text-yellow-600" />
-            <h2 className="text-xl font-bold text-yellow-900">
+            <Clock className="h-8 w-8 text-amber-600" />
+            <h2 className="text-xl font-bold text-amber-900">
               Tiempo de espera excedido
             </h2>
           </div>
@@ -137,7 +159,7 @@ export default function CatalogPage() {
           </p>
           <button
             onClick={fetchProducts}
-            className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700"
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
           >
             Reintentar
           </button>
@@ -148,7 +170,7 @@ export default function CatalogPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50 p-6">
         <div className="max-w-md mx-auto mt-8 bg-red-50 border border-red-200 p-6 rounded-lg">
           <div className="flex items-center gap-3 mb-4">
             <AlertCircle className="h-8 w-8 text-red-600" />
@@ -157,7 +179,7 @@ export default function CatalogPage() {
           <p className="text-gray-700 mb-4">{error}</p>
           <button
             onClick={fetchProducts}
-            className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700"
+            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
           >
             Reintentar
           </button>
@@ -167,14 +189,14 @@ export default function CatalogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50 p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                <Package className="text-purple-600" size={32} />
+                <Package className="text-blue-600" size={32} />
                 Catálogo de Productos
               </h1>
               <p className="text-gray-600 mt-1">
@@ -183,7 +205,7 @@ export default function CatalogPage() {
             </div>
             <button
               onClick={() => router.push('/buyer/cart')}
-              className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 flex items-center gap-2"
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2"
             >
               <ShoppingCart size={20} />
               Ver Carrito ({Object.keys(cart).length})
@@ -201,8 +223,25 @@ export default function CatalogPage() {
               placeholder="Buscar productos..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+          </div>
+
+          {/* Filtros de Categorías */}
+          <div className="mt-6 flex gap-2 overflow-x-auto pb-2">
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                onClick={() => setSelectedCategory(category.id)}
+                className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
+                  selectedCategory === category.id
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {category.emoji} {category.name} ({getCategoryCount(category.id)})
+              </button>
+            ))}
           </div>
         </div>
 
@@ -211,19 +250,44 @@ export default function CatalogPage() {
           {filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow"
+              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all cursor-pointer"
+              onClick={() => setSelectedProduct(product)}
             >
+              {/* Imagen placeholder con tags */}
+              <div className="relative h-48 bg-gradient-to-br from-blue-100 to-slate-100 flex items-center justify-center">
+                <Package className="w-20 h-20 text-slate-400" />
+                
+                {/* Tags */}
+                <div className="absolute top-2 left-2 flex flex-col gap-1">
+                  {product.isOffer && (
+                    <span className="bg-red-500 text-white text-xs px-2 py-1 rounded shadow-md">
+                      🔥 Oferta
+                    </span>
+                  )}
+                  {product.isNew && (
+                    <span className="bg-emerald-500 text-white text-xs px-2 py-1 rounded shadow-md">
+                      ✨ Nuevo
+                    </span>
+                  )}
+                  {product.stock < 10 && (
+                    <span className="bg-yellow-400 text-black text-xs px-2 py-1 rounded shadow-md">
+                      ⚠️ Últimas unidades
+                    </span>
+                  )}
+                </div>
+              </div>
+
               <div className="p-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-2">
+                <h3 className="text-lg font-bold text-gray-800 mb-2 line-clamp-2">
                   {product.name}
                 </h3>
                 {product.description && (
-                  <p className="text-sm text-gray-600 mb-4">
+                  <p className="text-sm text-gray-600 mb-4 line-clamp-2">
                     {product.description}
                   </p>
                 )}
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-2xl font-bold text-purple-600">
+                  <span className="text-2xl font-bold text-blue-600">
                     ${product.price.toFixed(2)}
                   </span>
                   <span className="text-sm text-gray-500">
@@ -237,7 +301,10 @@ export default function CatalogPage() {
                 {/* Controles de cantidad */}
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => updateQuantity(product.id, -1)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      updateQuantity(product.id, -1)
+                    }}
                     disabled={(cart[product.id] || 0) === 0}
                     className="bg-gray-200 p-2 rounded hover:bg-gray-300 disabled:opacity-50"
                   >
@@ -247,7 +314,10 @@ export default function CatalogPage() {
                     {cart[product.id] || 0}
                   </span>
                   <button
-                    onClick={() => updateQuantity(product.id, 1)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      updateQuantity(product.id, 1)
+                    }}
                     disabled={(cart[product.id] || 0) >= product.stock}
                     className="bg-gray-200 p-2 rounded hover:bg-gray-300 disabled:opacity-50"
                   >
@@ -256,11 +326,12 @@ export default function CatalogPage() {
                 </div>
 
                 <button
-                  onClick={() =>
+                  onClick={(e) => {
+                    e.stopPropagation()
                     addToCart(product.id, cart[product.id] || 1)
-                  }
+                  }}
                   disabled={(cart[product.id] || 0) === 0}
-                  className="w-full mt-4 bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Agregar al Carrito
                 </button>
@@ -281,6 +352,168 @@ export default function CatalogPage() {
           </div>
         )}
       </div>
+
+      {/* Modal de detalles del producto */}
+      {selectedProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            {/* Header del modal */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-800">
+                {selectedProduct.name}
+              </h2>
+              <button
+                onClick={() => setSelectedProduct(null)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6 text-gray-600" />
+              </button>
+            </div>
+
+            {/* Contenido del modal */}
+            <div className="p-6">
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Imagen del producto */}
+                <div className="relative">
+                  <div className="aspect-square bg-gradient-to-br from-blue-100 to-slate-100 rounded-xl flex items-center justify-center">
+                    <Package className="w-32 h-32 text-slate-400" />
+                  </div>
+                  
+                  {/* Tags */}
+                  <div className="absolute top-4 left-4 flex flex-col gap-2">
+                    {selectedProduct.isOffer && (
+                      <span className="bg-red-500 text-white text-sm px-3 py-1.5 rounded shadow-lg">
+                        🔥 Oferta especial
+                      </span>
+                    )}
+                    {selectedProduct.isNew && (
+                      <span className="bg-emerald-500 text-white text-sm px-3 py-1.5 rounded shadow-lg">
+                        ✨ Nuevo producto
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Detalles del producto */}
+                <div>
+                  <div className="mb-6">
+                    <div className="flex items-baseline gap-2 mb-2">
+                      <span className="text-4xl font-bold text-blue-600">
+                        ${selectedProduct.price.toFixed(2)}
+                      </span>
+                      <span className="text-gray-500">/ {selectedProduct.unit}</span>
+                    </div>
+                    
+                    {/* Stock */}
+                    <div className="flex items-center gap-2 mb-4">
+                      {selectedProduct.stock >= 10 ? (
+                        <span className="text-emerald-600 font-medium">
+                          ✓ En stock ({selectedProduct.stock} {selectedProduct.unit})
+                        </span>
+                      ) : selectedProduct.stock > 0 ? (
+                        <span className="text-amber-600 font-medium">
+                          ⚠️ Últimas {selectedProduct.stock} {selectedProduct.unit}
+                        </span>
+                      ) : (
+                        <span className="text-red-600 font-medium">
+                          ✗ Sin stock
+                        </span>
+                      )}
+                    </div>
+
+                    {/* SKU si existe */}
+                    {selectedProduct.sku && (
+                      <p className="text-sm text-gray-500 mb-4">
+                        SKU: {selectedProduct.sku}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Descripción completa */}
+                  {selectedProduct.description && (
+                    <div className="mb-6">
+                      <h3 className="font-bold text-gray-800 mb-2">Descripción</h3>
+                      <p className="text-gray-600 leading-relaxed">
+                        {selectedProduct.description}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Controles de cantidad */}
+                  <div className="bg-gray-50 rounded-xl p-6 mb-6">
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Cantidad
+                    </label>
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={() => updateQuantity(selectedProduct.id, -1)}
+                        disabled={(cart[selectedProduct.id] || 0) === 0}
+                        className="bg-white border-2 border-gray-300 p-3 rounded-lg hover:bg-gray-100 disabled:opacity-50"
+                      >
+                        <Minus size={20} />
+                      </button>
+                      <span className="w-20 text-center text-2xl font-bold">
+                        {cart[selectedProduct.id] || 0}
+                      </span>
+                      <button
+                        onClick={() => updateQuantity(selectedProduct.id, 1)}
+                        disabled={(cart[selectedProduct.id] || 0) >= selectedProduct.stock}
+                        className="bg-white border-2 border-gray-300 p-3 rounded-lg hover:bg-gray-100 disabled:opacity-50"
+                      >
+                        <Plus size={20} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Botón agregar al carrito */}
+                  <button
+                    onClick={() => {
+                      addToCart(selectedProduct.id, cart[selectedProduct.id] || 1)
+                      setSelectedProduct(null)
+                    }}
+                    disabled={(cart[selectedProduct.id] || 0) === 0}
+                    className="w-full bg-blue-600 text-white py-4 rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-lg font-semibold"
+                  >
+                    Agregar al Carrito
+                  </button>
+                </div>
+              </div>
+
+              {/* Productos relacionados */}
+              <div className="mt-8 pt-8 border-t border-gray-200">
+                <h3 className="text-xl font-bold text-gray-800 mb-4">
+                  Productos relacionados
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {products
+                    .filter(p => 
+                      p.id !== selectedProduct.id && 
+                      p.category === selectedProduct.category
+                    )
+                    .slice(0, 4)
+                    .map(product => (
+                      <div
+                        key={product.id}
+                        onClick={() => setSelectedProduct(product)}
+                        className="bg-gray-50 rounded-lg p-4 cursor-pointer hover:bg-gray-100 transition-colors"
+                      >
+                        <div className="aspect-square bg-gradient-to-br from-blue-100 to-slate-100 rounded-lg flex items-center justify-center mb-2">
+                          <Package className="w-12 h-12 text-slate-400" />
+                        </div>
+                        <h4 className="font-medium text-sm text-gray-800 line-clamp-2 mb-1">
+                          {product.name}
+                        </h4>
+                        <p className="text-blue-600 font-bold">
+                          ${product.price.toFixed(2)}
+                        </p>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
