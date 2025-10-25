@@ -102,6 +102,49 @@ export default function NotificationBell() {
     }
   }
 
+  // Determinar ruta según tipo de notificación
+  const getNotificationRoute = (notification: Notification) => {
+    switch (notification.type) {
+      case 'QUOTE_CREATED':
+      case 'QUOTE_UPDATED':
+        return `/dashboard/quotes${notification.orderId ? `?id=${notification.orderId}` : ''}`
+      case 'RETURN_REQUEST':
+        return `/dashboard/returns${notification.orderId ? `?id=${notification.orderId}` : ''}`
+      case 'CREDIT_NOTE_ISSUED':
+        return `/buyer/credit-notes${notification.orderId ? `?id=${notification.orderId}` : ''}`
+      case 'CHAT_MESSAGE':
+        return `/chat${notification.orderId ? `?orderId=${notification.orderId}` : ''}`
+      case 'LOW_STOCK_ALERT':
+        return `/products`
+      case 'NEW_ORDER':
+      case 'ORDER_MODIFIED':
+      case 'ORDER_CONFIRMED':
+      case 'ORDER_COMPLETED':
+      case 'ORDER_CANCELLED':
+      default:
+        return `/orders${notification.orderId ? `?id=${notification.orderId}` : ''}`
+    }
+  }
+
+  // Obtener texto del botón según tipo
+  const getActionButtonText = (type: NotificationType) => {
+    switch (type) {
+      case 'QUOTE_CREATED':
+      case 'QUOTE_UPDATED':
+        return 'Ver Cotización'
+      case 'RETURN_REQUEST':
+        return 'Ver Devolución'
+      case 'CREDIT_NOTE_ISSUED':
+        return 'Ver Nota de Crédito'
+      case 'CHAT_MESSAGE':
+        return 'Ver Chat'
+      case 'LOW_STOCK_ALERT':
+        return 'Ver Productos'
+      default:
+        return 'Ver Orden'
+    }
+  }
+
   return (
     <div className="relative">
       {/* Bell Button */}
@@ -273,13 +316,14 @@ export default function NotificationBell() {
                 {selectedNotification.orderId && (
                   <button
                     onClick={() => {
-                      router.push(`/orders?id=${selectedNotification.orderId}`)
+                      router.push(getNotificationRoute(selectedNotification))
                       setSelectedNotification(null)
+                      setIsOpen(false)
                     }}
                     className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm sm:text-base"
                   >
                     <ExternalLink size={16} className="sm:w-[18px] sm:h-[18px]" />
-                    Ver Orden
+                    {getActionButtonText(selectedNotification.type)}
                   </button>
                 )}
                 <button

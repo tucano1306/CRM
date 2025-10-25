@@ -12,7 +12,7 @@ type Notification = {
   title: string
   message: string
   isRead: boolean
-  createdAt: string
+  createdAt: Date
   readAt: string | null
   orderId: string | null
   relatedId: string | null
@@ -114,10 +114,10 @@ export default function NotificationBellSeller() {
   }, [selectedNotification])
 
   // Formatear fecha relativa
-  const getRelativeTime = (dateString: string) => {
-    const date = new Date(dateString)
+  const getRelativeTime = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date
     const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
+    const diffMs = now.getTime() - dateObj.getTime()
     const diffMins = Math.floor(diffMs / 60000)
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
@@ -127,7 +127,7 @@ export default function NotificationBellSeller() {
     if (diffHours < 24) return `Hace ${diffHours}h`
     if (diffDays === 1) return 'Ayer'
     if (diffDays < 7) return `Hace ${diffDays} días`
-    return date.toLocaleDateString()
+    return dateObj.toLocaleDateString()
   }
 
   // Icono según tipo
@@ -154,6 +154,49 @@ export default function NotificationBellSeller() {
         return '💰'
       default:
         return '🔔'
+    }
+  }
+
+  // Determinar ruta según tipo de notificación
+  const getNotificationRoute = (notification: Notification) => {
+    switch (notification.type) {
+      case 'QUOTE_CREATED':
+      case 'QUOTE_UPDATED':
+        return `/dashboard/quotes${notification.orderId ? `?id=${notification.orderId}` : ''}`
+      case 'RETURN_REQUEST':
+        return `/dashboard/returns${notification.orderId ? `?id=${notification.orderId}` : ''}`
+      case 'CREDIT_NOTE_ISSUED':
+        return `/buyer/credit-notes${notification.orderId ? `?id=${notification.orderId}` : ''}`
+      case 'CHAT_MESSAGE':
+        return `/chat${notification.orderId ? `?orderId=${notification.orderId}` : ''}`
+      case 'LOW_STOCK_ALERT':
+        return `/products`
+      case 'NEW_ORDER':
+      case 'ORDER_MODIFIED':
+      case 'ORDER_CONFIRMED':
+      case 'ORDER_COMPLETED':
+      case 'ORDER_CANCELLED':
+      default:
+        return `/orders${notification.orderId ? `?id=${notification.orderId}` : ''}`
+    }
+  }
+
+  // Obtener texto del botón según tipo
+  const getActionButtonText = (type: NotificationType) => {
+    switch (type) {
+      case 'QUOTE_CREATED':
+      case 'QUOTE_UPDATED':
+        return 'Ver Cotización'
+      case 'RETURN_REQUEST':
+        return 'Ver Devolución'
+      case 'CREDIT_NOTE_ISSUED':
+        return 'Ver Nota de Crédito'
+      case 'CHAT_MESSAGE':
+        return 'Ver Chat'
+      case 'LOW_STOCK_ALERT':
+        return 'Ver Productos'
+      default:
+        return 'Ver Orden'
     }
   }
 
@@ -316,13 +359,13 @@ export default function NotificationBellSeller() {
               {selectedNotification.orderId && (
                 <button
                   onClick={() => {
-                    router.push(`/orders?id=${selectedNotification.orderId}`)
+                    router.push(getNotificationRoute(selectedNotification))
                     setSelectedNotification(null)
                   }}
                   className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm"
                 >
                   <ExternalLink size={16} />
-                  Ver Orden
+                  {getActionButtonText(selectedNotification.type)}
                 </button>
               )}
               <button
