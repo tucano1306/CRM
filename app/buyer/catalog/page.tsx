@@ -82,16 +82,28 @@ export default function CatalogPage() {
   }
 
   // Toggle favorite
-  const toggleFavorite = (productId: string) => {
-    setFavorites(prev => {
-      const newFavorites = new Set(prev)
+  const toggleFavorite = async (productId: string) => {
+    const newFavorites = new Set(favorites)
+    
+    try {
       if (newFavorites.has(productId)) {
+        await apiCall(`/api/buyer/favorites/${productId}`, {
+          method: 'DELETE',
+        })
         newFavorites.delete(productId)
+        showToast('Eliminado de favoritos', 'success')
       } else {
+        await apiCall(`/api/buyer/favorites/${productId}`, {
+          method: 'POST',
+        })
         newFavorites.add(productId)
+        showToast('Agregado a favoritos', 'success')
       }
-      return newFavorites
-    })
+      setFavorites(newFavorites)
+    } catch (error) {
+      showToast('Error al actualizar favoritos', 'error')
+      console.error('Error toggling favorite:', error)
+    }
   }
 
   // Add/remove from compare
@@ -120,7 +132,31 @@ export default function CatalogPage() {
 
   useEffect(() => {
     fetchProducts()
+    fetchFavorites()
   }, [])
+
+  // Fetch favorites from backend
+  const fetchFavorites = async () => {
+    try {
+      const result = await apiCall('/api/buyer/favorites', {
+        method: 'GET',
+      })
+
+      console.log('📦 Favorites result:', result)
+
+      if (result.success && result.data && Array.isArray(result.data)) {
+        const favoriteIds = new Set<string>(result.data.map((fav: any) => fav.productId))
+        setFavorites(favoriteIds)
+        console.log('✅ Favorites loaded:', favoriteIds.size)
+      } else {
+        console.log('⚠️ No favorites found or invalid data')
+        setFavorites(new Set<string>())
+      }
+    } catch (error) {
+      console.error('Error loading favorites:', error)
+      setFavorites(new Set<string>())
+    }
+  }
 
   // ✅ fetchProducts CON TIMEOUT
   const fetchProducts = async () => {
@@ -171,19 +207,70 @@ export default function CatalogPage() {
     }
   }
 
-  const updateQuantity = (productId: string, change: number) => {
+  const updateQuantity = async (productId: string, change: number) => {
     const current = cart[productId] || 0
     const newQuantity = Math.max(0, current + change)
-    setCart({ ...cart, [productId]: newQuantity })
+    
+    if (newQuantity === 0) {
+      await removeFromCart(productId)
+      return
+    }
+
+    try {
+      // Actualizar en el backend
+      const cartItems = await apiCall('/api/buyer/cart', {
+        method: 'GET',
+        timeout: 5000,
+      })
+
+      if (cartItems.success && cartItems.data?.items) {
+        const item = cartItems.data.items.find((i: any) => i.product.id === productId)
+        if (item) {
+          await apiCall(`/api/buyer/cart/items/${item.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quantity: newQuantity }),
+            timeout: 5000,
+          })
+        }
+      }
+      
+      setCart({ ...cart, [productId]: newQuantity })
+      showToast('Cantidad actualizada', 'success')
+    } catch (err) {
+      showToast('Error al actualizar cantidad', 'error')
+    }
   }
 
-  const removeFromCart = (productId: string) => {
+  const removeFromCart = async (productId: string) => {
     const product = products.find(p => p.id === productId)
-    const newCart = { ...cart }
-    delete newCart[productId]
-    setCart(newCart)
-    if (product) {
-      showToast(`${product.name} eliminado del carrito`, 'info')
+    
+    try {
+      // Obtener items del carrito para encontrar el item ID
+      const cartItems = await apiCall('/api/buyer/cart', {
+        method: 'GET',
+        timeout: 5000,
+      })
+
+      if (cartItems.success && cartItems.data?.items) {
+        const item = cartItems.data.items.find((i: any) => i.product.id === productId)
+        if (item) {
+          await apiCall(`/api/buyer/cart/items/${item.id}`, {
+            method: 'DELETE',
+            timeout: 5000,
+          })
+        }
+      }
+
+      const newCart = { ...cart }
+      delete newCart[productId]
+      setCart(newCart)
+      
+      if (product) {
+        showToast(`${product.name} eliminado del carrito`, 'info')
+      }
+    } catch (err) {
+      showToast('Error al eliminar del carrito', 'error')
     }
   }
 

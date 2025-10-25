@@ -6,7 +6,7 @@ import { eventEmitter } from '@/lib/events/eventEmitter'
 import { EventType } from '@/lib/events/types/event.types'
 import { validateOrderTime, getNextAvailableOrderTime } from '@/lib/scheduleValidation'
 import logger, { LogCategory } from '@/lib/logger'
-import { notifyNewOrder } from '@/lib/notifications'
+import { notifyNewOrder, notifyBuyerOrderCreated } from '@/lib/notifications'
 
 const prisma = new PrismaClient()
 
@@ -325,6 +325,23 @@ export async function POST(request: Request) {
     } catch (notifError) {
       // No bloquear la respuesta si falla la notificación
       logger.error(LogCategory.API, 'Error sending notification', notifError instanceof Error ? notifError : new Error(String(notifError)))
+    }
+
+    // 🔔 CREAR NOTIFICACIÓN PARA EL COMPRADOR
+    try {
+      await notifyBuyerOrderCreated(
+        order!.clientId,
+        order!.id,
+        order!.orderNumber,
+        Number(order!.totalAmount)
+      )
+      logger.info(LogCategory.API, 'Notification sent to buyer', {
+        clientId: order!.clientId,
+        orderId: order!.id,
+      })
+    } catch (notifError) {
+      // No bloquear la respuesta si falla la notificación
+      logger.error(LogCategory.API, 'Error sending notification to buyer', notifError instanceof Error ? notifError : new Error(String(notifError)))
     }
 
     return NextResponse.json({

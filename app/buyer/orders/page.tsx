@@ -456,10 +456,47 @@ export default function OrdersPage() {
 
   const handleQuickReorder = async (order: Order, e: React.MouseEvent) => {
     e.stopPropagation()
-    // Redirigir al catálogo o crear una nueva orden con los mismos productos
-    if (confirm('¿Quieres crear una nueva orden con los mismos productos?')) {
-      router.push('/buyer/catalog')
-      // TODO: Implementar lógica para pre-llenar el carrito
+    
+    if (confirm('¿Quieres agregar todos los productos de esta orden al carrito?')) {
+      try {
+        let addedCount = 0
+        
+        // Agregar cada producto de la orden al carrito
+        for (const item of order.orderItems) {
+          try {
+            await apiCall('/api/buyer/cart/items', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                productId: item.productId,
+                quantity: item.quantity
+              }),
+            })
+            addedCount++
+          } catch (error) {
+            console.error(`Error adding product ${item.productName}:`, error)
+          }
+        }
+        
+        if (addedCount > 0) {
+          setToastMessage(`✅ ${addedCount} productos agregados al carrito`)
+          setToastStatus('success')
+          setShowToast(true)
+          // Esperar un momento y redirigir al carrito
+          setTimeout(() => {
+            router.push('/buyer/cart')
+          }, 1500)
+        } else {
+          setToastMessage('No se pudieron agregar los productos')
+          setToastStatus('error')
+          setShowToast(true)
+        }
+      } catch (error) {
+        setToastMessage('Error al reordenar')
+        setToastStatus('error')
+        setShowToast(true)
+        console.error('Error reordering:', error)
+      }
     }
   }
 

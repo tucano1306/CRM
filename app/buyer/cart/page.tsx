@@ -68,6 +68,8 @@ export default function CartPage() {
   const [deliveryMethod, setDeliveryMethod] = useState<'delivery' | 'pickup'>('delivery')
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<{id: string, name: string} | null>(null)
+  const [suggestedProducts, setSuggestedProducts] = useState<any[]>([])
+  const [popularProducts, setPopularProducts] = useState<any[]>([])
 
   const TAX_RATE = 0.10 // 10% de impuestos
   const DELIVERY_FEE = 5.00 // Costo de envío
@@ -83,7 +85,21 @@ export default function CartPage() {
 
   useEffect(() => {
     fetchCart()
+    loadSuggestedProducts()
+    loadPopularProducts()
   }, [])
+
+  // Cargar productos sugeridos
+  const loadSuggestedProducts = async () => {
+    const products = await getSuggestedProducts()
+    setSuggestedProducts(products)
+  }
+
+  // Cargar productos populares
+  const loadPopularProducts = async () => {
+    const products = await getPopularProducts()
+    setPopularProducts(products)
+  }
 
   // ✅ fetchCart CON TIMEOUT
   const fetchCart = async () => {
@@ -184,21 +200,33 @@ export default function CartPage() {
   }
 
   // Aplicar cupón
-  const applyCoupon = () => {
-    const validCoupons: {[key: string]: number} = {
-      'DESCUENTO10': 0.10,
-      'PRIMERACOMPRA': 0.15,
-      'ENVIOGRATIS': 0.05,
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) {
+      showToast('Por favor ingresa un cupón', 'error')
+      return
     }
 
-    if (validCoupons[couponCode.toUpperCase()]) {
-      setAppliedCoupon({
-        code: couponCode.toUpperCase(),
-        discount: validCoupons[couponCode.toUpperCase()]
+    try {
+      const result = await apiCall('/api/buyer/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: couponCode.toUpperCase(),
+          cartTotal: calculateSubtotal()
+        }),
       })
-      showToast(`¡Cupón ${couponCode.toUpperCase()} aplicado!`, 'success')
-    } else {
-      showToast('Cupón inválido', 'error')
+
+      if (result.success && result.data) {
+        setAppliedCoupon({
+          code: result.data.code,
+          discount: result.data.discountAmount
+        })
+        showToast(`¡Cupón aplicado! Descuento: $${result.data.discountAmount.toFixed(2)}`, 'success')
+        setCouponCode('')
+      }
+    } catch (error: any) {
+      showToast(error.message || 'Cupón inválido o expirado', 'error')
+      setAppliedCoupon(null)
     }
   }
 
@@ -215,7 +243,8 @@ export default function CartPage() {
 
   const calculateDiscount = () => {
     if (!appliedCoupon) return 0
-    return calculateSubtotal() * appliedCoupon.discount
+    // El descuento ya viene calculado del backend
+    return appliedCoupon.discount
   }
 
   const calculateTax = () => {
@@ -244,29 +273,83 @@ export default function CartPage() {
     }
   }
 
-  const getSuggestedProducts = () => {
-    // Mock de productos sugeridos - en producción vendría del backend
-    return [
-      { id: '1', name: 'Chorizo Premium', price: 12.99, imageUrl: '/placeholder-food.jpg' },
-      { id: '2', name: 'Salsa BBQ', price: 8.50, imageUrl: '/placeholder-food.jpg' },
-      { id: '3', name: 'Pan de Ajo', price: 5.99, imageUrl: '/placeholder-food.jpg' },
-    ]
+  const getSuggestedProducts = async () => {
+    try {
+      const result = await apiCall('/api/products/suggested', {
+        method: 'GET',
+      })
+      
+      console.log('Suggested products result:', result)
+      
+      if (result.success && result.data && Array.isArray(result.data)) {
+        console.log('Suggested products count:', result.data.length)
+        return result.data.slice(0, 3) // Limitar a 3
+      }
+    } catch (error) {
+      console.error('Error loading suggested products:', error)
+    }
+    
+    return []
   }
 
-  const getPopularProducts = () => {
-    // Mock de productos más vendidos - en producción vendría del backend
-    return [
-      { id: '101', name: 'Pizza Margherita', price: 15.99, imageUrl: '/placeholder-food.jpg', sales: 250 },
-      { id: '102', name: 'Hamburguesa Clásica', price: 12.50, imageUrl: '/placeholder-food.jpg', sales: 180 },
-      { id: '103', name: 'Tacos al Pastor', price: 9.99, imageUrl: '/placeholder-food.jpg', sales: 165 },
-      { id: '104', name: 'Sushi Roll', price: 18.99, imageUrl: '/placeholder-food.jpg', sales: 140 },
-    ]
+  const getPopularProducts = async () => {
+    try {
+      const result = await apiCall('/api/products/popular', {
+        method: 'GET',
+      })
+      
+      console.log('Popular products result:', result)
+      
+      if (result.success && result.data && Array.isArray(result.data)) {
+        console.log('Popular products count:', result.data.length)
+        return result.data.slice(0, 4) // Limitar a 4
+      }
+    } catch (error) {
+      console.error('Error loading popular products:', error)
+    }
+    
+    return []
   }
 
-  const saveCartForLater = () => {
-    // En producción, esto guardaría el carrito en el backend
-    showToast('Carrito guardado para después', 'success')
-    // Aquí iría la llamada al API
+  const saveCartForLater = async () => {
+    try {
+      const result = await apiCall('/api/buyer/cart/save-for-later', {
+        method: 'POST',
+      })
+
+      if (result.success) {
+        showToast('Carrito guardado exitosamente', 'success')
+      }
+    } catch (error) {
+      showToast('Error al guardar el carrito', 'error')
+      console.error('Error saving cart:', error)
+    }
+  }
+
+  // Agregar producto al carrito
+  const addToCart = async (productId: string, quantity: number = 1) => {
+    try {
+      console.log('Adding to cart:', { productId, quantity })
+      
+      const result = await apiCall('/api/buyer/cart/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, quantity }),
+      })
+
+      console.log('Add to cart result:', result)
+
+      if (result.success) {
+        showToast('✅ Producto agregado al carrito', 'success')
+        await fetchCart() // Recargar el carrito
+      } else {
+        showToast(result.error || '❌ Error al agregar producto', 'error')
+      }
+    } catch (error: any) {
+      const errorMsg = error?.message || 'Error al agregar producto'
+      showToast(`❌ ${errorMsg}`, 'error')
+      console.error('Error adding to cart:', error)
+    }
   }
 
   // ✅ clearCart CON TIMEOUT
@@ -307,7 +390,9 @@ export default function CartPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          notes: null,
+          notes: orderNotes || null,
+          deliveryMethod: deliveryMethod,
+          couponCode: appliedCoupon?.code || null,
           idempotencyKey: uuidv4()
         }),
         timeout: 8000, // ✅ 8 segundos para crear orden (operación compleja)
@@ -493,37 +578,36 @@ export default function CartPage() {
             </button>
 
             {/* Productos más vendidos */}
-            <div className="mt-12">
-              <h4 className="text-xl font-bold text-gray-800 mb-6 flex items-center justify-center gap-2">
-                🔥 Los más vendidos
-              </h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {getPopularProducts().map(product => (
-                  <div key={product.id} className="bg-gradient-to-br from-blue-50 to-slate-50 p-4 rounded-xl border border-blue-100 hover:shadow-lg transition-shadow cursor-pointer group">
-                    <div className="aspect-square bg-white rounded-lg flex items-center justify-center mb-3 shadow-sm">
-                      <Package className="w-12 h-12 text-blue-400 group-hover:text-blue-600 transition-colors" />
-                    </div>
-                    <p className="font-semibold text-gray-800 text-sm line-clamp-2 mb-2">
-                      {product.name}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <p className="text-blue-600 font-bold text-lg">
-                        ${product.price.toFixed(2)}
+            {popularProducts.length > 0 && (
+              <div className="mt-12">
+                <h4 className="text-xl font-bold text-gray-800 mb-6 flex items-center justify-center gap-2">
+                  🔥 Los más vendidos
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {popularProducts.map(product => (
+                    <div key={product.id} className="bg-gradient-to-br from-blue-50 to-slate-50 p-4 rounded-xl border border-blue-100 hover:shadow-lg transition-shadow cursor-pointer group">
+                      <div className="aspect-square bg-white rounded-lg flex items-center justify-center mb-3 shadow-sm">
+                        <Package className="w-12 h-12 text-blue-400 group-hover:text-blue-600 transition-colors" />
+                      </div>
+                      <p className="font-semibold text-gray-800 text-sm line-clamp-2 mb-2">
+                        {product.name}
                       </p>
-                      <span className="text-xs text-gray-500">
-                        {product.sales} ventas
-                      </span>
+                      <div className="flex items-center justify-between">
+                        <p className="text-blue-600 font-bold text-lg">
+                          ${product.price.toFixed(2)}
+                        </p>
+                      </div>
+                      <button 
+                        onClick={() => router.push('/buyer/catalog')}
+                        className="w-full mt-3 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                      >
+                        Ver producto
+                      </button>
                     </div>
-                    <button 
-                      onClick={() => router.push('/buyer/catalog')}
-                      className="w-full mt-3 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-                    >
-                      Ver producto
-                    </button>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
@@ -716,25 +800,30 @@ export default function CartPage() {
               ))}
 
               {/* PRODUCTOS SUGERIDOS */}
-              <div className="bg-gradient-to-r from-blue-50 to-slate-50 p-6 rounded-xl mt-6 border border-blue-100">
-                <h3 className="font-bold text-lg mb-4 text-gray-800 flex items-center gap-2">
-                  💡 Productos que podrían interesarte
-                </h3>
-                <div className="grid grid-cols-3 gap-4">
-                  {getSuggestedProducts().map(product => (
-                    <div key={product.id} className="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                      <div className="aspect-square bg-gradient-to-br from-blue-100 to-slate-100 rounded flex items-center justify-center mb-2">
-                        <Package className="w-8 h-8 text-slate-400" />
+              {suggestedProducts.length > 0 && (
+                <div className="bg-gradient-to-r from-blue-50 to-slate-50 p-6 rounded-xl mt-6 border border-blue-100">
+                  <h3 className="font-bold text-lg mb-4 text-gray-800 flex items-center gap-2">
+                    💡 Productos que podrían interesarte
+                  </h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    {suggestedProducts.map(product => (
+                      <div key={product.id} className="bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                        <div className="aspect-square bg-gradient-to-br from-blue-100 to-slate-100 rounded flex items-center justify-center mb-2">
+                          <Package className="w-8 h-8 text-slate-400" />
+                        </div>
+                        <p className="text-sm font-medium text-gray-800 line-clamp-2">{product.name}</p>
+                        <p className="text-blue-600 font-bold mt-1">${product.price.toFixed(2)}</p>
+                        <button 
+                          onClick={() => addToCart(product.id)}
+                          className="w-full bg-blue-100 text-blue-600 py-1.5 rounded mt-2 text-sm hover:bg-blue-200 transition-colors font-medium"
+                        >
+                          + Agregar
+                        </button>
                       </div>
-                      <p className="text-sm font-medium text-gray-800 line-clamp-2">{product.name}</p>
-                      <p className="text-blue-600 font-bold mt-1">${product.price.toFixed(2)}</p>
-                      <button className="w-full bg-blue-100 text-blue-600 py-1.5 rounded mt-2 text-sm hover:bg-blue-200 transition-colors font-medium">
-                        + Agregar
-                      </button>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Columna derecha: Resumen (1/3) */}

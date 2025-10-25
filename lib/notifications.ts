@@ -90,6 +90,28 @@ export async function notifyNewOrder(
 }
 
 /**
+ * Crear notificación para el COMPRADOR cuando crea una orden
+ */
+export async function notifyBuyerOrderCreated(
+  clientId: string,
+  orderId: string,
+  orderNumber: string,
+  totalAmount: number
+) {
+  return createNotification({
+    clientId,
+    type: 'ORDER_CONFIRMED',
+    title: '✅ Orden Creada Exitosamente',
+    message: `Tu orden #${orderNumber} ha sido creada exitosamente por $${totalAmount.toFixed(2)}. El vendedor la revisará pronto.`,
+    orderId,
+    metadata: {
+      orderNumber,
+      totalAmount,
+    },
+  })
+}
+
+/**
  * Crear notificación cuando se modifica una orden
  */
 export async function notifyOrderModified(

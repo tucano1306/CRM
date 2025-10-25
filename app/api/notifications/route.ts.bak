@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
-import crypto from 'crypto'
 
 /**
  * GET /api/notifications
@@ -22,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Buscar el usuario autenticado
-    let authUser = await prisma.authenticated_users.findUnique({
+    const authUser = await prisma.authenticated_users.findUnique({
       where: { authId: userId },
       include: { 
         sellers: true,
@@ -30,52 +29,11 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    console.log('🔔 [NOTIFICATIONS] authUser found:', {
-      userId,
-      authUserId: authUser?.id,
-      sellersCount: authUser?.sellers?.length || 0,
-      clientsCount: authUser?.clients?.length || 0,
-      role: authUser?.role
-    })
-
-    // Si no existe authUser, crearlo automáticamente
     if (!authUser) {
-      console.log('⚠️ [NOTIFICATIONS] Creating authenticated_users record for:', userId)
-      
-      // Obtener datos del usuario de Clerk
-      const { currentUser } = await import('@clerk/nextjs/server')
-      const clerkUser = await currentUser()
-      
-      if (!clerkUser) {
-        console.log('❌ [NOTIFICATIONS] Cannot get Clerk user')
-        return NextResponse.json(
-          { error: 'Usuario no encontrado' },
-          { status: 404 }
-        )
-      }
-
-      // Determinar rol del usuario desde metadata
-      const role = (clerkUser.publicMetadata?.role as string) || 
-                   (clerkUser.privateMetadata?.role as string) || 
-                   'CLIENT'
-
-      // Crear authenticated_users
-      authUser = await prisma.authenticated_users.create({
-        data: {
-          id: crypto.randomUUID(),
-          authId: userId,
-          email: clerkUser.emailAddresses[0]?.emailAddress || '',
-          name: clerkUser.firstName || clerkUser.username || 'Usuario',
-          role: role as any,
-          updatedAt: new Date()
-        },
-        include: {
-          sellers: true,
-          clients: true
-        }
-      })
-
-      console.log('✅ [NOTIFICATIONS] authenticated_users created:', authUser.id)
+      return NextResponse.json(
+        { error: 'Usuario no encontrado' },
+        { status: 404 }
+      )
     }
 
     const { searchParams } = new URL(request.url)
@@ -86,28 +44,18 @@ export async function GET(request: NextRequest) {
     const isSeller = authUser.sellers.length > 0
     const isClient = authUser.clients.length > 0
 
-    console.log('🔔 [NOTIFICATIONS] User type:', { isSeller, isClient })
-
-    // Si no tiene rol asignado, retornar array vacío en lugar de error
-    if (!isSeller && !isClient) {
-      console.log('⚠️ [NOTIFICATIONS] No role assigned, returning empty array')
-      return NextResponse.json({
-        success: true,
-        notifications: [],
-        unreadCount: 0,
-        userType: 'none',
-      })
-    }
-
     // Construir query
     const where: any = {}
     
     if (isSeller && authUser.sellers[0]) {
       where.sellerId = authUser.sellers[0].id
-      console.log('🔔 [NOTIFICATIONS] Querying for seller:', authUser.sellers[0].id)
     } else if (isClient && authUser.clients[0]) {
       where.clientId = authUser.clients[0].id
-      console.log('🔔 [NOTIFICATIONS] Querying for client:', authUser.clients[0].id)
+    } else {
+      return NextResponse.json(
+        { error: 'Usuario no tiene rol asignado' },
+        { status: 403 }
+      )
     }
 
     if (unreadOnly) {
