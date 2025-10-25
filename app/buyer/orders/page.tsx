@@ -19,6 +19,7 @@ import {
   Truck,
   PackageCheck,
   X,
+  Search,
 } from 'lucide-react'
 import OrderCountdown from '@/components/buyer/OrderCountdown'
 import { OrderCardSkeleton } from '@/components/skeletons'
@@ -193,6 +194,10 @@ export default function OrdersPage() {
   const [filterStatus, setFilterStatus] = useState<'ALL' | OrderStatus>('ALL')
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [activeTab, setActiveTab] = useState<'productos' | 'estado' | 'seguimiento'>('productos')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
 
   useEffect(() => {
     fetchOrders()
@@ -432,6 +437,56 @@ export default function OrdersPage() {
     )
   }
 
+  // Filtrado y ordenamiento de órdenes
+  const filteredAndSortedOrders = orders
+    .filter(order => {
+      // Filtro por estado
+      if (filterStatus !== 'ALL') {
+        if (filterStatus === 'CANCELED' && order.status !== 'CANCELED' && order.status !== 'CANCELLED') return false
+        if (filterStatus === 'DELIVERED' && order.status !== 'DELIVERED' && order.status !== 'COMPLETED') return false
+        if (filterStatus === 'PREPARING' && order.status !== 'PREPARING' && order.status !== 'PROCESSING') return false
+        if (filterStatus !== 'CANCELED' && filterStatus !== 'DELIVERED' && filterStatus !== 'PREPARING' && order.status !== filterStatus) return false
+      }
+
+      // Filtro por búsqueda
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        const matchesOrderNumber = (order.orderNumber || '').toLowerCase().includes(query)
+        const matchesId = order.id.toLowerCase().includes(query)
+        const matchesTotal = order.totalAmount.toString().includes(query)
+        if (!matchesOrderNumber && !matchesId && !matchesTotal) return false
+      }
+
+      // Filtro por rango de fechas
+      if (dateFrom) {
+        const orderDate = new Date(order.createdAt)
+        const fromDate = new Date(dateFrom)
+        if (orderDate < fromDate) return false
+      }
+      if (dateTo) {
+        const orderDate = new Date(order.createdAt)
+        const toDate = new Date(dateTo)
+        toDate.setHours(23, 59, 59, 999) // Incluir todo el día
+        if (orderDate > toDate) return false
+      }
+
+      return true
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        case 'oldest':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        case 'highest':
+          return Number(b.totalAmount) - Number(a.totalAmount)
+        case 'lowest':
+          return Number(a.totalAmount) - Number(b.totalAmount)
+        default:
+          return 0
+      }
+    })
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6">
       <div className="max-w-6xl mx-auto">
@@ -454,6 +509,74 @@ export default function OrdersPage() {
               Nueva orden
             </button>
           </div>
+        </div>
+
+        {/* Buscador y Filtros */}
+        <div className="bg-white rounded-2xl shadow-lg p-4 mb-6 border border-purple-100">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Búsqueda */}
+            <div className="relative">
+              <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por número de orden..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+              />
+            </div>
+            
+            {/* Rango de fechas */}
+            <div className="flex gap-2">
+              <input 
+                type="date" 
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none" 
+                placeholder="Desde"
+              />
+              <input 
+                type="date" 
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none" 
+                placeholder="Hasta"
+              />
+            </div>
+            
+            {/* Ordenar por */}
+            <select 
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as any)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none bg-white"
+            >
+              <option value="newest">Más recientes</option>
+              <option value="oldest">Más antiguos</option>
+              <option value="highest">Mayor monto</option>
+              <option value="lowest">Menor monto</option>
+            </select>
+          </div>
+
+          {/* Indicador de resultados filtrados */}
+          {(searchQuery || dateFrom || dateTo || filterStatus !== 'ALL') && (
+            <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                Mostrando <strong>{filteredAndSortedOrders.length}</strong> de <strong>{orders.length}</strong> órdenes
+              </p>
+              <button
+                onClick={() => {
+                  setSearchQuery('')
+                  setDateFrom('')
+                  setDateTo('')
+                  setFilterStatus('ALL')
+                  setSortBy('newest')
+                }}
+                className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Tabs de filtrado */}
@@ -541,15 +664,7 @@ export default function OrdersPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {orders
-              .filter(order => {
-                if (filterStatus === 'ALL') return true
-                if (filterStatus === 'CANCELED') return order.status === 'CANCELED' || order.status === 'CANCELLED'
-                if (filterStatus === 'DELIVERED') return order.status === 'DELIVERED' || order.status === 'COMPLETED'
-                if (filterStatus === 'PREPARING') return order.status === 'PREPARING' || order.status === 'PROCESSING'
-                return order.status === filterStatus
-              })
-              .map((order) => {
+            {filteredAndSortedOrders.map((order) => {
               const config = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.PENDING
               const StatusIcon = config.icon
 
@@ -604,26 +719,25 @@ export default function OrdersPage() {
                 </div>
               )
             })}
-            {orders.filter(order => {
-              if (filterStatus === 'ALL') return true
-              if (filterStatus === 'CANCELED') return order.status === 'CANCELED' || order.status === 'CANCELLED'
-              if (filterStatus === 'DELIVERED') return order.status === 'DELIVERED' || order.status === 'COMPLETED'
-              if (filterStatus === 'PREPARING') return order.status === 'PREPARING' || order.status === 'PROCESSING'
-              return order.status === filterStatus
-            }).length === 0 && (
+            {filteredAndSortedOrders.length === 0 && (
               <div className="col-span-full bg-white rounded-2xl shadow-lg p-12 text-center border border-purple-100">
                 <Package className="mx-auto text-gray-400 mb-4" size={64} />
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  No hay órdenes en este estado
+                  No hay órdenes que coincidan
                 </h2>
                 <p className="text-gray-600 mb-6">
-                  Prueba con otro filtro o haz una nueva orden
+                  Intenta ajustar los filtros de búsqueda
                 </p>
                 <button
-                  onClick={() => setFilterStatus('ALL')}
+                  onClick={() => {
+                    setSearchQuery('')
+                    setDateFrom('')
+                    setDateTo('')
+                    setFilterStatus('ALL')
+                  }}
                   className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
                 >
-                  Ver todas
+                  Limpiar filtros
                 </button>
               </div>
             )}
@@ -849,41 +963,130 @@ export default function OrdersPage() {
 
                 {/* Tab: Seguimiento */}
                 {activeTab === 'seguimiento' && (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <h3 className="text-lg font-bold text-gray-900 mb-4">
                       Historial de la orden
                     </h3>
                     
-                    {/* Timeline de estados */}
-                    <div className="relative pl-8 space-y-6">
-                      {/* Línea vertical */}
-                      <div className="absolute left-2 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-                      
-                      {/* Estado actual */}
-                      <div className="relative">
-                        <div className="absolute -left-6 w-4 h-4 bg-purple-600 rounded-full border-4 border-white"></div>
-                        <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                          <p className="font-semibold text-purple-900">
-                            {statusConfig[selectedOrder.status as keyof typeof statusConfig]?.label || selectedOrder.status}
-                          </p>
-                          <p className="text-sm text-gray-600 mt-1">Estado actual</p>
-                          <p className="text-xs text-gray-500 mt-2">
-                            {new Date(selectedOrder.createdAt).toLocaleString('es-ES')}
-                          </p>
+                    {/* Timeline visual mejorado */}
+                    <div className="space-y-4">
+                      {/* Estado: Orden Confirmada */}
+                      {(selectedOrder.status === 'CONFIRMED' || 
+                        selectedOrder.status === 'PREPARING' || 
+                        selectedOrder.status === 'PROCESSING' ||
+                        selectedOrder.status === 'READY_FOR_PICKUP' ||
+                        selectedOrder.status === 'IN_DELIVERY' ||
+                        selectedOrder.status === 'DELIVERED' ||
+                        selectedOrder.status === 'COMPLETED') && (
+                        <div className="flex items-start gap-4">
+                          <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
+                            <CheckCircle className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">Orden Confirmada</p>
+                            <p className="text-sm text-gray-500">
+                              {new Date(selectedOrder.createdAt).toLocaleString('es-ES', {
+                                day: 'numeric',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
-                      {/* Orden creada */}
-                      <div className="relative">
-                        <div className="absolute -left-6 w-4 h-4 bg-gray-400 rounded-full border-4 border-white"></div>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                          <p className="font-semibold text-gray-900">Orden creada</p>
-                          <p className="text-sm text-gray-600 mt-1">Esperando confirmación</p>
-                          <p className="text-xs text-gray-500 mt-2">
-                            {new Date(selectedOrder.createdAt).toLocaleString('es-ES')}
-                          </p>
+                      {/* Estado: En Preparación */}
+                      {(selectedOrder.status === 'PREPARING' || 
+                        selectedOrder.status === 'PROCESSING' ||
+                        selectedOrder.status === 'READY_FOR_PICKUP' ||
+                        selectedOrder.status === 'IN_DELIVERY' ||
+                        selectedOrder.status === 'DELIVERED' ||
+                        selectedOrder.status === 'COMPLETED') && (
+                        <div className="flex items-start gap-4">
+                          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
+                            <Package className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">En Preparación</p>
+                            <p className="text-sm text-gray-500">Tu pedido está siendo preparado</p>
+                          </div>
                         </div>
-                      </div>
+                      )}
+
+                      {/* Estado: En Camino */}
+                      {(selectedOrder.status === 'IN_DELIVERY' ||
+                        selectedOrder.status === 'DELIVERED' ||
+                        selectedOrder.status === 'COMPLETED') ? (
+                        <div className="flex items-start gap-4">
+                          <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
+                            <Truck className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">En Camino</p>
+                            <p className="text-sm text-gray-500">Tu pedido está siendo entregado</p>
+                          </div>
+                        </div>
+                      ) : selectedOrder.status !== 'PENDING' && selectedOrder.status !== 'CANCELED' && selectedOrder.status !== 'CANCELLED' && (
+                        <div className="flex items-start gap-4">
+                          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                            <Truck className="w-6 h-6 text-gray-500" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-400">En Camino</p>
+                            <p className="text-sm text-gray-400">Estimado: Próximamente</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Estado: Entregado */}
+                      {(selectedOrder.status === 'DELIVERED' || selectedOrder.status === 'COMPLETED') ? (
+                        <div className="flex items-start gap-4">
+                          <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white flex-shrink-0">
+                            <PackageCheck className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">Entregado</p>
+                            <p className="text-sm text-gray-500">Tu pedido fue entregado con éxito</p>
+                          </div>
+                        </div>
+                      ) : selectedOrder.status !== 'PENDING' && selectedOrder.status !== 'CANCELED' && selectedOrder.status !== 'CANCELLED' && (
+                        <div className="flex items-start gap-4">
+                          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
+                            <PackageCheck className="w-6 h-6 text-gray-500" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-400">Entregado</p>
+                            <p className="text-sm text-gray-400">Pendiente de entrega</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Estado: Pendiente */}
+                      {selectedOrder.status === 'PENDING' && (
+                        <div className="flex items-start gap-4">
+                          <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-white flex-shrink-0 animate-pulse">
+                            <Clock className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">Esperando Confirmación</p>
+                            <p className="text-sm text-gray-500">El vendedor revisará tu orden pronto</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Estado: Cancelado */}
+                      {(selectedOrder.status === 'CANCELED' || selectedOrder.status === 'CANCELLED') && (
+                        <div className="flex items-start gap-4">
+                          <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
+                            <XCircle className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-gray-900">Orden Cancelada</p>
+                            <p className="text-sm text-gray-500">Esta orden fue cancelada</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Información de entrega */}
