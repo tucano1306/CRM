@@ -170,7 +170,7 @@ export default function NotificationBell() {
               </div>
             ) : (
               <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                {notifications.map((notification) => (
+                {notifications.map((notification: Notification) => (
                   <div
                     key={notification.id}
                     className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${

@@ -5,7 +5,8 @@ import { Home, Package, ShoppingCart, User, Menu, X, Store, RefreshCw, RotateCcw
 import Link from 'next/link'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
-import NotificationBell from '@/components/shared/NotificationBell'
+import NotificationBell from '@/components/notifications/NotificationBell'
+import { NotificationProvider } from '@/components/providers/NotificationProvider'
 
 export default function BuyerLayout({ children }: { children: React.ReactNode }) {
   const { user } = useUser()
@@ -24,7 +25,8 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
   ]
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <NotificationProvider>
+      <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
       <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-purple-700 to-pink-600 shadow-2xl transition-transform lg:translate-x-0 lg:static`}>
         <div className="flex h-full flex-col">
@@ -84,5 +86,6 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
+    </NotificationProvider>
   )
 }

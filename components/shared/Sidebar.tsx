@@ -22,6 +22,7 @@ import {
 import { useState, useEffect } from 'react'
 import ThemeToggle from './ThemeToggle'
 import NotificationBellSeller from '../notifications/NotificationBellSeller'
+import { NotificationProvider } from '../providers/NotificationProvider'
 
 const menuItems = [
   {
@@ -90,6 +91,7 @@ export default function Sidebar() {
   }, [])
 
   return (
+    <NotificationProvider>
     <>
       {/* Mobile Menu Button */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
@@ -238,5 +240,6 @@ export default function Sidebar() {
         />
       )}
     </>
+    </NotificationProvider>
   )
 }
