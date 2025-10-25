@@ -227,63 +227,72 @@ export default function NotificationBell() {
         document.body
       )}
 
-      {/* Modal de detalles - Responsive */}
-      {selectedNotification && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999]">
-          <div 
-            className="fixed top-1/2 -translate-y-1/2 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-[95vw] sm:w-[450px] max-w-md max-h-[90vh] overflow-hidden flex flex-col"
+      {/* Modal de detalles - Centrado y responsive */}
+      {mounted && selectedNotification && createPortal(
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4"
+            onClick={() => setSelectedNotification(null)}
           >
-            <div className="flex items-start justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-start gap-3 sm:gap-4">
-                <span className="text-3xl sm:text-4xl">{getTypeIcon(selectedNotification.type)}</span>
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white break-words">{selectedNotification.title}</h2>
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">{getRelativeTime(selectedNotification.createdAt)}</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedNotification(null)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-              <p className="text-gray-700 dark:text-gray-300 text-sm sm:text-base leading-relaxed break-words">{selectedNotification.message}</p>
-              {selectedNotification.orderId && (
-                <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <div className="flex items-center gap-2 text-blue-900 dark:text-blue-300 font-semibold mb-2 text-sm sm:text-base">
-                    <Package size={18} className="sm:w-5 sm:h-5" />
-                    <span>Orden relacionada</span>
+            {/* Modal - Responsive y centrado */}
+            <div
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto relative transform transition-all"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <span className="text-3xl sm:text-4xl">{getTypeIcon(selectedNotification.type)}</span>
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white break-words">{selectedNotification.title}</h2>
+                    <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">{getRelativeTime(selectedNotification.createdAt)}</p>
                   </div>
-                  <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-400 font-mono break-all">ID: {selectedNotification.orderId}</p>
                 </div>
-              )}
-            </div>
-
-            <div className="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex flex-col sm:flex-row gap-2 sm:gap-3">
-              {selectedNotification.orderId && (
                 <button
-                  onClick={() => {
-                    router.push(`/orders?id=${selectedNotification.orderId}`)
-                    setSelectedNotification(null)
-                  }}
-                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm sm:text-base"
+                  onClick={() => setSelectedNotification(null)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
-                  <ExternalLink size={16} className="sm:w-[18px] sm:h-[18px]" />
-                  Ver Orden
+                  <X size={24} />
                 </button>
-              )}
-              <button
-                onClick={() => setSelectedNotification(null)}
-                className="px-6 py-2.5 sm:py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold text-sm sm:text-base"
-              >
-                Cerrar
-              </button>
+              </div>
+
+              <div className="p-4 sm:p-6">
+                <p className="text-gray-700 dark:text-gray-300 text-sm sm:text-base leading-relaxed break-words">{selectedNotification.message}</p>
+                {selectedNotification.orderId && (
+                  <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                    <div className="flex items-center gap-2 text-blue-900 dark:text-blue-300 font-semibold mb-2 text-sm sm:text-base">
+                      <Package size={18} className="sm:w-5 sm:h-5" />
+                      <span>Orden relacionada</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-400 font-mono break-all">ID: {selectedNotification.orderId}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex flex-col sm:flex-row gap-2 sm:gap-3">
+                {selectedNotification.orderId && (
+                  <button
+                    onClick={() => {
+                      router.push(`/orders?id=${selectedNotification.orderId}`)
+                      setSelectedNotification(null)
+                    }}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm sm:text-base"
+                  >
+                    <ExternalLink size={16} className="sm:w-[18px] sm:h-[18px]" />
+                    Ver Orden
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedNotification(null)}
+                  className="px-6 py-2.5 sm:py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold text-sm sm:text-base"
+                >
+                  Cerrar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </>,
+        document.body
       )}
     </div>
   )
