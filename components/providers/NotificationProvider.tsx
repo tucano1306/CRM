@@ -13,6 +13,8 @@ interface Notification {
   sellerId: string | null
   isRead: boolean
   createdAt: Date
+  readAt: string | null
+  relatedId: string | null
 }
 
 interface NotificationContextType {

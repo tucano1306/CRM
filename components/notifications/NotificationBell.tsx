@@ -13,7 +13,7 @@ type Notification = {
   title: string
   message: string
   isRead: boolean
-  createdAt: string
+  createdAt: Date
   readAt: string | null
   orderId: string | null
   relatedId: string | null
@@ -59,10 +59,10 @@ export default function NotificationBell() {
   }, [isOpen])
 
   // Formatear fecha relativa
-  const getRelativeTime = (dateString: string) => {
-    const date = new Date(dateString)
+  const getRelativeTime = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date
     const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
+    const diffMs = now.getTime() - dateObj.getTime()
     const diffMins = Math.floor(diffMs / 60000)
     const diffHours = Math.floor(diffMs / 3600000)
     const diffDays = Math.floor(diffMs / 86400000)
@@ -72,7 +72,7 @@ export default function NotificationBell() {
     if (diffHours < 24) return `Hace ${diffHours}h`
     if (diffDays === 1) return 'Ayer'
     if (diffDays < 7) return `Hace ${diffDays} días`
-    return date.toLocaleDateString()
+    return dateObj.toLocaleDateString()
   }
 
   // Icono según tipo
