@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { 
   ShoppingCart, Package, Clock, CheckCircle, 
   TrendingUp, Store, Heart, MessageCircle, RefreshCw,
-  ArrowUpRight, DollarSign, Plus, CreditCard, FileText, AlertCircle, ShoppingBag
+  ArrowUpRight, DollarSign, Plus, CreditCard, FileText, AlertCircle, ShoppingBag, X, Phone
 } from 'lucide-react'
 import Link from 'next/link'
 import { DashboardStatsSkeleton } from '@/components/skeletons'
@@ -36,6 +36,7 @@ export default function BuyerDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [chartPeriod, setChartPeriod] = useState<'6months' | 'year' | 'all'>('6months')
   const [activeTab, setActiveTab] = useState<'shop' | 'manage' | 'support'>('shop')
+  const [showQuickActions, setShowQuickActions] = useState(false)
 
   // Productos destacados simulados (en producción vendrían de la API)
   const featuredProducts = [
@@ -44,6 +45,16 @@ export default function BuyerDashboardPage() {
     { id: 3, name: 'Ensalada Caesar', price: 6.99, image: '/placeholder-salad.jpg', discount: 10 },
     { id: 4, name: 'Pasta Carbonara', price: 10.99, image: '/placeholder-pasta.jpg', discount: 20 },
   ]
+
+  // Datos del programa de fidelidad (en producción vendrían de la API)
+  const loyaltyData = {
+    currentPoints: 1250,
+    nextReward: 1500,
+    pointsToNextReward: 250,
+    progressPercentage: 83,
+    currentLevel: 'Gold',
+    nextLevel: 'Platinum'
+  }
 
   // Calcular datos mensuales para el gráfico
   const getMonthlyData = () => {
@@ -246,6 +257,38 @@ export default function BuyerDashboardPage() {
               ))}
           </div>
         )}
+
+        {/* Programa de Fidelidad */}
+        <div className="bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl p-6 text-white shadow-xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-2xl font-bold mb-2">🎁 Programa de Fidelidad</h3>
+              <p className="text-amber-100 mb-4">Acumula puntos con cada compra</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-5xl font-bold">{loyaltyData.currentPoints.toLocaleString()}</span>
+                <span className="text-xl">puntos</span>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-amber-100 mb-2">Próxima recompensa en</p>
+              <p className="text-3xl font-bold">{loyaltyData.pointsToNextReward}</p>
+              <p className="text-sm">puntos</p>
+            </div>
+          </div>
+          
+          {/* Barra de progreso */}
+          <div className="mt-6">
+            <div className="bg-white/30 rounded-full h-3 overflow-hidden">
+              <div 
+                className="bg-white h-3 rounded-full transition-all" 
+                style={{ width: `${loyaltyData.progressPercentage}%` }} 
+              />
+            </div>
+            <p className="text-sm text-amber-100 mt-2">
+              {loyaltyData.progressPercentage}% hacia tu siguiente nivel ({loyaltyData.nextLevel})
+            </p>
+          </div>
+        </div>
 
         {/* Stats Cards Interactivas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -682,6 +725,38 @@ export default function BuyerDashboardPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Quick Actions Flotantes */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <button 
+          onClick={() => setShowQuickActions(!showQuickActions)}
+          className="w-14 h-14 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full shadow-2xl flex items-center justify-center text-white hover:scale-110 transition-transform"
+        >
+          {showQuickActions ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+        </button>
+        
+        {/* Menu de acciones */}
+        {showQuickActions && (
+          <div className="absolute bottom-20 right-0 space-y-3 animate-scale-in">
+            <Link href="/buyer/catalog">
+              <button className="flex items-center gap-3 bg-white shadow-lg rounded-full px-6 py-3 hover:shadow-xl transition-all w-full">
+                <ShoppingCart className="w-5 h-5 text-purple-600" />
+                <span className="font-medium text-gray-900">Nueva orden</span>
+              </button>
+            </Link>
+            <Link href="/buyer/chat">
+              <button className="flex items-center gap-3 bg-white shadow-lg rounded-full px-6 py-3 hover:shadow-xl transition-all w-full">
+                <MessageCircle className="w-5 h-5 text-blue-600" />
+                <span className="font-medium text-gray-900">Chat</span>
+              </button>
+            </Link>
+            <button className="flex items-center gap-3 bg-white shadow-lg rounded-full px-6 py-3 hover:shadow-xl transition-all w-full">
+              <Phone className="w-5 h-5 text-green-600" />
+              <span className="font-medium text-gray-900">Ayuda</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   )
