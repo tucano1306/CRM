@@ -213,10 +213,70 @@ export default function OrdersPage() {
   const [ratingOrder, setRatingOrder] = useState<string | null>(null)
   const [selectedRating, setSelectedRating] = useState(0)
   const [hoveredRating, setHoveredRating] = useState(0)
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+  const [toastStatus, setToastStatus] = useState('')
 
   useEffect(() => {
     fetchOrders()
   }, [])
+
+  // Auto-hide toast after 5 seconds
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(false), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [showToast])
+
+  // Función para calcular porcentaje de progreso según el estado
+  const getProgressPercentage = (status: OrderStatus): number => {
+    const progressMap: Record<string, number> = {
+      'PENDING': 0,
+      'CONFIRMED': 25,
+      'PREPARING': 50,
+      'PROCESSING': 50,
+      'READY_FOR_PICKUP': 65,
+      'IN_DELIVERY': 75,
+      'DELIVERED': 100,
+      'COMPLETED': 100,
+      'CANCELED': 0,
+      'CANCELLED': 0,
+    }
+    return progressMap[status] || 0
+  }
+
+  // Calcular estadísticas financieras del mes actual
+  const getMonthlyStats = () => {
+    const now = new Date()
+    const currentMonth = now.getMonth()
+    const currentYear = now.getFullYear()
+
+    const monthlyOrders = orders.filter(order => {
+      const orderDate = new Date(order.createdAt)
+      return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear
+    })
+
+    const totalSpent = monthlyOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0)
+    const totalOrders = monthlyOrders.length
+    const averageOrder = totalOrders > 0 ? totalSpent / totalOrders : 0
+
+    // Simulación de ahorros (podría calcularse desde descuentos reales)
+    const estimatedSavings = totalSpent * 0.1
+
+    return {
+      totalOrders,
+      totalSpent,
+      estimatedSavings,
+      averageOrder
+    }
+  }
+
+  const showUpdateToast = (status: string) => {
+    setToastStatus(status)
+    setToastMessage('¡Tu orden ha sido actualizada!')
+    setShowToast(true)
+  }
 
   // ✅ fetchOrders CON TIMEOUT
   const fetchOrders = async () => {
@@ -560,7 +620,16 @@ export default function OrdersPage() {
     })
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6">
+    <>
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 animate-slide-in">
+          <p className="font-medium">{toastMessage}</p>
+          <p className="text-sm">Estado: {toastStatus}</p>
+        </div>
+      )}
+
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-purple-100">
@@ -582,6 +651,34 @@ export default function OrdersPage() {
             </button>
           </div>
         </div>
+
+        {/* Resumen Financiero */}
+        {orders.length > 0 && (() => {
+          const stats = getMonthlyStats()
+          return (
+            <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl shadow-lg p-6 mb-6 border border-purple-200">
+              <h3 className="font-bold text-lg mb-4 text-gray-800">Resumen del mes</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+                <div className="bg-white/50 rounded-lg p-4">
+                  <p className="text-3xl font-bold text-purple-600">{stats.totalOrders}</p>
+                  <p className="text-sm text-gray-600 mt-1">Órdenes</p>
+                </div>
+                <div className="bg-white/50 rounded-lg p-4">
+                  <p className="text-3xl font-bold text-green-600">${stats.totalSpent.toFixed(2)}</p>
+                  <p className="text-sm text-gray-600 mt-1">Gastado</p>
+                </div>
+                <div className="bg-white/50 rounded-lg p-4">
+                  <p className="text-3xl font-bold text-blue-600">${stats.estimatedSavings.toFixed(2)}</p>
+                  <p className="text-sm text-gray-600 mt-1">Ahorrado</p>
+                </div>
+                <div className="bg-white/50 rounded-lg p-4">
+                  <p className="text-3xl font-bold text-orange-600">${stats.averageOrder.toFixed(2)}</p>
+                  <p className="text-sm text-gray-600 mt-1">Promedio</p>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Buscador y Filtros */}
         <div className="bg-white rounded-2xl shadow-lg p-4 mb-6 border border-purple-100">
@@ -802,6 +899,24 @@ export default function OrdersPage() {
                       {order.orderItems?.length || 0} {order.orderItems?.length === 1 ? 'producto' : 'productos'}
                     </p>
                   </div>
+
+                  {/* Barra de progreso visual */}
+                  {order.status !== 'CANCELED' && order.status !== 'CANCELLED' && (
+                    <div className="mb-4">
+                      <div className="flex justify-between text-xs text-gray-500 mb-2">
+                        <span className={getProgressPercentage(order.status) >= 0 ? 'font-medium text-purple-600' : ''}>Pendiente</span>
+                        <span className={getProgressPercentage(order.status) >= 50 ? 'font-medium text-purple-600' : ''}>Preparando</span>
+                        <span className={getProgressPercentage(order.status) >= 75 ? 'font-medium text-purple-600' : ''}>En camino</span>
+                        <span className={getProgressPercentage(order.status) >= 100 ? 'font-medium text-purple-600' : ''}>Entregado</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500"
+                          style={{ width: `${getProgressPercentage(order.status)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
                   
                   {/* Total */}
                   <div className="mb-4 pt-4 border-t">
@@ -925,6 +1040,21 @@ export default function OrdersPage() {
                             day: 'numeric',
                           })} • {order.orderItems?.length || 0} productos
                         </p>
+                        
+                        {/* Barra de progreso en lista (compacta) */}
+                        {order.status !== 'CANCELED' && order.status !== 'CANCELLED' && (
+                          <div className="mt-2 max-w-xs">
+                            <div className="w-full bg-gray-200 rounded-full h-1.5">
+                              <div
+                                className="bg-gradient-to-r from-purple-500 to-pink-500 h-1.5 rounded-full transition-all duration-500"
+                                style={{ width: `${getProgressPercentage(order.status)}%` }}
+                              />
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Progreso: {getProgressPercentage(order.status)}%
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -1464,5 +1594,6 @@ export default function OrdersPage() {
         )}
       </div>
     </div>
+    </>
   )
 }
