@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { 
   ShoppingCart, Package, Clock, CheckCircle, 
   TrendingUp, Store, Heart, MessageCircle, RefreshCw,
-  ArrowUpRight, DollarSign, Plus, CreditCard, FileText, AlertCircle
+  ArrowUpRight, DollarSign, Plus, CreditCard, FileText, AlertCircle, ShoppingBag
 } from 'lucide-react'
 import Link from 'next/link'
 import { DashboardStatsSkeleton } from '@/components/skeletons'
@@ -149,6 +149,34 @@ export default function BuyerDashboardPage() {
     PAID: 'Pagado',
   }
 
+  // Función para obtener el progreso de una orden
+  const getOrderProgress = (status: string): number => {
+    const progressMap: Record<string, number> = {
+      PENDING: 0,
+      PAYMENT_PENDING: 10,
+      CONFIRMED: 25,
+      PREPARING: 50,
+      READY_FOR_PICKUP: 65,
+      IN_DELIVERY: 75,
+      DELIVERED: 90,
+      COMPLETED: 100,
+      CANCELED: 0,
+      PAID: 20,
+    }
+    return progressMap[status] || 0
+  }
+
+  // Función para obtener color de estado
+  const getStatusColor = (status: string): string => {
+    return statusColors[status] || 'bg-gray-100 text-gray-800'
+  }
+
+  // Detectar alertas importantes
+  const hasImportantAlerts = recentOrders.some(
+    order => order.status === 'PAYMENT_PENDING' || order.status === 'READY_FOR_PICKUP'
+  )
+
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
       {/* Header */}
@@ -172,6 +200,53 @@ export default function BuyerDashboardPage() {
       </div>
 
       <div className="container mx-auto px-6 py-8 space-y-8">
+        {/* Notificaciones/Alertas Importantes */}
+        {hasImportantAlerts && (
+          <div className="space-y-3">
+            {/* Órdenes pendientes de pago */}
+            {recentOrders
+              .filter(order => order.status === 'PAYMENT_PENDING')
+              .slice(0, 2)
+              .map(order => (
+                <div key={order.id} className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg flex items-start gap-3 shadow-md hover:shadow-lg transition-shadow">
+                  <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-medium text-yellow-800">Orden pendiente de pago</p>
+                    <p className="text-sm text-yellow-700">
+                      Orden #{order.orderNumber} - ${Number(order.totalAmount).toFixed(2)}
+                    </p>
+                  </div>
+                  <Link href={`/buyer/orders`}>
+                    <button className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors font-medium">
+                      Pagar ahora
+                    </button>
+                  </Link>
+                </div>
+              ))}
+
+            {/* Órdenes listas para recoger */}
+            {recentOrders
+              .filter(order => order.status === 'READY_FOR_PICKUP')
+              .slice(0, 2)
+              .map(order => (
+                <div key={order.id} className="bg-green-50 border-l-4 border-green-400 p-4 rounded-lg flex items-start gap-3 shadow-md hover:shadow-lg transition-shadow">
+                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-medium text-green-800">¡Tu orden está lista!</p>
+                    <p className="text-sm text-green-700">
+                      Orden #{order.orderNumber} - Puedes recogerla hoy
+                    </p>
+                  </div>
+                  <Link href={`/buyer/orders`}>
+                    <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                      Ver detalles
+                    </button>
+                  </Link>
+                </div>
+              ))}
+          </div>
+        )}
+
         {/* Stats Cards Interactivas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Link href="/buyer/orders?status=all">
@@ -539,54 +614,73 @@ export default function BuyerDashboardPage() {
         </div>
 
         {/* Órdenes Recientes */}
-        <div className="grid grid-cols-1 gap-6">
-          <Card className="shadow-xl border-0">
-            <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white">
-              <CardTitle className="flex items-center justify-between">
-                <span>Órdenes Recientes</span>
-                <Link href="/buyer/orders">
-                  <Button variant="ghost" className="text-white hover:bg-white/20">
-                    Ver todas
-                  </Button>
-                </Link>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              {recentOrders.length === 0 ? (
-                <div className="text-center py-12">
-                  <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 font-medium">No hay órdenes aún</p>
-                  <Link href="/buyer/catalog">
-                    <Button className="mt-4 bg-purple-600 hover:bg-purple-700">
-                      Explorar Catálogo
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {recentOrders.slice(0, 5).map((order) => (
-                    <div key={order.id} className="p-4 border rounded-xl hover:shadow-md transition">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="flex items-center gap-3 mb-2">
-                            <span className="font-semibold">#{order.orderNumber}</span>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[order.status]}`}>
-                              {statusLabels[order.status]}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            {order.itemsCount} productos • {new Date(order.createdAt).toLocaleDateString('es-ES')}
-                          </p>
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-900">📦 Órdenes Recientes</h3>
+            <Link href="/buyer/orders" className="text-purple-600 hover:text-purple-700 font-medium text-sm flex items-center gap-1">
+              Ver todas <ArrowUpRight className="w-4 h-4" />
+            </Link>
+          </div>
+          
+          {recentOrders.length === 0 ? (
+            <div className="text-center py-12">
+              <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 font-medium">No hay órdenes aún</p>
+              <Link href="/buyer/catalog">
+                <Button className="mt-4 bg-purple-600 hover:bg-purple-700">
+                  Explorar Catálogo
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {recentOrders.slice(0, 5).map((order) => (
+                <Link key={order.id} href="/buyer/orders">
+                  <div 
+                    className="border border-gray-200 rounded-xl p-4 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <ShoppingBag className="w-6 h-6 text-purple-600" />
                         </div>
-                        // ✅ CORRECTO
-                        <p className="text-2xl font-bold">${Number(order.totalAmount).toFixed(2)}</p>
+                        <div>
+                          <p className="font-bold text-gray-900">#{order.orderNumber}</p>
+                          <p className="text-sm text-gray-500">{order.itemsCount} productos</p>
+                        </div>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
+                        {statusLabels[order.status] || order.status}
+                      </span>
+                    </div>
+                    
+                    {/* Barra de progreso */}
+                    <div className="mb-3">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all"
+                          style={{ width: `${getOrderProgress(order.status)}%` }}
+                        />
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-gray-600">
+                        {new Date(order.createdAt).toLocaleDateString('es-ES', { 
+                          day: 'numeric', 
+                          month: 'short', 
+                          year: 'numeric' 
+                        })}
+                      </p>
+                      <p className="text-lg font-bold text-purple-600">
+                        ${Number(order.totalAmount).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
