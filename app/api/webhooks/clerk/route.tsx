@@ -79,13 +79,13 @@ export async function POST(req: Request) {
         console.log(`✅ Usuario actualizado: ${userEmail} (${role})`)
       } else {
         // Crear nuevo usuario
-        await prisma.authenticated_users.create({
+        const newUser = await prisma.authenticated_users.create({
           data: {
             authId: id,
             email: userEmail,
             name,
             role: role as any,
-          },
+          } as any,
         })
         console.log(`✅ Usuario creado: ${userEmail} (${role})`)
       }
@@ -117,13 +117,13 @@ export async function POST(req: Request) {
       } else {
         console.log(`⚠️ Usuario no encontrado en BD, creando: ${userEmail}`)
         // Si no existe, crearlo
-        await prisma.authenticated_users.create({
+        const newUser = await prisma.authenticated_users.create({
           data: {
             authId: id,
             email: userEmail,
             name: name || userEmail,
             role: role as any,
-          },
+          } as any,
         })
         console.log(`✅ Usuario creado: ${userEmail} (${role})`)
       }
