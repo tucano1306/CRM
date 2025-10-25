@@ -16,6 +16,8 @@ import {
   Heart,
   Grid,
   List,
+  Filter,
+  Trash2,
 } from 'lucide-react'
 import { ProductCardSkeleton } from '@/components/skeletons'
 
@@ -47,6 +49,13 @@ export default function CatalogPage() {
   const [sortBy, setSortBy] = useState('relevant')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [compareList, setCompareList] = useState<string[]>([])
+  const [showFilters, setShowFilters] = useState(true)
+  const [showCart, setShowCart] = useState(false)
+  
+  // Filtros avanzados
+  const [priceRange, setPriceRange] = useState([0, 100])
+  const [onlyInStock, setOnlyInStock] = useState(false)
+  const [selectedUnits, setSelectedUnits] = useState<string[]>([])
 
   // Toggle favorite
   const toggleFavorite = (productId: string) => {
@@ -141,10 +150,38 @@ export default function CatalogPage() {
     setCart({ ...cart, [productId]: newQuantity })
   }
 
+  const removeFromCart = (productId: string) => {
+    const newCart = { ...cart }
+    delete newCart[productId]
+    setCart(newCart)
+  }
+
+  const getTotalCartPrice = () => {
+    return Object.entries(cart).reduce((total, [productId, quantity]) => {
+      const product = products.find(p => p.id === productId)
+      return total + (product ? product.price * quantity : 0)
+    }, 0)
+  }
+
+  const getCartItems = () => {
+    return Object.entries(cart)
+      .map(([productId, quantity]) => {
+        const product = products.find(p => p.id === productId)
+        return product ? { ...product, quantity } : null
+      })
+      .filter(item => item !== null)
+  }
+
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase())
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory
-    return matchesSearch && matchesCategory
+    
+    // Filtros avanzados
+    const matchesPrice = product.price >= priceRange[0] && product.price <= priceRange[1]
+    const matchesStock = !onlyInStock || product.stock > 0
+    const matchesUnit = selectedUnits.length === 0 || selectedUnits.includes(product.unit)
+    
+    return matchesSearch && matchesCategory && matchesPrice && matchesStock && matchesUnit
   })
 
   // Sort products
@@ -261,8 +298,8 @@ export default function CatalogPage() {
               </p>
             </div>
             <button
-              onClick={() => router.push('/buyer/cart')}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              onClick={() => setShowCart(true)}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 flex items-center gap-2 transition-colors"
             >
               <ShoppingCart size={20} />
               Ver Carrito ({Object.keys(cart).length})
@@ -285,6 +322,19 @@ export default function CatalogPage() {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
+
+            {/* Botón de filtros */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
+                showFilters 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Filter size={20} />
+              Filtros
+            </button>
 
             {/* Ordenamiento */}
             <select 
@@ -344,8 +394,120 @@ export default function CatalogPage() {
           </div>
         </div>
 
-        {/* Grid/Lista de productos */}
-        <div className={
+        {/* Layout con Sidebar de Filtros y Productos */}
+        <div className="flex gap-6">
+          {/* Sidebar de Filtros Avanzados */}
+          {showFilters && (
+            <div className="w-72 flex-shrink-0">
+              <div className="bg-white p-6 rounded-xl shadow-lg sticky top-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-bold text-lg text-gray-800">Filtros Avanzados</h3>
+                  <button
+                    onClick={() => {
+                      setPriceRange([0, 100])
+                      setOnlyInStock(false)
+                      setSelectedUnits([])
+                    }}
+                    className="text-sm text-blue-600 hover:text-blue-700"
+                  >
+                    Limpiar
+                  </button>
+                </div>
+                
+                {/* Rango de precio */}
+                <div className="mb-6">
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Rango de Precio
+                  </label>
+                  <input 
+                    type="range" 
+                    min="0" 
+                    max="100"
+                    value={priceRange[1]}
+                    onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
+                    className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                  />
+                  <div className="flex justify-between text-xs text-gray-600 mt-2">
+                    <span>${priceRange[0]}</span>
+                    <span>${priceRange[1]}</span>
+                  </div>
+                </div>
+                
+                {/* Stock */}
+                <div className="mb-6">
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Disponibilidad
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input 
+                      type="checkbox"
+                      checked={onlyInStock}
+                      onChange={(e) => setOnlyInStock(e.target.checked)}
+                      className="w-4 h-4 rounded border-gray-300 accent-blue-600 cursor-pointer"
+                    />
+                    <span className="text-sm text-gray-700">Solo en stock</span>
+                  </label>
+                </div>
+                
+                {/* Unidades */}
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Unidad de Medida
+                  </label>
+                  <div className="space-y-2">
+                    {['kg', 'lb', 'pk', 'un'].map(unit => (
+                      <label key={unit} className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="checkbox"
+                          checked={selectedUnits.includes(unit)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedUnits([...selectedUnits, unit])
+                            } else {
+                              setSelectedUnits(selectedUnits.filter(u => u !== unit))
+                            }
+                          }}
+                          className="w-4 h-4 rounded border-gray-300 accent-blue-600 cursor-pointer"
+                        />
+                        <span className="text-sm text-gray-700 capitalize">
+                          {unit === 'pk' ? 'Paquete' : unit === 'un' ? 'Unidad' : unit}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Resumen de filtros activos */}
+                {(onlyInStock || selectedUnits.length > 0 || priceRange[1] < 100) && (
+                  <div className="mt-6 pt-6 border-t border-gray-200">
+                    <p className="text-xs text-gray-600 mb-2">Filtros activos:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {onlyInStock && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                          En stock
+                        </span>
+                      )}
+                      {priceRange[1] < 100 && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                          Hasta ${priceRange[1]}
+                        </span>
+                      )}
+                      {selectedUnits.map(unit => (
+                        <span key={unit} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                          {unit}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Contenedor de productos */}
+          <div className="flex-1">
+            {/* Grid/Lista de productos */}
+            <div className={
           viewMode === 'grid' 
             ? 'grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
             : 'flex flex-col gap-4'
@@ -507,17 +669,19 @@ export default function CatalogPage() {
           ))}
         </div>
 
-        {filteredProducts.length === 0 && (
+        {sortedProducts.length === 0 && (
           <div className="bg-white rounded-xl shadow-lg p-12 text-center">
             <Package className="mx-auto text-gray-400 mb-4" size={64} />
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
               No se encontraron productos
             </h2>
             <p className="text-gray-600">
-              Intenta con otra búsqueda
+              Intenta con otra búsqueda o ajusta los filtros
             </p>
           </div>
         )}
+          </div>
+        </div>
       </div>
 
       {/* Botón flotante de comparación */}
@@ -543,6 +707,133 @@ export default function CatalogPage() {
             <X className="w-4 h-4" />
           </button>
         </button>
+      )}
+
+      {/* Carrito Lateral (Slide-in) */}
+      {showCart && (
+        <>
+          {/* Overlay */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 transition-opacity"
+            onClick={() => setShowCart(false)}
+          />
+          
+          {/* Panel del Carrito */}
+          <div className="fixed right-0 top-0 h-full w-full md:w-96 bg-white shadow-2xl z-50 transform transition-transform duration-300 overflow-y-auto">
+            <div className="p-6">
+              {/* Header del carrito */}
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                  🛒 Tu Carrito ({Object.keys(cart).length})
+                </h2>
+                <button
+                  onClick={() => setShowCart(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-6 h-6 text-gray-600" />
+                </button>
+              </div>
+              
+              {/* Lista de items */}
+              {getCartItems().length === 0 ? (
+                <div className="text-center py-12">
+                  <ShoppingCart className="mx-auto text-gray-300 mb-4" size={64} />
+                  <p className="text-gray-600">Tu carrito está vacío</p>
+                  <button
+                    onClick={() => setShowCart(false)}
+                    className="mt-4 text-blue-600 hover:text-blue-700"
+                  >
+                    Continuar comprando
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-4 mb-6">
+                    {getCartItems().map((item) => (
+                      <div key={item.id} className="flex gap-4 border-b border-gray-200 pb-4">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-slate-100 rounded flex items-center justify-center flex-shrink-0">
+                          {item.imageUrl ? (
+                            <img 
+                              src={item.imageUrl} 
+                              alt={item.name}
+                              className="w-full h-full object-cover rounded"
+                            />
+                          ) : (
+                            <Package className="w-8 h-8 text-slate-400" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-800 truncate">{item.name}</p>
+                          <p className="text-sm text-gray-500">
+                            ${item.price.toFixed(2)} × {item.quantity}
+                          </p>
+                          <p className="text-sm font-bold text-blue-600 mt-1">
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </p>
+                          
+                          {/* Controles de cantidad en carrito */}
+                          <div className="flex items-center gap-2 mt-2">
+                            <button
+                              onClick={() => updateQuantity(item.id, -1)}
+                              className="bg-gray-200 p-1 rounded hover:bg-gray-300"
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <span className="text-sm font-medium w-8 text-center">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() => updateQuantity(item.id, 1)}
+                              disabled={item.quantity >= item.stock}
+                              className="bg-gray-200 p-1 rounded hover:bg-gray-300 disabled:opacity-50"
+                            >
+                              <Plus size={14} />
+                            </button>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="p-2 hover:bg-red-50 rounded-lg transition-colors text-red-500 h-fit"
+                          title="Eliminar del carrito"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Total */}
+                  <div className="border-t border-gray-200 pt-4 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Subtotal:</span>
+                      <span className="font-medium">${getTotalCartPrice().toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xl font-bold">
+                      <span>Total:</span>
+                      <span className="text-blue-600">${getTotalCartPrice().toFixed(2)}</span>
+                    </div>
+                    
+                    <button 
+                      onClick={() => {
+                        router.push('/buyer/cart')
+                      }}
+                      className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+                    >
+                      Proceder al Pago
+                    </button>
+                    
+                    <button
+                      onClick={() => setShowCart(false)}
+                      className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors"
+                    >
+                      Continuar Comprando
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </>
       )}
 
       {/* Modal de detalles del producto */}
