@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { 
   ShoppingCart, Package, Clock, CheckCircle, 
   TrendingUp, Store, Heart, MessageCircle, RefreshCw,
-  ArrowUpRight, DollarSign, Plus, CreditCard, FileText, AlertCircle, ShoppingBag, X, Phone
+  ArrowUpRight, DollarSign, Plus, CreditCard, FileText, AlertCircle, ShoppingBag, X, Phone, Lightbulb
 } from 'lucide-react'
 import Link from 'next/link'
 import { DashboardStatsSkeleton } from '@/components/skeletons'
@@ -55,6 +55,16 @@ export default function BuyerDashboardPage() {
     currentLevel: 'Gold',
     nextLevel: 'Platinum'
   }
+
+  // Productos frecuentes/favoritos (en producción vendrían de la API basados en historial)
+  const frequentProducts = [
+    { id: 1, name: 'Pizza Margarita Grande', price: 12.99, orderCount: 15 },
+    { id: 2, name: 'Hamburguesa Doble', price: 9.99, orderCount: 12 },
+    { id: 3, name: 'Ensalada Caesar', price: 7.99, orderCount: 10 },
+    { id: 4, name: 'Pasta Carbonara', price: 11.99, orderCount: 8 },
+    { id: 5, name: 'Tacos al Pastor', price: 8.99, orderCount: 7 },
+  ]
+
 
   // Calcular datos mensuales para el gráfico
   const getMonthlyData = () => {
@@ -458,6 +468,47 @@ export default function BuyerDashboardPage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Compra Nuevamente - Productos Frecuentes */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+          <h3 className="text-xl font-bold text-gray-900 mb-6">🔁 Compra Nuevamente</h3>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {frequentProducts.map(product => (
+              <div key={product.id} className="border border-gray-200 rounded-xl p-4 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer">
+                <div className="w-full h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center">
+                  <Package className="w-12 h-12 text-gray-400" />
+                </div>
+                <p className="text-sm font-medium mb-2 line-clamp-2 text-gray-900">{product.name}</p>
+                <p className="text-purple-600 font-bold mb-1">${product.price}</p>
+                <p className="text-xs text-gray-500 mb-3">Ordenado {product.orderCount} veces</p>
+                <button className="w-full bg-purple-100 text-purple-600 py-2 rounded-lg hover:bg-purple-200 text-sm font-medium transition-colors">
+                  Reordenar
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Tips/Ayuda Contextual */}
+        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 mb-8">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <Lightbulb className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-blue-900 mb-2">💡 Tip del día</h4>
+              <p className="text-blue-800 mb-3">
+                Completa tu perfil para recibir recomendaciones personalizadas y ofertas exclusivas basadas en tus preferencias.
+              </p>
+              <Link href="/buyer/profile">
+                <button className="text-blue-600 hover:text-blue-700 font-medium text-sm hover:underline transition-all">
+                  Completar perfil →
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
 
