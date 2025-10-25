@@ -13,6 +13,7 @@ import {
   Clock,
   AlertCircle,
   X,
+  Heart,
 } from 'lucide-react'
 import { ProductCardSkeleton } from '@/components/skeletons'
 
@@ -40,6 +41,20 @@ export default function CatalogPage() {
   const [cart, setCart] = useState<{ [key: string]: number }>({})
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
+  const [favorites, setFavorites] = useState<Set<string>>(new Set())
+
+  // Toggle favorite
+  const toggleFavorite = (productId: string) => {
+    setFavorites(prev => {
+      const newFavorites = new Set(prev)
+      if (newFavorites.has(productId)) {
+        newFavorites.delete(productId)
+      } else {
+        newFavorites.add(productId)
+      }
+      return newFavorites
+    })
+  }
 
   // Categorías con contador
   const categories = [
@@ -250,31 +265,59 @@ export default function CatalogPage() {
           {filteredProducts.map((product) => (
             <div
               key={product.id}
-              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all cursor-pointer"
+              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all cursor-pointer group"
               onClick={() => setSelectedProduct(product)}
             >
-              {/* Imagen placeholder con tags */}
-              <div className="relative h-48 bg-gradient-to-br from-blue-100 to-slate-100 flex items-center justify-center">
-                <Package className="w-20 h-20 text-slate-400" />
+              {/* Imagen del producto con tags */}
+              <div className="relative h-48 bg-gray-100 rounded-t-lg overflow-hidden">
+                <img 
+                  src={product.imageUrl || '/placeholder-food.jpg'} 
+                  alt={product.name}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement
+                    target.style.display = 'none'
+                    const parent = target.parentElement
+                    if (parent) {
+                      parent.classList.add('flex', 'items-center', 'justify-center', 'bg-gradient-to-br', 'from-blue-100', 'to-slate-100')
+                      const packageIcon = document.createElement('div')
+                      packageIcon.innerHTML = '<svg class="w-20 h-20 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>'
+                      parent.appendChild(packageIcon.firstChild!)
+                    }
+                  }}
+                />
                 
                 {/* Tags */}
-                <div className="absolute top-2 left-2 flex flex-col gap-1">
+                <div className="absolute top-2 left-2 flex flex-col gap-1 z-10">
                   {product.isOffer && (
-                    <span className="bg-red-500 text-white text-xs px-2 py-1 rounded shadow-md">
+                    <span className="bg-red-500 text-white text-xs px-2 py-1 rounded shadow-md backdrop-blur-sm">
                       🔥 Oferta
                     </span>
                   )}
                   {product.isNew && (
-                    <span className="bg-emerald-500 text-white text-xs px-2 py-1 rounded shadow-md">
+                    <span className="bg-emerald-500 text-white text-xs px-2 py-1 rounded shadow-md backdrop-blur-sm">
                       ✨ Nuevo
                     </span>
                   )}
-                  {product.stock < 10 && (
-                    <span className="bg-yellow-400 text-black text-xs px-2 py-1 rounded shadow-md">
+                  {product.stock < 10 && product.stock > 0 && (
+                    <span className="bg-yellow-400 text-black text-xs px-2 py-1 rounded shadow-md backdrop-blur-sm">
                       ⚠️ Últimas unidades
                     </span>
                   )}
                 </div>
+
+                {/* Botón de favoritos */}
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleFavorite(product.id)
+                  }}
+                  className="absolute top-2 right-2 p-2 bg-white/80 backdrop-blur-sm rounded-full hover:bg-white transition-all z-10"
+                >
+                  <Heart 
+                    className={`w-5 h-5 ${favorites.has(product.id) ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
+                  />
+                </button>
               </div>
 
               <div className="p-6">
@@ -294,8 +337,25 @@ export default function CatalogPage() {
                     / {product.unit}
                   </span>
                 </div>
-                <div className="text-sm text-gray-600 mb-4">
-                  Stock: {product.stock} {product.unit}
+
+                {/* Indicador visual de stock */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                    <span>Disponibilidad</span>
+                    <span className="font-medium">{product.stock} {product.unit}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div 
+                        className={`h-2 rounded-full transition-all ${
+                          product.stock > 50 ? 'bg-emerald-500' : 
+                          product.stock > 10 ? 'bg-yellow-500' : 
+                          product.stock > 0 ? 'bg-red-500' : 'bg-gray-400'
+                        }`}
+                        style={{ width: `${Math.min((product.stock / 100) * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Controles de cantidad */}
