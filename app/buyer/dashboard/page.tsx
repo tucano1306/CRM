@@ -6,7 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { 
   ShoppingCart, Package, Clock, CheckCircle, 
-  TrendingUp, Store, Heart, MessageCircle, RefreshCw 
+  TrendingUp, Store, Heart, MessageCircle, RefreshCw,
+  ArrowUpRight, DollarSign
 } from 'lucide-react'
 import Link from 'next/link'
 import { DashboardStatsSkeleton } from '@/components/skeletons'
@@ -33,6 +34,38 @@ export default function BuyerDashboardPage() {
   const [stats, setStats] = useState<BuyerStats | null>(null)
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
   const [loading, setLoading] = useState(true)
+  const [chartPeriod, setChartPeriod] = useState<'6months' | 'year' | 'all'>('6months')
+
+  // Calcular datos mensuales para el gráfico
+  const getMonthlyData = () => {
+    const monthsData = []
+    const now = new Date()
+    const monthCount = chartPeriod === '6months' ? 6 : chartPeriod === 'year' ? 12 : 24
+
+    for (let i = monthCount - 1; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
+      const monthOrders = recentOrders.filter(order => {
+        const orderDate = new Date(order.createdAt)
+        return orderDate.getMonth() === date.getMonth() && 
+               orderDate.getFullYear() === date.getFullYear()
+      })
+
+      const totalAmount = monthOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0)
+      
+      monthsData.push({
+        name: date.toLocaleDateString('es-ES', { month: 'short' }),
+        amount: totalAmount,
+        count: monthOrders.length
+      })
+    }
+
+    // Calcular porcentajes para la altura de las barras
+    const maxAmount = Math.max(...monthsData.map(m => m.amount), 1)
+    return monthsData.map(month => ({
+      ...month,
+      percentage: (month.amount / maxAmount) * 100
+    }))
+  }
 
   useEffect(() => {
     fetchBuyerData()
@@ -42,7 +75,7 @@ export default function BuyerDashboardPage() {
     try {
       const [statsRes, ordersRes] = await Promise.all([
         fetch('/api/buyer/stats'),
-        fetch('/api/buyer/orders/recent')
+        fetch('/api/buyer/orders') // Obtener todas las órdenes para el gráfico
       ])
 
       if (statsRes.ok) {
@@ -52,7 +85,7 @@ export default function BuyerDashboardPage() {
 
       if (ordersRes.ok) {
         const result = await ordersRes.json()
-        if (result.success) setRecentOrders(result.data)
+        if (result.success) setRecentOrders(result.data.orders || result.data)
       }
     } catch (error) {
       console.error('Error:', error)
@@ -130,55 +163,136 @@ export default function BuyerDashboardPage() {
       </div>
 
       <div className="container mx-auto px-6 py-8 space-y-8">
-        {/* Stats Cards */}
+        {/* Stats Cards Interactivas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="shadow-lg hover:shadow-xl transition-all border-0">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm mb-1">Total Órdenes</p>
-                  <p className="text-4xl font-bold">{stats?.totalOrders || 0}</p>
-                </div>
-                <Package className="h-12 w-12 text-blue-200" />
+          <Link href="/buyer/orders?status=all">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
+              <div className="flex items-center justify-between mb-4">
+                <Package className="w-12 h-12 opacity-80" />
+                <ArrowUpRight className="w-6 h-6" />
               </div>
+              <p className="text-4xl font-bold mb-2">{stats?.totalOrders || 0}</p>
+              <p className="text-blue-100">Total Órdenes</p>
+              <p className="text-xs text-blue-200 mt-2">
+                {stats?.totalOrders && stats.totalOrders > 0 ? `↗️ Ver todas` : 'Aún no tienes órdenes'}
+              </p>
             </div>
-          </Card>
+          </Link>
 
-          <Card className="shadow-lg hover:shadow-xl transition-all border-0">
-            <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-100 text-sm mb-1">En Proceso</p>
-                  <p className="text-4xl font-bold">{stats?.pendingOrders || 0}</p>
-                </div>
-                <Clock className="h-12 w-12 text-orange-200" />
+          <Link href="/buyer/orders?status=PENDING">
+            <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
+              <div className="flex items-center justify-between mb-4">
+                <Clock className="w-12 h-12 opacity-80" />
+                <ArrowUpRight className="w-6 h-6" />
               </div>
+              <p className="text-4xl font-bold mb-2">{stats?.pendingOrders || 0}</p>
+              <p className="text-orange-100">En Proceso</p>
+              <p className="text-xs text-orange-200 mt-2">
+                {stats?.pendingOrders && stats.pendingOrders > 0 ? `↗️ ${stats.pendingOrders} pendientes` : 'Todo al día'}
+              </p>
             </div>
-          </Card>
+          </Link>
 
-          <Card className="shadow-lg hover:shadow-xl transition-all border-0">
-            <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm mb-1">Completadas</p>
-                  <p className="text-4xl font-bold">{stats?.completedOrders || 0}</p>
-                </div>
-                <CheckCircle className="h-12 w-12 text-green-200" />
+          <Link href="/buyer/orders?status=COMPLETED">
+            <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
+              <div className="flex items-center justify-between mb-4">
+                <CheckCircle className="w-12 h-12 opacity-80" />
+                <ArrowUpRight className="w-6 h-6" />
               </div>
+              <p className="text-4xl font-bold mb-2">{stats?.completedOrders || 0}</p>
+              <p className="text-green-100">Completadas</p>
+              <p className="text-xs text-green-200 mt-2">
+                {stats?.completedOrders && stats.completedOrders > 0 ? `↗️ ${stats.completedOrders} exitosas` : 'Sin completar aún'}
+              </p>
             </div>
-          </Card>
+          </Link>
 
-          <Card className="shadow-lg hover:shadow-xl transition-all border-0">
-            <div className="bg-gradient-to-br from-purple-500 to-purple-600 p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm mb-1">Total Gastado</p>
-                  <p className="text-3xl font-bold">${stats?.totalSpent?.toFixed(2) || '0.00'}</p>
-                </div>
-                <TrendingUp className="h-12 w-12 text-purple-200" />
+          <Link href="/buyer/orders">
+            <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
+              <div className="flex items-center justify-between mb-4">
+                <DollarSign className="w-12 h-12 opacity-80" />
+                <ArrowUpRight className="w-6 h-6" />
               </div>
+              <p className="text-3xl font-bold mb-2">${stats?.totalSpent?.toFixed(2) || '0.00'}</p>
+              <p className="text-purple-100">Total Gastado</p>
+              <p className="text-xs text-purple-200 mt-2">
+                {stats?.totalSpent && stats.totalSpent > 0 ? `↗️ Ver detalles` : 'Comienza a comprar'}
+              </p>
             </div>
-          </Card>
+          </Link>
+        </div>
+
+        {/* Gráfico de Gastos Mensuales */}
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              📊 Gastos Mensuales
+            </h3>
+            <select 
+              value={chartPeriod}
+              onChange={(e) => setChartPeriod(e.target.value as any)}
+              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+            >
+              <option value="6months">Últimos 6 meses</option>
+              <option value="year">Este año</option>
+              <option value="all">Todo el tiempo</option>
+            </select>
+          </div>
+          
+          {recentOrders.length === 0 ? (
+            <div className="text-center py-12">
+              <TrendingUp className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">No hay datos para mostrar aún</p>
+              <p className="text-sm text-gray-400 mt-2">Realiza tu primera compra para ver estadísticas</p>
+            </div>
+          ) : (
+            <>
+              {/* Gráfico de barras */}
+              <div className="flex items-end justify-between gap-2 h-48 px-4">
+                {getMonthlyData().map((month, index) => (
+                  <div key={index} className="flex-1 flex flex-col items-center group">
+                    <div className="relative w-full">
+                      {/* Tooltip on hover */}
+                      <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-3 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        ${month.amount.toFixed(2)}
+                        <div className="text-xs text-gray-300">{month.count} órdenes</div>
+                      </div>
+                      <div 
+                        className="w-full bg-gradient-to-t from-purple-500 to-pink-500 rounded-t-lg hover:from-purple-600 hover:to-pink-600 transition-all cursor-pointer"
+                        style={{ 
+                          height: `${Math.max(month.percentage, 5)}%`,
+                          minHeight: month.amount > 0 ? '20px' : '5px'
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2 font-medium">{month.name}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Resumen del gráfico */}
+              <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-purple-600">
+                    ${getMonthlyData().reduce((sum, m) => sum + m.amount, 0).toFixed(2)}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">Total del período</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {getMonthlyData().reduce((sum, m) => sum + m.count, 0)}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">Órdenes realizadas</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-green-600">
+                    ${(getMonthlyData().reduce((sum, m) => sum + m.amount, 0) / Math.max(getMonthlyData().reduce((sum, m) => sum + m.count, 0), 1)).toFixed(2)}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">Promedio por orden</p>
+                </div>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
