@@ -20,6 +20,11 @@ import {
   PackageCheck,
   X,
   Search,
+  Grid3x3,
+  List,
+  FileText,
+  RotateCcw,
+  MapPin,
 } from 'lucide-react'
 import OrderCountdown from '@/components/buyer/OrderCountdown'
 import { OrderCardSkeleton } from '@/components/skeletons'
@@ -198,6 +203,7 @@ export default function OrdersPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   useEffect(() => {
     fetchOrders()
@@ -368,6 +374,31 @@ export default function OrdersPage() {
     }
   }
 
+  const handleQuickCancel = async (orderId: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    await cancelOrder(orderId)
+  }
+
+  const handleQuickTrack = (order: Order, e: React.MouseEvent) => {
+    e.stopPropagation()
+    openOrderModal(order)
+    setActiveTab('seguimiento')
+  }
+
+  const handleQuickReorder = async (order: Order, e: React.MouseEvent) => {
+    e.stopPropagation()
+    // Redirigir al catálogo o crear una nueva orden con los mismos productos
+    if (confirm('¿Quieres crear una nueva orden con los mismos productos?')) {
+      router.push('/buyer/catalog')
+      // TODO: Implementar lógica para pre-llenar el carrito
+    }
+  }
+
+  const handleQuickInvoice = async (order: Order, e: React.MouseEvent) => {
+    e.stopPropagation()
+    await handleViewInvoice(order)
+  }
+
   // ✅ ESTADO DE LOADING
   if (loading) {
     return (
@@ -513,6 +544,36 @@ export default function OrdersPage() {
 
         {/* Buscador y Filtros */}
         <div className="bg-white rounded-2xl shadow-lg p-4 mb-6 border border-purple-100">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-semibold text-gray-700">Filtros de búsqueda</h3>
+            {/* Toggle Vista Grid/List */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600 mr-2">Vista:</span>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-lg transition-colors ${
+                  viewMode === 'grid' 
+                    ? 'bg-purple-600 text-white' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Vista en cuadrícula"
+              >
+                <Grid3x3 className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-lg transition-colors ${
+                  viewMode === 'list' 
+                    ? 'bg-purple-600 text-white' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title="Vista en lista"
+              >
+                <List className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Búsqueda */}
             <div className="relative">
@@ -663,16 +724,16 @@ export default function OrdersPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className={viewMode === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : 'space-y-4'}>
             {filteredAndSortedOrders.map((order) => {
               const config = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.PENDING
               const StatusIcon = config.icon
 
-              return (
+              return viewMode === 'grid' ? (
+                // Vista GRID (Card)
                 <div
                   key={order.id}
-                  className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 border-l-4 border-purple-500 cursor-pointer"
-                  onClick={() => openOrderModal(order)}
+                  className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 border-l-4 border-purple-500"
                 >
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
@@ -702,19 +763,145 @@ export default function OrdersPage() {
                   </div>
                   
                   {/* Total */}
-                  <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="mb-4 pt-4 border-t">
                     <span className="text-2xl font-bold text-purple-600">
                       ${Number(order.totalAmount).toFixed(2)}
                     </span>
+                  </div>
+
+                  {/* Acciones rápidas */}
+                  <div className="flex gap-2">
+                    {order.status === 'PENDING' && (
+                      <button 
+                        onClick={(e) => handleQuickCancel(order.id, e)}
+                        className="flex-1 bg-red-100 text-red-600 py-2 rounded-lg hover:bg-red-200 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                      >
+                        <XCircle className="w-4 h-4" />
+                        Cancelar
+                      </button>
+                    )}
+                    
+                    {(order.status === 'CONFIRMED' || order.status === 'PREPARING' || order.status === 'IN_DELIVERY') && (
+                      <button 
+                        onClick={(e) => handleQuickTrack(order, e)}
+                        className="flex-1 bg-blue-100 text-blue-600 py-2 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                      >
+                        <MapPin className="w-4 h-4" />
+                        Rastrear
+                      </button>
+                    )}
+                    
+                    {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && (
+                      <>
+                        <button 
+                          onClick={(e) => handleQuickReorder(order, e)}
+                          className="flex-1 bg-green-100 text-green-600 py-2 rounded-lg hover:bg-green-200 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          Reordenar
+                        </button>
+                        <button 
+                          onClick={(e) => handleQuickInvoice(order, e)}
+                          className="flex-1 bg-purple-100 text-purple-600 py-2 rounded-lg hover:bg-purple-200 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                        >
+                          <FileText className="w-4 h-4" />
+                          Factura
+                        </button>
+                      </>
+                    )}
+
                     <button 
-                      className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        openOrderModal(order)
-                      }}
+                      onClick={() => openOrderModal(order)}
+                      className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
                     >
-                      Ver detalles
+                      Detalles
                     </button>
+                  </div>
+                </div>
+              ) : (
+                // Vista LIST (Fila)
+                <div
+                  key={order.id}
+                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all p-4 border-l-4 border-purple-500"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    {/* Izquierda: Info básica */}
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className={`p-3 rounded-lg ${config.bg} flex-shrink-0`}>
+                        <StatusIcon className={`${config.color} w-6 h-6`} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900">
+                          {order.orderNumber || `#${order.id.slice(0, 8)}`}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {new Date(order.createdAt).toLocaleDateString('es-ES', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })} • {order.orderItems?.length || 0} productos
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Centro: Estado y Total */}
+                    <div className="text-center flex-shrink-0">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.color} block mb-2`}>
+                        {config.label}
+                      </span>
+                      <span className="text-xl font-bold text-purple-600">
+                        ${Number(order.totalAmount).toFixed(2)}
+                      </span>
+                    </div>
+
+                    {/* Derecha: Acciones */}
+                    <div className="flex gap-2 flex-shrink-0">
+                      {order.status === 'PENDING' && (
+                        <button 
+                          onClick={(e) => handleQuickCancel(order.id, e)}
+                          className="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition-colors"
+                          title="Cancelar orden"
+                        >
+                          <XCircle className="w-5 h-5" />
+                        </button>
+                      )}
+                      
+                      {(order.status === 'CONFIRMED' || order.status === 'PREPARING' || order.status === 'IN_DELIVERY') && (
+                        <button 
+                          onClick={(e) => handleQuickTrack(order, e)}
+                          className="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition-colors"
+                          title="Rastrear orden"
+                        >
+                          <MapPin className="w-5 h-5" />
+                        </button>
+                      )}
+                      
+                      {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && (
+                        <>
+                          <button 
+                            onClick={(e) => handleQuickReorder(order, e)}
+                            className="bg-green-100 text-green-600 p-2 rounded-lg hover:bg-green-200 transition-colors"
+                            title="Reordenar"
+                          >
+                            <RotateCcw className="w-5 h-5" />
+                          </button>
+                          <button 
+                            onClick={(e) => handleQuickInvoice(order, e)}
+                            className="bg-purple-100 text-purple-600 p-2 rounded-lg hover:bg-purple-200 transition-colors"
+                            title="Ver factura"
+                          >
+                            <FileText className="w-5 h-5" />
+                          </button>
+                        </>
+                      )}
+
+                      <button 
+                        onClick={() => openOrderModal(order)}
+                        className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                      >
+                        Detalles
+                      </button>
+                    </div>
                   </div>
                 </div>
               )
