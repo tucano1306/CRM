@@ -1,3 +1,7 @@
+// ARCHIVO OBSOLETO - Ya no se usa porque el proyecto usa Clerk para autenticación
+// Este archivo configuraba NextAuth que ha sido reemplazado completamente por Clerk
+
+/*
 import type { NextAuthConfig } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
@@ -62,3 +66,9 @@ export const authConfig: NextAuthConfig = {
     signIn: "/login",
   },
 }
+*/
+
+// Para autenticación, usa Clerk:
+// import { auth } from '@clerk/nextjs/server'
+// const { userId } = await auth()
+

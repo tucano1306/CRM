@@ -5,12 +5,13 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const orders = await prisma.order.findMany({
       where: {
-        clientId: params.id
+        clientId: id
       },
       include: {
         orderItems: {

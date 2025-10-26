@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 // POST - Agregar a favoritos
 export async function POST(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -13,7 +13,7 @@ export async function POST(
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
-    const { productId } = params
+    const { productId } = await params
 
     // Buscar usuario autenticado
     const user = await prisma.authenticated_users.findUnique({
@@ -69,7 +69,7 @@ export async function POST(
 // DELETE - Eliminar de favoritos
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { productId: string } }
+  { params }: { params: Promise<{ productId: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -77,7 +77,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
-    const { productId } = params
+    const { productId } = await params
 
     // Buscar usuario autenticado
     const user = await prisma.authenticated_users.findUnique({

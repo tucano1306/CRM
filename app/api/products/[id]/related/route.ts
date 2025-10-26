@@ -4,10 +4,10 @@ import { prisma } from '@/lib/prisma'
 // GET - Obtener productos relacionados (misma categoría)
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     // Obtener el producto actual
     const product = await prisma.product.findUnique({

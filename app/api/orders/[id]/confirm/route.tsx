@@ -12,7 +12,7 @@ const prisma = new PrismaClient()
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 1. Verificar autenticación
@@ -24,7 +24,7 @@ export async function PUT(
       )
     }
 
-    const { id: orderId } = params
+    const { id: orderId } = await params
     const body = await request.json()
     const { idempotencyKey } = body
 

@@ -4,11 +4,12 @@ import { prisma } from '@/lib/prisma'
 // GET - Obtener items de una orden
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const items = await prisma.orderItem.findMany({
-      where: { orderId: params.id },
+      where: { orderId: id },
       include: {
         product: {
           select: {

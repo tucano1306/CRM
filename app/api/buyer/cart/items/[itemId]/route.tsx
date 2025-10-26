@@ -5,9 +5,9 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 type RouteContext = {
-  params: {
+  params: Promise<{
     itemId: string
-  }
+  }>
 }
 
 // PUT /api/buyer/cart/items/[itemId] - Actualizar cantidad
@@ -29,7 +29,8 @@ export async function PUT(request: Request, context: RouteContext) {
       )
     }
 
-    const itemId = context.params.itemId
+    const params = await context.params
+    const itemId = params.itemId
 
     // Verificar que el item existe y pertenece al usuario
     const item = await prisma.cartItem.findUnique({
@@ -85,7 +86,8 @@ export async function DELETE(request: Request, context: RouteContext) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    const itemId = context.params.itemId
+    const params = await context.params
+    const itemId = params.itemId
 
     // Verificar que el item existe y pertenece al usuario
     const item = await prisma.cartItem.findUnique({

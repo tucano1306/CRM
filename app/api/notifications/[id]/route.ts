@@ -8,7 +8,7 @@ import { prisma } from '@/lib/prisma'
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -20,7 +20,7 @@ export async function PATCH(
       )
     }
 
-    const notificationId = params.id
+    const { id: notificationId } = await params
 
     // Verificar que la notificación pertenece al usuario
     const authUser = await prisma.authenticated_users.findUnique({
@@ -90,7 +90,7 @@ export async function PATCH(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { userId } = await auth()
@@ -102,7 +102,7 @@ export async function DELETE(
       )
     }
 
-    const notificationId = params.id
+    const { id: notificationId } = await params
 
     // Verificar que la notificación pertenece al usuario
     const authUser = await prisma.authenticated_users.findUnique({
