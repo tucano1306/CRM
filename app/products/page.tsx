@@ -121,6 +121,9 @@ export default function ProductsPage() {
     { id: 'VEGETALES', label: 'Vegetales', icon: '🥬' },
     { id: 'CONDIMENTOS', label: 'Condimentos', icon: '🧂' },
     { id: 'BEBIDAS', label: 'Bebidas', icon: '🥤' },
+    { id: 'PANADERIA', label: 'Panadería', icon: '🍞' },
+    { id: 'FRUTAS', label: 'Frutas', icon: '🍎' },
+    { id: 'CONGELADOS', label: 'Congelados', icon: '🧊' },
     { id: 'OTROS', label: 'Otros', icon: '📋' }
   ]
 

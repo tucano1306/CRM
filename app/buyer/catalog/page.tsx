@@ -128,6 +128,14 @@ export default function CatalogPage() {
     { id: 'embutidos', name: 'Embutidos', emoji: '🌭' },
     { id: 'salsas', name: 'Salsas', emoji: '🍯' },
     { id: 'vegetales', name: 'Vegetales', emoji: '🥬' },
+    { id: 'granos', name: 'Granos', emoji: '🌾' },
+    { id: 'condimentos', name: 'Condimentos', emoji: '🧂' },
+    { id: 'bebidas', name: 'Bebidas', emoji: '🥤' },
+    { id: 'lacteos', name: 'Lácteos', emoji: '🥛' },
+    { id: 'panaderia', name: 'Panadería', emoji: '🍞' },
+    { id: 'frutas', name: 'Frutas', emoji: '🍎' },
+    { id: 'congelados', name: 'Congelados', emoji: '🧊' },
+    { id: 'otros', name: 'Otros', emoji: '📦' },
   ]
 
   useEffect(() => {
