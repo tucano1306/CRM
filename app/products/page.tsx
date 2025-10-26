@@ -221,34 +221,51 @@ export default function ProductsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    console.log('📝 [PRODUCTO] Iniciando guardado...', formData)
+    
     try {
       const url = editingId ? `/api/products/${editingId}` : '/api/products'
       const method = editingId ? 'PUT' : 'POST'
       
+      const productData = {
+        ...formData,
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock),
+        sku: formData.sku || null
+      }
+      
+      console.log(`🔄 [PRODUCTO] ${method} ${url}`, productData)
+      
       const result = await apiCall(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          price: parseFloat(formData.price),
-          stock: parseInt(formData.stock),
-          sku: formData.sku || null  // ← AGREGADO
-        }),
-        timeout: 5000,
+        body: JSON.stringify(productData),
+        timeout: 10000,
       })
 
+      console.log('📦 [PRODUCTO] Respuesta del servidor:', result)
+
       if (result.success) {
+        const action = editingId ? 'actualizado' : 'creado'
+        console.log(`✅ [PRODUCTO] Producto ${action} exitosamente:`, result.data)
+        
+        // Mostrar mensaje de éxito
+        alert(`✅ Producto ${action} exitosamente!\n\nNombre: ${productData.name}\nCategoría: ${productData.category}\nPrecio: $${productData.price}\nStock: ${productData.stock}`)
+        
         setShowForm(false)
         setEditingId(null)
         setFormData({ name: '', description: '', unit: 'pk', category: 'OTROS', price: '', stock: '', sku: '' })
-        fetchProducts()
-        fetchProductStats()
+        
+        // Recargar productos
+        await fetchProducts()
+        await fetchProductStats()
       } else {
-        alert(result.error || 'Error al guardar producto')
+        console.error('❌ [PRODUCTO] Error del servidor:', result.error)
+        alert(`❌ Error: ${result.error || 'Error al guardar producto'}`)
       }
     } catch (error) {
-      console.error('Error al guardar producto:', error)
-      alert('Error al guardar producto')
+      console.error('❌ [PRODUCTO] Error al guardar producto:', error)
+      alert(`❌ Error al guardar producto: ${error instanceof Error ? error.message : 'Error desconocido'}`)
     }
   }
 
@@ -433,8 +450,9 @@ export default function ProductsPage() {
           (product.unit || '').toLowerCase().includes(searchLower)
         )
 
-        // Filtro de categoría
-        const categoryMatch = activeCategory === 'TODOS' || product.category === activeCategory
+        // Filtro de categoría (case-insensitive)
+        const categoryMatch = activeCategory === 'TODOS' || 
+          (product.category && product.category.toUpperCase() === activeCategory.toUpperCase())
 
         // Filtro de stock
         const stockMatch = (() => {
@@ -455,6 +473,8 @@ export default function ProductsPage() {
 
         console.log('🔍 Comparando:', {
           productName: product.name,
+          productCategory: product.category,
+          activeCategory,
           searchMatch,
           categoryMatch,
           stockMatch,

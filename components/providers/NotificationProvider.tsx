@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { NotificationType } from '@prisma/client'
 
 interface Notification {
@@ -22,9 +22,11 @@ interface NotificationContextType {
   unreadCount: number
   loading: boolean
   error: string | null
+  newNotification: Notification | null
   markAsRead: (id: string) => Promise<void>
   markAllAsRead: () => Promise<void>
   refreshNotifications: () => Promise<void>
+  clearNewNotification: () => void
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
@@ -33,6 +35,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [newNotification, setNewNotification] = useState<Notification | null>(null)
+  const previousNotificationIdsRef = useRef<Set<string>>(new Set())
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -46,6 +50,21 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       if (!response.ok) throw new Error(`Error ${response.status}`)
       const result = await response.json()
       const notificationsData = result.data?.data?.notifications || result.data?.notifications || result.notifications || []
+      
+      // Detectar nuevas notificaciones
+      const currentIds = new Set<string>(notificationsData.map((n: Notification) => n.id))
+      const newIds = Array.from(currentIds).filter(id => !previousNotificationIdsRef.current.has(id))
+      
+      if (newIds.length > 0 && previousNotificationIdsRef.current.size > 0) {
+        // Hay notificaciones nuevas (y no es la primera carga)
+        const newestNotification = notificationsData.find((n: Notification) => newIds.includes(n.id))
+        if (newestNotification && !newestNotification.isRead) {
+          console.log('🔔 [NOTIFICATION PROVIDER] Nueva notificación detectada:', newestNotification)
+          setNewNotification(newestNotification)
+        }
+      }
+      
+      previousNotificationIdsRef.current = currentIds
       setNotifications(notificationsData)
       setError(null)
     } catch (err: any) {
@@ -77,16 +96,30 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }, [])
 
+  const clearNewNotification = useCallback(() => {
+    setNewNotification(null)
+  }, [])
+
   useEffect(() => {
     fetchNotifications()
-    const interval = setInterval(fetchNotifications, 30000)
+    const interval = setInterval(fetchNotifications, 10000) // Cada 10 segundos
     return () => clearInterval(interval)
   }, [fetchNotifications])
 
   const unreadCount = notifications.filter(n => !n.isRead).length
 
   return (
-    <NotificationContext.Provider value={{ notifications, unreadCount, loading, error, markAsRead, markAllAsRead, refreshNotifications: fetchNotifications }}>
+    <NotificationContext.Provider value={{ 
+      notifications, 
+      unreadCount, 
+      loading, 
+      error, 
+      newNotification,
+      markAsRead, 
+      markAllAsRead, 
+      refreshNotifications: fetchNotifications,
+      clearNewNotification
+    }}>
       {children}
     </NotificationContext.Provider>
   )

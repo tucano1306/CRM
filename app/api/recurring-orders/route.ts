@@ -162,9 +162,37 @@ export async function POST(request: Request) {
           include: {
             product: true
           }
-        }
+        },
+        client: true
       }
     })
+
+    console.log('✅ [RECURRING ORDER] Orden recurrente creada:', recurringOrder.id)
+
+    // 🔔 CREAR NOTIFICACIÓN PARA EL VENDEDOR
+    try {
+      // El cliente ya tiene el seller en recurringOrder.client.sellerId
+      if (recurringOrder.client.sellerId) {
+        const notification = await prisma.notification.create({
+          data: {
+            type: 'NEW_ORDER',
+            title: '🔄 Nueva Orden Recurrente',
+            message: `${recurringOrder.client.name} ha creado una orden recurrente "${recurringOrder.name}" por $${totalAmount.toFixed(2)}. Frecuencia: ${recurringOrder.frequency}`,
+            clientId: body.clientId,
+            sellerId: recurringOrder.client.sellerId,
+            orderId: recurringOrder.id,
+            relatedId: recurringOrder.id,
+            isRead: false
+          }
+        })
+        console.log('✅ [NOTIFICATION] Notificación creada para vendedor:', notification.id)
+      } else {
+        console.warn('⚠️ [NOTIFICATION] Cliente no tiene vendedor asociado')
+      }
+    } catch (notifError) {
+      console.error('❌ [NOTIFICATION] Error creando notificación:', notifError)
+      // No fallar la creación de la orden por error en notificación
+    }
 
     return NextResponse.json({
       success: true,

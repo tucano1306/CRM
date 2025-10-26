@@ -19,7 +19,7 @@ type Notification = {
 }
 
 export default function NotificationBellSeller() {
-  const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useNotifications()
+  const { notifications, unreadCount, loading, markAsRead, markAllAsRead, newNotification, clearNewNotification } = useNotifications()
   const [isOpen, setIsOpen] = useState(false)
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -31,6 +31,23 @@ export default function NotificationBellSeller() {
   const [modalPosition, setModalPosition] = useState({ x: 0, y: 0 })
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const modalRef = useRef<HTMLDivElement>(null)
+
+  // 🆕 Detectar nueva notificación y abrir modal automáticamente
+  useEffect(() => {
+    if (newNotification) {
+      console.log('🔔 [AUTO MODAL SELLER] Nueva notificación recibida, abriendo modal...', newNotification)
+      setSelectedNotification(newNotification)
+      setIsOpen(true) // También abrir el dropdown
+      
+      // Marcar como leída después de 5 segundos
+      const timer = setTimeout(() => {
+        markAsRead(newNotification.id)
+        clearNewNotification()
+      }, 5000)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [newNotification, markAsRead, clearNewNotification])
 
   // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
@@ -309,33 +326,45 @@ export default function NotificationBellSeller() {
         </div>
       )}
 
-      {/* Modal de detalles - Vendedor (arrastrable) */}
+      {/* Modal de detalles - Vendedor (arrastrable con animación) */}
       {selectedNotification && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999]">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] animate-in fade-in duration-300">
           <div 
             ref={modalRef}
             style={{
               position: 'fixed',
               left: modalPosition.x || 'auto',
-              top: modalPosition.y || '50%',
+              top: modalPosition.x ? modalPosition.y : '50%',
               right: modalPosition.x ? 'auto' : '6rem',
               transform: modalPosition.x ? 'none' : 'translateY(-50%)'
             }}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-right-4 duration-500 ring-4 ring-blue-500/50"
           >
+            {/* Badge de "Nueva" si es una notificación nueva */}
+            {newNotification?.id === selectedNotification.id && (
+              <div className="absolute -top-3 -right-3 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce z-20">
+                ¡NUEVA!
+              </div>
+            )}
+            
             <div 
               onMouseDown={handleMouseDown}
               className={`flex items-start justify-between p-4 border-b border-gray-200 dark:border-gray-700 select-none bg-gray-50 dark:bg-gray-900 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
             >
               <div className="flex items-start gap-3">
-                <span className="text-3xl">{getTypeIcon(selectedNotification.type)}</span>
+                <span className="text-3xl animate-bounce">{getTypeIcon(selectedNotification.type)}</span>
                 <div className="flex-1 min-w-0">
                   <h2 className="text-lg font-bold text-gray-900 dark:text-white break-words">{selectedNotification.title}</h2>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{getRelativeTime(selectedNotification.createdAt)}</p>
                 </div>
               </div>
               <button
-                onClick={() => setSelectedNotification(null)}
+                onClick={() => {
+                  setSelectedNotification(null)
+                  if (newNotification?.id === selectedNotification.id) {
+                    clearNewNotification()
+                  }
+                }}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 z-10"
               >
                 <X size={20} />
@@ -361,15 +390,23 @@ export default function NotificationBellSeller() {
                   onClick={() => {
                     router.push(getNotificationRoute(selectedNotification))
                     setSelectedNotification(null)
+                    if (newNotification?.id === selectedNotification.id) {
+                      clearNewNotification()
+                    }
                   }}
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm"
+                  className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-all hover:scale-105"
                 >
                   <ExternalLink size={16} />
                   {getActionButtonText(selectedNotification.type)}
                 </button>
               )}
               <button
-                onClick={() => setSelectedNotification(null)}
+                onClick={() => {
+                  setSelectedNotification(null)
+                  if (newNotification?.id === selectedNotification.id) {
+                    clearNewNotification()
+                  }
+                }}
                 className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold text-sm"
               >
                 Cerrar

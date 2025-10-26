@@ -20,7 +20,7 @@ type Notification = {
 }
 
 export default function NotificationBell() {
-  const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useNotifications()
+  const { notifications, unreadCount, loading, markAsRead, markAllAsRead, newNotification, clearNewNotification } = useNotifications()
   const [isOpen, setIsOpen] = useState(false)
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -39,6 +39,23 @@ export default function NotificationBell() {
     console.log('🔔 NotificationBell COMPRADOR rendered. Notifications:', notifications.length, 'Unread:', unreadCount)
     console.log('🔔 Este es el componente del COMPRADOR (NotificationBell.tsx)')
   }, [notifications, unreadCount])
+
+  // 🆕 Detectar nueva notificación y abrir modal automáticamente
+  useEffect(() => {
+    if (newNotification) {
+      console.log('🔔 [AUTO MODAL] Nueva notificación recibida, abriendo modal...', newNotification)
+      setSelectedNotification(newNotification)
+      setIsOpen(true) // También abrir el dropdown
+      
+      // Marcar como leída después de 5 segundos
+      const timer = setTimeout(() => {
+        markAsRead(newNotification.id)
+        clearNewNotification()
+      }, 5000)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [newNotification, markAsRead, clearNewNotification])
 
   // Cerrar dropdown al hacer clic fuera
   useEffect(() => {
@@ -275,24 +292,41 @@ export default function NotificationBell() {
         <>
           {/* Overlay */}
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4"
-            onClick={() => setSelectedNotification(null)}
+            className="fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4 animate-in fade-in duration-300"
+            onClick={() => {
+              setSelectedNotification(null)
+              if (newNotification?.id === selectedNotification.id) {
+                clearNewNotification()
+              }
+            }}
           >
-            {/* Modal - Responsive y centrado */}
+            {/* Modal - Responsive y centrado con animación */}
             <div
-              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto relative transform transition-all"
+              className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto relative transform transition-all animate-in slide-in-from-bottom-4 duration-500 ring-4 ring-blue-500/50"
               onClick={(e) => e.stopPropagation()}
             >
+              {/* Badge de "Nueva" si es una notificación nueva */}
+              {newNotification?.id === selectedNotification.id && (
+                <div className="absolute -top-3 -right-3 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce">
+                  ¡NUEVA!
+                </div>
+              )}
+              
               <div className="flex items-start justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-start gap-3 sm:gap-4">
-                  <span className="text-3xl sm:text-4xl">{getTypeIcon(selectedNotification.type)}</span>
+                  <span className="text-3xl sm:text-4xl animate-bounce">{getTypeIcon(selectedNotification.type)}</span>
                   <div className="flex-1 min-w-0">
                     <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white break-words">{selectedNotification.title}</h2>
                     <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">{getRelativeTime(selectedNotification.createdAt)}</p>
                   </div>
                 </div>
                 <button
-                  onClick={() => setSelectedNotification(null)}
+                  onClick={() => {
+                    setSelectedNotification(null)
+                    if (newNotification?.id === selectedNotification.id) {
+                      clearNewNotification()
+                    }
+                  }}
                   className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
                   <X size={24} />
@@ -319,16 +353,24 @@ export default function NotificationBell() {
                       router.push(getNotificationRoute(selectedNotification))
                       setSelectedNotification(null)
                       setIsOpen(false)
+                      if (newNotification?.id === selectedNotification.id) {
+                        clearNewNotification()
+                      }
                     }}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm sm:text-base"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm sm:text-base transition-all hover:scale-105"
                   >
                     <ExternalLink size={16} className="sm:w-[18px] sm:h-[18px]" />
                     {getActionButtonText(selectedNotification.type)}
                   </button>
                 )}
                 <button
-                  onClick={() => setSelectedNotification(null)}
-                  className="px-6 py-2.5 sm:py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold text-sm sm:text-base"
+                  onClick={() => {
+                    setSelectedNotification(null)
+                    if (newNotification?.id === selectedNotification.id) {
+                      clearNewNotification()
+                    }
+                  }}
+                  className="px-6 py-2.5 sm:py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold text-sm sm:text-base transition-all"
                 >
                   Cerrar
                 </button>
