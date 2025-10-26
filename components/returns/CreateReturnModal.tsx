@@ -64,7 +64,9 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
 
   useEffect(() => {
+    console.log('🔍 [CREATE RETURN MODAL] isOpen cambió a:', isOpen)
     if (isOpen) {
+      console.log('📋 [CREATE RETURN MODAL] Ejecutando fetchOrders...')
       fetchOrders()
     }
   }, [isOpen])
@@ -90,13 +92,26 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
 
   const fetchOrders = async () => {
     try {
-      const response = await fetch('/api/orders?role=client&status=DELIVERED')
+      console.log('🔍 [FETCH ORDERS] Iniciando petición a /api/orders...')
+      // Buscar órdenes DELIVERED o COMPLETED (ambas son elegibles para devolución)
+      const url = '/api/orders?role=client&status=DELIVERED,COMPLETED'
+      console.log('📋 [FETCH ORDERS] URL:', url)
+      
+      const response = await fetch(url)
       const result = await response.json()
+      
+      console.log('✅ [FETCH ORDERS] Respuesta recibida:', result)
+      console.log('📊 [FETCH ORDERS] Órdenes en result.orders:', result.orders?.length || 0)
+      console.log('📊 [FETCH ORDERS] Órdenes en result.data:', result.data?.length || 0)
+      
       if (result.success) {
-        setOrders(result.data || [])
+        // El endpoint /api/orders devuelve { success: true, orders: [...] }
+        const ordersList = result.orders || result.data || []
+        console.log('✅ [FETCH ORDERS] Órdenes a guardar:', ordersList.length)
+        setOrders(ordersList)
       }
     } catch (error) {
-      console.error('Error fetching orders:', error)
+      console.error('❌ [FETCH ORDERS] Error fetching orders:', error)
     }
   }
 
@@ -253,17 +268,17 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
                   onChange={(e) => setSelectedOrderId(e.target.value)}
                   className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 >
-                  <option value="">Selecciona una orden entregada...</option>
+                  <option value="">Selecciona una orden entregada o completada...</option>
                   {orders.map((order) => (
                     <option key={order.id} value={order.id}>
-                      {order.orderNumber} - ${order.totalAmount.toFixed(2)} - {' '}
+                      {order.orderNumber} - ${Number(order.totalAmount).toFixed(2)} - {' '}
                       {new Date(order.createdAt).toLocaleDateString('es-ES')}
                     </option>
                   ))}
                 </select>
                 {orders.length === 0 && (
                   <p className="text-sm text-gray-500 mt-2">
-                    No tienes órdenes entregadas disponibles para devolución
+                    No tienes órdenes entregadas o completadas disponibles para devolución
                   </p>
                 )}
               </div>
@@ -371,7 +386,7 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
                       <div className="flex-1">
                         <h4 className="font-semibold text-gray-900">{item.productName}</h4>
                         <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
-                          <span>Precio: ${item.pricePerUnit.toFixed(2)}</span>
+                          <span>Precio: ${Number(item.pricePerUnit || 0).toFixed(2)}</span>
                           <span>Cantidad en orden: {item.maxQuantity}</span>
                         </div>
                       </div>
@@ -402,7 +417,7 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
                     {item.quantityReturned > 0 && (
                       <div className="mt-3 pt-3 border-t">
                         <p className="text-sm font-semibold text-purple-600">
-                          Subtotal: ${(item.quantityReturned * item.pricePerUnit).toFixed(2)}
+                          Subtotal: ${(item.quantityReturned * Number(item.pricePerUnit || 0)).toFixed(2)}
                         </p>
                       </div>
                     )}
@@ -458,11 +473,11 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
                       <div>
                         <p className="font-medium text-gray-900">{item.productName}</p>
                         <p className="text-sm text-gray-600">
-                          {item.quantityReturned} × ${item.pricePerUnit.toFixed(2)}
+                          {item.quantityReturned} × ${Number(item.pricePerUnit || 0).toFixed(2)}
                         </p>
                       </div>
                       <p className="font-semibold text-gray-900">
-                        ${(item.quantityReturned * item.pricePerUnit).toFixed(2)}
+                        ${(item.quantityReturned * Number(item.pricePerUnit || 0)).toFixed(2)}
                       </p>
                     </div>
                   ))}

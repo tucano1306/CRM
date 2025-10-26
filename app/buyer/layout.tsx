@@ -1,7 +1,7 @@
 'use client'
 
 import { useUser, UserButton } from '@clerk/nextjs'
-import { Home, Package, ShoppingCart, User, Menu, X, Store, RefreshCw, RotateCcw, DollarSign } from 'lucide-react'
+import { Home, Package, ShoppingCart, User, Menu, X, Store, RefreshCw, RotateCcw, DollarSign, FileText } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
@@ -18,6 +18,7 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
     { name: 'Catálogo', href: '/buyer/catalog', icon: Store },
     { name: 'Carrito', href: '/buyer/cart', icon: ShoppingCart },
     { name: 'Órdenes', href: '/buyer/orders', icon: Package },
+    { name: 'Cotizaciones', href: '/buyer/quotes', icon: FileText },
     { name: 'Órdenes Recurrentes', href: '/buyer/recurring-orders', icon: RefreshCw },
     { name: 'Devoluciones', href: '/buyer/returns', icon: RotateCcw },
     { name: 'Mis Créditos', href: '/buyer/credit-notes', icon: DollarSign },

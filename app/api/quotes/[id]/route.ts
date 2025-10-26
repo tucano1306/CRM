@@ -67,8 +67,10 @@ export async function PATCH(
       return NextResponse.json({ error: 'Cotización no encontrada' }, { status: 404 })
     }
 
-    // No permitir editar si ya fue enviada o convertida
-    if (['SENT', 'ACCEPTED', 'CONVERTED'].includes(existingQuote.status)) {
+    // No permitir editar si ya fue enviada o convertida (excepto cambio de estado por comprador)
+    const isStatusChange = body.status && ['ACCEPTED', 'REJECTED'].includes(body.status)
+    
+    if (['SENT', 'ACCEPTED', 'CONVERTED'].includes(existingQuote.status) && !isStatusChange) {
       return NextResponse.json(
         { error: 'No se puede editar una cotización enviada o convertida' },
         { status: 400 }
@@ -84,6 +86,29 @@ export async function PATCH(
     if (body.notes !== undefined) updateData.notes = body.notes
     if (body.termsAndConditions !== undefined) updateData.termsAndConditions = body.termsAndConditions
     if (body.discount !== undefined) updateData.discount = body.discount
+    
+    // Manejar cambio de estado (aceptar/rechazar por comprador)
+    if (isStatusChange) {
+      updateData.status = body.status
+      
+      // Crear notificación para el vendedor
+      if (existingQuote.sellerId) {
+        const statusMessage = body.status === 'ACCEPTED' 
+          ? `✅ ha aceptado la cotización #${existingQuote.quoteNumber} por $${existingQuote.totalAmount.toFixed(2)}`
+          : `❌ ha rechazado la cotización #${existingQuote.quoteNumber}`
+        
+        await prisma.notification.create({
+          data: {
+            type: body.status === 'ACCEPTED' ? 'QUOTE_ACCEPTED' : 'QUOTE_REJECTED',
+            title: body.status === 'ACCEPTED' ? '✅ Cotización Aceptada' : '❌ Cotización Rechazada',
+            message: `El cliente ${statusMessage}`,
+            sellerId: existingQuote.sellerId,
+            relatedId: existingQuote.id,
+            isRead: false
+          }
+        })
+      }
+    }
 
     // Si se actualizan items
     if (body.items && Array.isArray(body.items)) {

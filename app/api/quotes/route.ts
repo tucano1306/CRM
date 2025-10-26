@@ -16,34 +16,93 @@ export async function GET() {
     // Obtener usuario autenticado
     const authUser = await prisma.authenticated_users.findUnique({
       where: { authId: userId },
-      include: { sellers: true }
+      include: { 
+        sellers: true,
+        clients: true 
+      }
     })
 
-    if (!authUser || authUser.sellers.length === 0) {
-      return NextResponse.json({ error: 'Vendedor no encontrado' }, { status: 404 })
+    console.log('🔍 [QUOTES API] Usuario autenticado:', {
+      userId,
+      authUserId: authUser?.id,
+      email: authUser?.email,
+      sellersCount: authUser?.sellers?.length || 0,
+      clientsCount: authUser?.clients?.length || 0,
+      sellers: authUser?.sellers?.map(s => ({ id: s.id, name: s.name })),
+      clients: authUser?.clients?.map(c => ({ id: c.id, name: c.name }))
+    })
+
+    if (!authUser) {
+      return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
     }
 
-    const sellerId = authUser.sellers[0].id
+    let quotes
 
-    // Obtener cotizaciones del vendedor
-    const quotes = await prisma.quote.findMany({
-      where: { sellerId },
-      include: {
-        client: {
-          select: {
-            name: true,
-            email: true,
-            phone: true
+    // Si es vendedor, obtener cotizaciones que ha creado
+    if (authUser.sellers.length > 0) {
+      const sellerId = authUser.sellers[0].id
+
+      quotes = await prisma.quote.findMany({
+        where: { sellerId },
+        include: {
+          client: {
+            select: {
+              name: true,
+              email: true,
+              phone: true
+            }
+          },
+          items: {
+            include: {
+              product: true
+            }
           }
         },
-        items: {
-          include: {
-            product: true
+        orderBy: { createdAt: 'desc' }
+      })
+    } 
+    // Si es comprador, obtener cotizaciones que ha recibido
+    else if (authUser.clients.length > 0) {
+      const clientId = authUser.clients[0].id
+
+      console.log('🔍 [QUOTES API] Buscando cotizaciones para cliente:', clientId)
+
+      quotes = await prisma.quote.findMany({
+        where: { clientId },
+        include: {
+          seller: {
+            select: {
+              name: true,
+              email: true,
+              phone: true
+            }
+          },
+          items: {
+            include: {
+              product: true
+            }
           }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    })
+        },
+        orderBy: { createdAt: 'desc' }
+      })
+      
+      console.log(`📋 [QUOTES API] Cotizaciones encontradas para cliente: ${quotes.length}`)
+      if (quotes.length > 0) {
+        console.log('📋 [QUOTES API] Primera cotización:', {
+          id: quotes[0].id,
+          quoteNumber: quotes[0].quoteNumber,
+          status: quotes[0].status,
+          itemsCount: quotes[0].items.length
+        })
+      }
+    } 
+    // Si no tiene rol asignado
+    else {
+      return NextResponse.json({ 
+        success: true, 
+        data: [] 
+      })
+    }
 
     return NextResponse.json({ success: true, data: quotes })
   } catch (error) {

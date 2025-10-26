@@ -120,11 +120,24 @@ export async function GET(request: NextRequest) {
       take: limit,
     })
 
+    console.log(`🔔 [NOTIFICATIONS] Found ${notifications.length} notifications for user`)
+    if (notifications.length > 0) {
+      console.log('🔔 [NOTIFICATIONS] Latest notification:', {
+        id: notifications[0].id,
+        type: notifications[0].type,
+        title: notifications[0].title,
+        isRead: notifications[0].isRead,
+        createdAt: notifications[0].createdAt
+      })
+    }
+
     // Contar no leídas
     const unreadWhere = { ...where, isRead: false }
     const unreadCount = await prisma.notification.count({
       where: unreadWhere,
     })
+
+    console.log(`🔔 [NOTIFICATIONS] Unread count: ${unreadCount}`)
 
     return NextResponse.json({
       success: true,

@@ -27,7 +27,13 @@ export async function GET(request: Request) {
     const whereClause: any = {}
     
     if (status && status !== 'all') {
-      whereClause.status = status
+      // Soportar múltiples estados separados por coma (ej: "DELIVERED,COMPLETED")
+      const statuses = status.split(',').map(s => s.trim())
+      if (statuses.length > 1) {
+        whereClause.status = { in: statuses }
+      } else {
+        whereClause.status = status
+      }
     }
 
     // ✅ Obtener órdenes CON TIMEOUT (incluye campos para factura)

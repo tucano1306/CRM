@@ -262,6 +262,9 @@ enum NotificationType {
   RETURN_REJECTED        // Vendedor → Comprador
   QUOTE_CREATED          // Vendedor → Comprador
   QUOTE_UPDATED          // Vendedor → Comprador
+  QUOTE_SENT             // Vendedor → Comprador (cotización enviada)
+  QUOTE_ACCEPTED         // Comprador → Vendedor (cotización aceptada)
+  QUOTE_REJECTED         // Comprador → Vendedor (cotización rechazada)
   CREDIT_NOTE_ISSUED     // Vendedor → Comprador
   LOW_STOCK_ALERT        // Sistema → Vendedor
 }

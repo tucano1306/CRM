@@ -111,7 +111,12 @@ export default function NotificationBell() {
         return '🔄'
       case 'QUOTE_CREATED':
       case 'QUOTE_UPDATED':
+      case 'QUOTE_SENT':
         return '📋'
+      case 'QUOTE_ACCEPTED':
+        return '✅'
+      case 'QUOTE_REJECTED':
+        return '❌'
       case 'CREDIT_NOTE_ISSUED':
         return '💰'
       default:
@@ -124,7 +129,17 @@ export default function NotificationBell() {
     switch (notification.type) {
       case 'QUOTE_CREATED':
       case 'QUOTE_UPDATED':
-        return `/dashboard/quotes${notification.orderId ? `?id=${notification.orderId}` : ''}`
+      case 'QUOTE_SENT':
+        // Si tiene relatedId, usar ese ID para la ruta
+        return notification.relatedId 
+          ? `/buyer/quotes?id=${notification.relatedId}`
+          : `/buyer/quotes`
+      case 'QUOTE_ACCEPTED':
+      case 'QUOTE_REJECTED':
+        // Para vendedores que reciben aceptación/rechazo
+        return notification.relatedId
+          ? `/dashboard/quotes?id=${notification.relatedId}`
+          : `/dashboard/quotes`
       case 'RETURN_REQUEST':
         return `/dashboard/returns${notification.orderId ? `?id=${notification.orderId}` : ''}`
       case 'CREDIT_NOTE_ISSUED':
@@ -148,7 +163,12 @@ export default function NotificationBell() {
     switch (type) {
       case 'QUOTE_CREATED':
       case 'QUOTE_UPDATED':
+      case 'QUOTE_SENT':
         return 'Ver Cotización'
+      case 'QUOTE_ACCEPTED':
+        return 'Ver Aceptación'
+      case 'QUOTE_REJECTED':
+        return 'Ver Rechazo'
       case 'RETURN_REQUEST':
         return 'Ver Devolución'
       case 'CREDIT_NOTE_ISSUED':

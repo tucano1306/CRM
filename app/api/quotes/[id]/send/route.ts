@@ -49,6 +49,26 @@ export async function POST(
       }
     })
 
+    // Crear notificación para el comprador
+    if (quote.clientId) {
+      console.log('📋 [QUOTE SEND] Creando notificación para cliente:', quote.clientId)
+      
+      const notification = await prisma.notification.create({
+        data: {
+          type: 'QUOTE_SENT',
+          title: '📋 Nueva Cotización Recibida',
+          message: `Has recibido una nueva cotización #${quote.quoteNumber} por $${quote.totalAmount.toFixed(2)}. Válida hasta: ${new Date(quote.validUntil).toLocaleDateString('es-ES')}`,
+          clientId: quote.clientId,
+          relatedId: quote.id,
+          isRead: false
+        }
+      })
+      
+      console.log('✅ [QUOTE SEND] Notificación creada:', notification.id)
+    } else {
+      console.log('⚠️ [QUOTE SEND] No hay clientId en la cotización')
+    }
+
     // TODO: Aquí puedes agregar envío de email al cliente
     // sendQuoteEmail(updatedQuote)
 
