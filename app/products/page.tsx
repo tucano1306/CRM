@@ -587,53 +587,53 @@ export default function ProductsPage() {
         </div>
 
         {/* Tarjetas de Estadísticas de Stock */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4 border-l-4 border-blue-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Total Productos</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                <p className="text-xs sm:text-sm text-gray-600">Total Productos</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.total}</p>
               </div>
-              <Package className="h-10 w-10 text-blue-500 opacity-80" />
+              <Package className="h-8 w-8 sm:h-10 sm:w-10 text-blue-500 opacity-80" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4 border-l-4 border-green-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Stock Normal</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.normalStock}</p>
-                <p className="text-xs text-green-600">
+                <p className="text-xs sm:text-sm text-gray-600">Stock Normal</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.normalStock}</p>
+                <p className="text-xs text-green-600 hidden sm:block">
                   {stats.normalStockPercentage.toFixed(0)}% del total
                 </p>
               </div>
-              <CheckCircle className="h-10 w-10 text-green-500 opacity-80" />
+              <CheckCircle className="h-8 w-8 sm:h-10 sm:w-10 text-green-500 opacity-80" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-yellow-500">
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4 border-l-4 border-yellow-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Stock Bajo</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.lowStock}</p>
-                <p className="text-xs text-yellow-600">
+                <p className="text-xs sm:text-sm text-gray-600">Stock Bajo</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.lowStock}</p>
+                <p className="text-xs text-yellow-600 hidden sm:block">
                   {stats.lowStockPercentage.toFixed(0)}% del total
                 </p>
               </div>
-              <AlertCircle className="h-10 w-10 text-yellow-500 opacity-80" />
+              <AlertCircle className="h-8 w-8 sm:h-10 sm:w-10 text-yellow-500 opacity-80" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-4 border-l-4 border-red-500">
+          <div className="bg-white rounded-lg shadow p-3 sm:p-4 border-l-4 border-red-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Agotados</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.outOfStock}</p>
-                <p className="text-xs text-red-600">
+                <p className="text-xs sm:text-sm text-gray-600">Agotados</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.outOfStock}</p>
+                <p className="text-xs text-red-600 hidden sm:block">
                   {stats.outOfStockPercentage.toFixed(0)}% del total
                 </p>
               </div>
-              <TrendingDown className="h-10 w-10 text-red-500 opacity-80" />
+              <TrendingDown className="h-8 w-8 sm:h-10 sm:w-10 text-red-500 opacity-80" />
             </div>
           </div>
         </div>

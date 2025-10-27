@@ -326,31 +326,31 @@ export default function DashboardPage() {
   return (
     <MainLayout>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-          <TrendingUp className="text-blue-600" size={36} />
-          Dashboard
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-2 sm:gap-3">
+          <TrendingUp className="text-blue-600" size={28} />
+          <span className="sm:inline">Dashboard</span>
         </h1>
-        <p className="text-gray-600 mt-1">
+        <p className="text-sm sm:text-base text-gray-600 mt-1">
           Resumen general de tu negocio
         </p>
       </div>
 
       {/* Tabs de navegación */}
-      <div className="mb-6 flex gap-2 border-b border-gray-200">
+      <div className="mb-6 flex gap-1 sm:gap-2 border-b border-gray-200 overflow-x-auto">
         {tabs.map((tab) => {
           const TabIcon = tab.icon
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 font-medium transition-colors ${
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 font-medium transition-colors whitespace-nowrap text-sm sm:text-base ${
                 activeTab === tab.id
                   ? 'text-blue-600 border-b-2 border-blue-600'
                   : 'text-gray-600 hover:text-gray-800'
               }`}
             >
-              <TabIcon size={18} />
-              {tab.label}
+              <TabIcon size={16} className="sm:w-[18px] sm:h-[18px]" />
+              <span className="hidden xs:inline">{tab.label}</span>
             </button>
           )
         })}
@@ -408,50 +408,50 @@ export default function DashboardPage() {
 
       {/* Alertas con botones de acción */}
       {stats.lowStockProducts > 0 && (
-        <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
+        <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <AlertCircle className="text-red-600" size={20} />
-              <p className="text-red-800 font-semibold">
+              <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
+              <p className="text-red-800 font-semibold text-sm sm:text-base">
                 ⚠️ Tienes {stats.lowStockProducts} producto(s) con stock bajo
               </p>
             </div>
             <button
               onClick={openLowStockModal}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center gap-2"
+              className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
             >
               <Eye size={16} />
-              Ver productos
+              <span>Ver productos</span>
             </button>
           </div>
         </div>
       )}
 
       {stats.pendingOrders > 0 && (
-        <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
+        <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Clock className="text-yellow-600" size={20} />
-              <p className="text-yellow-800 font-semibold">
+              <Clock className="text-yellow-600 flex-shrink-0" size={20} />
+              <p className="text-yellow-800 font-semibold text-sm sm:text-base">
                 📦 Tienes {stats.pendingOrders} orden(es) pendiente(s) de atención
               </p>
             </div>
             <button
               onClick={openPendingOrdersModal}
-              className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium flex items-center gap-2"
+              className="w-full sm:w-auto px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
             >
               <Eye size={16} />
-              Ver órdenes
+              <span>Ver órdenes</span>
             </button>
           </div>
         </div>
       )}
 
       {/* Tabla de Últimas Órdenes */}
-      <div className="mt-6 bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-          <ShoppingCart size={24} className="text-blue-600" />
-          Últimas Órdenes
+      <div className="mt-6 bg-white rounded-lg shadow-lg p-4 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <ShoppingCart size={20} className="sm:w-6 sm:h-6 text-blue-600" />
+          <span>Últimas Órdenes</span>
         </h2>
         {recentOrders.length > 0 ? (
           <div className="overflow-x-auto">
@@ -532,7 +532,7 @@ export default function DashboardPage() {
           <div className="flex justify-end gap-2">
             <button
               onClick={() => setRevenuePeriod('7d')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${
                 revenuePeriod === '7d'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
@@ -542,7 +542,7 @@ export default function DashboardPage() {
             </button>
             <button
               onClick={() => setRevenuePeriod('30d')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${
                 revenuePeriod === '30d'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-200 text-gray-700 hover:bg-gray-300'

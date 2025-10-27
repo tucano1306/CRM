@@ -13,6 +13,12 @@ if (typeof window === 'undefined') {
 export const metadata = {
   title: 'Food Orders CRM',
   description: 'Sistema de gestión de pedidos de comida',
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
 }
 
 export default function RootLayout({
