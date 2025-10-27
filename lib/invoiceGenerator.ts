@@ -12,6 +12,14 @@ interface InvoiceItem {
   subtotal: number
 }
 
+interface CreditNoteUsage {
+  creditNoteId: string
+  creditNoteNumber: string
+  amountUsed: number
+  originalAmount: number
+  remainingAmount: number
+}
+
 interface InvoiceData {
   // Información de la factura
   invoiceNumber: string
@@ -40,7 +48,10 @@ interface InvoiceData {
   subtotal: number
   taxRate: number
   taxAmount: number
-  total: number
+  totalBeforeCredits: number  // Total antes de aplicar créditos
+  creditNotesUsed?: CreditNoteUsage[]  // Notas de crédito aplicadas
+  totalCreditApplied?: number  // Total de crédito aplicado
+  total: number  // Total final después de créditos
   
   // Información adicional
   paymentMethod?: string
@@ -252,14 +263,52 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
   
   yPos += 10
   
-  // Total
+  // Total antes de créditos
+  const totalBeforeCredits = data.totalBeforeCredits || data.total
+  doc.setTextColor(...secondaryColor)
+  doc.text('Total Orden:', totalsX, yPos)
+  doc.setTextColor(0, 0, 0)
+  doc.text(`$${Number(totalBeforeCredits).toFixed(2)}`, totalsX + totalsWidth, yPos, { align: 'right' })
+  
+  yPos += 10
+  
+  // Notas de crédito aplicadas
+  if (data.creditNotesUsed && data.creditNotesUsed.length > 0) {
+    doc.setFontSize(9)
+    doc.setTextColor(...secondaryColor)
+    doc.text('Créditos Aplicados:', totalsX, yPos)
+    yPos += 6
+    
+    data.creditNotesUsed.forEach((credit) => {
+      doc.setFontSize(8)
+      doc.setTextColor(100, 100, 100)
+      doc.text(`  ${credit.creditNoteNumber}:`, totalsX + 5, yPos)
+      doc.setTextColor(220, 38, 38) // Rojo para mostrar descuento
+      doc.text(`-$${Number(credit.amountUsed).toFixed(2)}`, totalsX + totalsWidth, yPos, { align: 'right' })
+      yPos += 5
+    })
+    
+    yPos += 5
+    
+    // Total de crédito aplicado
+    if (data.totalCreditApplied && data.totalCreditApplied > 0) {
+      doc.setFontSize(9)
+      doc.setTextColor(...secondaryColor)
+      doc.text('Total Crédito:', totalsX, yPos)
+      doc.setTextColor(220, 38, 38)
+      doc.text(`-$${Number(data.totalCreditApplied).toFixed(2)}`, totalsX + totalsWidth, yPos, { align: 'right' })
+      yPos += 10
+    }
+  }
+  
+  // Total final
   doc.setFillColor(...accentColor)
   doc.rect(totalsX - 5, yPos - 6, totalsWidth + 10, 12, 'F')
   
   doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(255, 255, 255)
-  doc.text('TOTAL:', totalsX, yPos)
+  doc.text('TOTAL A PAGAR:', totalsX, yPos)
   doc.text(`$${Number(data.total).toFixed(2)}`, totalsX + totalsWidth, yPos, { align: 'right' })
   
   yPos += 20
@@ -360,9 +409,6 @@ export function getInvoiceBlob(data: InvoiceData): Blob {
   return doc.output('blob')
 }
 
-// Exportar tipos para uso externo
-export type { InvoiceData, InvoiceItem }
-
 /* 
  * EJEMPLO DE USO:
  * 
@@ -425,3 +471,5 @@ export type { InvoiceData, InvoiceItem }
  * const blob = getInvoiceBlob(invoiceData)
  */
 
+// Exportar tipos para uso externo
+export type { InvoiceData, InvoiceItem, CreditNoteUsage }

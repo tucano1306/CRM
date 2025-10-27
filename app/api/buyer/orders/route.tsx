@@ -521,7 +521,7 @@ export async function GET() {
       )
     }
 
-    // ✅ Obtener órdenes CON TIMEOUT
+    // ✅ Obtener órdenes CON TIMEOUT (incluyendo créditos usados)
     const orders = await withPrismaTimeout(
       () => prisma.order.findMany({
         where: { 
@@ -536,6 +536,18 @@ export async function GET() {
           },
           client: true,
           seller: true,
+          creditNoteUsages: {  // ← Incluir créditos usados para factura
+            include: {
+              creditNote: {
+                select: {
+                  id: true,
+                  creditNoteNumber: true,
+                  amount: true,
+                  balance: true,
+                },
+              },
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',

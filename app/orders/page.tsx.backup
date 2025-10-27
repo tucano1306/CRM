@@ -65,8 +65,6 @@ interface OrderWithItems {
     creditNote: {
       id: string
       creditNoteNumber: string
-      amount: number
-      balance: number  // Cambiado de remainingAmount a balance
     }
   }>
 }
@@ -110,19 +108,15 @@ export default function OrdersManagementPage() {
     const subtotal = order.orderItems.reduce((sum, item) => sum + Number(item.subtotal), 0)
     const taxRate = 0.10
     const taxAmount = subtotal * taxRate
-    const totalBeforeCredits = subtotal + taxAmount
     
     // Calcular créditos aplicados
-    const creditNotesUsed = order.creditNoteUsages?.map(usage => ({
-      creditNoteId: usage.creditNote.id,
-      creditNoteNumber: usage.creditNote.creditNoteNumber,
-      amountUsed: Number(usage.amountUsed),
-      originalAmount: Number(usage.creditNote.amount),
-      remainingAmount: Number(usage.creditNote.balance)  // Cambiado de remainingAmount a balance
-    })) || []
+    const creditNotesTotal = order.creditNoteUsages?.reduce(
+      (sum, usage) => sum + Number(usage.amountUsed), 
+      0
+    ) || 0
     
-    const totalCreditApplied = creditNotesUsed.reduce((sum, credit) => sum + credit.amountUsed, 0)
-    const total = totalBeforeCredits - totalCreditApplied
+    // Total = Subtotal + Impuestos - Créditos
+    const total = subtotal + taxAmount - creditNotesTotal
 
     const invoiceDate = new Date(order.createdAt)
     const dueDate = new Date(invoiceDate)
@@ -158,9 +152,7 @@ export default function OrdersManagementPage() {
       subtotal,
       taxRate,
       taxAmount,
-      totalBeforeCredits,
-      creditNotesUsed: creditNotesUsed.length > 0 ? creditNotesUsed : undefined,
-      totalCreditApplied: totalCreditApplied > 0 ? totalCreditApplied : undefined,
+      creditNotes: creditNotesTotal > 0 ? creditNotesTotal : undefined,
       total,
       
       paymentMethod: 'Transferencia Bancaria',

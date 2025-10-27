@@ -78,6 +78,18 @@ export async function GET(request: Request) {
               phone: true,  // ← Para factura
             },
           },
+          creditNoteUsages: {  // ← Para factura con créditos
+            include: {
+              creditNote: {
+                select: {
+                  id: true,
+                  creditNoteNumber: true,
+                  amount: true,
+                  balance: true,  // Saldo restante
+                },
+              },
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',
