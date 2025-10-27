@@ -27,7 +27,16 @@ export async function PATCH(
 
     // Verificar que la orden existe
     const existingOrder = await prisma.recurringOrder.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        client: {
+          select: {
+            id: true,
+            name: true,
+            sellerId: true
+          }
+        }
+      }
     })
 
     if (!existingOrder) {
@@ -47,12 +56,42 @@ export async function PATCH(
         items: true,
         client: {
           select: {
+            id: true,
             name: true,
-            email: true
+            email: true,
+            sellerId: true
           }
         }
       }
     })
+
+    console.log(`✅ [RECURRING ORDER] Orden recurrente ${body.isActive ? 'activada' : 'pausada'}:`, id)
+
+    // 🔔 CREAR NOTIFICACIÓN PARA EL VENDEDOR
+    try {
+      if (updatedOrder.client.sellerId) {
+        const actionText = body.isActive ? 'reactivado' : 'pausado'
+        const actionEmoji = body.isActive ? '▶️' : '⏸️'
+        
+        const notification = await prisma.notification.create({
+          data: {
+            type: 'ORDER_STATUS_CHANGED',
+            title: `${actionEmoji} Orden Recurrente ${body.isActive ? 'Reactivada' : 'Pausada'}`,
+            message: `${updatedOrder.client.name} ha ${actionText} la orden recurrente "${updatedOrder.name}" (${getFrequencyLabel(updatedOrder.frequency)}).`,
+            clientId: updatedOrder.client.id,
+            sellerId: updatedOrder.client.sellerId,
+            relatedId: id,
+            isRead: false
+          }
+        })
+        console.log('✅ [NOTIFICATION] Notificación de cambio de estado enviada al vendedor:', notification.id)
+      } else {
+        console.warn('⚠️ [NOTIFICATION] Cliente no tiene vendedor asociado')
+      }
+    } catch (notifError) {
+      console.error('❌ [NOTIFICATION] Error creando notificación:', notifError)
+      // No fallar el toggle por error en notificación
+    }
 
     return NextResponse.json({
       success: true,
@@ -65,5 +104,17 @@ export async function PATCH(
       { success: false, error: 'Error al cambiar estado de orden recurrente' },
       { status: 500 }
     )
+  }
+}
+
+// Función auxiliar para obtener etiqueta de frecuencia legible
+function getFrequencyLabel(frequency: string): string {
+  switch (frequency) {
+    case 'DAILY': return 'Diaria'
+    case 'WEEKLY': return 'Semanal'
+    case 'BIWEEKLY': return 'Quincenal'
+    case 'MONTHLY': return 'Mensual'
+    case 'CUSTOM': return 'Personalizada'
+    default: return frequency
   }
 }

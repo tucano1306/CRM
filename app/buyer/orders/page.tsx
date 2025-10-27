@@ -903,13 +903,33 @@ export default function OrdersPage() {
             {filteredAndSortedOrders.map((order) => {
               const config = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.PENDING
               const StatusIcon = config.icon
+              
+              // Determinar si necesita animación (órdenes no completadas ni canceladas)
+              const needsAttention = !['COMPLETED', 'DELIVERED', 'CANCELED', 'CANCELLED'].includes(order.status)
+              const isCompleted = order.status === 'COMPLETED' || order.status === 'DELIVERED'
 
               return viewMode === 'grid' ? (
                 // Vista GRID (Card)
                 <div
                   key={order.id}
-                  className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 border-l-4 border-purple-500"
+                  className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 border-l-4 border-purple-500 relative"
+                  style={needsAttention ? {
+                    animation: 'orderPulse 3s ease-in-out infinite',
+                  } : {}}
                 >
+                  {/* Sticker de Completada */}
+                  {isCompleted && (
+                    <div className="absolute top-0 right-0 z-10"
+                      style={{
+                        animation: 'stickerBounce 0.8s ease-out',
+                      }}
+                    >
+                      <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white px-4 py-2 rounded-bl-2xl shadow-lg flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5" />
+                        <span className="font-bold text-sm">¡Completada!</span>
+                      </div>
+                    </div>
+                  )}
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div>
@@ -924,9 +944,24 @@ export default function OrdersPage() {
                         })}
                       </p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${config.bg} ${config.color}`}>
-                      {config.label}
-                    </span>
+                    <div className="relative">
+                      {needsAttention && (
+                        <div 
+                          className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"
+                          style={{
+                            animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite',
+                          }}
+                        />
+                      )}
+                      <span 
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${config.bg} ${config.color}`}
+                        style={needsAttention ? {
+                          animation: 'statusPulse 2s ease-in-out infinite',
+                        } : {}}
+                      >
+                        {config.label}
+                      </span>
+                    </div>
                   </div>
                   
                   {/* Productos */}
@@ -1058,8 +1093,25 @@ export default function OrdersPage() {
                 // Vista LIST (Fila)
                 <div
                   key={order.id}
-                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all p-4 border-l-4 border-purple-500"
+                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all p-4 border-l-4 border-purple-500 relative"
+                  style={needsAttention ? {
+                    animation: 'orderPulse 3s ease-in-out infinite',
+                  } : {}}
                 >
+                  {/* Sticker de Completada (también en lista) */}
+                  {isCompleted && (
+                    <div className="absolute top-0 right-0 z-10"
+                      style={{
+                        animation: 'stickerBounce 0.8s ease-out',
+                      }}
+                    >
+                      <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white px-3 py-1 rounded-bl-xl shadow-lg flex items-center gap-1">
+                        <CheckCircle className="h-4 w-4" />
+                        <span className="font-bold text-xs">¡Completada!</span>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between gap-4">
                     {/* Izquierda: Info básica */}
                     <div className="flex items-center gap-4 flex-1">
@@ -1097,10 +1149,25 @@ export default function OrdersPage() {
 
                     {/* Centro: Estado y Total */}
                     <div className="text-center flex-shrink-0">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.color} block mb-2`}>
-                        {config.label}
-                      </span>
-                      <span className="text-xl font-bold text-purple-600">
+                      <div className="relative inline-block mb-2">
+                        {needsAttention && (
+                          <div 
+                            className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full"
+                            style={{
+                              animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite',
+                            }}
+                          />
+                        )}
+                        <span 
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.color}`}
+                          style={needsAttention ? {
+                            animation: 'statusPulse 2s ease-in-out infinite',
+                          } : {}}
+                        >
+                          {config.label}
+                        </span>
+                      </div>
+                      <span className="text-xl font-bold text-purple-600 block">
                         ${Number(order.totalAmount).toFixed(2)}
                       </span>
                     </div>
@@ -1630,6 +1697,51 @@ export default function OrdersPage() {
           </div>
         )}
       </div>
+
+      {/* CSS Animations */}
+      <style>{`
+        @keyframes orderPulse {
+          0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+          }
+          50% {
+            transform: scale(1.02);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+          }
+        }
+
+        @keyframes stickerBounce {
+          0%, 100% {
+            transform: translateY(0) rotate(0deg);
+          }
+          25% {
+            transform: translateY(-10px) rotate(-3deg);
+          }
+          50% {
+            transform: translateY(0) rotate(0deg);
+          }
+          75% {
+            transform: translateY(-5px) rotate(3deg);
+          }
+        }
+
+        @keyframes statusPulse {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.05);
+          }
+        }
+
+        @keyframes ping {
+          75%, 100% {
+            transform: scale(2);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
     </>
   )

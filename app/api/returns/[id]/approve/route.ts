@@ -34,7 +34,7 @@ export async function POST(
       return NextResponse.json({ error: 'Solo se pueden aprobar devoluciones pendientes' }, { status: 400 })
     }
 
-    // Actualizar estado
+    // Actualizar estado y crear nota de crédito si el tipo de reembolso es CREDIT
     const updatedReturn = await prisma.return.update({
       where: { id },
       data: {
@@ -45,9 +45,50 @@ export async function POST(
       },
       include: {
         items: true,
-        client: true
+        client: true,
+        order: true
       }
     })
+
+    // Crear nota de crédito si el tipo de devolución es CREDIT
+    let creditNote = null
+    if (returnRecord.refundType === 'CREDIT') {
+      console.log('💳 [RETURN APPROVED] Creando nota de crédito para cliente:', returnRecord.clientId)
+      
+      const creditNoteNumber = `CN-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
+      
+      creditNote = await prisma.creditNote.create({
+        data: {
+          creditNoteNumber,
+          returnId: id,
+          clientId: returnRecord.clientId,
+          sellerId: returnRecord.sellerId,
+          amount: Number(returnRecord.finalRefundAmount),
+          balance: Number(returnRecord.finalRefundAmount),
+          usedAmount: 0,
+          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 año
+          isActive: true,
+          notes: `Crédito por devolución ${returnRecord.returnNumber}`
+        }
+      })
+      
+      console.log('✅ [RETURN APPROVED] Nota de crédito creada:', creditNote.creditNoteNumber)
+      
+      // Crear notificación de crédito emitido
+      await prisma.notification.create({
+        data: {
+          type: 'CREDIT_NOTE_ISSUED',
+          title: '💳 Crédito a tu Favor',
+          message: `Se ha emitido un crédito de $${Number(returnRecord.finalRefundAmount).toFixed(2)} por tu devolución ${returnRecord.returnNumber}. Puedes usarlo en tu próxima compra.`,
+          clientId: returnRecord.clientId,
+          relatedId: creditNote.id,
+          orderId: returnRecord.orderId,
+          isRead: false
+        }
+      })
+      
+      console.log('🔔 [RETURN APPROVED] Notificación de crédito enviada al cliente')
+    }
 
     // 🔔 ENVIAR NOTIFICACIÓN AL COMPRADOR sobre aprobación de devolución
     try {
@@ -79,7 +120,10 @@ export async function POST(
     return NextResponse.json({
       success: true,
       data: updatedReturn,
-      message: 'Devolución aprobada exitosamente'
+      creditNote: creditNote,
+      message: creditNote 
+        ? `Devolución aprobada y crédito de $${Number(returnRecord.finalRefundAmount).toFixed(2)} emitido exitosamente`
+        : 'Devolución aprobada exitosamente'
     })
   } catch (error) {
     console.error('Error approving return:', error)

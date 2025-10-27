@@ -177,7 +177,7 @@ export async function POST(request: Request) {
           data: {
             type: 'NEW_ORDER',
             title: '🔄 Nueva Orden Recurrente',
-            message: `${recurringOrder.client.name} ha creado una orden recurrente "${recurringOrder.name}" por $${totalAmount.toFixed(2)}. Frecuencia: ${recurringOrder.frequency}`,
+            message: `${recurringOrder.client.name} ha creado una orden recurrente "${recurringOrder.name}" por $${totalAmount.toFixed(2)}. Frecuencia: ${getFrequencyLabel(recurringOrder.frequency)}`,
             clientId: body.clientId,
             sellerId: recurringOrder.client.sellerId,
             orderId: recurringOrder.id,
@@ -205,6 +205,18 @@ export async function POST(request: Request) {
       { success: false, error: 'Error al crear orden recurrente' },
       { status: 500 }
     )
+  }
+}
+
+// Función auxiliar para obtener etiqueta de frecuencia legible
+function getFrequencyLabel(frequency: string): string {
+  switch (frequency) {
+    case 'DAILY': return 'Diaria'
+    case 'WEEKLY': return 'Semanal'
+    case 'BIWEEKLY': return 'Quincenal'
+    case 'MONTHLY': return 'Mensual'
+    case 'CUSTOM': return 'Personalizada'
+    default: return frequency
   }
 }
 

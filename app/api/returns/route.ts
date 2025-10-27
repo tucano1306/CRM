@@ -228,9 +228,33 @@ export async function POST(request: Request) {
           include: {
             product: true
           }
+        },
+        client: {
+          select: {
+            name: true
+          }
         }
       }
     })
+
+    // Crear notificación para el vendedor
+    if (order.sellerId) {
+      console.log('🔔 [RETURN CREATED] Creando notificación para vendedor:', order.sellerId)
+      
+      await prisma.notification.create({
+        data: {
+          type: 'RETURN_REQUEST',
+          title: '🔄 Nueva Solicitud de Devolución',
+          message: `${newReturn.client.name} ha solicitado una devolución para la orden ${newReturn.order.orderNumber}. Monto: $${finalRefundAmount.toFixed(2)}`,
+          sellerId: order.sellerId,
+          relatedId: newReturn.id,
+          orderId: orderId,
+          isRead: false
+        }
+      })
+      
+      console.log('✅ [RETURN CREATED] Notificación creada exitosamente')
+    }
 
     return NextResponse.json({
       success: true,

@@ -3,7 +3,7 @@
 
 import { useEffect, useState } from 'react'
 import { useAuth } from '@clerk/nextjs'
-import RecurringOrdersManager from '@/components/recurring-orders/RecurringOrdersManager'
+import ModernRecurringOrdersManager from '@/components/recurring-orders/ModernRecurringOrdersManager'
 import { RefreshCw } from 'lucide-react'
 
 export default function BuyerRecurringOrdersPage() {
@@ -39,18 +39,9 @@ export default function BuyerRecurringOrdersPage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Mis Órdenes Recurrentes
-        </h1>
-        <p className="text-gray-600">
-          Programa y gestiona tus pedidos automáticos
-        </p>
-      </div>
-
+    <div className="container mx-auto py-8 px-4 max-w-7xl">
       {clientId && (
-        <RecurringOrdersManager 
+        <ModernRecurringOrdersManager 
           userRole="CLIENT"
           clientId={clientId}
         />

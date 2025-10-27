@@ -190,9 +190,18 @@ export async function DELETE(
     const params = await context.params
     const { id } = params
 
-    // Verificar que la orden existe
+    // Verificar que la orden existe y obtener información completa
     const existingOrder = await prisma.recurringOrder.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        client: {
+          select: {
+            id: true,
+            name: true,
+            sellerId: true
+          }
+        }
+      }
     })
 
     if (!existingOrder) {
@@ -202,10 +211,45 @@ export async function DELETE(
       )
     }
 
+    // Guardar información para la notificación antes de eliminar
+    const orderInfo = {
+      name: existingOrder.name,
+      frequency: existingOrder.frequency,
+      totalAmount: existingOrder.totalAmount,
+      clientName: existingOrder.client.name,
+      clientId: existingOrder.client.id,
+      sellerId: existingOrder.client.sellerId
+    }
+
     // Eliminar orden (los items y ejecuciones se eliminan en cascada)
     await prisma.recurringOrder.delete({
       where: { id }
     })
+
+    console.log('✅ [RECURRING ORDER] Orden recurrente eliminada:', id)
+
+    // 🔔 CREAR NOTIFICACIÓN PARA EL VENDEDOR
+    try {
+      if (orderInfo.sellerId) {
+        const notification = await prisma.notification.create({
+          data: {
+            type: 'ORDER_CANCELLED', // Usar tipo de cancelación
+            title: '🗑️ Orden Recurrente Eliminada',
+            message: `${orderInfo.clientName} ha eliminado la orden recurrente "${orderInfo.name}" (Frecuencia: ${getFrequencyLabel(orderInfo.frequency)}). Esta orden ya no se ejecutará automáticamente.`,
+            clientId: orderInfo.clientId,
+            sellerId: orderInfo.sellerId,
+            relatedId: id,
+            isRead: false
+          }
+        })
+        console.log('✅ [NOTIFICATION] Notificación de eliminación enviada al vendedor:', notification.id)
+      } else {
+        console.warn('⚠️ [NOTIFICATION] Cliente no tiene vendedor asociado')
+      }
+    } catch (notifError) {
+      console.error('❌ [NOTIFICATION] Error creando notificación:', notifError)
+      // No fallar la eliminación por error en notificación
+    }
 
     return NextResponse.json({
       success: true,
@@ -285,4 +329,16 @@ function calculateNextExecutionDate(
   }
 
   return nextDate
+}
+
+// Función auxiliar para obtener etiqueta de frecuencia legible
+function getFrequencyLabel(frequency: string): string {
+  switch (frequency) {
+    case 'DAILY': return 'Diaria'
+    case 'WEEKLY': return 'Semanal'
+    case 'BIWEEKLY': return 'Quincenal'
+    case 'MONTHLY': return 'Mensual'
+    case 'CUSTOM': return 'Personalizada'
+    default: return frequency
+  }
 }

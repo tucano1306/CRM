@@ -1,0 +1,13 @@
+-- AlterEnum: Add new return reasons for manual returns
+ALTER TYPE "ReturnReason" ADD VALUE 'DAMAGED_PRODUCT';
+ALTER TYPE "ReturnReason" ADD VALUE 'INCORRECT_PRODUCT';
+ALTER TYPE "ReturnReason" ADD VALUE 'CUSTOMER_DISSATISFACTION';
+ALTER TYPE "ReturnReason" ADD VALUE 'PRICING_ERROR';
+ALTER TYPE "ReturnReason" ADD VALUE 'DUPLICATE_ORDER';
+ALTER TYPE "ReturnReason" ADD VALUE 'GOODWILL';
+ALTER TYPE "ReturnReason" ADD VALUE 'OVERCHARGE';
+ALTER TYPE "ReturnReason" ADD VALUE 'PROMOTION_ADJUSTMENT';
+ALTER TYPE "ReturnReason" ADD VALUE 'COMPENSATION';
+
+-- AlterTable: Add is_manual column to returns table
+ALTER TABLE "returns" ADD COLUMN "is_manual" BOOLEAN NOT NULL DEFAULT false;

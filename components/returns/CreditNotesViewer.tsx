@@ -199,15 +199,15 @@ export default function CreditNotesViewer() {
                     </div>
 
                     {/* Historial de uso */}
-                    {note.usage.length > 0 && (
+                    {note.usage && note.usage.length > 0 && (
                       <div className="mt-3 pt-3 border-t">
                         <p className="text-xs font-semibold text-gray-700 mb-2">
                           Historial de uso:
                         </p>
                         <div className="space-y-1">
-                          {note.usage.map((use) => (
+                          {note.usage.map((use: any) => (
                             <div key={use.id} className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
-                              📦 {use.order.orderNumber} - ${use.amountUsed.toFixed(2)} - {new Date(use.usedAt).toLocaleDateString('es-ES')}
+                              📦 {use.order?.orderNumber || 'N/A'} - ${Number(use.amountUsed).toFixed(2)} - {new Date(use.usedAt).toLocaleDateString('es-ES')}
                             </div>
                           ))}
                         </div>
@@ -254,15 +254,20 @@ export default function CreditNotesViewer() {
         </div>
       </div>
 
-      {/* Modal usar crédito (placeholder - implementar según necesidad) */}
+      {/* Modal usar crédito */}
       {selectedNote && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">Usar Crédito</h3>
+            <h3 className="text-lg font-semibold mb-4">💳 Usar Crédito</h3>
             <p className="text-gray-600 mb-4">
-              Para usar este crédito, aplícalo al momento de crear una nueva orden.
-              El crédito se descontará automáticamente del total.
+              Tienes <span className="font-bold text-green-600">${selectedNote.balance.toFixed(2)}</span> disponible.
+              Ve al carrito para aplicar este crédito a tu próxima compra.
             </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-blue-800">
+                💡 El crédito se aplicará automáticamente al confirmar tu pedido desde el carrito.
+              </p>
+            </div>
             <div className="flex gap-2">
               <Button
                 onClick={() => setSelectedNote(null)}
@@ -272,12 +277,28 @@ export default function CreditNotesViewer() {
                 Cerrar
               </Button>
               <Button
-                onClick={() => {
-                  window.location.href = '/buyer/catalog'
+                onClick={async () => {
+                  // Verificar si hay productos en el carrito
+                  try {
+                    const response = await fetch('/api/buyer/cart')
+                    const result = await response.json()
+                    
+                    if (result.success && result.cart?.items?.length > 0) {
+                      // Hay productos, ir al carrito
+                      window.location.href = `/buyer/cart?useCredit=${selectedNote.id}`
+                    } else {
+                      // No hay productos, mostrar mensaje
+                      alert('⚠️ Tu carrito está vacío.\n\nPor favor agrega productos al carrito antes de usar tus créditos.')
+                      setSelectedNote(null)
+                    }
+                  } catch (error) {
+                    console.error('Error checking cart:', error)
+                    alert('Error al verificar el carrito. Por favor intenta de nuevo.')
+                  }
                 }}
                 className="flex-1 bg-green-600 hover:bg-green-700"
               >
-                Ir a Catálogo
+                Ir al Carrito
               </Button>
             </div>
           </div>

@@ -11,9 +11,11 @@ import {
   DollarSign,
   Calendar,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Check
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 interface Client {
   id: string
@@ -38,6 +40,9 @@ interface OrdersListImprovedProps {
   orders: Order[]
   userRole: 'SELLER' | 'CLIENT'
   onOrderClick?: (order: Order) => void
+  selectedOrders?: string[]
+  onToggleSelection?: (orderId: string) => void
+  onBulkStatusChange?: () => void
 }
 
 const statusConfig: Record<string, { label: string; color: string; bg: string; icon: any }> = {
@@ -88,9 +93,14 @@ const statusConfig: Record<string, { label: string; color: string; bg: string; i
 export default function OrdersListImproved({ 
   orders, 
   userRole,
-  onOrderClick 
+  onOrderClick,
+  selectedOrders = [],
+  onToggleSelection,
+  onBulkStatusChange
 }: OrdersListImprovedProps) {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
+
+  const isSelected = (orderId: string) => selectedOrders.includes(orderId)
 
   if (orders.length === 0) {
     return (
@@ -112,22 +122,82 @@ export default function OrdersListImproved({
         const config = statusConfig[order.status] || statusConfig.PENDING
         const StatusIcon = config.icon
         const isExpanded = expandedOrder === order.id
+        
+        // Determinar si necesita animación (órdenes no completadas ni canceladas)
+        const needsAttention = !['COMPLETED', 'DELIVERED', 'CANCELED'].includes(order.status)
+        const isCompleted = order.status === 'COMPLETED' || order.status === 'DELIVERED'
 
         return (
-          <Card key={order.id} className="overflow-hidden hover:shadow-md transition-shadow">
+          <Card 
+            key={order.id} 
+            className="overflow-hidden hover:shadow-md transition-shadow relative"
+            style={needsAttention ? {
+              animation: 'orderPulse 3s ease-in-out infinite',
+            } : {}}
+          >
+            {/* Sticker de Completada */}
+            {isCompleted && (
+              <div className="absolute top-0 right-0 z-10"
+                style={{
+                  animation: 'stickerBounce 0.8s ease-out',
+                }}
+              >
+                <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white px-4 py-2 rounded-bl-2xl shadow-lg flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5" />
+                  <span className="font-bold text-sm">¡Completada!</span>
+                </div>
+              </div>
+            )}
+
             <div 
-              className="p-4 cursor-pointer"
-              onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
+              className="p-4"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 flex-1">
+                  {/* Checkbox de selección (solo para vendedor) */}
+                  {userRole === 'SELLER' && onToggleSelection && (
+                    <div 
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onToggleSelection(order.id)
+                      }}
+                      className="flex-shrink-0 cursor-pointer"
+                    >
+                      <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                        isSelected(order.id)
+                          ? 'bg-purple-600 border-purple-600'
+                          : 'border-gray-300 hover:border-purple-400'
+                      }`}>
+                        {isSelected(order.id) && (
+                          <Check className="h-4 w-4 text-white" />
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Ícono de estado */}
-                  <div className={`p-3 rounded-lg ${config.bg}`}>
+                  <div 
+                    className={`p-3 rounded-lg ${config.bg} cursor-pointer relative`}
+                    onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
+                    style={needsAttention ? {
+                      animation: 'iconPulse 2s ease-in-out infinite',
+                    } : {}}
+                  >
+                    {needsAttention && (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"
+                        style={{
+                          animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite',
+                        }}
+                      />
+                    )}
                     <StatusIcon className={`h-5 w-5 ${config.color}`} />
                   </div>
 
                   {/* Información de la orden */}
-                  <div className="flex-1">
+                  <div 
+                    className="flex-1 cursor-pointer"
+                    onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
+                  >
                     <div className="flex items-center gap-3 mb-1">
                       <h4 className="font-semibold text-gray-900">
                         Orden #{order.orderNumber}
@@ -228,6 +298,51 @@ export default function OrdersListImproved({
           </Card>
         )
       })}
+      
+      {/* Animaciones CSS inline */}
+      <style>{`
+        @keyframes orderPulse {
+          0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+          }
+          50% {
+            transform: scale(1.02);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+          }
+        }
+
+        @keyframes stickerBounce {
+          0%, 100% {
+            transform: translateY(0) rotate(0deg);
+          }
+          25% {
+            transform: translateY(-10px) rotate(-3deg);
+          }
+          50% {
+            transform: translateY(0) rotate(0deg);
+          }
+          75% {
+            transform: translateY(-5px) rotate(3deg);
+          }
+        }
+
+        @keyframes iconPulse {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.1);
+          }
+        }
+
+        @keyframes ping {
+          75%, 100% {
+            transform: scale(2);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   )
 }

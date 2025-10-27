@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { v4 as uuidv4 } from 'uuid'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
 import {
@@ -54,6 +54,7 @@ type Cart = {
 
 export default function CartPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [cart, setCart] = useState<Cart | null>(null)
   const [loading, setLoading] = useState(true)
   const [timedOut, setTimedOut] = useState(false)
@@ -70,6 +71,11 @@ export default function CartPage() {
   const [itemToDelete, setItemToDelete] = useState<{id: string, name: string} | null>(null)
   const [suggestedProducts, setSuggestedProducts] = useState<any[]>([])
   const [popularProducts, setPopularProducts] = useState<any[]>([])
+  const [availableCredits, setAvailableCredits] = useState<any[]>([])
+  const [selectedCredits, setSelectedCredits] = useState<string[]>([])
+  const [creditAmounts, setCreditAmounts] = useState<Record<string, number>>({}) // Monto a usar de cada crédito
+  const [showCreditsSection, setShowCreditsSection] = useState(false)
+  const [loadingCredits, setLoadingCredits] = useState(true)
 
   const TAX_RATE = 0.10 // 10% de impuestos
   const DELIVERY_FEE = 5.00 // Costo de envío
@@ -87,7 +93,35 @@ export default function CartPage() {
     fetchCart()
     loadSuggestedProducts()
     loadPopularProducts()
+    loadAvailableCredits()
   }, [])
+
+  // Detectar crédito en URL y aplicarlo automáticamente
+  useEffect(() => {
+    const creditIdFromUrl = searchParams?.get('useCredit')
+    
+    if (creditIdFromUrl && availableCredits.length > 0) {
+      console.log('💳 [AUTO-APPLY] Crédito detectado en URL:', creditIdFromUrl)
+      
+      // Buscar el crédito en los disponibles
+      const credit = availableCredits.find(c => c.id === creditIdFromUrl)
+      
+      if (credit && !selectedCredits.includes(creditIdFromUrl)) {
+        console.log('💳 [AUTO-APPLY] Aplicando crédito automáticamente')
+        const maxBalance = Number(credit.balance)
+        
+        setSelectedCredits([creditIdFromUrl])
+        setCreditAmounts({ [creditIdFromUrl]: maxBalance }) // Usar el balance completo por defecto
+        setShowCreditsSection(true) // Expandir sección para que vea el crédito aplicado
+        
+        showToast(`✓ Crédito de $${maxBalance.toFixed(2)} aplicado automáticamente`, 'success')
+        
+        // Limpiar URL (opcional - remueve el parámetro después de aplicarlo)
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, '', newUrl)
+      }
+    }
+  }, [searchParams, availableCredits])
 
   // Cargar productos sugeridos
   const loadSuggestedProducts = async () => {
@@ -99,6 +133,132 @@ export default function CartPage() {
   const loadPopularProducts = async () => {
     const products = await getPopularProducts()
     setPopularProducts(products)
+  }
+
+  // Cargar créditos disponibles del comprador
+  const loadAvailableCredits = async () => {
+    try {
+      setLoadingCredits(true)
+      console.log('💳 [CREDITS] Iniciando carga de créditos...')
+      
+      const result = await apiCall('/api/credit-notes?role=client', {
+        method: 'GET',
+      })
+      
+      console.log('💳 [CREDITS] Respuesta completa:', result)
+      console.log('💳 [CREDITS] result.success:', result.success)
+      console.log('💳 [CREDITS] result.data:', result.data)
+      console.log('💳 [CREDITS] result.data keys:', result.data ? Object.keys(result.data) : 'null')
+      console.log('💳 [CREDITS] result.data.data:', result.data?.data)
+      
+      if (result.success && result.data) {
+        console.log('💳 [CREDITS] Tipo de result.data:', typeof result.data, 'Es array:', Array.isArray(result.data))
+        
+        // El problema: apiCall puede devolver { data: { data: [...] } }
+        // Intentar primero result.data.data, luego result.data
+        let creditsArray = []
+        
+        if (Array.isArray(result.data.data)) {
+          console.log('💳 [CREDITS] Usando result.data.data (array anidado)')
+          creditsArray = result.data.data
+        } else if (Array.isArray(result.data)) {
+          console.log('💳 [CREDITS] Usando result.data (array directo)')
+          creditsArray = result.data
+        } else {
+          console.log('💳 [CREDITS] No se encontró array en ninguna ubicación')
+          creditsArray = []
+        }
+        
+        console.log('💳 [CREDITS] Credits array length:', creditsArray.length)
+        
+        // Filtrar solo créditos activos con balance (aunque el endpoint ya lo hace)
+        const activeCredits = creditsArray.filter((credit: any) => {
+          const isActive = credit.isActive && credit.balance > 0
+          const notExpired = !credit.expiresAt || new Date(credit.expiresAt) > new Date()
+          console.log(`   - ${credit.creditNoteNumber}: activo=${isActive}, no expirado=${notExpired}`)
+          return isActive && notExpired
+        })
+        
+        console.log('💳 [CREDITS] Créditos filtrados:', activeCredits.length)
+        
+        setAvailableCredits(activeCredits)
+        
+        if (activeCredits.length > 0) {
+          console.log('✅ [CREDITS] Créditos cargados exitosamente:', activeCredits.map((c: any) => c.creditNoteNumber))
+        } else {
+          console.log('⚠️ [CREDITS] No hay créditos disponibles después del filtrado')
+        }
+      } else {
+        console.log('❌ [CREDITS] No se obtuvieron créditos. Success:', result.success)
+        setAvailableCredits([])
+      }
+    } catch (error) {
+      console.error('❌ [CREDITS] Error loading credits:', error)
+      console.error('❌ [CREDITS] Error stack:', error instanceof Error ? error.stack : 'No stack')
+      setAvailableCredits([])
+    } finally {
+      setLoadingCredits(false)
+    }
+  }
+
+  // Calcular total de créditos seleccionados
+  const calculateCreditsApplied = () => {
+    if (selectedCredits.length === 0) return 0
+    
+    // Sumar los montos específicos ingresados para cada crédito seleccionado
+    return selectedCredits.reduce((sum, creditId) => {
+      const amount = creditAmounts[creditId] || 0
+      return sum + amount
+    }, 0)
+  }
+
+  // Toggle selección de crédito
+  const toggleCreditSelection = (creditId: string, maxBalance: number) => {
+    if (selectedCredits.includes(creditId)) {
+      // Deseleccionar
+      setSelectedCredits(prev => prev.filter(id => id !== creditId))
+      setCreditAmounts(prev => {
+        const newAmounts = { ...prev }
+        delete newAmounts[creditId]
+        return newAmounts
+      })
+    } else {
+      // Seleccionar y establecer monto inicial limitado a lo que realmente se necesita
+      setSelectedCredits(prev => [...prev, creditId])
+      
+      // Calcular cuánto realmente necesita el usuario
+      const currentTotal = calculateTotal() // Esto ya incluye los créditos actuales aplicados
+      const alreadyApplied = calculateCreditsApplied()
+      const remainingToPay = currentTotal + alreadyApplied // Total antes de aplicar este nuevo crédito
+      
+      // Usar el menor entre el balance del crédito y lo que falta por pagar
+      const smartAmount = Math.min(maxBalance, Math.max(0, remainingToPay))
+      
+      setCreditAmounts(prev => ({
+        ...prev,
+        [creditId]: smartAmount
+      }))
+    }
+  }
+
+  // Actualizar monto de crédito a usar
+  const updateCreditAmount = (creditId: string, amount: number, maxBalance: number) => {
+    // Calcular cuánto realmente necesita el usuario
+    const subtotal = calculateSubtotal()
+    const discount = calculateDiscount()
+    const tax = calculateTax()
+    const delivery = calculateDeliveryFee()
+    const alreadyApplied = calculateCreditsApplied() - (creditAmounts[creditId] || 0) // Excluir el crédito actual
+    const totalBeforeThisCredit = subtotal - discount + tax + delivery - alreadyApplied
+    const remainingToPay = Math.max(0, totalBeforeThisCredit)
+    
+    // Limitar al menor entre: el monto ingresado, el balance máximo, y lo que realmente falta pagar
+    const smartLimit = Math.min(Math.max(0, amount), maxBalance, remainingToPay)
+    
+    setCreditAmounts(prev => ({
+      ...prev,
+      [creditId]: smartLimit
+    }))
   }
 
   // ✅ fetchCart CON TIMEOUT
@@ -257,7 +417,16 @@ export default function CartPage() {
   }
 
   const calculateTotal = () => {
-    return calculateSubtotal() - calculateDiscount() + calculateTax() + calculateDeliveryFee()
+    const subtotal = calculateSubtotal()
+    const discount = calculateDiscount()
+    const tax = calculateTax()
+    const delivery = calculateDeliveryFee()
+    const credits = calculateCreditsApplied()
+    
+    const total = subtotal - discount + tax + delivery - credits
+    
+    // El total nunca puede ser negativo
+    return Math.max(0, total)
   }
 
   const getEstimatedDeliveryDate = () => {
@@ -393,6 +562,12 @@ export default function CartPage() {
           notes: orderNotes || null,
           deliveryMethod: deliveryMethod,
           couponCode: appliedCoupon?.code || null,
+          creditNotes: selectedCredits.length > 0 
+            ? selectedCredits.map(creditId => ({
+                creditNoteId: creditId,
+                amountToUse: creditAmounts[creditId] || 0
+              }))
+            : null,
           idempotencyKey: uuidv4()
         }),
         timeout: 8000, // ✅ 8 segundos para crear orden (operación compleja)
@@ -950,6 +1125,166 @@ export default function CartPage() {
                   </p>
                 </div>
 
+                {/* Créditos disponibles - SIEMPRE VISIBLE */}
+                <div className="p-6 border-b border-gray-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <button
+                      onClick={() => setShowCreditsSection(!showCreditsSection)}
+                      className="flex items-center gap-2 text-sm font-medium text-gray-700"
+                    >
+                      💳 Créditos disponibles ({loadingCredits ? '...' : availableCredits.length})
+                      {!loadingCredits && availableCredits.length > 0 && (
+                        <span className="text-xs text-green-600 font-bold">
+                          ${availableCredits.reduce((sum, c) => sum + Number(c.balance), 0).toFixed(2)}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      onClick={loadAvailableCredits}
+                      className="text-xs text-blue-600 hover:text-blue-800"
+                      title="Recargar créditos"
+                    >
+                      🔄
+                    </button>
+                  </div>
+
+                  {showCreditsSection && availableCredits.length > 0 && (
+                    <div className="space-y-3 mt-3">
+                      {availableCredits.map((credit) => {
+                        const isSelected = selectedCredits.includes(credit.id)
+                        const maxBalance = Number(credit.balance)
+                        const currentAmount = creditAmounts[credit.id] || maxBalance
+                        
+                        // Calcular cuánto realmente se necesita para este crédito
+                        const subtotal = calculateSubtotal()
+                        const discount = calculateDiscount()
+                        const tax = calculateTax()
+                        const delivery = calculateDeliveryFee()
+                        const alreadyApplied = calculateCreditsApplied() - (isSelected ? currentAmount : 0)
+                        const totalBeforeThisCredit = subtotal - discount + tax + delivery - alreadyApplied
+                        const remainingToPay = Math.max(0, totalBeforeThisCredit)
+                        const optimalAmount = Math.min(maxBalance, remainingToPay)
+                        const isOverApplying = currentAmount > optimalAmount && optimalAmount > 0
+                        const isWastingCredit = currentAmount > remainingToPay
+                        
+                        return (
+                          <div
+                            key={credit.id}
+                            className={`p-3 border-2 rounded-lg transition-colors ${
+                              isSelected
+                                ? 'border-green-500 bg-green-50'
+                                : 'border-gray-200 hover:bg-gray-50'
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleCreditSelection(credit.id, maxBalance)}
+                                className="w-4 h-4 text-green-600 mt-1 cursor-pointer"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-gray-800 text-sm">
+                                  {credit.creditNoteNumber}
+                                </p>
+                                <p className="text-xs text-gray-500 truncate mb-2">
+                                  {credit.notes}
+                                </p>
+                                <div className="flex items-center gap-2 text-xs text-gray-600">
+                                  <span>Balance disponible:</span>
+                                  <span className="font-bold text-green-600">
+                                    ${maxBalance.toFixed(2)}
+                                  </span>
+                                </div>
+                                
+                                {isSelected && (
+                                  <div className="mt-3 space-y-2">
+                                    <label className="text-xs font-medium text-gray-700">
+                                      Monto a usar de este crédito:
+                                    </label>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-sm font-bold">$</span>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        max={maxBalance}
+                                        step="0.01"
+                                        value={currentAmount}
+                                        onChange={(e) => updateCreditAmount(credit.id, parseFloat(e.target.value) || 0, maxBalance)}
+                                        className="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm"
+                                        placeholder="0.00"
+                                      />
+                                      <button
+                                        onClick={() => updateCreditAmount(credit.id, maxBalance, maxBalance)}
+                                        className="text-xs text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap"
+                                      >
+                                        Usar todo
+                                      </button>
+                                    </div>
+                                    {currentAmount > maxBalance && (
+                                      <p className="text-xs text-red-600">
+                                        ❌ No puedes usar más del balance disponible
+                                      </p>
+                                    )}
+                                    {isWastingCredit && currentAmount <= maxBalance && (
+                                      <div className="bg-amber-50 border border-amber-300 rounded-lg p-2">
+                                        <p className="text-xs text-amber-800 font-medium">
+                                          ⚠️ Solo necesitas ${optimalAmount.toFixed(2)} de tu crédito de ${maxBalance.toFixed(2)}
+                                        </p>
+                                        <p className="text-xs text-amber-700 mt-1">
+                                          El sistema ha limitado automáticamente el uso a lo necesario. 
+                                          Los ${(maxBalance - optimalAmount).toFixed(2)} restantes quedarán disponibles para futuras compras.
+                                        </p>
+                                      </div>
+                                    )}
+                                    {currentAmount > 0 && currentAmount <= maxBalance && !isWastingCredit && (
+                                      <div className="flex items-start gap-2">
+                                        <p className="text-xs text-green-600 font-medium flex-1">
+                                          ✓ Se aplicarán ${currentAmount.toFixed(2)} de este crédito
+                                        </p>
+                                        {currentAmount < maxBalance && (
+                                          <p className="text-xs text-gray-500">
+                                            (Quedan ${(maxBalance - currentAmount).toFixed(2)})
+                                          </p>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                        <p className="text-xs text-blue-800">
+                          💡 El sistema protege tus créditos limitando automáticamente el uso al monto necesario para tu compra
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {!showCreditsSection && availableCredits.length > 0 && (
+                    <p className="text-xs text-blue-600 mt-2 cursor-pointer hover:underline"
+                       onClick={() => setShowCreditsSection(true)}>
+                      Haz clic para ver y usar tus créditos
+                    </p>
+                  )}
+
+                  {availableCredits.length === 0 && showCreditsSection && (
+                    <div className="text-sm text-gray-500 mt-3 p-3 bg-gray-50 rounded-lg">
+                      {loadingCredits ? (
+                        <div className="flex items-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Cargando créditos...
+                        </div>
+                      ) : (
+                        'No tienes créditos disponibles actualmente.'
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* Desglose de precios */}
                 <div className="p-6 space-y-3">
                   <div className="flex justify-between text-gray-600">
@@ -990,6 +1325,15 @@ export default function CartPage() {
                         Retiro en tienda:
                       </span>
                       <span className="font-semibold">Gratis</span>
+                    </div>
+                  )}
+
+                  {selectedCredits.length > 0 && (
+                    <div className="flex justify-between text-green-600 font-semibold">
+                      <span className="flex items-center gap-1">
+                        💳 Créditos aplicados ({selectedCredits.length}):
+                      </span>
+                      <span>-${calculateCreditsApplied().toFixed(2)}</span>
                     </div>
                   )}
 

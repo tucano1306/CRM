@@ -25,6 +25,7 @@ interface Return {
   restockFee: number
   finalRefundAmount: number
   notes?: string
+  isManual?: boolean
   createdAt: string
   approvedAt?: string
   completedAt?: string
@@ -36,7 +37,8 @@ interface Return {
     email: string
   }
   seller?: {
-    businessName: string
+    businessName?: string
+    name?: string
   }
   items: ReturnItem[]
   creditNote?: {
@@ -226,6 +228,21 @@ export default function ReturnDetailModal({ returnRecord, isOpen, onClose, onUpd
             <div className="flex items-center gap-3 mb-2">
               <h2 className="text-2xl font-bold text-gray-900">{returnRecord.returnNumber}</h2>
               {getStatusBadge()}
+              
+              {/* Badge de origen de devolución */}
+              {returnRecord.isManual ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-100 border border-orange-300">
+                  <span className="text-xs font-semibold text-orange-800">
+                    🛠️ Devolución Manual por Vendedor
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 border border-blue-300">
+                  <span className="text-xs font-semibold text-blue-800">
+                    📝 Solicitud del Cliente
+                  </span>
+                </div>
+              )}
             </div>
             <p className="text-sm text-gray-600">
               Orden: {returnRecord.order.orderNumber} | {' '}
@@ -288,6 +305,45 @@ export default function ReturnDetailModal({ returnRecord, isOpen, onClose, onUpd
           {/* TAB: Información */}
           {activeTab === 'info' && (
             <div className="space-y-6">
+              {/* Información de Origen */}
+              <div className={`border rounded-lg p-4 ${returnRecord.isManual ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'}`}>
+                <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                  {returnRecord.isManual ? '🛠️' : '📝'} Origen de la Devolución
+                </h3>
+                <div className="space-y-2 text-sm">
+                  {returnRecord.isManual ? (
+                    <>
+                      <p className="text-gray-800">
+                        <span className="font-medium">Tipo:</span> Devolución Manual creada por el Vendedor
+                      </p>
+                      <p className="text-gray-700">
+                        Esta devolución fue generada directamente por el vendedor como un gesto de servicio al cliente. 
+                        No requirió aprobación previa ya que fue procesada automáticamente.
+                      </p>
+                      {returnRecord.seller && (
+                        <p className="text-gray-800 mt-2">
+                          <span className="font-medium">Vendedor:</span> {returnRecord.seller.name || returnRecord.seller.businessName || 'N/A'}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-gray-800">
+                        <span className="font-medium">Tipo:</span> Solicitud de Devolución del Cliente
+                      </p>
+                      <p className="text-gray-700">
+                        Esta devolución fue solicitada por el cliente y {returnRecord.status === 'PENDING' ? 'está pendiente de revisión' : returnRecord.status === 'APPROVED' ? 'fue aprobada' : returnRecord.status === 'REJECTED' ? 'fue rechazada' : 'fue completada'} por el vendedor.
+                      </p>
+                      {returnRecord.client && (
+                        <p className="text-gray-800 mt-2">
+                          <span className="font-medium">Solicitante:</span> {returnRecord.client.name}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
               {/* Cliente */}
               {returnRecord.client && (
                 <div className="bg-white border rounded-lg p-4">

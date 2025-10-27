@@ -39,7 +39,16 @@ export async function GET(request: Request) {
               order: true
             }
           },
-          usage: true
+          usage: {
+            include: {
+              order: {
+                select: {
+                  orderNumber: true,
+                  createdAt: true
+                }
+              }
+            }
+          }
         },
         orderBy: { createdAt: 'desc' }
       })
@@ -53,7 +62,16 @@ export async function GET(request: Request) {
               order: true
             }
           },
-          usage: true
+          usage: {
+            include: {
+              order: {
+                select: {
+                  orderNumber: true,
+                  createdAt: true
+                }
+              }
+            }
+          }
         },
         orderBy: { createdAt: 'desc' }
       })

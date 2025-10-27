@@ -141,7 +141,9 @@ export default function NotificationBell() {
           ? `/dashboard/quotes?id=${notification.relatedId}`
           : `/dashboard/quotes`
       case 'RETURN_REQUEST':
-        return `/dashboard/returns${notification.orderId ? `?id=${notification.orderId}` : ''}`
+        // Para devoluciones, mostrar solo el mensaje sin redirigir
+        // El usuario puede ir manualmente a Devoluciones si lo necesita
+        return ''
       case 'CREDIT_NOTE_ISSUED':
         return `/buyer/credit-notes${notification.orderId ? `?id=${notification.orderId}` : ''}`
       case 'CHAT_MESSAGE':
@@ -367,7 +369,7 @@ export default function NotificationBell() {
               </div>
 
               <div className="p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex flex-col sm:flex-row gap-2 sm:gap-3">
-                {selectedNotification.orderId && (
+                {selectedNotification.orderId && getNotificationRoute(selectedNotification) !== '' && (
                   <button
                     onClick={() => {
                       router.push(getNotificationRoute(selectedNotification))

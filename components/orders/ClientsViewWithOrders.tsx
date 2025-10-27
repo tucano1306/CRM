@@ -12,12 +12,18 @@ import {
   Search,
   Calendar,
   TrendingUp,
-  X
+  X,
+  CheckSquare,
+  Square,
+  Clock,
+  ShoppingBag,
+  ArrowLeft
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import OrdersListImproved from './OrdersListImproved'
 import OrdersTimelineView from './OrdersTimelineView'
 import OrderDetailModal from './OrderDetailModal'
+import BulkStatusChangeModal from './BulkStatusChangeModal'
 
 type OrderStatus = 
   | 'PENDING' 
@@ -81,6 +87,8 @@ export default function ClientsViewWithOrders({
   const [selectedClient, setSelectedClient] = useState<ClientWithOrders | null>(null)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedOrders, setSelectedOrders] = useState<string[]>([])
+  const [showBulkStatusModal, setShowBulkStatusModal] = useState(false)
 
   // Agrupar órdenes por cliente
   const clientsWithOrders = useMemo(() => {
@@ -120,6 +128,59 @@ export default function ClientsViewWithOrders({
     clientData.client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     clientData.client.email.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const handleToggleSelection = (orderId: string) => {
+    setSelectedOrders(prev =>
+      prev.includes(orderId)
+        ? prev.filter(id => id !== orderId)
+        : [...prev, orderId]
+    )
+  }
+
+  const handleSelectAll = () => {
+    if (selectedClient) {
+      const allOrderIds = selectedClient.orders.map(o => o.id)
+      setSelectedOrders(allOrderIds)
+    }
+  }
+
+  const handleDeselectAll = () => {
+    setSelectedOrders([])
+  }
+
+  const getCommonStatus = (): OrderStatus | null => {
+    if (selectedOrders.length === 0) return null
+    
+    const selectedOrdersData = selectedClient?.orders.filter(o => selectedOrders.includes(o.id)) || []
+    if (selectedOrdersData.length === 0) return null
+    
+    const firstStatus = selectedOrdersData[0].status
+    const allSameStatus = selectedOrdersData.every(o => o.status === firstStatus)
+    
+    return allSameStatus ? firstStatus : null
+  }
+
+  const handleBulkStatusChange = async (newStatus: OrderStatus, notes?: string) => {
+    if (!onStatusChange) return
+
+    try {
+      // Cambiar el status de todas las órdenes seleccionadas
+      await Promise.all(
+        selectedOrders.map(orderId =>
+          onStatusChange(orderId, newStatus, notes)
+        )
+      )
+
+      // Limpiar selección
+      setSelectedOrders([])
+      setShowBulkStatusModal(false)
+      
+      alert(`✅ Se actualizaron ${selectedOrders.length} órdenes exitosamente`)
+    } catch (error) {
+      console.error('Error en cambio masivo:', error)
+      alert('Error al actualizar las órdenes')
+    }
+  }
 
   return (
     <>
@@ -203,75 +264,129 @@ export default function ClientsViewWithOrders({
               )}
             </div>
           ) : (
-            filteredClients.map((clientData) => (
-              <div
-                key={clientData.client.id}
-                onClick={() => setSelectedClient(clientData)}
-                className="bg-white rounded-lg shadow-sm hover:shadow-lg transition-all cursor-pointer border-2 border-transparent hover:border-purple-300 group"
-              >
-                <div className="p-6">
-                  {/* Header con Avatar */}
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="flex-shrink-0 w-14 h-14 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xl">
-                      {clientData.client.name.charAt(0).toUpperCase()}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 text-lg mb-1 truncate">
-                        {clientData.client.name}
-                      </h3>
-                      <div className="flex items-center gap-1 text-sm text-gray-600 mb-1">
-                        <Mail className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{clientData.client.email}</span>
+            filteredClients.map((clientData, index) => {
+              // Color distintivo por cliente basado en el índice
+              const colors = [
+                { bg: 'from-purple-400 to-purple-600', border: 'border-purple-300', stat: 'bg-purple-50 border-purple-200 text-purple-600' },
+                { bg: 'from-blue-400 to-blue-600', border: 'border-blue-300', stat: 'bg-blue-50 border-blue-200 text-blue-600' },
+                { bg: 'from-green-400 to-green-600', border: 'border-green-300', stat: 'bg-green-50 border-green-200 text-green-600' },
+                { bg: 'from-orange-400 to-orange-600', border: 'border-orange-300', stat: 'bg-orange-50 border-orange-200 text-orange-600' },
+                { bg: 'from-pink-400 to-pink-600', border: 'border-pink-300', stat: 'bg-pink-50 border-pink-200 text-pink-600' },
+                { bg: 'from-indigo-400 to-indigo-600', border: 'border-indigo-300', stat: 'bg-indigo-50 border-indigo-200 text-indigo-600' },
+              ]
+              const colorScheme = colors[index % colors.length]
+              
+              return (
+                <div
+                  key={clientData.client.id}
+                  onClick={() => setSelectedClient(clientData)}
+                  style={{
+                    animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`
+                  }}
+                  className={`bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer border-2 ${colorScheme.border} hover:scale-[1.02] group overflow-hidden`}
+                >
+                  {/* Banda superior de color */}
+                  <div className={`h-1 bg-gradient-to-r ${colorScheme.bg}`} />
+                  
+                  <div className="p-6">
+                    {/* Header con Avatar */}
+                    <div className="flex items-start gap-4 mb-4">
+                      <div className={`flex-shrink-0 w-14 h-14 bg-gradient-to-br ${colorScheme.bg} rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg ring-4 ring-white`}>
+                        {clientData.client.name.charAt(0).toUpperCase()}
                       </div>
-                      {clientData.client.phone && (
-                        <div className="flex items-center gap-1 text-sm text-gray-600">
-                          <Phone className="h-3 w-3 flex-shrink-0" />
-                          <span>{clientData.client.phone}</span>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-bold text-gray-900 text-lg truncate">
+                            {clientData.client.name}
+                          </h3>
+                          <ShoppingBag className="h-4 w-4 text-gray-400 flex-shrink-0" />
                         </div>
-                      )}
-                    </div>
-
-                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-purple-600 transition-colors flex-shrink-0" />
-                  </div>
-
-                  {/* Estadísticas del Cliente */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Package className="h-4 w-4 text-purple-600" />
-                        <span className="text-xs text-purple-600 font-medium">Órdenes</span>
+                        <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
+                          <Mail className="h-3 w-3 flex-shrink-0" />
+                          <span className="truncate">{clientData.client.email}</span>
+                        </div>
+                        {clientData.client.phone && (
+                          <div className="flex items-center gap-1 text-xs text-gray-600">
+                            <Phone className="h-3 w-3 flex-shrink-0" />
+                            <span>{clientData.client.phone}</span>
+                          </div>
+                        )}
                       </div>
-                      <p className="text-2xl font-bold text-purple-900">
-                        {clientData.totalOrders}
-                      </p>
-                    </div>
 
-                    <div className="bg-green-50 rounded-lg p-3 border border-green-200">
-                      <div className="flex items-center gap-2 mb-1">
-                        <DollarSign className="h-4 w-4 text-green-600" />
-                        <span className="text-xs text-green-600 font-medium">Total</span>
+                      <div className="flex flex-col items-center gap-1">
+                        <ChevronRight className={`h-6 w-6 text-gray-300 group-hover:text-${colorScheme.border.split('-')[1]}-600 group-hover:translate-x-1 transition-all flex-shrink-0`} />
+                        <span className="text-xs text-gray-400 font-medium">Ver</span>
                       </div>
-                      <p className="text-xl font-bold text-green-900">
-                        ${clientData.totalSpent.toFixed(2)}
-                      </p>
                     </div>
-                  </div>
 
-                  {/* Última orden */}
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <div className="flex items-center gap-1 text-xs text-gray-500">
-                      <Calendar className="h-3 w-3" />
-                      <span>
-                        Última orden: {new Date(clientData.lastOrderDate).toLocaleDateString('es-ES')}
-                      </span>
+                    {/* Estadísticas del Cliente */}
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className={`${colorScheme.stat} rounded-lg p-3 border transition-all hover:shadow-md`}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <Package className="h-4 w-4" />
+                          <span className="text-xs font-medium">Órdenes</span>
+                        </div>
+                        <p className="text-2xl font-bold">
+                          {clientData.totalOrders}
+                        </p>
+                      </div>
+
+                      <div className="bg-green-50 border-green-200 text-green-600 rounded-lg p-3 border transition-all hover:shadow-md">
+                        <div className="flex items-center gap-2 mb-1">
+                          <DollarSign className="h-4 w-4" />
+                          <span className="text-xs font-medium">Total</span>
+                        </div>
+                        <p className="text-xl font-bold text-green-900">
+                          ${clientData.totalSpent.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Última orden con hora */}
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                          <Calendar className="h-3.5 w-3.5 text-gray-500" />
+                          <span className="font-medium">Última orden:</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs font-semibold text-gray-900">
+                            {new Date(clientData.lastOrderDate).toLocaleDateString('es-ES', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
+                          </p>
+                          <p className="text-xs text-gray-500 flex items-center justify-end gap-1">
+                            <Clock className="h-3 w-3" />
+                            {new Date(clientData.lastOrderDate).toLocaleTimeString('es-ES', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))
+              )
+            })
           )}
         </div>
+
+        <style jsx>{`
+          @keyframes fadeInUp {
+            from {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}</style>
 
         {/* Contador de resultados */}
         {filteredClients.length > 0 && (
@@ -286,79 +401,209 @@ export default function ClientsViewWithOrders({
         <>
           {/* Overlay */}
           <div 
-            className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 z-40 backdrop-blur-sm transition-all duration-300"
+            style={{ animation: 'fadeIn 0.3s ease-out' }}
             onClick={() => setSelectedClient(null)}
           />
 
           {/* Modal */}
           <div className="fixed right-0 top-0 h-full w-full md:w-[900px] lg:w-[1100px] bg-gray-50 z-50 shadow-2xl overflow-hidden flex flex-col animate-slide-in-right">
             
-            {/* Header del Cliente */}
-            <div className="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-2xl font-bold">
-                    {selectedClient.client.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold mb-1">
-                      {selectedClient.client.name}
-                    </h2>
-                    <p className="text-purple-100 text-sm flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      {selectedClient.client.email}
-                    </p>
-                    {selectedClient.client.phone && (
-                      <p className="text-purple-100 text-sm flex items-center gap-2 mt-1">
-                        <Phone className="h-4 w-4" />
-                        {selectedClient.client.phone}
-                      </p>
-                    )}
+            {/* Header del Cliente - Mejorado */}
+            <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 text-white">
+              {/* Barra superior con botones */}
+              <div className="px-6 py-4 border-b border-white/20">
+                <div className="flex items-center justify-between">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedClient(null)}
+                    className="text-white hover:bg-white/20 gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline">Volver a clientes</span>
+                  </Button>
+                  
+                  <div className="flex items-center gap-2">
+                    <div className="hidden sm:flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
+                      <User className="h-4 w-4" />
+                      <span className="text-sm font-medium">Vista de Cliente</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setSelectedClient(null)}
+                      className="text-white hover:bg-white/20"
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setSelectedClient(null)}
-                  className="text-white hover:bg-purple-500"
-                >
-                  <X className="h-6 w-6" />
-                </Button>
               </div>
 
-              {/* Stats rápidos */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="bg-white/10 rounded-lg p-3">
-                  <p className="text-purple-100 text-xs mb-1">Total Órdenes</p>
-                  <p className="text-2xl font-bold">{selectedClient.totalOrders}</p>
+              {/* Info del cliente */}
+              <div className="px-6 py-6">
+                <div className="flex items-start gap-5 mb-6">
+                  <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl font-bold shadow-lg ring-4 ring-white/30">
+                    {selectedClient.client.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h2 className="text-3xl font-bold">
+                        {selectedClient.client.name}
+                      </h2>
+                      <span className="px-3 py-1 bg-white/20 backdrop-blur-sm rounded-full text-xs font-semibold">
+                        Cliente Activo
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                      <p className="text-purple-100 flex items-center gap-2">
+                        <Mail className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">{selectedClient.client.email}</span>
+                      </p>
+                      {selectedClient.client.phone && (
+                        <p className="text-purple-100 flex items-center gap-2">
+                          <Phone className="h-4 w-4 flex-shrink-0" />
+                          {selectedClient.client.phone}
+                        </p>
+                      )}
+                      {selectedClient.client.address && (
+                        <p className="text-purple-100 flex items-center gap-2 sm:col-span-2">
+                          <MapPin className="h-4 w-4 flex-shrink-0" />
+                          <span className="truncate">{selectedClient.client.address}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="bg-white/10 rounded-lg p-3">
-                  <p className="text-purple-100 text-xs mb-1">Total Gastado</p>
-                  <p className="text-2xl font-bold">${selectedClient.totalSpent.toFixed(2)}</p>
-                </div>
-                <div className="bg-white/10 rounded-lg p-3">
-                  <p className="text-purple-100 text-xs mb-1">Promedio</p>
-                  <p className="text-2xl font-bold">
-                    ${(selectedClient.totalSpent / selectedClient.totalOrders).toFixed(2)}
-                  </p>
+
+                {/* Stats mejorados */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Package className="h-5 w-5 text-purple-200" />
+                      <p className="text-purple-100 text-xs font-medium uppercase tracking-wide">Total Órdenes</p>
+                    </div>
+                    <p className="text-3xl font-bold">{selectedClient.totalOrders}</p>
+                    <p className="text-xs text-purple-200 mt-1">
+                      {selectedClient.orders.filter(o => o.status === 'COMPLETED').length} completadas
+                    </p>
+                  </div>
+                  <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all">
+                    <div className="flex items-center gap-2 mb-2">
+                      <DollarSign className="h-5 w-5 text-purple-200" />
+                      <p className="text-purple-100 text-xs font-medium uppercase tracking-wide">Total Gastado</p>
+                    </div>
+                    <p className="text-3xl font-bold">${selectedClient.totalSpent.toFixed(2)}</p>
+                    <p className="text-xs text-purple-200 mt-1">Ventas totales</p>
+                  </div>
+                  <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className="h-5 w-5 text-purple-200" />
+                      <p className="text-purple-100 text-xs font-medium uppercase tracking-wide">Promedio</p>
+                    </div>
+                    <p className="text-3xl font-bold">
+                      ${(selectedClient.totalSpent / selectedClient.totalOrders).toFixed(2)}
+                    </p>
+                    <p className="text-xs text-purple-200 mt-1">Por orden</p>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Órdenes del Cliente */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="mb-4">
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  Órdenes de {selectedClient.client.name}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Historial completo de todas las órdenes realizadas
-                </p>
+            <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-gray-50 to-white">
+              {/* Header mejorado */}
+              <div className="mb-6 bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-600">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-3 bg-purple-100 rounded-lg">
+                      <ShoppingBag className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900">
+                        Historial de Órdenes
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {selectedClient.totalOrders} orden{selectedClient.totalOrders !== 1 ? 'es' : ''} de <span className="font-semibold text-purple-600">{selectedClient.client.name}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="hidden sm:flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Clock className="h-4 w-4" />
+                      <span>Ordenado por más reciente</span>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Mostrando fecha y hora de recepción
+                    </p>
+                  </div>
+                </div>
               </div>
+
+              {/* Barra de herramientas de selección múltiple - Mejorada */}
+              {userRole === 'seller' && (
+                <div className="mb-6">
+                  <div className="bg-white rounded-xl shadow-sm p-4 border border-gray-200">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <div className="flex items-center gap-2">
+                        <CheckSquare className="h-5 w-5 text-purple-600" />
+                        <span className="text-sm font-semibold text-gray-700">Selección múltiple:</span>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleSelectAll}
+                          size="sm"
+                          variant="outline"
+                          className="text-purple-600 border-purple-300 hover:bg-purple-50 hover:border-purple-400 transition-all"
+                        >
+                          <CheckSquare className="h-4 w-4 mr-1.5" />
+                          Todas ({selectedClient.orders.length})
+                        </Button>
+                        <Button
+                          onClick={handleDeselectAll}
+                          size="sm"
+                          variant="outline"
+                          disabled={selectedOrders.length === 0}
+                          className="hover:bg-gray-50 transition-all"
+                        >
+                          <Square className="h-4 w-4 mr-1.5" />
+                          Ninguna
+                        </Button>
+                      </div>
+
+                      {selectedOrders.length > 0 && (
+                        <div className="flex items-center gap-3 ml-auto bg-gradient-to-r from-purple-50 to-purple-100 border-2 border-purple-300 rounded-lg px-4 py-2.5 animate-scale-in">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                              {selectedOrders.length}
+                            </div>
+                            <span className="text-sm font-semibold text-purple-900">
+                              {selectedOrders.length === 1 ? 'orden seleccionada' : 'órdenes seleccionadas'}
+                            </span>
+                          </div>
+                          <Button
+                            onClick={() => setShowBulkStatusModal(true)}
+                            size="sm"
+                            className="bg-purple-600 hover:bg-purple-700 shadow-lg hover:shadow-xl transition-all"
+                          >
+                            <Package className="h-4 w-4 mr-1.5" />
+                            Cambiar Estado
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <OrdersTimelineView 
                 orders={selectedClient.orders}
                 onOrderClick={(order) => setSelectedOrder(order as Order)}
+                selectedOrders={selectedOrders}
+                onToggleSelection={userRole === 'seller' ? handleToggleSelection : undefined}
+                userRole={userRole === 'seller' ? 'SELLER' : 'CLIENT'}
               />
             </div>
           </div>
@@ -379,20 +624,16 @@ export default function ClientsViewWithOrders({
         />
       )}
 
-      <style jsx global>{`
-        @keyframes slide-in-right {
-          from {
-            transform: translateX(100%);
-          }
-          to {
-            transform: translateX(0);
-          }
-        }
-        
-        .animate-slide-in-right {
-          animation: slide-in-right 0.3s ease-out;
-        }
-      `}</style>
+      {/* Modal de Cambio Masivo de Estado */}
+      {showBulkStatusModal && (
+        <BulkStatusChangeModal
+          isOpen={showBulkStatusModal}
+          onClose={() => setShowBulkStatusModal(false)}
+          selectedCount={selectedOrders.length}
+          currentStatus={getCommonStatus()}
+          onConfirm={handleBulkStatusChange}
+        />
+      )}
     </>
   )
 }

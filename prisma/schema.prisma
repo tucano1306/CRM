@@ -677,6 +677,15 @@ enum ReturnReason {
   QUALITY_ISSUE
   NOT_AS_DESCRIBED
   OTHER
+  DAMAGED_PRODUCT
+  INCORRECT_PRODUCT
+  CUSTOMER_DISSATISFACTION
+  PRICING_ERROR
+  DUPLICATE_ORDER
+  GOODWILL
+  OVERCHARGE
+  PROMOTION_ADJUSTMENT
+  COMPENSATION
 }
 
 model Return {
@@ -696,6 +705,7 @@ model Return {
   approvedAt          DateTime?     @map("approved_at")
   completedAt         DateTime?     @map("completed_at")
   notes               String?
+  isManual            Boolean       @default(false) @map("is_manual")
   createdAt           DateTime      @default(now()) @map("created_at")
   updatedAt           DateTime      @updatedAt @map("updated_at")
   

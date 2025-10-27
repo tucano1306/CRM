@@ -17,8 +17,8 @@ interface OrderItem {
   productId: string
   productName: string
   quantity: number
-  price: number
-  subtotal: number
+  pricePerUnit: number | string  // Puede venir como string desde la DB
+  subtotal: number | string
 }
 
 interface SelectedItem {
@@ -76,15 +76,33 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
       const order = orders.find(o => o.id === selectedOrderId)
       setSelectedOrder(order || null)
       if (order) {
+        console.log('🔍 [ORDER SELECTED] Orden completa:', order)
+        console.log('🔍 [ORDER SELECTED] Items de la orden:', order.orderItems)
+        if (order.orderItems && order.orderItems.length > 0) {
+          console.log('🔍 [ORDER SELECTED] Primer item:', order.orderItems[0])
+        }
+        
         setSelectedItems(
-          order.orderItems.map(item => ({
-            orderItemId: item.id,
-            productId: item.productId,
-            productName: item.productName,
-            maxQuantity: item.quantity,
-            quantityReturned: 0,
-            pricePerUnit: item.price
-          }))
+          order.orderItems.map(item => {
+            // La propiedad correcta es pricePerUnit, no price
+            const pricePerUnit = Number(item.pricePerUnit) || 0
+            console.log('🔍 [MAPPING ITEM]:', {
+              id: item.id,
+              productName: item.productName,
+              quantity: item.quantity,
+              pricePerUnit: pricePerUnit,
+              originalPricePerUnit: item.pricePerUnit
+            })
+            
+            return {
+              orderItemId: item.id,
+              productId: item.productId,
+              productName: item.productName,
+              maxQuantity: item.quantity,
+              quantityReturned: 0,
+              pricePerUnit: pricePerUnit
+            }
+          })
         )
       }
     }
@@ -108,6 +126,15 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
         // El endpoint /api/orders devuelve { success: true, orders: [...] }
         const ordersList = result.orders || result.data || []
         console.log('✅ [FETCH ORDERS] Órdenes a guardar:', ordersList.length)
+        
+        // Log de la primera orden para ver su estructura
+        if (ordersList.length > 0) {
+          console.log('🔍 [FETCH ORDERS] Primera orden completa:', ordersList[0])
+          if (ordersList[0].orderItems && ordersList[0].orderItems.length > 0) {
+            console.log('🔍 [FETCH ORDERS] Primer item de la primera orden:', ordersList[0].orderItems[0])
+          }
+        }
+        
         setOrders(ordersList)
       }
     } catch (error) {
@@ -386,8 +413,9 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
                       <div className="flex-1">
                         <h4 className="font-semibold text-gray-900">{item.productName}</h4>
                         <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
-                          <span>Precio: ${Number(item.pricePerUnit || 0).toFixed(2)}</span>
+                          <span>Precio total en orden: ${(Number(item.pricePerUnit || 0) * item.maxQuantity).toFixed(2)}</span>
                           <span>Cantidad en orden: {item.maxQuantity}</span>
+                          <span>Precio unitario: ${Number(item.pricePerUnit || 0).toFixed(2)}</span>
                         </div>
                       </div>
 
@@ -417,7 +445,7 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
                     {item.quantityReturned > 0 && (
                       <div className="mt-3 pt-3 border-t">
                         <p className="text-sm font-semibold text-purple-600">
-                          Subtotal: ${(item.quantityReturned * Number(item.pricePerUnit || 0)).toFixed(2)}
+                          Monto a devolver: ${(item.quantityReturned * Number(item.pricePerUnit || 0)).toFixed(2)} ({item.quantityReturned} producto{item.quantityReturned > 1 ? 's' : ''})
                         </p>
                       </div>
                     )}

@@ -25,6 +25,7 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     const notes = body.notes || null
+    const creditNotes = body.creditNotes || [] // Array de { creditNoteId, amountToUse }
     // Idempotency: accept an optional idempotencyKey from client. If provided,
     // return previously created order with the same key.
     const idempotencyKey: string | undefined = body.idempotencyKey
@@ -95,6 +96,78 @@ export async function POST(request: Request) {
       tax,
       totalAmount,
       itemCount: cart.items.length
+    })
+
+    // ========================================================================
+    // VALIDAR Y PROCESAR CRÉDITOS
+    // ========================================================================
+    let totalCreditsApplied = 0
+    const creditsToApply: Array<{ credit: any, amountToUse: number }> = []
+
+    if (creditNotes && creditNotes.length > 0) {
+      logger.info(LogCategory.API, 'Processing credit notes', { count: creditNotes.length })
+      
+      for (const { creditNoteId, amountToUse } of creditNotes) {
+        // Validar el crédito
+        const credit = await withPrismaTimeout(
+          () => prisma.creditNote.findUnique({
+            where: { id: creditNoteId }
+          })
+        )
+
+        if (!credit) {
+          logger.warn(LogCategory.VALIDATION, 'Credit note not found', { creditNoteId })
+          return NextResponse.json(
+            { error: `Nota de crédito ${creditNoteId} no encontrada` },
+            { status: 400 }
+          )
+        }
+
+        if (!credit.isActive) {
+          logger.warn(LogCategory.VALIDATION, 'Credit note not active', { creditNoteId })
+          return NextResponse.json(
+            { error: `Nota de crédito ${credit.creditNoteNumber} no está activa` },
+            { status: 400 }
+          )
+        }
+
+        if (credit.expiresAt && new Date(credit.expiresAt) < new Date()) {
+          logger.warn(LogCategory.VALIDATION, 'Credit note expired', { creditNoteId, expiresAt: credit.expiresAt })
+          return NextResponse.json(
+            { error: `Nota de crédito ${credit.creditNoteNumber} ha expirado` },
+            { status: 400 }
+          )
+        }
+
+        if (Number(credit.balance) < amountToUse) {
+          logger.warn(LogCategory.VALIDATION, 'Insufficient credit balance', {
+            creditNoteId,
+            requested: amountToUse,
+            available: credit.balance
+          })
+          return NextResponse.json(
+            { error: `Balance insuficiente en crédito ${credit.creditNoteNumber}. Disponible: $${Number(credit.balance).toFixed(2)}` },
+            { status: 400 }
+          )
+        }
+
+        creditsToApply.push({ credit, amountToUse })
+        totalCreditsApplied += amountToUse
+      }
+
+      logger.info(LogCategory.API, 'Credits validated successfully', {
+        totalCredits: totalCreditsApplied,
+        creditsCount: creditsToApply.length
+      })
+    }
+
+    // Calcular total final con créditos aplicados
+    const finalTotal = Math.max(0, totalAmount - totalCreditsApplied)
+
+    logger.debug(LogCategory.API, 'Final total calculated', {
+      originalTotal: totalAmount,
+      creditsApplied: totalCreditsApplied,
+      finalTotal
     })
 
     // ✅ Buscar o crear authenticated_users CON TIMEOUT
@@ -248,7 +321,7 @@ export async function POST(request: Request) {
             clientId: client!.id,
             sellerId: sellerId!,  // Ahora garantizado que existe
             status: 'PENDING',
-            totalAmount: totalAmount,
+            totalAmount: finalTotal, // Usar total con créditos aplicados
             notes: notes,
             idempotencyKey: idempotencyKey || null,
             confirmationDeadline: client!.orderConfirmationEnabled ? confirmationDeadline : null,
@@ -276,6 +349,39 @@ export async function POST(request: Request) {
                 decrement: item.quantity,
               },
             },
+          })
+        }
+
+        // Aplicar créditos seleccionados
+        for (const { credit, amountToUse } of creditsToApply) {
+          // Registrar uso del crédito
+          await tx.creditNoteUsage.create({
+            data: {
+              creditNoteId: credit.id,
+              orderId: newOrder.id,
+              amountUsed: amountToUse,
+              notes: `Aplicado a orden ${newOrder.orderNumber}`
+            }
+          })
+
+          // Actualizar balance del crédito
+          await tx.creditNote.update({
+            where: { id: credit.id },
+            data: {
+              balance: {
+                decrement: amountToUse
+              },
+              usedAmount: {
+                increment: amountToUse
+              }
+            }
+          })
+
+          logger.info(LogCategory.API, 'Credit applied to order', {
+            creditNoteId: credit.id,
+            creditNoteNumber: credit.creditNoteNumber,
+            amountUsed: amountToUse,
+            orderId: newOrder.id
           })
         }
 

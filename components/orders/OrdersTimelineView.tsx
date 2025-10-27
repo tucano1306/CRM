@@ -10,7 +10,8 @@ import {
   Calendar,
   ChevronRight,
   TrendingUp,
-  Truck
+  Truck,
+  Check
 } from 'lucide-react'
 
 type OrderStatus = 
@@ -46,6 +47,9 @@ interface Order {
 interface OrdersTimelineViewProps {
   orders: Order[]
   onOrderClick: (order: Order) => void
+  selectedOrders?: string[]
+  onToggleSelection?: (orderId: string) => void
+  userRole?: 'SELLER' | 'CLIENT'
 }
 
 const statusConfig = {
@@ -191,7 +195,15 @@ const groupOrder = [
   'Mes pasado'
 ]
 
-export default function OrdersTimelineView({ orders, onOrderClick }: OrdersTimelineViewProps) {
+export default function OrdersTimelineView({ 
+  orders, 
+  onOrderClick,
+  selectedOrders = [],
+  onToggleSelection,
+  userRole = 'CLIENT'
+}: OrdersTimelineViewProps) {
+  
+  const isSelected = (orderId: string) => selectedOrders.includes(orderId)
   // Ordenar y agrupar órdenes por fecha
   const groupedOrders = useMemo(() => {
     // Ordenar de más reciente a más antigua
@@ -278,18 +290,44 @@ export default function OrdersTimelineView({ orders, onOrderClick }: OrdersTimel
 
                     {/* Card de Orden */}
                     <div
-                      onClick={() => onOrderClick(order)}
-                      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer border border-gray-200 hover:border-purple-300 group ml-4"
+                      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-200 hover:border-purple-300 group ml-4"
                     >
                       <div className="p-4">
                         <div className="flex items-center gap-3">
+                          {/* Checkbox de selección (solo para vendedor) */}
+                          {userRole === 'SELLER' && onToggleSelection && (
+                            <div 
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onToggleSelection(order.id)
+                              }}
+                              className="flex-shrink-0 cursor-pointer"
+                            >
+                              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                                isSelected(order.id)
+                                  ? 'bg-purple-600 border-purple-600'
+                                  : 'border-gray-300 hover:border-purple-400'
+                              }`}>
+                                {isSelected(order.id) && (
+                                  <Check className="h-3 w-3 text-white" />
+                                )}
+                              </div>
+                            </div>
+                          )}
+
                           {/* Icono de Estado */}
-                          <div className={`${config.bg} p-2.5 rounded-lg flex-shrink-0`}>
+                          <div 
+                            className={`${config.bg} p-2.5 rounded-lg flex-shrink-0 cursor-pointer`}
+                            onClick={() => onOrderClick(order)}
+                          >
                             <StatusIcon className={`h-5 w-5 ${config.color}`} />
                           </div>
 
                           {/* Info Principal */}
-                          <div className="flex-1 min-w-0">
+                          <div 
+                            className="flex-1 min-w-0 cursor-pointer"
+                            onClick={() => onOrderClick(order)}
+                          >
                             <div className="flex items-center gap-2 mb-1">
                               <h4 className="font-semibold text-gray-900 text-sm">
                                 #{order.orderNumber}

@@ -6,6 +6,13 @@ export enum EventType {
   ORDER_PLACED = 'order.placed',
   ORDER_CANCELLED = 'order.cancelled',
   
+  // Recurring Order events
+  RECURRING_ORDER_CREATED = 'recurring_order.created',
+  RECURRING_ORDER_UPDATED = 'recurring_order.updated',
+  RECURRING_ORDER_DELETED = 'recurring_order.deleted',
+  RECURRING_ORDER_PAUSED = 'recurring_order.paused',
+  RECURRING_ORDER_RESUMED = 'recurring_order.resumed',
+  
   // Chat events
   CHAT_MESSAGE_SENT = 'chat.message.sent',
   CHAT_MESSAGE_RECEIVED = 'chat.message.received',
@@ -41,6 +48,19 @@ export interface OrderEvent extends BaseEvent {
     amount: number;
     status: string;
     items?: any[];
+  };
+}
+
+export interface RecurringOrderEvent extends BaseEvent {
+  type: EventType.RECURRING_ORDER_CREATED | EventType.RECURRING_ORDER_UPDATED | EventType.RECURRING_ORDER_DELETED | EventType.RECURRING_ORDER_PAUSED | EventType.RECURRING_ORDER_RESUMED;
+  data: {
+    recurringOrderId: string;
+    clientId: string;
+    sellerId: string;
+    name: string;
+    frequency: string;
+    amount: number;
+    isActive: boolean;
   };
 }
 
@@ -85,4 +105,4 @@ export interface NotificationEvent extends BaseEvent {
   };
 }
 
-export type Event = OrderEvent | ChatEvent | ClientEvent | UserEvent | NotificationEvent;
+export type Event = OrderEvent | RecurringOrderEvent | ChatEvent | ClientEvent | UserEvent | NotificationEvent;

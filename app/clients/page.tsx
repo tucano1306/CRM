@@ -3,24 +3,18 @@
 import { useEffect, useState } from 'react'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { apiCall } from '@/lib/api-client'
-import ClientsViewWithOrders from '@/components/orders/ClientsViewWithOrders'
+import ClientProfileCard from '@/components/clients/ClientProfileCard'
 import { 
   Plus, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Edit, 
-  Trash2, 
   Clock, 
   AlertCircle,
   Search,
   X,
   Users,
-  List,
-  Grid
+  TrendingUp,
+  DollarSign,
+  ShoppingBag
 } from 'lucide-react'
 
 interface ClientWithStats {
@@ -40,14 +34,12 @@ interface ClientWithStats {
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<ClientWithStats[]>([])
-  const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [timedOut, setTimedOut] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [viewMode, setViewMode] = useState<'cards' | 'orders'>('orders')
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -58,7 +50,6 @@ export default function ClientsPage() {
 
   useEffect(() => {
     fetchClients()
-    fetchOrders()
   }, [])
 
   const fetchClients = async () => {
@@ -105,25 +96,6 @@ export default function ClientsPage() {
     } finally {
       setLoading(false)
       setTimedOut(false)
-    }
-  }
-
-  const fetchOrders = async () => {
-    try {
-      console.log('🔍 Obteniendo órdenes...')
-      const result = await apiCall('/api/orders', {
-        timeout: 10000,
-      })
-
-      if (result.success) {
-        const ordersData = result.data?.orders || result.data || []
-        console.log('✅ Órdenes obtenidas:', ordersData.length)
-        setOrders(ordersData)
-      } else {
-        console.error('❌ Error obteniendo órdenes:', result.error)
-      }
-    } catch (err) {
-      console.error('❌ Error de conexión al obtener órdenes:', err)
     }
   }
 
@@ -232,15 +204,22 @@ export default function ClientsPage() {
           title="Clientes"
           description="Cargando clientes..."
         />
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="p-6">
-                <div className="h-6 bg-gray-200 rounded mb-4" />
-                <div className="h-4 bg-gray-200 rounded mb-2" />
+            <div key={i} className="animate-pulse bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-200">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 bg-gray-200 rounded-full" />
+                <div className="flex-1">
+                  <div className="h-6 bg-gray-200 rounded mb-2 w-3/4" />
+                  <div className="h-4 bg-gray-200 rounded w-1/2" />
+                </div>
+              </div>
+              <div className="space-y-3">
                 <div className="h-4 bg-gray-200 rounded" />
-              </CardContent>
-            </Card>
+                <div className="h-4 bg-gray-200 rounded" />
+                <div className="h-4 bg-gray-200 rounded w-2/3" />
+              </div>
+            </div>
           ))}
         </div>
       </MainLayout>
@@ -299,43 +278,52 @@ export default function ClientsPage() {
         title="Clientes"
         description={`${clients.length} clientes registrados`}
         action={
-          <div className="flex items-center gap-3">
-            {/* Toggle de vista */}
-            <div className="flex items-center bg-gray-100 rounded-lg p-1">
-              <button
-                onClick={() => setViewMode('orders')}
-                className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
-                  viewMode === 'orders'
-                    ? 'bg-white text-purple-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <List className="h-4 w-4" />
-                <span className="text-sm font-medium">Con Órdenes</span>
-              </button>
-              <button
-                onClick={() => setViewMode('cards')}
-                className={`px-4 py-2 rounded-md flex items-center gap-2 transition-colors ${
-                  viewMode === 'cards'
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                <Grid className="h-4 w-4" />
-                <span className="text-sm font-medium">Tarjetas</span>
-              </button>
-            </div>
-
-            <button
-              onClick={() => setShowForm(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
-            >
-              <Plus size={20} />
-              Nuevo Cliente
-            </button>
-          </div>
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 flex items-center gap-2 shadow-lg hover:shadow-xl transition-all"
+          >
+            <Plus size={20} />
+            Nuevo Cliente
+          </button>
         }
       />
+
+      {/* Estadísticas generales */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-blue-100 text-sm font-medium mb-1">Total Clientes</p>
+              <p className="text-4xl font-bold">{clients.length}</p>
+            </div>
+            <Users className="w-12 h-12 text-blue-200 opacity-80" />
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-green-100 text-sm font-medium mb-1">Órdenes Totales</p>
+              <p className="text-4xl font-bold">
+                {clients.reduce((sum, c) => sum + (c.stats?.totalOrders || 0), 0)}
+              </p>
+            </div>
+            <ShoppingBag className="w-12 h-12 text-green-200 opacity-80" />
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl shadow-lg p-6 text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-purple-100 text-sm font-medium mb-1">Ingresos Totales</p>
+              <p className="text-4xl font-bold">
+                ${clients.reduce((sum, c) => sum + (c.stats?.totalSpent || 0), 0).toFixed(2)}
+              </p>
+            </div>
+            <DollarSign className="w-12 h-12 text-purple-200 opacity-80" />
+          </div>
+        </div>
+      </div>
 
       {/* Barra de búsqueda moderna */}
       <div className="mb-6">
@@ -345,13 +333,10 @@ export default function ClientsPage() {
           </div>
           <input
             type="text"
-            placeholder={viewMode === 'cards' 
-              ? "Buscar por nombre, email, teléfono o dirección..." 
-              : "Buscar clientes con órdenes (por nombre o email)..."
-            }
+            placeholder="Buscar por nombre, email, teléfono o dirección..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all"
+            className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all text-lg"
           />
           {searchQuery && (
             <button
@@ -364,7 +349,7 @@ export default function ClientsPage() {
         </div>
         
         {/* Indicador de resultados */}
-        {viewMode === 'cards' && searchQuery && (
+        {searchQuery && (
           <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
             <Users className="h-4 w-4" />
             <span>
@@ -387,88 +372,87 @@ export default function ClientsPage() {
             )}
           </div>
         )}
-        
-        {/* Info sobre vista actual */}
-        {viewMode === 'orders' && (
-          <div className="mt-3 bg-purple-50 border border-purple-200 rounded-lg p-3 text-sm text-purple-800">
-            <div className="flex items-start gap-2">
-              <Users className="h-4 w-4 mt-0.5 flex-shrink-0" />
-              <p>
-                <strong>Vista "Con Órdenes":</strong> Solo muestra clientes que tienen pedidos realizados. 
-                Si buscas un cliente nuevo sin órdenes, cambia a la vista <button 
-                  onClick={() => setViewMode('cards')}
-                  className="underline font-semibold hover:text-purple-900"
-                >"Tarjetas"</button>.
-              </p>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Formulario */}
+      {/* Formulario de cliente */}
       {showForm && (
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h3 className="text-xl font-bold mb-4">
-            {editingId ? 'Editar Cliente' : 'Nuevo Cliente'}
+        <div className="bg-white rounded-2xl shadow-2xl p-8 mb-6 border-2 border-blue-100">
+          <h3 className="text-2xl font-bold mb-6 text-gray-800">
+            {editingId ? '✏️ Editar Cliente' : '➕ Nuevo Cliente'}
           </h3>
           <div className="grid md:grid-cols-2 gap-4">
-            <input
-              type="text"
-              placeholder="Nombre"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              className="border rounded-lg px-4 py-2"
-            />
-            <input
-              type="email"
-              placeholder="Email"
-              value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
-              className="border rounded-lg px-4 py-2"
-            />
-            <input
-              type="tel"
-              placeholder="Teléfono"
-              value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
-              className="border rounded-lg px-4 py-2"
-            />
-            <input
-              type="text"
-              placeholder="Dirección"
-              value={formData.address}
-              onChange={(e) =>
-                setFormData({ ...formData, address: e.target.value })
-              }
-              className="border rounded-lg px-4 py-2"
-            />
-            <input
-              type="text"
-              placeholder="Código Postal (ej: 12345)"
-              value={formData.zipCode}
-              onChange={(e) =>
-                setFormData({ ...formData, zipCode: e.target.value })
-              }
-              maxLength={10}
-              className="border rounded-lg px-4 py-2"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Nombre completo</label>
+              <input
+                type="text"
+                placeholder="Ej: Juan Pérez"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <input
+                type="email"
+                placeholder="ejemplo@correo.com"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+              <input
+                type="tel"
+                placeholder="123-456-7890"
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Código Postal</label>
+              <input
+                type="text"
+                placeholder="12345"
+                value={formData.zipCode}
+                onChange={(e) =>
+                  setFormData({ ...formData, zipCode: e.target.value })
+                }
+                maxLength={10}
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Dirección completa</label>
+              <input
+                type="text"
+                placeholder="Calle, número, colonia, ciudad"
+                value={formData.address}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+              />
+            </div>
           </div>
-          <div className="flex gap-2 mt-4">
+          <div className="flex gap-3 mt-6">
             <button
               onClick={saveClient}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+              className="flex-1 bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-green-700 font-semibold shadow-lg hover:shadow-xl transition-all"
             >
-              {editingId ? 'Actualizar' : 'Guardar'}
+              {editingId ? '💾 Actualizar' : '✅ Guardar'}
             </button>
             <button
               onClick={cancelEdit}
-              className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400"
+              className="px-8 bg-gray-200 text-gray-700 py-3 rounded-xl hover:bg-gray-300 font-semibold transition-all"
             >
               Cancelar
             </button>
@@ -476,157 +460,42 @@ export default function ClientsPage() {
         </div>
       )}
 
-      {/* Vista de Clientes con Órdenes */}
-      {viewMode === 'orders' && (
-        <>
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Clock className="h-8 w-8 text-gray-400 animate-spin mr-3" />
-              <p className="text-gray-600">Cargando órdenes...</p>
-            </div>
-          ) : orders.length > 0 ? (
-            <ClientsViewWithOrders 
-              orders={orders}
-              userRole="seller"
-            />
-          ) : (
-            <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-              <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                No hay órdenes disponibles
+      {/* Vista de tarjetas de clientes */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredClients.length === 0 ? (
+          <div className="col-span-full">
+            <div className="bg-white rounded-2xl shadow-lg p-12 text-center border-2 border-gray-100">
+              <Search className="h-20 w-20 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-2xl font-bold text-gray-700 mb-2">
+                {searchQuery ? 'No se encontraron clientes' : 'No hay clientes registrados'}
               </h3>
-              <p className="text-gray-500 mb-4">
-                Una vez que los clientes realicen pedidos, aparecerán aquí organizados por cliente
+              <p className="text-gray-500 mb-6 text-lg">
+                {searchQuery
+                  ? 'Intenta con otro término de búsqueda'
+                  : 'Comienza agregando tu primer cliente haciendo clic en "Nuevo Cliente"'}
               </p>
-              <button
-                onClick={() => setViewMode('cards')}
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Ver lista de clientes
-              </button>
+              {searchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="text-blue-600 hover:text-blue-700 font-semibold text-lg"
+                >
+                  🔄 Limpiar búsqueda
+                </button>
+              )}
             </div>
-          )}
-        </>
-      )}
-
-      {/* Vista de Tarjetas tradicional */}
-      {viewMode === 'cards' && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredClients.length === 0 ? (
-            <div className="col-span-full">
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <Search className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                    {searchQuery ? 'No se encontraron clientes' : 'No hay clientes'}
-                  </h3>
-                  <p className="text-gray-500">
-                  {searchQuery
-                    ? 'Intenta con otro término de búsqueda'
-                    : 'Comienza agregando tu primer cliente'}
-                </p>
-                {searchQuery && (
-                  <button
-                    onClick={clearSearch}
-                    className="mt-4 text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    Limpiar búsqueda
-                  </button>
-                )}
-              </CardContent>
-            </Card>
           </div>
         ) : (
-          filteredClients.map((client) => {
-            const hasOrders = client.stats && client.stats.totalOrders > 0
-            const isActive = hasOrders && client.stats!.totalOrders >= 3
-
-            return (
-              <Card
-                key={client.id}
-                className="shadow-lg hover:shadow-xl transition-all duration-200 border-0"
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold mb-1">{client.name}</h3>
-                      {isActive && (
-                        <span className="inline-block px-2 py-1 text-xs font-semibold text-green-800 bg-green-100 rounded-full">
-                          Cliente Activo
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2 text-sm text-gray-600 mb-4">
-                    <div className="flex items-center gap-2">
-                      <Mail size={16} className="text-blue-600" />
-                      <span className="break-all">{client.email}</span>
-                    </div>
-                    {client.phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone size={16} className="text-green-600" />
-                        <span>{client.phone}</span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <MapPin size={16} className="text-red-600" />
-                      <span className="break-words">{client.address}</span>
-                    </div>
-                    {client.zipCode && (
-                      <div className="flex items-center gap-2">
-                        <MapPin size={16} className="text-purple-600" />
-                        <span>CP: {client.zipCode}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Stats */}
-                  {client.stats && (
-                    <div className="grid grid-cols-2 gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="text-xs text-gray-500">Órdenes</p>
-                        <p className="text-lg font-bold text-blue-600">
-                          {client.stats.totalOrders}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-gray-500">Total Gastado</p>
-                        <p className="text-lg font-bold text-green-600">
-                          ${client.stats.totalSpent.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Botones de Acción */}
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 gap-1 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300"
-                      onClick={() => startEdit(client)}
-                    >
-                      <Edit className="h-3 w-3" />
-                      Editar
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => deleteClient(client.id)}
-                      className="gap-1"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                      Eliminar
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })
+          filteredClients.map((client, index) => (
+            <ClientProfileCard
+              key={client.id}
+              client={client}
+              onEdit={startEdit}
+              onDelete={deleteClient}
+              colorIndex={index}
+            />
+          ))
         )}
-        </div>
-      )}
+      </div>
     </MainLayout>
   )
 }

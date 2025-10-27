@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Search, Package, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import CreateReturnModal from './CreateReturnModal'
@@ -27,6 +28,7 @@ interface Return {
   restockFee: number
   finalRefundAmount: number
   notes?: string
+  isManual?: boolean
   createdAt: string
   approvedAt?: string
   completedAt?: string
@@ -38,7 +40,8 @@ interface Return {
     email: string
   }
   seller?: {
-    businessName: string
+    businessName?: string
+    name?: string
   }
   items: ReturnItem[]
   creditNote?: {
@@ -53,6 +56,9 @@ interface ReturnsManagerProps {
 }
 
 export default function ReturnsManager({ role = 'seller' }: ReturnsManagerProps) {
+  const searchParams = useSearchParams()
+  const returnIdFromUrl = searchParams?.get('id')
+  
   const [returns, setReturns] = useState<Return[]>([])
   const [filteredReturns, setFilteredReturns] = useState<Return[]>([])
   const [loading, setLoading] = useState(true)
@@ -69,6 +75,17 @@ export default function ReturnsManager({ role = 'seller' }: ReturnsManagerProps)
     filterReturns()
   }, [returns, searchTerm, statusFilter])
 
+  // Abrir modal automáticamente si hay un ID en la URL
+  useEffect(() => {
+    if (returnIdFromUrl && returns.length > 0) {
+      const returnToShow = returns.find(r => r.id === returnIdFromUrl)
+      if (returnToShow) {
+        console.log('📋 [RETURNS] Abriendo devolución desde notificación:', returnIdFromUrl)
+        setSelectedReturn(returnToShow)
+      }
+    }
+  }, [returnIdFromUrl, returns])
+
   const fetchReturns = async () => {
     try {
       setLoading(true)
@@ -81,6 +98,43 @@ export default function ReturnsManager({ role = 'seller' }: ReturnsManagerProps)
       console.error('Error fetching returns:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleChangeRefundType = async (returnId: string, newRefundType: 'CREDIT' | 'REFUND') => {
+    console.log('🔄 [FRONTEND] Attempting to change refund type:', { returnId, newRefundType })
+    
+    const confirmMessage = newRefundType === 'CREDIT'
+      ? '¿Cambiar a CRÉDITO? El monto estará disponible para tus próximas compras.'
+      : '¿Cambiar a REEMBOLSO? El dinero será devuelto a tu método de pago original.'
+    
+    if (!confirm(confirmMessage)) {
+      console.log('❌ [FRONTEND] User cancelled')
+      return
+    }
+
+    try {
+      console.log('📡 [FRONTEND] Sending request to API...')
+      const response = await fetch(`/api/returns/${returnId}/change-refund-type`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refundType: newRefundType })
+      })
+
+      console.log('📡 [FRONTEND] Response status:', response.status)
+      const result = await response.json()
+      console.log('📡 [FRONTEND] Response data:', result)
+
+      if (result.success) {
+        alert(result.message)
+        fetchReturns() // Refrescar la lista
+      } else {
+        console.error('❌ [FRONTEND] Error from API:', result.error)
+        alert(result.error || 'Error al cambiar tipo de reembolso')
+      }
+    } catch (error) {
+      console.error('❌ [FRONTEND] Exception:', error)
+      alert('Error al cambiar tipo de reembolso')
     }
   }
 
@@ -269,51 +323,112 @@ export default function ReturnsManager({ role = 'seller' }: ReturnsManagerProps)
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredReturns.map((returnRecord) => (
-            <div
-              key={returnRecord.id}
-              onClick={() => setSelectedReturn(returnRecord)}
-              className="bg-white rounded-lg shadow-sm border hover:border-purple-300 hover:shadow-md transition-all cursor-pointer p-4"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold text-gray-900">
-                    {returnRecord.returnNumber}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Orden: {returnRecord.order.orderNumber}
+          {filteredReturns.map((returnRecord) => {
+            // Log para debugging
+            console.log('🔍 [RENDER] Return card:', {
+              id: returnRecord.id,
+              returnNumber: returnRecord.returnNumber,
+              role,
+              status: returnRecord.status,
+              refundType: returnRecord.refundType,
+              shouldShowButtons: role === 'client' && returnRecord.status === 'APPROVED'
+            })
+            
+            return (
+              <div
+                key={returnRecord.id}
+                onClick={() => setSelectedReturn(returnRecord)}
+                className="bg-white rounded-lg shadow-sm border hover:border-purple-300 hover:shadow-md transition-all cursor-pointer p-4"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      {returnRecord.returnNumber}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Orden: {returnRecord.order.orderNumber}
+                    </p>
+                    {/* Badge de origen */}
+                    {returnRecord.isManual ? (
+                      <span className="inline-block mt-1 text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium">
+                        🛠️ Manual
+                      </span>
+                    ) : (
+                      <span className="inline-block mt-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                        📝 Solicitud
+                      </span>
+                    )}
+                  </div>
+                  {getStatusBadge(returnRecord.status)}
+                </div>
+
+                {role === 'seller' && returnRecord.client && (
+                  <p className="text-sm text-gray-600 mb-2">
+                    👤 {returnRecord.client.name}
+                  </p>
+                )}
+
+                <div className="space-y-2 text-sm">
+                  <p className="text-gray-600">
+                    <span className="font-semibold">Tipo:</span>{' '}
+                    {getRefundTypeBadge(returnRecord.refundType)}
+                  </p>
+                  <p className="text-gray-600">
+                    <span className="font-semibold">Items:</span> {returnRecord.items.length}
+                  </p>
+                  <p className="text-gray-900 font-semibold">
+                    Monto: ${returnRecord.finalRefundAmount.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {new Date(returnRecord.createdAt).toLocaleDateString('es-ES', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    })}
                   </p>
                 </div>
-                {getStatusBadge(returnRecord.status)}
-              </div>
 
-              {role === 'seller' && returnRecord.client && (
-                <p className="text-sm text-gray-600 mb-2">
-                  👤 {returnRecord.client.name}
-                </p>
-              )}
-
-              <div className="space-y-2 text-sm">
-                <p className="text-gray-600">
-                  <span className="font-semibold">Tipo:</span>{' '}
-                  {getRefundTypeBadge(returnRecord.refundType)}
-                </p>
-                <p className="text-gray-600">
-                  <span className="font-semibold">Items:</span> {returnRecord.items.length}
-                </p>
-                <p className="text-gray-900 font-semibold">
-                  Monto: ${returnRecord.finalRefundAmount.toFixed(2)}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {new Date(returnRecord.createdAt).toLocaleDateString('es-ES', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                  })}
-                </p>
+                {/* Botones de cambio de tipo de reembolso para comprador */}
+                {role === 'client' && returnRecord.status === 'APPROVED' && (
+                  <div className="mt-3 pt-3 border-t">
+                    <p className="text-xs text-gray-600 mb-2 font-semibold">Cambiar método de reembolso:</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={(e) => {
+                          console.log('🔘 [BUTTON CLICK] Crédito button clicked for', returnRecord.returnNumber)
+                          e.stopPropagation()
+                          handleChangeRefundType(returnRecord.id, 'CREDIT')
+                        }}
+                        disabled={returnRecord.refundType === 'CREDIT'}
+                        className={`flex-1 px-3 py-2 text-xs font-semibold rounded-lg transition-all ${
+                          returnRecord.refundType === 'CREDIT'
+                            ? 'bg-green-100 text-green-800 cursor-not-allowed'
+                            : 'bg-gray-100 text-gray-700 hover:bg-green-50 hover:text-green-700'
+                        }`}
+                      >
+                        🎫 Crédito
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          console.log('🔘 [BUTTON CLICK] Reembolso button clicked for', returnRecord.returnNumber)
+                          e.stopPropagation()
+                          handleChangeRefundType(returnRecord.id, 'REFUND')
+                        }}
+                        disabled={returnRecord.refundType === 'REFUND'}
+                        className={`flex-1 px-3 py-2 text-xs font-semibold rounded-lg transition-all ${
+                          returnRecord.refundType === 'REFUND'
+                            ? 'bg-blue-100 text-blue-800 cursor-not-allowed'
+                            : 'bg-gray-100 text-gray-700 hover:bg-blue-50 hover:text-blue-700'
+                        }`}
+                      >
+                        💰 Reembolso
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
