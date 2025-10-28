@@ -217,26 +217,53 @@ export default function ClientsViewWithOrders({
     })
   }, [selectedClient, orderSearchTerm])
 
+  // Calcular estadísticas basadas en clientes filtrados
+  const filteredStats = useMemo(() => {
+    const totalClients = filteredClients.length
+    const totalOrders = filteredClients.reduce((sum, c) => sum + c.totalOrders, 0)
+    const totalRevenue = filteredClients.reduce((sum, c) => sum + c.totalSpent, 0)
+    const averagePerClient = totalClients > 0 ? totalRevenue / totalClients : 0
+
+    console.log('📊 Estadísticas filtradas:', {
+      searchTerm,
+      totalClients,
+      totalOrders,
+      totalRevenue,
+      averagePerClient
+    })
+
+    return {
+      totalClients,
+      totalOrders,
+      totalRevenue,
+      averagePerClient
+    }
+  }, [filteredClients, searchTerm])
+
   return (
     <>
       <div className="space-y-4">
-        {/* Estadísticas Globales */}
+        {/* Estadísticas - Dinámicas según filtro */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-4 text-white">
             <div className="flex items-center justify-between mb-2">
               <User className="h-5 w-5 opacity-80" />
               <TrendingUp className="h-4 w-4 opacity-60" />
             </div>
-            <p className="text-2xl font-bold">{clientsWithOrders.length}</p>
-            <p className="text-sm opacity-90">Total Clientes</p>
+            <p className="text-2xl font-bold">{filteredStats.totalClients}</p>
+            <p className="text-sm opacity-90">
+              {searchTerm ? 'Clientes Filtrados' : 'Total Clientes'}
+            </p>
           </div>
 
           <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 text-white">
             <div className="flex items-center justify-between mb-2">
               <Package className="h-5 w-5 opacity-80" />
             </div>
-            <p className="text-2xl font-bold">{orders.length}</p>
-            <p className="text-sm opacity-90">Total Órdenes</p>
+            <p className="text-2xl font-bold">{filteredStats.totalOrders}</p>
+            <p className="text-sm opacity-90">
+              {searchTerm ? 'Órdenes del Cliente' : 'Total Órdenes'}
+            </p>
           </div>
 
           <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-4 text-white">
@@ -244,9 +271,11 @@ export default function ClientsViewWithOrders({
               <DollarSign className="h-5 w-5 opacity-80" />
             </div>
             <p className="text-2xl font-bold">
-              {formatPrice(orders.reduce((sum, o) => sum + Number(o.totalAmount), 0))}
+              {formatPrice(filteredStats.totalRevenue)}
             </p>
-            <p className="text-sm opacity-90">Ventas Totales</p>
+            <p className="text-sm opacity-90">
+              {searchTerm ? 'Ingresos del Cliente' : 'Ventas Totales'}
+            </p>
           </div>
 
           <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-4 text-white">
@@ -254,7 +283,7 @@ export default function ClientsViewWithOrders({
               <Calendar className="h-5 w-5 opacity-80" />
             </div>
             <p className="text-2xl font-bold">
-              {formatPrice(orders.reduce((sum, o) => sum + Number(o.totalAmount), 0) / clientsWithOrders.length || 0)}
+              {formatPrice(filteredStats.averagePerClient)}
             </p>
             <p className="text-sm opacity-90">Promedio/Cliente</p>
           </div>

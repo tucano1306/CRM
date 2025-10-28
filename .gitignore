@@ -10,6 +10,8 @@ coverage/
 Thumbs.db
 npm-debug.log*
 yarn-debug.log*
+npm-dev.log
+
 # clerk configuration (can include secrets)
 /.clerk/
 
@@ -22,3 +24,43 @@ yarn-debug.log*
 # Archivo de sonido de notificación (agregar manualmente)
 /public/notification.mp3
 
+# Scripts temporales de debugging/testing
+check-*.js
+check-*.sql
+verify-*.js
+verify-*.sql
+fix-*.js
+fix-*.sql
+test-*.js
+test-*.ts
+test-*.html
+test-*.md
+demo-*.js
+diagnostic-*.js
+create-test-*.js
+simulate-*.sql
+update-*.sql
+link-*.sql
+cleanup-*.sql
+debug-*.sql
+
+# Scripts de migración ya aplicados
+apply-*.js
+apply-*.py
+apply-*.ps1
+
+# Scripts temporales de PowerShell
+abrir-*.ps1
+abrir-*.bat
+clear-cache.ps1
+clean-rebuild.ps1
+fix-route-params.ps1
+open-browsers.ps1
+update-currency-format.ps1
+
+# Archivos de documentación temporal
+FLUJO-*.md
+RESUMEN-*.md
+
+# Script de limpieza
+cleanup-project.ps1

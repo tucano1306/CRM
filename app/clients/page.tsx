@@ -41,6 +41,7 @@ export default function ClientsPage() {
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -195,7 +196,21 @@ export default function ClientsPage() {
 
   const clearSearch = () => {
     setSearchQuery('')
+    setSelectedClientId(null)
   }
+
+  const handleSelectClient = (clientId: string) => {
+    setSelectedClientId(clientId)
+  }
+
+  const handleBackToList = () => {
+    setSelectedClientId(null)
+  }
+
+  // Si hay un cliente seleccionado, mostrar solo ese cliente
+  const displayClients = selectedClientId 
+    ? filteredClients.filter(c => c.id === selectedClientId)
+    : filteredClients
 
   // Loading state
   if (loading) {
@@ -289,13 +304,15 @@ export default function ClientsPage() {
         }
       />
 
-      {/* Estadísticas generales */}
+      {/* Estadísticas - Dinámicas según búsqueda o cliente seleccionado */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl shadow-lg p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-sm font-medium mb-1">Total Clientes</p>
-              <p className="text-4xl font-bold">{clients.length}</p>
+              <p className="text-blue-100 text-sm font-medium mb-1">
+                {selectedClientId ? 'Cliente Seleccionado' : searchQuery ? 'Clientes Filtrados' : 'Total Clientes'}
+              </p>
+              <p className="text-4xl font-bold">{displayClients.length}</p>
             </div>
             <Users className="w-12 h-12 text-blue-200 opacity-80" />
           </div>
@@ -304,9 +321,11 @@ export default function ClientsPage() {
         <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl shadow-lg p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-green-100 text-sm font-medium mb-1">Órdenes Totales</p>
+              <p className="text-green-100 text-sm font-medium mb-1">
+                {selectedClientId || searchQuery ? 'Órdenes del Cliente' : 'Órdenes Totales'}
+              </p>
               <p className="text-4xl font-bold">
-                {clients.reduce((sum, c) => sum + (c.stats?.totalOrders || 0), 0)}
+                {displayClients.reduce((sum, c) => sum + (c.stats?.totalOrders || 0), 0)}
               </p>
             </div>
             <ShoppingBag className="w-12 h-12 text-green-200 opacity-80" />
@@ -316,9 +335,11 @@ export default function ClientsPage() {
         <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl shadow-lg p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-purple-100 text-sm font-medium mb-1">Ingresos Totales</p>
+              <p className="text-purple-100 text-sm font-medium mb-1">
+                {selectedClientId || searchQuery ? 'Ingresos del Cliente' : 'Ingresos Totales'}
+              </p>
               <p className="text-4xl font-bold">
-                {formatPrice(clients.reduce((sum, c) => sum + (c.stats?.totalSpent || 0), 0))}
+                {formatPrice(displayClients.reduce((sum, c) => sum + (c.stats?.totalSpent || 0), 0))}
               </p>
             </div>
             <DollarSign className="w-12 h-12 text-purple-200 opacity-80" />
@@ -462,8 +483,22 @@ export default function ClientsPage() {
       )}
 
       {/* Vista de tarjetas de clientes */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredClients.length === 0 ? (
+      {selectedClientId && (
+        <div className="mb-4">
+          <button
+            onClick={handleBackToList}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-700 font-medium"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Volver a la lista
+          </button>
+        </div>
+      )}
+
+      <div className={`grid gap-6 ${selectedClientId ? 'md:grid-cols-1 max-w-2xl mx-auto' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
+        {displayClients.length === 0 ? (
           <div className="col-span-full">
             <div className="bg-white rounded-2xl shadow-lg p-12 text-center border-2 border-gray-100">
               <Search className="h-20 w-20 text-gray-300 mx-auto mb-4" />
@@ -486,12 +521,13 @@ export default function ClientsPage() {
             </div>
           </div>
         ) : (
-          filteredClients.map((client, index) => (
+          displayClients.map((client, index) => (
             <ClientProfileCard
               key={client.id}
               client={client}
               onEdit={startEdit}
               onDelete={deleteClient}
+              onSelect={selectedClientId ? undefined : handleSelectClient}
               colorIndex={index}
             />
           ))

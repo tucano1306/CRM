@@ -37,11 +37,21 @@ interface ClientProfileCardProps {
   }
   onEdit: (client: any) => void
   onDelete: (id: string) => void
+  onSelect?: (clientId: string) => void
   colorIndex: number
 }
 
-export default function ClientProfileCard({ client, onEdit, onDelete, colorIndex }: ClientProfileCardProps) {
-  const [expanded, setExpanded] = useState(false)
+export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, colorIndex }: ClientProfileCardProps) {
+  // Si hay onSelect, el componente está en modo lista; si no, está en modo detalle
+  const [expanded, setExpanded] = useState(!onSelect)
+
+  const handleCardClick = () => {
+    if (onSelect) {
+      onSelect(client.id)
+    } else {
+      setExpanded(!expanded)
+    }
+  }
 
   const colors = [
     { 
@@ -109,10 +119,11 @@ export default function ClientProfileCard({ client, onEdit, onDelete, colorIndex
 
   return (
     <div 
-      className={`relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 ${colorScheme.border}`}
+      className={`relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 ${colorScheme.border} cursor-pointer`}
       style={{ 
         animation: `fadeInUp 0.5s ease-out ${colorIndex * 0.05}s both`,
       }}
+      onClick={handleCardClick}
     >
       {/* Header con gradiente */}
       <div className={`bg-gradient-to-r ${colorScheme.bg} p-6 relative`}>
@@ -136,7 +147,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, colorIndex
           </div>
 
           {/* Botones de acción */}
-          <div className="flex gap-2">
+          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => onEdit(client)}
               className="p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-colors"
@@ -170,7 +181,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, colorIndex
       </div>
 
       {/* Información de contacto */}
-      <div className="p-6 space-y-3">
+      <div className="p-6 space-y-3" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start gap-3">
           <Mail className={`w-5 h-5 mt-0.5 ${colorScheme.icon}`} />
           <div className="flex-1 min-w-0">
@@ -211,12 +222,9 @@ export default function ClientProfileCard({ client, onEdit, onDelete, colorIndex
         </div>
       </div>
 
-      {/* Detalles expandibles */}
+      {/* Botón de expandir/contraer */}
       <div className="border-t border-gray-100">
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="w-full px-6 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors"
-        >
+        <div className="w-full px-6 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
           <span className="text-sm font-medium text-gray-700">
             {expanded ? 'Ocultar detalles' : 'Ver más detalles'}
           </span>
@@ -225,7 +233,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, colorIndex
           ) : (
             <ChevronDown className="w-4 h-4 text-gray-500" />
           )}
-        </button>
+        </div>
 
         {expanded && (
           <div className="px-6 pb-4 space-y-3 animate-fadeIn">
