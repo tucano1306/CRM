@@ -19,7 +19,8 @@ export default function ReturnsPage() {
     <MainLayout>
       <div className="container mx-auto py-8 px-4">
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          {/* Header responsivo: vertical en móvil, horizontal en desktop */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 🔄 Devoluciones y Créditos
@@ -31,10 +32,11 @@ export default function ReturnsPage() {
             
             <Button
               onClick={() => setShowManualReturnModal(true)}
-              className="bg-orange-600 hover:bg-orange-700 text-white"
+              className="bg-orange-600 hover:bg-orange-700 text-white whitespace-nowrap md:self-start"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Crear Devolución Manual
+              <span className="hidden sm:inline">Crear Devolución Manual</span>
+              <span className="sm:hidden">Nueva Devolución</span>
             </Button>
           </div>
         </div>

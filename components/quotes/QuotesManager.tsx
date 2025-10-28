@@ -204,36 +204,40 @@ export default function QuotesManager() {
                   onClick={() => setSelectedQuote(quote)}
                   className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer border border-gray-200 hover:border-purple-300 p-4"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className={`bg-${config.color}-100 p-3 rounded-lg`}>
+                  {/* Layout responsivo: vertical en móvil, horizontal en desktop */}
+                  <div className="flex flex-col md:flex-row md:items-center gap-4">
+                    {/* Ícono de estado */}
+                    <div className={`bg-${config.color}-100 p-3 rounded-lg self-start`}>
                       <StatusIcon className={`h-6 w-6 text-${config.color}-600`} />
                     </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-900">{quote.title}</h3>
-                        <span className={`text-xs px-2 py-1 rounded-full bg-${config.color}-100 text-${config.color}-800`}>
+                    {/* Contenido principal */}
+                    <div className="flex-1 min-w-0">
+                      {/* Título y badges */}
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <h3 className="font-semibold text-gray-900 truncate">{quote.title}</h3>
+                        <span className={`text-xs px-2 py-1 rounded-full bg-${config.color}-100 text-${config.color}-800 whitespace-nowrap`}>
                           {config.label}
                         </span>
                         {isExpired && quote.status !== 'CONVERTED' && (
-                          <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800">
+                          <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800 whitespace-nowrap">
                             Expirada
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <span>#{quote.quoteNumber}</span>
-                        <span>•</span>
-                        <span>👤 {quote.client.name}</span>
-                        <span>•</span>
-                        <span>📦 {quote.items?.length || 0} productos</span>
-                        <span>•</span>
-                        <span>⏰ Válida hasta: {new Date(quote.validUntil).toLocaleDateString('es-ES')}</span>
+                      
+                      {/* Información en grid responsivo */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 text-sm text-gray-600">
+                        <span className="truncate">#{quote.quoteNumber}</span>
+                        <span className="truncate">👤 {quote.client.name}</span>
+                        <span className="whitespace-nowrap">📦 {quote.items?.length || 0} productos</span>
+                        <span className="truncate">⏰ {new Date(quote.validUntil).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: '2-digit' })}</span>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-purple-600">
+                    {/* Precio y fecha - se mueve abajo en móvil */}
+                    <div className="flex md:flex-col items-center md:items-end justify-between md:justify-start gap-2 md:text-right">
+                      <p className="text-xl md:text-2xl font-bold text-purple-600">
                         {formatPrice(Number(quote.totalAmount))}
                       </p>
                       <p className="text-xs text-gray-500">
@@ -241,7 +245,8 @@ export default function QuotesManager() {
                       </p>
                     </div>
 
-                    <ChevronRight className="h-5 w-5 text-gray-400" />
+                    {/* Chevron - oculto en móvil */}
+                    <ChevronRight className="hidden md:block h-5 w-5 text-gray-400 flex-shrink-0" />
                   </div>
                 </div>
               )
