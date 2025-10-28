@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
+import { formatPrice, formatNumber } from '@/lib/utils'
 import {
   ShoppingCart,
   Package,
@@ -296,7 +297,7 @@ export default function DashboardPage() {
     },
     {
       title: 'Ingresos Totales',
-      value: `$${Number(stats.totalRevenue || 0).toFixed(2)}`,
+      value: formatPrice(stats.totalRevenue || 0),
       icon: DollarSign,
       color: 'bg-emerald-500',
       trend: stats.revenueGrowth,
@@ -484,8 +485,8 @@ export default function DashboardPage() {
                     <td className="py-3 px-4 text-sm text-gray-700">
                       {order.clientName}
                     </td>
-                    <td className="py-3 px-4 text-sm font-semibold text-gray-900">
-                      ${Number(order.totalAmount).toFixed(2)}
+                    <td className="py-3 px-4 text-xs font-semibold text-gray-900">
+                      {formatPrice(order.totalAmount)}
                     </td>
                     <td className="py-3 px-4">
                       <span
@@ -561,8 +562,8 @@ export default function DashboardPage() {
               <h3 className="text-gray-600 text-sm font-medium mb-2">
                 Ingresos Totales
               </h3>
-              <p className="text-2xl font-bold text-emerald-600">
-                ${Number(stats.totalRevenue || 0).toFixed(2)}
+              <p className="text-xl font-bold text-emerald-600">
+                {formatPrice(stats.totalRevenue || 0)}
               </p>
               {stats.revenueGrowth !== undefined && (
                 <p className="text-sm text-gray-500 mt-1 flex items-center gap-1">
@@ -719,8 +720,8 @@ export default function DashboardPage() {
                         <p className="text-sm text-gray-600">
                           Cliente: {order.clientName || 'N/A'}
                         </p>
-                        <p className="text-sm font-semibold text-gray-900">
-                          ${Number(order.totalAmount || 0).toFixed(2)}
+                        <p className="text-xs font-semibold text-gray-900">
+                          {formatPrice(order.totalAmount || 0)}
                         </p>
                       </div>
                       <div className="flex gap-2">

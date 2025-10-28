@@ -58,6 +58,16 @@ interface Order {
     phone?: string
   }
   orderItems: OrderItem[]
+  creditNoteUsages?: Array<{
+    id: string
+    amountUsed: number
+    creditNote: {
+      id: string
+      creditNoteNumber: string
+      amount: number
+      balance: number
+    }
+  }>
 }
 
 interface OrderDetailModalProps {
@@ -337,12 +347,63 @@ export default function OrderDetailModal({
                             ${(Number(order.totalAmount) - Number(order.totalAmount) / 1.1).toFixed(2)}
                           </span>
                         </div>
-                        <div className="border-t pt-2 flex justify-between">
-                          <span className="font-bold text-gray-900">Total:</span>
-                          <span className="font-bold text-green-600 text-lg">
-                            ${Number(order.totalAmount).toFixed(2)}
-                          </span>
-                        </div>
+
+                        {/* Mostrar Notas de Crédito si existen */}
+                        {order.creditNoteUsages && order.creditNoteUsages.length > 0 && (
+                          <>
+                            <div className="border-t pt-2 flex justify-between text-sm">
+                              <span className="font-semibold text-gray-900">Total Orden:</span>
+                              <span className="font-semibold text-gray-900">
+                                ${Number(order.totalAmount).toFixed(2)}
+                              </span>
+                            </div>
+
+                            {/* Sección de Créditos Aplicados */}
+                            <div className="bg-green-50 rounded-lg p-3 space-y-2 border border-green-200 mt-3">
+                              <div className="font-semibold text-green-800 text-sm flex items-center gap-2">
+                                <FileText className="h-4 w-4" />
+                                Créditos Aplicados:
+                              </div>
+                              {order.creditNoteUsages.map((usage) => (
+                                <div key={usage.id} className="flex justify-between text-sm pl-6">
+                                  <span className="text-green-700">
+                                    {usage.creditNote.creditNoteNumber}:
+                                  </span>
+                                  <span className="text-green-700 font-semibold">
+                                    -${Number(usage.amountUsed).toFixed(2)}
+                                  </span>
+                                </div>
+                              ))}
+                              <div className="flex justify-between text-green-800 font-bold pt-2 border-t border-green-300 text-sm">
+                                <span>Total Crédito:</span>
+                                <span>
+                                  -${order.creditNoteUsages.reduce((sum, usage) => sum + Number(usage.amountUsed), 0).toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Total Final a Pagar */}
+                            <div className="border-t-2 border-purple-200 pt-2 flex justify-between bg-purple-50 -mx-6 px-6 py-3 -mb-2">
+                              <span className="font-bold text-purple-900 text-base">TOTAL A PAGAR:</span>
+                              <span className="font-bold text-purple-600 text-xl">
+                                ${(
+                                  Number(order.totalAmount) -
+                                  order.creditNoteUsages.reduce((sum, usage) => sum + Number(usage.amountUsed), 0)
+                                ).toFixed(2)}
+                              </span>
+                            </div>
+                          </>
+                        )}
+
+                        {/* Si NO hay créditos, mostrar total normal */}
+                        {(!order.creditNoteUsages || order.creditNoteUsages.length === 0) && (
+                          <div className="border-t pt-2 flex justify-between">
+                            <span className="font-bold text-gray-900">Total:</span>
+                            <span className="font-bold text-green-600 text-lg">
+                              ${Number(order.totalAmount).toFixed(2)}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
 

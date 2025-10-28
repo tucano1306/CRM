@@ -30,13 +30,15 @@
     "target": "ES2017"
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
+    "next-env.d.ts",
     ".next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
-    "__tests__"
+    "__tests__",
+    "app/api/products/[id]/rate",
+    "app/api/orders/[id]/rate"
   ]
 }

@@ -87,6 +87,7 @@ export default function ClientsViewWithOrders({
   const [selectedClient, setSelectedClient] = useState<ClientWithOrders | null>(null)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [orderSearchTerm, setOrderSearchTerm] = useState('') // Búsqueda de órdenes en modal
   const [selectedOrders, setSelectedOrders] = useState<string[]>([])
   const [showBulkStatusModal, setShowBulkStatusModal] = useState(false)
 
@@ -139,8 +140,9 @@ export default function ClientsViewWithOrders({
 
   const handleSelectAll = () => {
     if (selectedClient) {
-      const allOrderIds = selectedClient.orders.map(o => o.id)
-      setSelectedOrders(allOrderIds)
+      // Seleccionar solo las órdenes filtradas (visibles)
+      const visibleOrderIds = filteredClientOrders.map(o => o.id)
+      setSelectedOrders(visibleOrderIds)
     }
   }
 
@@ -181,6 +183,38 @@ export default function ClientsViewWithOrders({
       alert('Error al actualizar las órdenes')
     }
   }
+
+  // Filtrar órdenes del cliente seleccionado
+  const filteredClientOrders = useMemo(() => {
+    if (!selectedClient) return []
+    if (!orderSearchTerm.trim()) return selectedClient.orders
+
+    const searchLower = orderSearchTerm.toLowerCase().trim()
+    
+    return selectedClient.orders.filter(order => {
+      // Buscar por últimos 4 dígitos del número de orden
+      const orderNumberLast4 = order.orderNumber.slice(-4)
+      if (orderNumberLast4.includes(searchLower)) return true
+      
+      // Buscar por número completo
+      if (order.orderNumber.toLowerCase().includes(searchLower)) return true
+      
+      // Buscar por fecha (DD/MM/YYYY)
+      const orderDate = new Date(order.createdAt)
+      const dateStr = orderDate.toLocaleDateString('es-ES')
+      if (dateStr.includes(searchLower)) return true
+      
+      // Buscar por día (formato DD o D)
+      const day = orderDate.getDate().toString()
+      if (day === searchLower || day.padStart(2, '0') === searchLower) return true
+      
+      // Buscar por mes
+      const month = (orderDate.getMonth() + 1).toString()
+      if (month === searchLower || month.padStart(2, '0') === searchLower) return true
+      
+      return false
+    })
+  }, [selectedClient, orderSearchTerm])
 
   return (
     <>
@@ -515,7 +549,7 @@ export default function ClientsViewWithOrders({
             <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-gray-50 to-white">
               {/* Header mejorado */}
               <div className="mb-6 bg-white rounded-xl shadow-sm p-6 border-l-4 border-purple-600">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                   <div className="flex items-center gap-3">
                     <div className="p-3 bg-purple-100 rounded-lg">
                       <ShoppingBag className="h-6 w-6 text-purple-600" />
@@ -525,7 +559,7 @@ export default function ClientsViewWithOrders({
                         Historial de Órdenes
                       </h3>
                       <p className="text-sm text-gray-600 mt-1">
-                        {selectedClient.totalOrders} orden{selectedClient.totalOrders !== 1 ? 'es' : ''} de <span className="font-semibold text-purple-600">{selectedClient.client.name}</span>
+                        {filteredClientOrders.length} de {selectedClient.totalOrders} orden{selectedClient.totalOrders !== 1 ? 'es' : ''} de <span className="font-semibold text-purple-600">{selectedClient.client.name}</span>
                       </p>
                     </div>
                   </div>
@@ -539,6 +573,46 @@ export default function ClientsViewWithOrders({
                     </p>
                   </div>
                 </div>
+
+                {/* Buscador de órdenes */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <input
+                    type="text"
+                    value={orderSearchTerm}
+                    onChange={(e) => setOrderSearchTerm(e.target.value)}
+                    placeholder="Buscar por # orden (últimos 4 dígitos), fecha o día..."
+                    className="w-full pl-10 pr-10 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all text-sm"
+                  />
+                  {orderSearchTerm && (
+                    <button
+                      onClick={() => setOrderSearchTerm('')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Indicador de búsqueda activa */}
+                {orderSearchTerm && (
+                  <div className="mt-3 flex items-center gap-2 text-sm">
+                    <div className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full flex items-center gap-2">
+                      <Search className="h-3 w-3" />
+                      <span className="font-medium">Búsqueda activa:</span>
+                      <span className="font-bold">"{orderSearchTerm}"</span>
+                      <button
+                        onClick={() => setOrderSearchTerm('')}
+                        className="ml-1 hover:bg-purple-200 rounded-full p-0.5 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                    {filteredClientOrders.length === 0 && (
+                      <span className="text-gray-500 italic">No se encontraron resultados</span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Barra de herramientas de selección múltiple - Mejorada */}
@@ -559,7 +633,7 @@ export default function ClientsViewWithOrders({
                           className="text-purple-600 border-purple-300 hover:bg-purple-50 hover:border-purple-400 transition-all"
                         >
                           <CheckSquare className="h-4 w-4 mr-1.5" />
-                          Todas ({selectedClient.orders.length})
+                          Todas ({filteredClientOrders.length})
                         </Button>
                         <Button
                           onClick={handleDeselectAll}
@@ -599,7 +673,7 @@ export default function ClientsViewWithOrders({
               )}
 
               <OrdersTimelineView 
-                orders={selectedClient.orders}
+                orders={filteredClientOrders}
                 onOrderClick={(order) => setSelectedOrder(order as Order)}
                 selectedOrders={selectedOrders}
                 onToggleSelection={userRole === 'seller' ? handleToggleSelection : undefined}

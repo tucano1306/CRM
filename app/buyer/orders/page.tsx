@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { v4 as uuidv4 } from 'uuid'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
+import { formatPrice, formatNumber } from '@/lib/utils'
 import { downloadInvoice, openInvoiceInNewTab, type InvoiceData } from '@/lib/invoiceGenerator'
 import {
   Package,
@@ -220,8 +221,6 @@ export default function OrdersPage() {
   const [dateTo, setDateTo] = useState('')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [ratingOrder, setRatingOrder] = useState<string | null>(null)
-  const [selectedRating, setSelectedRating] = useState(0)
   const [hoveredRating, setHoveredRating] = useState(0)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
@@ -541,28 +540,6 @@ export default function OrdersPage() {
     }
   }
 
-  const handleRateOrder = async (orderId: string, rating: number) => {
-    try {
-      const result = await apiCall(`/api/orders/${orderId}/rate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rating }),
-        timeout: 5000,
-      })
-
-      if (result.success) {
-        alert('✅ Gracias por tu calificación!')
-        setRatingOrder(null)
-        setSelectedRating(0)
-        fetchOrders()
-      } else {
-        alert(result.error || 'Error al calificar la orden')
-      }
-    } catch (err) {
-      alert(getErrorMessage(err))
-    }
-  }
-
   // ✅ ESTADO DE LOADING
   if (loading) {
     return (
@@ -723,19 +700,19 @@ export default function OrdersPage() {
               <h3 className="font-bold text-lg mb-4 text-gray-800">Resumen del mes</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
                 <div className="bg-white/50 rounded-lg p-4">
-                  <p className="text-3xl font-bold text-purple-600">{stats.totalOrders}</p>
+                  <p className="text-2xl font-bold text-purple-600">{stats.totalOrders}</p>
                   <p className="text-sm text-gray-600 mt-1">Órdenes</p>
                 </div>
                 <div className="bg-white/50 rounded-lg p-4">
-                  <p className="text-3xl font-bold text-green-600">${stats.totalSpent.toFixed(2)}</p>
+                  <p className="text-xl font-bold text-green-600">{formatPrice(stats.totalSpent)}</p>
                   <p className="text-sm text-gray-600 mt-1">Gastado</p>
                 </div>
                 <div className="bg-white/50 rounded-lg p-4">
-                  <p className="text-3xl font-bold text-blue-600">${stats.estimatedSavings.toFixed(2)}</p>
+                  <p className="text-xl font-bold text-blue-600">{formatPrice(stats.estimatedSavings)}</p>
                   <p className="text-sm text-gray-600 mt-1">Ahorrado</p>
                 </div>
                 <div className="bg-white/50 rounded-lg p-4">
-                  <p className="text-3xl font-bold text-orange-600">${stats.averageOrder.toFixed(2)}</p>
+                  <p className="text-xl font-bold text-orange-600">{formatPrice(stats.averageOrder)}</p>
                   <p className="text-sm text-gray-600 mt-1">Promedio</p>
                 </div>
               </div>
@@ -1018,8 +995,8 @@ export default function OrdersPage() {
                   
                   {/* Total */}
                   <div className="mb-4 pt-4 border-t">
-                    <span className="text-2xl font-bold text-purple-600">
-                      ${Number(order.totalAmount).toFixed(2)}
+                    <span className="text-xl font-bold text-purple-600">
+                      {formatPrice(order.totalAmount)}
                     </span>
                   </div>
 
@@ -1082,38 +1059,6 @@ export default function OrdersPage() {
                       Contactar vendedor
                     </button>
                   </div>
-
-                  {/* Sistema de calificación */}
-                  {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && !order.rating && (
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
-                      <p className="font-medium mb-3 text-gray-900">¿Cómo fue tu experiencia?</p>
-                      <div className="flex gap-2 justify-center">
-                        {[1, 2, 3, 4, 5].map(star => (
-                          <button 
-                            key={star}
-                            onClick={() => handleRateOrder(order.id, star)}
-                            onMouseEnter={() => setHoveredRating(star)}
-                            onMouseLeave={() => setHoveredRating(0)}
-                            className="text-3xl hover:scale-110 transition-transform"
-                          >
-                            {star <= (hoveredRating || selectedRating) ? '⭐' : '☆'}
-                          </button>
-                        ))}
-                      </div>
-                      <p className="text-xs text-gray-600 text-center mt-2">
-                        Haz clic en las estrellas para calificar
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Mostrar calificación existente */}
-                  {order.rating && (
-                    <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-4">
-                      <p className="text-sm text-gray-700 text-center">
-                        Tu calificación: {Array(order.rating).fill('⭐').join('')}
-                      </p>
-                    </div>
-                  )}
                 </div>
               ) : (
                 // Vista LIST (Fila)
@@ -1193,8 +1138,8 @@ export default function OrdersPage() {
                           {config.label}
                         </span>
                       </div>
-                      <span className="text-xl font-bold text-purple-600 block">
-                        ${Number(order.totalAmount).toFixed(2)}
+                      <span className="text-lg font-bold text-purple-600 block">
+                        {formatPrice(order.totalAmount)}
                       </span>
                     </div>
 
@@ -1255,36 +1200,6 @@ export default function OrdersPage() {
                       </button>
                     </div>
                   </div>
-
-                  {/* Rating en vista lista (más compacto) */}
-                  {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && !order.rating && (
-                    <div className="bg-yellow-50 border-t border-yellow-200 px-4 py-3 mt-2">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-sm text-gray-900">¿Cómo fue tu experiencia?</p>
-                        <div className="flex gap-1">
-                          {[1, 2, 3, 4, 5].map(star => (
-                            <button 
-                              key={star}
-                              onClick={() => handleRateOrder(order.id, star)}
-                              onMouseEnter={() => setHoveredRating(star)}
-                              onMouseLeave={() => setHoveredRating(0)}
-                              className="text-xl hover:scale-110 transition-transform"
-                            >
-                              {star <= (hoveredRating || selectedRating) ? '⭐' : '☆'}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {order.rating && (
-                    <div className="bg-green-50 border-t border-green-200 px-4 py-2 mt-2">
-                      <p className="text-xs text-gray-700 text-center">
-                        Calificación: {Array(order.rating).fill('⭐').join('')}
-                      </p>
-                    </div>
-                  )}
                 </div>
               )
             })}
@@ -1403,8 +1318,8 @@ export default function OrdersPage() {
                           <h4 className="font-semibold text-gray-900">
                             {item.productName}
                           </h4>
-                          <p className="text-sm text-gray-600">
-                            {item.quantity} {item.product?.unit || 'und'} × ${Number(item.pricePerUnit).toFixed(2)}
+                          <p className="text-xs text-gray-600">
+                            {item.quantity} {item.product?.unit || 'und'} × {formatPrice(item.pricePerUnit)}
                           </p>
                           {item.itemNote && (
                             <p className="text-xs text-gray-500 mt-1">
@@ -1413,25 +1328,25 @@ export default function OrdersPage() {
                           )}
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-purple-600">
-                            ${Number(item.subtotal).toFixed(2)}
+                          <p className="font-bold text-purple-600 text-sm">
+                            {formatPrice(item.subtotal)}
                           </p>
                         </div>
                       </div>
                     ))}
                     
                     {/* Resumen de totales */}
-                    <div className="mt-6 pt-4 border-t space-y-2">
+                    <div className="mt-6 pt-4 border-t space-y-2 text-sm">
                       <div className="flex justify-between text-gray-600">
                         <span>Subtotal:</span>
                         <span>
-                          ${(selectedOrder.orderItems?.reduce((sum, item) => sum + Number(item.subtotal), 0) || 0).toFixed(2)}
+                          {formatPrice(selectedOrder.orderItems?.reduce((sum, item) => sum + Number(item.subtotal), 0) || 0)}
                         </span>
                       </div>
                       <div className="flex justify-between text-gray-600">
                         <span>Impuestos (10%):</span>
                         <span>
-                          ${((selectedOrder.orderItems?.reduce((sum, item) => sum + Number(item.subtotal), 0) || 0) * 0.1).toFixed(2)}
+                          {formatPrice((selectedOrder.orderItems?.reduce((sum, item) => sum + Number(item.subtotal), 0) || 0) * 0.1)}
                         </span>
                       </div>
                       
@@ -1441,7 +1356,7 @@ export default function OrdersPage() {
                           <div className="flex justify-between text-gray-900 font-semibold pt-2 border-t">
                             <span>Total Orden:</span>
                             <span>
-                              ${((selectedOrder.orderItems?.reduce((sum, item) => sum + Number(item.subtotal), 0) || 0) * 1.1).toFixed(2)}
+                              {formatPrice((selectedOrder.orderItems?.reduce((sum, item) => sum + Number(item.subtotal), 0) || 0) * 1.1)}
                             </span>
                           </div>
                           
@@ -1449,26 +1364,26 @@ export default function OrdersPage() {
                           <div className="bg-green-50 rounded-lg p-3 space-y-2 border border-green-200">
                             <div className="font-semibold text-green-800 text-sm">Créditos Aplicados:</div>
                             {selectedOrder.creditNoteUsages.map((usage) => (
-                              <div key={usage.id} className="flex justify-between text-sm">
+                              <div key={usage.id} className="flex justify-between text-xs">
                                 <span className="text-green-700">{usage.creditNote.creditNoteNumber}:</span>
                                 <span className="text-green-700 font-semibold">
-                                  -${Number(usage.amountUsed).toFixed(2)}
+                                  -{formatPrice(usage.amountUsed)}
                                 </span>
                               </div>
                             ))}
-                            <div className="flex justify-between text-green-800 font-bold pt-2 border-t border-green-300">
+                            <div className="flex justify-between text-green-800 font-bold pt-2 border-t border-green-300 text-xs">
                               <span>Total Crédito:</span>
                               <span>
-                                -${(selectedOrder.creditNoteUsages.reduce((sum, usage) => sum + Number(usage.amountUsed), 0)).toFixed(2)}
+                                -{formatPrice(selectedOrder.creditNoteUsages.reduce((sum, usage) => sum + Number(usage.amountUsed), 0))}
                               </span>
                             </div>
                           </div>
                         </>
                       )}
                       
-                      <div className="flex justify-between text-xl font-bold text-purple-600 pt-2 border-t">
+                      <div className="flex justify-between text-lg font-bold text-purple-600 pt-2 border-t">
                         <span>Total {selectedOrder.creditNoteUsages && selectedOrder.creditNoteUsages.length > 0 ? 'a Pagar' : ''}:</span>
-                        <span>${Number(selectedOrder.totalAmount).toFixed(2)}</span>
+                        <span>{formatPrice(selectedOrder.totalAmount)}</span>
                       </div>
                     </div>
 
@@ -1550,42 +1465,6 @@ export default function OrdersPage() {
                       <p className="text-gray-700">{selectedOrder.seller?.name}</p>
                       <p className="text-sm text-gray-600">{selectedOrder.seller?.email}</p>
                     </div>
-
-                    {/* Sistema de calificación en modal */}
-                    {(selectedOrder.status === 'DELIVERED' || selectedOrder.status === 'COMPLETED') && !selectedOrder.rating && (
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                        <p className="font-medium mb-3 text-gray-900">¿Cómo fue tu experiencia con esta orden?</p>
-                        <div className="flex gap-2 justify-center">
-                          {[1, 2, 3, 4, 5].map(star => (
-                            <button 
-                              key={star}
-                              onClick={() => handleRateOrder(selectedOrder.id, star)}
-                              onMouseEnter={() => setHoveredRating(star)}
-                              onMouseLeave={() => setHoveredRating(0)}
-                              className="text-4xl hover:scale-110 transition-transform"
-                            >
-                              {star <= (hoveredRating || selectedRating) ? '⭐' : '☆'}
-                            </button>
-                          ))}
-                        </div>
-                        <p className="text-xs text-gray-600 text-center mt-2">
-                          Tu opinión nos ayuda a mejorar el servicio
-                        </p>
-                      </div>
-                    )}
-
-                    {selectedOrder.rating && (
-                      <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                        <p className="text-center text-gray-700">
-                          <span className="font-semibold">Tu calificación:</span> {Array(selectedOrder.rating).fill('⭐').join('')}
-                        </p>
-                        {selectedOrder.ratingComment && (
-                          <p className="text-sm text-gray-600 text-center mt-2">
-                            "{selectedOrder.ratingComment}"
-                          </p>
-                        )}
-                      </div>
-                    )}
 
                     {/* Acciones */}
                     <div className="flex gap-3">

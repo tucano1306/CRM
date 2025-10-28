@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { v4 as uuidv4 } from 'uuid'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
+import { formatPrice, formatNumber } from '@/lib/utils'
 import {
   ShoppingCart,
   Plus,
@@ -768,8 +769,8 @@ export default function CartPage() {
                         {product.name}
                       </p>
                       <div className="flex items-center justify-between">
-                        <p className="text-blue-600 font-bold text-lg">
-                          ${product.price.toFixed(2)}
+                        <p className="text-blue-600 font-bold text-base">
+                          {formatPrice(product.price)}
                         </p>
                       </div>
                       <button 
@@ -841,8 +842,8 @@ export default function CartPage() {
 
                       {/* PRECIO Y STOCK */}
                       <div className="flex items-center gap-4 mt-3">
-                        <span className="text-blue-600 font-bold text-lg">
-                          ${item.price.toFixed(2)}
+                        <span className="text-blue-600 font-bold text-base">
+                          {formatPrice(item.price)}
                         </span>
                         <span className="text-gray-500 text-sm">
                           / {item.product.unit}
@@ -919,9 +920,9 @@ export default function CartPage() {
 
                           {/* Subtotal del item */}
                           <div className="text-right">
-                            <p className="text-sm text-gray-500">Subtotal</p>
-                            <p className="text-xl font-bold text-gray-800 transition-all duration-300">
-                              ${(item.price * item.quantity).toFixed(2)}
+                            <p className="text-xs text-gray-500">Subtotal</p>
+                            <p className="text-lg font-bold text-gray-800 transition-all duration-300">
+                              {formatPrice(item.price * item.quantity)}
                             </p>
                           </div>
                         </div>
@@ -930,7 +931,7 @@ export default function CartPage() {
                         {item.quantity >= 10 && (
                           <div className="bg-green-50 border border-green-200 p-2 rounded-lg mt-3 animate-fade-in-up">
                             <p className="text-xs text-green-700 font-medium flex items-center gap-1">
-                              🎉 ¡10% de descuento por compra al mayor! Ahorraste ${(item.price * item.quantity * 0.10).toFixed(2)}
+                              🎉 ¡10% de descuento por compra al mayor! Ahorraste {formatPrice(item.price * item.quantity * 0.10)}
                             </p>
                           </div>
                         )}
@@ -987,7 +988,7 @@ export default function CartPage() {
                           <Package className="w-8 h-8 text-slate-400" />
                         </div>
                         <p className="text-sm font-medium text-gray-800 line-clamp-2">{product.name}</p>
-                        <p className="text-blue-600 font-bold mt-1">${product.price.toFixed(2)}</p>
+                        <p className="text-blue-600 font-bold mt-1 text-xs">{formatPrice(product.price)}</p>
                         <button 
                           onClick={() => addToCart(product.id)}
                           className="w-full bg-blue-100 text-blue-600 py-1.5 rounded mt-2 text-sm hover:bg-blue-200 transition-colors font-medium"
@@ -1135,7 +1136,7 @@ export default function CartPage() {
                       💳 Créditos disponibles ({loadingCredits ? '...' : availableCredits.length})
                       {!loadingCredits && availableCredits.length > 0 && (
                         <span className="text-xs text-green-600 font-bold">
-                          ${availableCredits.reduce((sum, c) => sum + Number(c.balance), 0).toFixed(2)}
+                          {formatPrice(availableCredits.reduce((sum, c) => sum + Number(c.balance), 0))}
                         </span>
                       )}
                     </button>
@@ -1193,7 +1194,7 @@ export default function CartPage() {
                                 <div className="flex items-center gap-2 text-xs text-gray-600">
                                   <span>Balance disponible:</span>
                                   <span className="font-bold text-green-600">
-                                    ${maxBalance.toFixed(2)}
+                                    {formatPrice(maxBalance)}
                                   </span>
                                 </div>
                                 
@@ -1229,22 +1230,22 @@ export default function CartPage() {
                                     {isWastingCredit && currentAmount <= maxBalance && (
                                       <div className="bg-amber-50 border border-amber-300 rounded-lg p-2">
                                         <p className="text-xs text-amber-800 font-medium">
-                                          ⚠️ Solo necesitas ${optimalAmount.toFixed(2)} de tu crédito de ${maxBalance.toFixed(2)}
+                                          ⚠️ Solo necesitas {formatPrice(optimalAmount)} de tu crédito de {formatPrice(maxBalance)}
                                         </p>
                                         <p className="text-xs text-amber-700 mt-1">
                                           El sistema ha limitado automáticamente el uso a lo necesario. 
-                                          Los ${(maxBalance - optimalAmount).toFixed(2)} restantes quedarán disponibles para futuras compras.
+                                          Los {formatPrice(maxBalance - optimalAmount)} restantes quedarán disponibles para futuras compras.
                                         </p>
                                       </div>
                                     )}
                                     {currentAmount > 0 && currentAmount <= maxBalance && !isWastingCredit && (
                                       <div className="flex items-start gap-2">
                                         <p className="text-xs text-green-600 font-medium flex-1">
-                                          ✓ Se aplicarán ${currentAmount.toFixed(2)} de este crédito
+                                          ✓ Se aplicarán {formatPrice(currentAmount)} de este crédito
                                         </p>
                                         {currentAmount < maxBalance && (
                                           <p className="text-xs text-gray-500">
-                                            (Quedan ${(maxBalance - currentAmount).toFixed(2)})
+                                            (Quedan {formatPrice(maxBalance - currentAmount)})
                                           </p>
                                         )}
                                       </div>
@@ -1286,26 +1287,26 @@ export default function CartPage() {
                 </div>
 
                 {/* Desglose de precios */}
-                <div className="p-6 space-y-3">
+                <div className="p-6 space-y-3 text-sm">
                   <div className="flex justify-between text-gray-600">
                     <span>Subtotal:</span>
-                    <span className="font-semibold">
-                      ${calculateSubtotal().toFixed(2)}
+                    <span className="font-semibold text-xs">
+                      {formatPrice(calculateSubtotal())}
                     </span>
                   </div>
 
                   {appliedCoupon && (
                     <div className="flex justify-between text-green-600">
-                      <span>Descuento ({(appliedCoupon.discount * 100).toFixed(0)}%):</span>
-                      <span className="font-semibold">
-                        -${calculateDiscount().toFixed(2)}
+                      <span>Descuento ({formatNumber(appliedCoupon.discount * 100, 0)}%):</span>
+                      <span className="font-semibold text-xs">
+                        -{formatPrice(calculateDiscount())}
                       </span>
                     </div>
                   )}
 
                   <div className="flex justify-between text-gray-600">
-                    <span>Impuestos ({(TAX_RATE * 100).toFixed(0)}%):</span>
-                    <span className="font-semibold">${calculateTax().toFixed(2)}</span>
+                    <span>Impuestos ({formatNumber(TAX_RATE * 100, 0)}%):</span>
+                    <span className="font-semibold text-xs">{formatPrice(calculateTax())}</span>
                   </div>
 
                   {deliveryMethod === 'delivery' && (
@@ -1314,7 +1315,7 @@ export default function CartPage() {
                         <Truck className="w-4 h-4" />
                         Envío:
                       </span>
-                      <span className="font-semibold">${DELIVERY_FEE.toFixed(2)}</span>
+                      <span className="font-semibold text-xs">{formatPrice(DELIVERY_FEE)}</span>
                     </div>
                   )}
 
@@ -1333,24 +1334,24 @@ export default function CartPage() {
                       <span className="flex items-center gap-1">
                         💳 Créditos aplicados ({selectedCredits.length}):
                       </span>
-                      <span>-${calculateCreditsApplied().toFixed(2)}</span>
+                      <span className="text-xs">-{formatPrice(calculateCreditsApplied())}</span>
                     </div>
                   )}
 
                   {/* Indicador de ahorro */}
                   {appliedCoupon && (
                     <div className="bg-green-50 border border-green-200 p-3 rounded-lg">
-                      <p className="text-green-700 font-medium flex items-center gap-2 text-sm">
+                      <p className="text-green-700 font-medium flex items-center gap-2 text-xs">
                         <Tag className="w-4 h-4" />
-                        ¡Ahorraste ${calculateDiscount().toFixed(2)} en este pedido!
+                        ¡Ahorraste {formatPrice(calculateDiscount())} en este pedido!
                       </p>
                     </div>
                   )}
 
-                  <div className="border-t pt-3 flex justify-between text-lg font-bold text-gray-800">
+                  <div className="border-t pt-3 flex justify-between font-bold text-gray-800">
                     <span>Total:</span>
-                    <span className="text-blue-600">
-                      ${calculateTotal().toFixed(2)}
+                    <span className="text-blue-600 text-lg">
+                      {formatPrice(calculateTotal())}
                     </span>
                   </div>
                 </div>

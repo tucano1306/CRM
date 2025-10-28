@@ -234,20 +234,20 @@ export default function NotificationBellSeller() {
         )}
       </button>
 
-      {/* Dropdown Panel - Vendedor (más pequeño, a la derecha) */}
+      {/* Dropdown Panel - Vendedor (responsive - pantalla completa en móvil) */}
       {isOpen && (
         <div 
           ref={dropdownRef}
-          className="fixed top-16 right-4 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 z-[9999] max-h-[calc(100vh-5rem)] overflow-hidden flex flex-col"
+          className="fixed top-16 left-0 right-0 sm:left-auto sm:right-4 w-full sm:w-96 max-w-full sm:max-w-md bg-white dark:bg-gray-800 rounded-none sm:rounded-lg shadow-2xl border-t sm:border border-gray-200 dark:border-gray-700 z-[9999] max-h-[calc(100vh-4rem)] overflow-hidden flex flex-col"
         >
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
-            <h3 className="font-bold text-gray-900 dark:text-white">Notificaciones</h3>
-            <div className="flex items-center gap-2">
+            <h3 className="font-bold text-base text-gray-900 dark:text-white">Notificaciones</h3>
+            <div className="flex items-center gap-3">
               {unreadCount > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-semibold"
+                  className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-semibold"
                 >
                   Marcar todas
                 </button>
@@ -326,36 +326,34 @@ export default function NotificationBellSeller() {
         </div>
       )}
 
-      {/* Modal de detalles - Vendedor (arrastrable con animación) */}
+      {/* Modal de detalles - Vendedor (con margen arriba y abajo en móvil) */}
       {selectedNotification && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[9999] animate-in fade-in duration-300 flex items-center justify-center p-4 sm:p-6">
           <div 
             ref={modalRef}
             style={{
-              position: 'fixed',
-              left: modalPosition.x || 'auto',
-              top: modalPosition.x ? modalPosition.y : '50%',
-              right: modalPosition.x ? 'auto' : '6rem',
-              transform: modalPosition.x ? 'none' : 'translateY(-50%)'
+              position: window.innerWidth >= 768 && modalPosition.x ? 'fixed' : 'relative',
+              left: window.innerWidth >= 768 && modalPosition.x ? modalPosition.x : 'auto',
+              top: window.innerWidth >= 768 && modalPosition.x ? modalPosition.y : 'auto'
             }}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col animate-in slide-in-from-right-4 duration-500 ring-4 ring-blue-500/50"
+            className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-2xl w-full sm:w-[90vw] sm:max-w-md max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-right-4 duration-500 ring-0 sm:ring-4 sm:ring-blue-500/50"
           >
             {/* Badge de "Nueva" si es una notificación nueva */}
             {newNotification?.id === selectedNotification.id && (
-              <div className="absolute -top-3 -right-3 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce z-20">
+              <div className="absolute top-2 right-2 sm:-top-3 sm:-right-3 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg animate-bounce z-20">
                 ¡NUEVA!
               </div>
             )}
             
             <div 
               onMouseDown={handleMouseDown}
-              className={`flex items-start justify-between p-4 border-b border-gray-200 dark:border-gray-700 select-none bg-gray-50 dark:bg-gray-900 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+              className={`flex items-start justify-between p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700 select-none bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 ${isDragging ? 'cursor-grabbing' : 'sm:cursor-grab cursor-default'}`}
             >
-              <div className="flex items-start gap-3">
-                <span className="text-3xl animate-bounce">{getTypeIcon(selectedNotification.type)}</span>
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <span className="text-3xl sm:text-4xl animate-bounce flex-shrink-0">{getTypeIcon(selectedNotification.type)}</span>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-lg font-bold text-gray-900 dark:text-white break-words">{selectedNotification.title}</h2>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{getRelativeTime(selectedNotification.createdAt)}</p>
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white break-words leading-tight">{selectedNotification.title}</h2>
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1">{getRelativeTime(selectedNotification.createdAt)}</p>
                 </div>
               </div>
               <button
@@ -365,26 +363,26 @@ export default function NotificationBellSeller() {
                     clearNewNotification()
                   }
                 }}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 z-10"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 z-10 flex-shrink-0 ml-3 p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors"
               >
-                <X size={20} />
+                <X size={22} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4">
-              <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed break-words">{selectedNotification.message}</p>
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 bg-white dark:bg-gray-800">
+              <p className="text-gray-700 dark:text-gray-300 text-base sm:text-lg leading-relaxed break-words">{selectedNotification.message}</p>
               {selectedNotification.orderId && (
-                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                  <div className="flex items-center gap-2 text-blue-900 dark:text-blue-300 font-semibold mb-2 text-sm">
-                    <Package size={16} />
+                <div className="mt-5 p-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl">
+                  <div className="flex items-center gap-2 text-blue-900 dark:text-blue-300 font-semibold mb-2 text-sm sm:text-base">
+                    <Package size={18} />
                     <span>Orden relacionada</span>
                   </div>
-                  <p className="text-xs text-blue-800 dark:text-blue-400 font-mono break-all">ID: {selectedNotification.orderId}</p>
+                  <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-400 font-mono break-all bg-white dark:bg-blue-950/30 p-2 rounded">ID: {selectedNotification.orderId}</p>
                 </div>
               )}
             </div>
 
-            <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex flex-col gap-2">
+            <div className="p-4 sm:p-5 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex flex-col gap-3">
               {selectedNotification.orderId && (
                 <button
                   onClick={() => {
@@ -394,9 +392,9 @@ export default function NotificationBellSeller() {
                       clearNewNotification()
                     }
                   }}
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-sm transition-all hover:scale-105"
+                  className="flex items-center justify-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold text-base transition-all hover:scale-105 shadow-lg"
                 >
-                  <ExternalLink size={16} />
+                  <ExternalLink size={18} />
                   {getActionButtonText(selectedNotification.type)}
                 </button>
               )}
@@ -407,7 +405,7 @@ export default function NotificationBellSeller() {
                     clearNewNotification()
                   }
                 }}
-                className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold text-sm"
+                className="px-5 py-3 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 font-semibold text-base transition-colors"
               >
                 Cerrar
               </button>

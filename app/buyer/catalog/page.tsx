@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
+import { formatPrice, formatNumber } from '@/lib/utils'
 import {
   ShoppingCart,
   Package,
@@ -585,7 +586,7 @@ export default function CatalogPage() {
                             {product.name}
                           </p>
                           <p className="text-xs text-gray-500">
-                            ${product.price.toFixed(2)} / {product.unit}
+                            {formatPrice(product.price)} / {product.unit}
                           </p>
                         </div>
                       </button>
@@ -871,8 +872,8 @@ export default function CatalogPage() {
                   </p>
                 )}
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-2xl font-bold text-blue-600">
-                    ${product.price.toFixed(2)}
+                  <span className="text-xl font-bold text-blue-600">
+                    {formatPrice(product.price)}
                   </span>
                   <div className="flex items-center gap-1">
                     <span className="text-sm text-gray-500">
@@ -1079,11 +1080,11 @@ export default function CatalogPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-gray-800 truncate">{item.name}</p>
-                          <p className="text-sm text-gray-500">
-                            ${item.price.toFixed(2)} × {item.quantity}
+                          <p className="text-xs text-gray-500">
+                            {formatPrice(item.price)} × {item.quantity}
                           </p>
                           <p className="text-sm font-bold text-blue-600 mt-1">
-                            ${(item.price * item.quantity).toFixed(2)}
+                            {formatPrice(item.price * item.quantity)}
                           </p>
                           
                           {/* Controles de cantidad en carrito */}
@@ -1119,13 +1120,13 @@ export default function CatalogPage() {
                   
                   {/* Total */}
                   <div className="border-t border-gray-200 pt-4 space-y-4">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-600">Subtotal:</span>
-                      <span className="font-medium">${getTotalCartPrice().toFixed(2)}</span>
+                      <span className="font-medium text-xs">{formatPrice(getTotalCartPrice())}</span>
                     </div>
-                    <div className="flex justify-between items-center text-xl font-bold">
+                    <div className="flex justify-between items-center font-bold">
                       <span>Total:</span>
-                      <span className="text-blue-600">${getTotalCartPrice().toFixed(2)}</span>
+                      <span className="text-blue-600 text-lg">{formatPrice(getTotalCartPrice())}</span>
                     </div>
                     
                     <button 
@@ -1196,8 +1197,8 @@ export default function CatalogPage() {
                 <div>
                   <div className="mb-6">
                     <div className="flex items-baseline gap-2 mb-2">
-                      <span className="text-4xl font-bold text-blue-600">
-                        ${selectedProduct.price.toFixed(2)}
+                      <span className="text-3xl font-bold text-blue-600">
+                        {formatPrice(selectedProduct.price)}
                       </span>
                       <span className="text-gray-500">/ {selectedProduct.unit}</span>
                     </div>
@@ -1301,8 +1302,8 @@ export default function CatalogPage() {
                         <h4 className="font-medium text-sm text-gray-800 line-clamp-2 mb-1">
                           {product.name}
                         </h4>
-                        <p className="text-blue-600 font-bold">
-                          ${product.price.toFixed(2)}
+                        <p className="text-blue-600 font-bold text-xs">
+                          {formatPrice(product.price)}
                         </p>
                       </div>
                     ))}
