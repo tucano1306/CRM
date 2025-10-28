@@ -484,20 +484,24 @@ export default function ClientsPage() {
 
       {/* Vista de tarjetas de clientes */}
       {selectedClientId && (
-        <div className="mb-4">
+        <div className="mb-6 animate-slideIn">
           <button
             onClick={handleBackToList}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-700 font-medium"
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all shadow-lg hover:shadow-xl font-semibold"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Volver a la lista
+            Volver a todos los clientes
           </button>
         </div>
       )}
 
-      <div className={`grid gap-6 ${selectedClientId ? 'md:grid-cols-1 max-w-2xl mx-auto' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
+      <div className={`transition-all duration-300 ${
+        selectedClientId 
+          ? 'grid grid-cols-1 max-w-4xl mx-auto' 
+          : 'grid gap-6 md:grid-cols-2 lg:grid-cols-3'
+      }`}>
         {displayClients.length === 0 ? (
           <div className="col-span-full">
             <div className="bg-white rounded-2xl shadow-lg p-12 text-center border-2 border-gray-100">
@@ -522,14 +526,23 @@ export default function ClientsPage() {
           </div>
         ) : (
           displayClients.map((client, index) => (
-            <ClientProfileCard
+            <div
               key={client.id}
-              client={client}
-              onEdit={startEdit}
-              onDelete={deleteClient}
-              onSelect={selectedClientId ? undefined : handleSelectClient}
-              colorIndex={index}
-            />
+              className={`${
+                selectedClientId 
+                  ? 'animate-fadeInUp' 
+                  : ''
+              }`}
+            >
+              <ClientProfileCard
+                client={client}
+                onEdit={startEdit}
+                onDelete={deleteClient}
+                onSelect={selectedClientId ? undefined : handleSelectClient}
+                colorIndex={index}
+                isExpanded={selectedClientId === client.id}
+              />
+            </div>
           ))
         )}
       </div>

@@ -16,24 +16,39 @@ export function useUnreadMessages() {
 
     const fetchUnreadCount = async () => {
       try {
-        const response = await fetch('/api/chat-messages/unread-count')
-        if (response.ok) {
-          const data = await response.json()
-          setUnreadCount(data.unreadCount || 0)
+        const response = await fetch('/api/chat-messages/unread-count', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        
+        if (!response.ok) {
+          // No lanzar error, solo registrar silenciosamente
+          console.warn('Could not fetch unread messages count')
+          return
         }
+        
+        const data = await response.json()
+        setUnreadCount(data.unreadCount || 0)
       } catch (error) {
-        console.error('Error fetching unread messages count:', error)
+        // Silenciar error de fetch - puede ser que el servidor esté iniciándose
+        console.debug('Unread messages fetch temporarily unavailable')
       } finally {
         setLoading(false)
       }
     }
 
-    fetchUnreadCount()
+    // Esperar un momento antes de la primera llamada para que el servidor esté listo
+    const initialTimeout = setTimeout(fetchUnreadCount, 1000)
 
-    // Polling cada 10 segundos
-    const interval = setInterval(fetchUnreadCount, 10000)
+    // Polling cada 30 segundos (reducido de 10 para menos carga)
+    const interval = setInterval(fetchUnreadCount, 30000)
 
-    return () => clearInterval(interval)
+    return () => {
+      clearTimeout(initialTimeout)
+      clearInterval(interval)
+    }
   }, [user?.id])
 
   return { unreadCount, loading }

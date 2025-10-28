@@ -39,11 +39,18 @@ interface ClientProfileCardProps {
   onDelete: (id: string) => void
   onSelect?: (clientId: string) => void
   colorIndex: number
+  isExpanded?: boolean
 }
 
-export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, colorIndex }: ClientProfileCardProps) {
+export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, colorIndex, isExpanded = false }: ClientProfileCardProps) {
   // Si hay onSelect, el componente está en modo lista; si no, está en modo detalle
-  const [expanded, setExpanded] = useState(!onSelect)
+  // Si isExpanded es true, forzamos modo expandido y siempre mostramos detalles
+  const [expanded, setExpanded] = useState(!onSelect || isExpanded)
+
+  // Actualizar expanded cuando cambie isExpanded
+  if (isExpanded && !expanded) {
+    setExpanded(true)
+  }
 
   const handleCardClick = () => {
     if (onSelect) {
@@ -119,28 +126,34 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
 
   return (
     <div 
-      className={`relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 ${colorScheme.border} cursor-pointer`}
+      className={`relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border-2 ${colorScheme.border} ${
+        isExpanded 
+          ? 'scale-100 opacity-100' 
+          : 'cursor-pointer'
+      }`}
       style={{ 
-        animation: `fadeInUp 0.5s ease-out ${colorIndex * 0.05}s both`,
+        animation: isExpanded 
+          ? 'fadeInUp 0.5s ease-out both'
+          : `fadeInUp 0.5s ease-out ${colorIndex * 0.05}s both`,
       }}
-      onClick={handleCardClick}
+      onClick={isExpanded ? undefined : handleCardClick}
     >
       {/* Header con gradiente */}
-      <div className={`bg-gradient-to-r ${colorScheme.bg} p-6 relative`}>
+      <div className={`bg-gradient-to-r ${colorScheme.bg} ${isExpanded ? 'p-8' : 'p-6'} relative`}>
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             {/* Avatar */}
-            <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-4 ring-white/30">
-              <User className="w-8 h-8 text-white" />
+            <div className={`${isExpanded ? 'w-20 h-20' : 'w-16 h-16'} rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center ring-4 ring-white/30 transition-all duration-300`}>
+              <User className={`${isExpanded ? 'w-10 h-10' : 'w-8 h-8'} text-white`} />
             </div>
             
             {/* Nombre y nivel */}
             <div>
-              <h3 className="text-xl font-bold text-white mb-1">
+              <h3 className={`${isExpanded ? 'text-3xl' : 'text-xl'} font-bold text-white mb-2 transition-all duration-300`}>
                 {client.name}
               </h3>
-              <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border-2 ${clientLevel.color}`}>
-                <Award className="w-3 h-3" />
+              <div className={`inline-flex items-center gap-1 ${isExpanded ? 'px-4 py-2 text-sm' : 'px-3 py-1 text-xs'} rounded-full font-semibold border-2 ${clientLevel.color} transition-all duration-300`}>
+                <Award className={`${isExpanded ? 'w-4 h-4' : 'w-3 h-3'}`} />
                 {clientLevel.label}
               </div>
             </div>
@@ -167,16 +180,16 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
       </div>
 
       {/* Estadísticas rápidas */}
-      <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50">
-        <div className={`${colorScheme.stat} rounded-xl p-4 text-center`}>
-          <ShoppingBag className={`w-5 h-5 mx-auto mb-2 ${colorScheme.icon}`} />
-          <p className="text-2xl font-bold">{client.stats?.totalOrders || 0}</p>
-          <p className="text-xs font-medium opacity-75">Órdenes</p>
+      <div className={`grid grid-cols-2 gap-2 sm:gap-4 ${isExpanded ? 'p-4 sm:p-6' : 'p-4'} bg-gray-50 transition-all duration-300`}>
+        <div className={`${colorScheme.stat} rounded-xl ${isExpanded ? 'p-3 sm:p-6' : 'p-4'} text-center transition-all duration-300`}>
+          <ShoppingBag className={`${isExpanded ? 'w-6 h-6 sm:w-8 sm:h-8' : 'w-5 h-5'} mx-auto mb-2 ${colorScheme.icon}`} />
+          <p className={`${isExpanded ? 'text-2xl sm:text-3xl md:text-4xl' : 'text-2xl'} font-bold transition-all duration-300 break-words`}>{client.stats?.totalOrders || 0}</p>
+          <p className={`${isExpanded ? 'text-xs sm:text-sm' : 'text-xs'} font-medium opacity-75`}>Órdenes Totales</p>
         </div>
-        <div className={`${colorScheme.stat} rounded-xl p-4 text-center`}>
-          <DollarSign className={`w-5 h-5 mx-auto mb-2 ${colorScheme.icon}`} />
-          <p className="text-2xl font-bold">{formatPrice(client.stats?.totalSpent || 0)}</p>
-          <p className="text-xs font-medium opacity-75">Gastado</p>
+        <div className={`${colorScheme.stat} rounded-xl ${isExpanded ? 'p-3 sm:p-6' : 'p-4'} text-center transition-all duration-300`}>
+          <DollarSign className={`${isExpanded ? 'w-6 h-6 sm:w-8 sm:h-8' : 'w-5 h-5'} mx-auto mb-2 ${colorScheme.icon}`} />
+          <p className={`${isExpanded ? 'text-lg sm:text-2xl md:text-3xl lg:text-4xl' : 'text-2xl'} font-bold transition-all duration-300 break-words`}>{formatPrice(client.stats?.totalSpent || 0)}</p>
+          <p className={`${isExpanded ? 'text-xs sm:text-sm' : 'text-xs'} font-medium opacity-75`}>Total Gastado</p>
         </div>
       </div>
 
@@ -222,51 +235,90 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
         </div>
       </div>
 
-      {/* Botón de expandir/contraer */}
-      <div className="border-t border-gray-100">
-        <div className="w-full px-6 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
-          <span className="text-sm font-medium text-gray-700">
-            {expanded ? 'Ocultar detalles' : 'Ver más detalles'}
-          </span>
-          {expanded ? (
-            <ChevronUp className="w-4 h-4 text-gray-500" />
-          ) : (
-            <ChevronDown className="w-4 h-4 text-gray-500" />
+      {/* Botón de expandir/contraer - Solo en modo lista */}
+      {!isExpanded && (
+        <div className="border-t border-gray-100">
+          <div className="w-full px-6 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors">
+            <span className="text-sm font-medium text-gray-700">
+              {expanded ? 'Ocultar detalles' : 'Ver más detalles'}
+            </span>
+            {expanded ? (
+              <ChevronUp className="w-4 h-4 text-gray-500" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-500" />
+            )}
+          </div>
+
+          {expanded && (
+            <div className="px-6 pb-4 space-y-3 animate-fadeIn">
+              <div className="flex items-center gap-3 text-sm">
+                <Calendar className={`w-4 h-4 ${colorScheme.icon}`} />
+                <div>
+                  <p className="text-xs text-gray-500">Cliente desde</p>
+                  <p className="text-gray-800 font-medium">{formatDate(client.createdAt)}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 text-sm">
+                <User className={`w-4 h-4 ${colorScheme.icon}`} />
+                <div>
+                  <p className="text-xs text-gray-500">ID de Usuario</p>
+                  <p className="text-gray-800 font-mono text-xs truncate">{client.clerkUserId}</p>
+                </div>
+              </div>
+
+              {client.stats && client.stats.totalOrders > 0 && (
+                <div className="flex items-center gap-3 text-sm">
+                  <TrendingUp className={`w-4 h-4 ${colorScheme.icon}`} />
+                  <div>
+                    <p className="text-xs text-gray-500">Promedio por orden</p>
+                    <p className="text-gray-800 font-bold">
+                      {formatPrice(client.stats.totalSpent / client.stats.totalOrders)}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
+      )}
 
-        {expanded && (
-          <div className="px-6 pb-4 space-y-3 animate-fadeIn">
-            <div className="flex items-center gap-3 text-sm">
-              <Calendar className={`w-4 h-4 ${colorScheme.icon}`} />
+      {/* Detalles expandidos - Solo cuando isExpanded es true */}
+      {isExpanded && (
+        <div className="border-t border-gray-100 px-6 py-6 space-y-4 bg-gray-50 animate-fadeIn">
+          <h4 className="text-lg font-bold text-gray-800 mb-4">Información Detallada</h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex items-center gap-3 text-sm bg-white p-4 rounded-lg shadow-sm">
+              <Calendar className={`w-5 h-5 ${colorScheme.icon}`} />
               <div>
-                <p className="text-xs text-gray-500">Cliente desde</p>
-                <p className="text-gray-800 font-medium">{formatDate(client.createdAt)}</p>
+                <p className="text-xs text-gray-500 font-medium">Cliente desde</p>
+                <p className="text-gray-800 font-bold">{formatDate(client.createdAt)}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 text-sm">
-              <User className={`w-4 h-4 ${colorScheme.icon}`} />
-              <div>
-                <p className="text-xs text-gray-500">ID de Usuario</p>
+            <div className="flex items-center gap-3 text-sm bg-white p-4 rounded-lg shadow-sm">
+              <User className={`w-5 h-5 ${colorScheme.icon}`} />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-500 font-medium">ID de Usuario</p>
                 <p className="text-gray-800 font-mono text-xs truncate">{client.clerkUserId}</p>
               </div>
             </div>
 
             {client.stats && client.stats.totalOrders > 0 && (
-              <div className="flex items-center gap-3 text-sm">
-                <TrendingUp className={`w-4 h-4 ${colorScheme.icon}`} />
+              <div className="flex items-center gap-3 text-sm bg-white p-4 rounded-lg shadow-sm md:col-span-2">
+                <TrendingUp className={`w-5 h-5 ${colorScheme.icon}`} />
                 <div>
-                  <p className="text-xs text-gray-500">Promedio por orden</p>
-                  <p className="text-gray-800 font-bold">
+                  <p className="text-xs text-gray-500 font-medium">Promedio por orden</p>
+                  <p className="text-gray-800 font-bold text-lg">
                     {formatPrice(client.stats.totalSpent / client.stats.totalOrders)}
                   </p>
                 </div>
               </div>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes fadeInUp {
