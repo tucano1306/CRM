@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
 import ChatWindow from '@/components/chat/ChatWindow'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,25 +11,36 @@ export default function BuyerChatPage() {
   const [seller, setSeller] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchSellerInfo()
-  }, [])
-
-  const fetchSellerInfo = async () => {
+  const fetchSellerInfo = useCallback(async () => {
     try {
+      console.log('🔍 Buyer: Obteniendo información del vendedor...')
       // Obtener información del vendedor asignado
       const response = await fetch('/api/buyer/seller')
       const data = await response.json()
 
+      console.log('📦 Buyer: Respuesta del API:', data)
+
       if (data.success && data.seller) {
+        console.log('✅ Buyer: Vendedor encontrado:', {
+          id: data.seller.id,
+          name: data.seller.name,
+          email: data.seller.email,
+          clerkUserId: data.seller.clerkUserId
+        })
         setSeller(data.seller)
+      } else {
+        console.error('❌ Buyer: No se encontró vendedor:', data.error)
       }
     } catch (error) {
       console.error('Error fetching seller:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchSellerInfo()
+  }, [fetchSellerInfo])
 
   if (loading) {
     return (
@@ -81,15 +92,10 @@ export default function BuyerChatPage() {
 
         {/* Chat Window */}
         {seller && seller.clerkUserId ? (
-          <>
-            {/* ✅ AGREGAR ESTE LOG TEMPORAL */}
-            {console.log('Renderizando ChatWindow con receiverId:', seller.clerkUserId)}
-            
-            <ChatWindow 
-              receiverId={seller.clerkUserId}
-              receiverName={seller.name}
-            />
-          </>
+          <ChatWindow 
+            receiverId={seller.clerkUserId}
+            receiverName={seller.name}
+          />
         ) : (
           <Card>
             <CardContent className="p-12 text-center">

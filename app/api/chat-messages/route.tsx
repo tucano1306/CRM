@@ -99,8 +99,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { receiverId, message, orderId, idempotencyKey } = body
 
+    console.log('📨 POST /api/chat-messages:', {
+      senderId: userId,
+      receiverId,
+      message: message?.substring(0, 50),
+      orderId,
+      idempotencyKey
+    })
+
     // 2. Validar datos
     if (!receiverId || !message) {
+      console.error('❌ Faltan datos:', { receiverId, message })
       return NextResponse.json(
         { success: false, error: 'receiverId y message son requeridos' },
         { status: 400 }
@@ -150,6 +159,8 @@ export async function POST(request: NextRequest) {
     )
 
     // 6. ✅ Validar horarios de chat (si el sender es seller) CON TIMEOUT
+    // ⚠️ DESHABILITADO PARA DESARROLLO - Descomentar en producción si se necesita
+    /*
     if (senderSeller) {
       const now = new Date()
       const dayOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'][now.getDay()]
@@ -175,6 +186,7 @@ Día: ${dayOfWeek}, Hora actual: ${currentTime}`
         }, { status: 403 })
       }
     }
+    */
 
     // 7. ✅ Crear mensaje CON TIMEOUT
     const chatMessage = await withPrismaTimeout(

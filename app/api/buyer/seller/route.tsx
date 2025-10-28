@@ -45,6 +45,8 @@ export async function GET() {
 
     console.log('Cliente encontrado:', client?.id)
     console.log('Seller encontrado:', client?.seller?.id)
+    console.log('Seller authenticated_users count:', client?.seller?.authenticated_users?.length)
+    console.log('Seller authenticated_users:', JSON.stringify(client?.seller?.authenticated_users, null, 2))
 
     if (!client) {
       return NextResponse.json({ 
@@ -60,16 +62,34 @@ export async function GET() {
       })
     }
 
-    const sellerAuth = client.seller.authenticated_users[0]
-
-    if (!sellerAuth) {
+    if (!client.seller.authenticated_users || client.seller.authenticated_users.length === 0) {
+      console.error('❌ El seller no tiene authenticated_users')
       return NextResponse.json({ 
         success: false, 
-        error: 'El vendedor no tiene usuario autenticado' 
+        error: 'El vendedor no tiene usuario autenticado configurado' 
       })
     }
 
-    console.log('✅ Seller authId:', sellerAuth.authId)
+    // Buscar el authenticated_user con role SELLER (no el de seed)
+    // Priorizar los que NO empiezan con "auth_" (que son de Clerk real)
+    let sellerAuth = client.seller.authenticated_users.find(
+      auth => auth.authId.startsWith('user_')
+    )
+    
+    // Si no hay ninguno con user_, tomar el primero con role SELLER
+    if (!sellerAuth) {
+      sellerAuth = client.seller.authenticated_users.find(
+        auth => auth.role === 'SELLER'
+      )
+    }
+    
+    // Si aún no hay, tomar el primero
+    if (!sellerAuth) {
+      sellerAuth = client.seller.authenticated_users[0]
+    }
+
+    console.log('✅ Seller authId seleccionado:', sellerAuth.authId)
+    console.log('   De un total de:', client.seller.authenticated_users.length, 'opciones')
 
     return NextResponse.json({
       success: true,

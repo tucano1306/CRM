@@ -36,14 +36,15 @@ export default function NotificationBell() {
 
   // Debug: log cuando el componente renderiza
   useEffect(() => {
-    console.log('🔔 NotificationBell COMPRADOR rendered. Notifications:', notifications.length, 'Unread:', unreadCount)
-    console.log('🔔 Este es el componente del COMPRADOR (NotificationBell.tsx)')
+    // ⚠️ LOGS COMENTADOS PARA REDUCIR RUIDO EN DESARROLLO
+    // console.log('🔔 NotificationBell COMPRADOR rendered. Notifications:', notifications.length, 'Unread:', unreadCount)
+    // console.log('🔔 Este es el componente del COMPRADOR (NotificationBell.tsx)')
   }, [notifications, unreadCount])
 
   // 🆕 Detectar nueva notificación y abrir modal automáticamente
   useEffect(() => {
     if (newNotification) {
-      console.log('🔔 [AUTO MODAL] Nueva notificación recibida, abriendo modal...', newNotification)
+      // console.log('🔔 [AUTO MODAL] Nueva notificación recibida, abriendo modal...', newNotification)
       setSelectedNotification(newNotification)
       setIsOpen(true) // También abrir el dropdown
       
@@ -190,8 +191,9 @@ export default function NotificationBell() {
       <button
         ref={buttonRef}
         onClick={() => {
-          console.log('🔔 Bell clicked. Current isOpen:', isOpen, 'Will toggle to:', !isOpen)
-          console.log('🔔 Current notifications:', notifications.length)
+          // ⚠️ LOGS COMENTADOS PARA REDUCIR RUIDO EN DESARROLLO
+          // console.log('🔔 Bell clicked. Current isOpen:', isOpen, 'Will toggle to:', !isOpen)
+          // console.log('🔔 Current notifications:', notifications.length)
           setIsOpen(!isOpen)
         }}
         className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"

@@ -59,7 +59,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         // Hay notificaciones nuevas (y no es la primera carga)
         const newestNotification = notificationsData.find((n: Notification) => newIds.includes(n.id))
         if (newestNotification && !newestNotification.isRead) {
-          console.log('🔔 [NOTIFICATION PROVIDER] Nueva notificación detectada:', newestNotification)
+          // ⚠️ LOG COMENTADO PARA REDUCIR RUIDO EN DESARROLLO
+          // console.log('🔔 [NOTIFICATION PROVIDER] Nueva notificación detectada:', newestNotification)
           setNewNotification(newestNotification)
         }
       }

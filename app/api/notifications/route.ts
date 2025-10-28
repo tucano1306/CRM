@@ -30,13 +30,14 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    console.log('🔔 [NOTIFICATIONS] authUser found:', {
-      userId,
-      authUserId: authUser?.id,
-      sellersCount: authUser?.sellers?.length || 0,
-      clientsCount: authUser?.clients?.length || 0,
-      role: authUser?.role
-    })
+    // ⚠️ LOGS COMENTADOS PARA REDUCIR RUIDO EN DESARROLLO
+    // console.log('🔔 [NOTIFICATIONS] authUser found:', {
+    //   userId,
+    //   authUserId: authUser?.id,
+    //   sellersCount: authUser?.sellers?.length || 0,
+    //   clientsCount: authUser?.clients?.length || 0,
+    //   role: authUser?.role
+    // })
 
     // Si no existe authUser, crearlo automáticamente
     if (!authUser) {
@@ -86,7 +87,8 @@ export async function GET(request: NextRequest) {
     const isSeller = authUser.sellers.length > 0
     const isClient = authUser.clients.length > 0
 
-    console.log('🔔 [NOTIFICATIONS] User type:', { isSeller, isClient })
+    // ⚠️ LOGS COMENTADOS PARA REDUCIR RUIDO EN DESARROLLO
+    // console.log('🔔 [NOTIFICATIONS] User type:', { isSeller, isClient })
 
     // Si no tiene rol asignado, retornar array vacío en lugar de error
     if (!isSeller && !isClient) {
@@ -104,10 +106,10 @@ export async function GET(request: NextRequest) {
     
     if (isSeller && authUser.sellers[0]) {
       where.sellerId = authUser.sellers[0].id
-      console.log('🔔 [NOTIFICATIONS] Querying for seller:', authUser.sellers[0].id)
+      // console.log('🔔 [NOTIFICATIONS] Querying for seller:', authUser.sellers[0].id)
     } else if (isClient && authUser.clients[0]) {
       where.clientId = authUser.clients[0].id
-      console.log('🔔 [NOTIFICATIONS] Querying for client:', authUser.clients[0].id)
+      // console.log('🔔 [NOTIFICATIONS] Querying for client:', authUser.clients[0].id)
     }
 
     if (unreadOnly) {
@@ -120,16 +122,17 @@ export async function GET(request: NextRequest) {
       take: limit,
     })
 
-    console.log(`🔔 [NOTIFICATIONS] Found ${notifications.length} notifications for user`)
-    if (notifications.length > 0) {
-      console.log('🔔 [NOTIFICATIONS] Latest notification:', {
-        id: notifications[0].id,
-        type: notifications[0].type,
-        title: notifications[0].title,
-        isRead: notifications[0].isRead,
-        createdAt: notifications[0].createdAt
-      })
-    }
+    // ⚠️ LOGS COMENTADOS PARA REDUCIR RUIDO EN DESARROLLO
+    // console.log(`🔔 [NOTIFICATIONS] Found ${notifications.length} notifications for user`)
+    // if (notifications.length > 0) {
+    //   console.log('🔔 [NOTIFICATIONS] Latest notification:', {
+    //     id: notifications[0].id,
+    //     type: notifications[0].type,
+    //     title: notifications[0].title,
+    //     isRead: notifications[0].isRead,
+    //     createdAt: notifications[0].createdAt
+    //   })
+    // }
 
     // Contar no leídas
     const unreadWhere = { ...where, isRead: false }
@@ -137,7 +140,7 @@ export async function GET(request: NextRequest) {
       where: unreadWhere,
     })
 
-    console.log(`🔔 [NOTIFICATIONS] Unread count: ${unreadCount}`)
+    // console.log(`🔔 [NOTIFICATIONS] Unread count: ${unreadCount}`)
 
     return NextResponse.json({
       success: true,

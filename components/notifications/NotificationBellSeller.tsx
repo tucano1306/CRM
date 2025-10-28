@@ -35,7 +35,8 @@ export default function NotificationBellSeller() {
   // 🆕 Detectar nueva notificación y abrir modal automáticamente
   useEffect(() => {
     if (newNotification) {
-      console.log('🔔 [AUTO MODAL SELLER] Nueva notificación recibida, abriendo modal...', newNotification)
+      // ⚠️ LOG COMENTADO PARA REDUCIR RUIDO EN DESARROLLO
+      // console.log('🔔 [AUTO MODAL SELLER] Nueva notificación recibida, abriendo modal...', newNotification)
       setSelectedNotification(newNotification)
       setIsOpen(true) // También abrir el dropdown
       
