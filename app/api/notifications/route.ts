@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import crypto from 'crypto'
+import { z } from 'zod'
+import { validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 /**
  * GET /api/notifications
@@ -164,33 +167,42 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { sellerId, clientId, type, title, message, orderId, relatedId, metadata } = body
 
-    // Debe tener al menos un destinatario
-    if (!sellerId && !clientId) {
-      return NextResponse.json(
-        { error: 'Debe especificar sellerId o clientId' },
-        { status: 400 }
-      )
+    // ✅ Validar schema
+    const createNotificationSchema = z.object({
+      sellerId: z.string().uuid().optional(),
+      clientId: z.string().uuid().optional(),
+      type: z.string().min(1).max(50),
+      title: z.string().min(1).max(200),
+      message: z.string().min(1).max(1000),
+      orderId: z.string().uuid().optional(),
+      relatedId: z.string().uuid().optional(),
+      metadata: z.any().optional() // JSON field
+    }).refine(data => data.sellerId || data.clientId, {
+      message: 'Debe especificar sellerId o clientId'
+    })
+
+    const validation = validateSchema(createNotificationSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ error: 'Datos inválidos', details: validation.errors }, { status: 400 })
     }
 
-    if (!type || !title || !message) {
-      return NextResponse.json(
-        { error: 'Campos requeridos: type, title, message' },
-        { status: 400 }
-      )
-    }
+    const { sellerId, clientId, type, title, message, orderId, relatedId, metadata } = validation.data
+
+    // ✅ Sanitizar campos de texto
+    const sanitizedTitle = DOMPurify.sanitize(title.trim())
+    const sanitizedMessage = DOMPurify.sanitize(message.trim())
 
     const notification = await prisma.notification.create({
       data: {
         sellerId,
         clientId,
-        type,
-        title,
-        message,
+        type: type as any, // NotificationType enum
+        title: sanitizedTitle,
+        message: sanitizedMessage,
         orderId,
         relatedId,
-        metadata: metadata || null,
+        metadata: metadata || undefined,
       },
     })
 

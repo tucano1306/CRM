@@ -4,6 +4,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { notifyQuoteCreated } from '@/lib/notifications'
 import logger, { LogCategory } from '@/lib/logger'
+import { createQuoteSchema, validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 // GET - Obtener cotizaciones
 export async function GET() {
@@ -121,9 +123,13 @@ export async function POST(request: Request) {
 
     const body = await request.json()
 
-    // Validar datos
-    if (!body.clientId || !body.title || !body.items || body.items.length === 0) {
-      return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
+    // ✅ VALIDACIÓN CON ZOD
+    const validation = validateSchema(createQuoteSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ 
+        error: 'Datos inválidos',
+        details: validation.errors
+      }, { status: 400 })
     }
 
     // Obtener vendedor
@@ -138,12 +144,34 @@ export async function POST(request: Request) {
 
     const sellerId = authUser.sellers[0].id
 
+    // ✅ SANITIZACIÓN DE DATOS
+    const sanitizedData = {
+      ...validation.data,
+      title: DOMPurify.sanitize(validation.data.title.trim()),
+      description: validation.data.description ? 
+        DOMPurify.sanitize(validation.data.description.trim()) : undefined,
+      notes: validation.data.notes ? 
+        DOMPurify.sanitize(validation.data.notes.trim()) : undefined,
+      termsAndConditions: validation.data.termsAndConditions ? 
+        DOMPurify.sanitize(validation.data.termsAndConditions.trim()) : 
+        'Términos y condiciones estándar',
+      items: validation.data.items.map((item: any) => ({
+        ...item,
+        productName: DOMPurify.sanitize(item.productName.trim()),
+        description: item.description ? DOMPurify.sanitize(item.description.trim()) : undefined,
+        notes: item.notes ? DOMPurify.sanitize(item.notes.trim()) : undefined
+      })),
+      // validUntil: usar valor original validado o generar fecha +30 días
+      validUntil: validation.data.validUntil || 
+        new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    }
+
     // Calcular totales
-    const subtotal = body.items.reduce((sum: number, item: any) => {
+    const subtotal = sanitizedData.items.reduce((sum: number, item: any) => {
       return sum + (item.quantity * item.pricePerUnit)
     }, 0)
     
-    const discount = body.discount || 0
+    const discount = sanitizedData.discount || 0
     const tax = (subtotal - discount) * 0.10 // 10% de impuesto
     const totalAmount = subtotal - discount + tax
 
@@ -154,20 +182,20 @@ export async function POST(request: Request) {
     const quote = await prisma.quote.create({
       data: {
         quoteNumber,
-        clientId: body.clientId,
+        clientId: sanitizedData.clientId,
         sellerId,
-        title: body.title,
-        description: body.description,
+        title: sanitizedData.title,
+        description: sanitizedData.description,
         subtotal,
         tax,
         discount,
         totalAmount,
-        validUntil: new Date(body.validUntil),
-        notes: body.notes,
-        termsAndConditions: body.termsAndConditions || 'Términos y condiciones estándar',
+        validUntil: new Date(sanitizedData.validUntil),
+        notes: sanitizedData.notes,
+        termsAndConditions: sanitizedData.termsAndConditions,
         status: 'DRAFT',
         items: {
-          create: body.items.map((item: any) => ({
+          create: sanitizedData.items.map((item: any) => ({
             productId: item.productId,
             productName: item.productName,
             description: item.description,
@@ -192,7 +220,7 @@ export async function POST(request: Request) {
     // 🔔 ENVIAR NOTIFICACIÓN AL COMPRADOR
     try {
       await notifyQuoteCreated(
-        body.clientId,
+        sanitizedData.clientId,
         quote.id,
         quoteNumber,
         Number(totalAmount)
@@ -201,7 +229,7 @@ export async function POST(request: Request) {
         LogCategory.API,
         'Quote creation notification sent to client',
         {
-          clientId: body.clientId,
+          clientId: sanitizedData.clientId,
           quoteId: quote.id,
           quoteNumber
         }

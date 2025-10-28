@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { PrismaClient } from '@prisma/client'
+import { addToCartSchema, validateSchema } from '@/lib/validations'
 
 const prisma = new PrismaClient()
 
@@ -54,6 +55,7 @@ export async function GET() {
 }
 
 // POST /api/buyer/cart - Agregar producto al carrito
+// ✅ CON VALIDACIÓN ZOD
 export async function POST(request: Request) {
   try {
     const { userId } = await auth()
@@ -63,15 +65,21 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const productId = body.productId
-    const quantity = body.quantity || 1
 
-    if (!productId) {
+    // ✅ VALIDACIÓN CON ZOD
+    const validation = validateSchema(addToCartSchema, body)
+    
+    if (!validation.success) {
       return NextResponse.json(
-        { error: 'productId es requerido' },
+        { 
+          error: 'Datos inválidos',
+          details: validation.errors
+        },
         { status: 400 }
       )
     }
+
+    const { productId, quantity } = validation.data
 
     // Verificar que el producto existe y tiene stock
     const product = await prisma.product.findUnique({

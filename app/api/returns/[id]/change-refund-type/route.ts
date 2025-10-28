@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import { z } from 'zod'
+
+// ✅ SCHEMA INLINE
+const changeRefundTypeSchema = z.object({
+  refundType: z.enum(['CREDIT', 'REFUND', 'REPLACEMENT'], {
+    message: 'Tipo de reembolso debe ser: CREDIT, REFUND, o REPLACEMENT'
+  })
+})
 
 export async function POST(
   request: NextRequest,
@@ -18,17 +26,20 @@ export async function POST(
     }
 
     const { id } = params
-    const { refundType } = await request.json()
-    console.log('🔍 [CHANGE-REFUND-TYPE] Return ID:', id, 'New Type:', refundType)
+    const body = await request.json()
 
-    // Validar tipo de reembolso
-    if (!['CREDIT', 'REFUND'].includes(refundType)) {
-      console.log('❌ [CHANGE-REFUND-TYPE] Invalid refund type:', refundType)
-      return NextResponse.json(
-        { success: false, error: 'Tipo de reembolso inválido' },
-        { status: 400 }
-      )
+    // ✅ VALIDACIÓN
+    const validation = changeRefundTypeSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json({ 
+        success: false,
+        error: 'Datos inválidos',
+        details: validation.error.issues.map(i => i.message)
+      }, { status: 400 })
     }
+
+    const { refundType } = validation.data
+    console.log('🔍 [CHANGE-REFUND-TYPE] Return ID:', id, 'New Type:', refundType)
 
     // Verificar que el usuario sea el cliente
     const authUser = await prisma.authenticated_users.findUnique({

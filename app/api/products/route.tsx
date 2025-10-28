@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
+import { createProductSchema, validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 // GET /api/products - Obtener todos los productos
 // ✅ CON TIMEOUT DE 5 SEGUNDOS
@@ -67,7 +69,7 @@ export async function GET(request: Request) {
 }
 
 // POST /api/products - Crear nuevo producto
-// ✅ CON TIMEOUT DE 5 SEGUNDOS
+// ✅ CON TIMEOUT DE 5 SEGUNDOS Y VALIDACIÓN ZOD
 export async function POST(request: Request) {
   try {
     const { userId } = await auth()
@@ -77,49 +79,29 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, description, unit, category, price, stock, sku } = body
 
-    console.log('📦 [CREATE PRODUCT] Datos recibidos:', { name, description, unit, category, price, stock, sku })
+    console.log('📦 [CREATE PRODUCT] Datos recibidos:', body)
 
-    // Validación
-    if (!name || !unit || price === undefined || stock === undefined) {
-      console.error('❌ [CREATE PRODUCT] Validación fallida - campos faltantes')
-      return NextResponse.json(
-        { error: 'Faltan campos requeridos: name, unit, price, stock son obligatorios' },
-        { status: 400 }
-      )
-    }
-
-    // Validar que price y stock sean números válidos
-    const priceNum = parseFloat(price)
-    const stockNum = parseInt(stock)
-
-    if (isNaN(priceNum) || priceNum < 0) {
-      console.error('❌ [CREATE PRODUCT] Precio inválido:', price)
-      return NextResponse.json(
-        { error: 'El precio debe ser un número válido mayor o igual a 0' },
-        { status: 400 }
-      )
-    }
-
-    if (isNaN(stockNum) || stockNum < 0) {
-      console.error('❌ [CREATE PRODUCT] Stock inválido:', stock)
-      return NextResponse.json(
-        { error: 'El stock debe ser un número entero válido mayor o igual a 0' },
-        { status: 400 }
-      )
-    }
-
-    // Validar categoría
-    const validCategories = ['CARNES', 'EMBUTIDOS', 'SALSAS', 'LACTEOS', 'GRANOS', 'VEGETALES', 'CONDIMENTOS', 'BEBIDAS', 'OTROS']
-    const productCategory = category || 'OTROS'
+    // ✅ VALIDACIÓN CON ZOD
+    const validation = validateSchema(createProductSchema, body)
     
-    if (!validCategories.includes(productCategory)) {
-      console.error('❌ [CREATE PRODUCT] Categoría inválida:', category)
+    if (!validation.success) {
+      console.error('❌ [CREATE PRODUCT] Validación fallida:', validation.errors)
       return NextResponse.json(
-        { error: `Categoría inválida. Debe ser una de: ${validCategories.join(', ')}` },
+        { 
+          error: 'Datos inválidos',
+          details: validation.errors
+        },
         { status: 400 }
       )
+    }
+
+    // ✅ SANITIZACIÓN DE INPUTS
+    const sanitizedData = {
+      ...validation.data,
+      name: DOMPurify.sanitize(validation.data.name.trim()),
+      description: validation.data.description ? DOMPurify.sanitize(validation.data.description.trim()) : undefined,
+      sku: validation.data.sku ? DOMPurify.sanitize(validation.data.sku.trim()) : undefined
     }
 
     console.log('✅ [CREATE PRODUCT] Validaciones pasadas, creando producto...')
@@ -128,14 +110,14 @@ export async function POST(request: Request) {
     const product = await withPrismaTimeout(
       () => prisma.product.create({
         data: {
-          name: name.trim(),
-          description: description?.trim() || '',
-          unit,
-          category: productCategory,
-          price: priceNum,
-          stock: stockNum,
-          sku: sku?.trim() || null,
-          isActive: true,
+          name: sanitizedData.name,
+          description: sanitizedData.description || '',
+          unit: sanitizedData.unit,
+          price: sanitizedData.price,
+          stock: sanitizedData.stock,
+          sku: sanitizedData.sku,
+          imageUrl: sanitizedData.imageUrl || null,
+          isActive: sanitizedData.isActive ?? true,
         },
       })
     )

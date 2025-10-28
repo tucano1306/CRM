@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@clerk/nextjs/server'
+import { z } from 'zod'
+import { validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 /**
  * PATCH /api/buyer/cart/items/[itemId]/note
@@ -36,15 +39,21 @@ export async function PATCH(
 
     // 3. Validar datos del body
     const body = await request.json()
-    const { note } = body
 
-    // Validar que note sea string o null/undefined
-    if (note !== null && note !== undefined && typeof note !== 'string') {
-      return NextResponse.json(
-        { success: false, error: 'La nota debe ser texto o null' },
-        { status: 400 }
-      )
+    // ✅ Validar schema
+    const updateNoteSchema = z.object({
+      note: z.string().max(500).nullable()
+    })
+
+    const validation = validateSchema(updateNoteSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ success: false, error: 'Datos inválidos', details: validation.errors }, { status: 400 })
     }
+
+    const { note } = validation.data
+
+    // ✅ Sanitizar nota
+    const sanitizedNote = note ? DOMPurify.sanitize(note.trim()) : null
 
     // 4. Verificar que el item existe y obtener el cart
     const cartItem = await prisma.cartItem.findUnique({
@@ -79,7 +88,7 @@ export async function PATCH(
     const updatedItem = await (prisma.cartItem as any).update({
       where: { id: itemId },
       data: { 
-        itemNote: note || null,
+        itemNote: sanitizedNote,
         updatedAt: new Date()
       },
       include: {

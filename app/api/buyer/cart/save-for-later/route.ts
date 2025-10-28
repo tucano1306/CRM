@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 
 // POST - Guardar carrito para más tarde
+// ✅ No requiere body, guarda el carrito actual automáticamente
 export async function POST(request: Request) {
   try {
     const { userId } = await auth()

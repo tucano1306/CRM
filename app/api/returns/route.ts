@@ -2,6 +2,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { createReturnSchema, validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 const prisma = new PrismaClient()
 
@@ -123,14 +125,29 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { orderId, reason, reasonDescription, refundType, items, notes } = body
 
-    // Validar campos requeridos
-    if (!orderId || !reason || !refundType || !items || items.length === 0) {
-      return NextResponse.json(
-        { error: 'Faltan campos requeridos' },
-        { status: 400 }
-      )
+    // ✅ VALIDACIÓN CON ZOD
+    const validation = validateSchema(createReturnSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ 
+        error: 'Datos inválidos',
+        details: validation.errors
+      }, { status: 400 })
+    }
+
+    const { orderId, reason, reasonDescription, refundType, items, notes } = validation.data
+
+    // ✅ SANITIZACIÓN
+    const sanitizedData = {
+      orderId,
+      reason,
+      reasonDescription: reasonDescription ? DOMPurify.sanitize(reasonDescription.trim()) : undefined,
+      refundType,
+      items: items.map((item: any) => ({
+        ...item,
+        notes: item.notes ? DOMPurify.sanitize(item.notes.trim()) : undefined
+      })),
+      notes: notes ? DOMPurify.sanitize(notes.trim()) : undefined
     }
 
     // Buscar usuario autenticado (cliente)
@@ -147,7 +164,7 @@ export async function POST(request: Request) {
 
     // Verificar que la orden pertenece al cliente
     const order = await prisma.order.findUnique({
-      where: { id: orderId },
+      where: { id: sanitizedData.orderId },
       include: {
         orderItems: true,
         seller: true
@@ -162,7 +179,7 @@ export async function POST(request: Request) {
     let totalReturnAmount = 0
     const returnItems = []
 
-    for (const item of items) {
+    for (const item of sanitizedData.items) {
       const orderItem = order.orderItems.find(oi => oi.id === item.orderItemId)
       if (!orderItem) {
         return NextResponse.json(

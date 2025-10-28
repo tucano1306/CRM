@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { updateProductSchema, validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 // GET - Obtener producto por ID con estadísticas
 export async function GET(
@@ -89,6 +91,7 @@ export async function GET(
 }
 
 // PUT - Actualizar producto
+// ✅ CON VALIDACIÓN ZOD
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -96,37 +99,54 @@ export async function PUT(
   const { id: productId } = await params
   try {
     const body = await request.json()
-    const { price, stock } = body
 
-    // Validar valores positivos si se actualizan
-    if (price !== undefined && price < 0) {
+    // ✅ VALIDACIÓN CON ZOD
+    const validation = validateSchema(updateProductSchema, body)
+    
+    if (!validation.success) {
       return NextResponse.json(
         { 
           success: false,
-          error: 'El precio debe ser un valor positivo' 
+          error: 'Datos inválidos',
+          details: validation.errors
         },
         { status: 400 }
       )
     }
 
-    if (stock !== undefined && stock < 0) {
-      return NextResponse.json(
-        { 
-          success: false,
-          error: 'El stock debe ser un valor positivo' 
-        },
-        { status: 400 }
-      )
+    // ✅ SANITIZACIÓN
+    const sanitizedData: any = {}
+    
+    if (validation.data.name) {
+      sanitizedData.name = DOMPurify.sanitize(validation.data.name.trim())
     }
-
-    // Convertir tipos si es necesario
-    const updateData: any = { ...body }
-    if (price !== undefined) updateData.price = parseFloat(price.toString())
-    if (stock !== undefined) updateData.stock = parseInt(stock.toString())
+    if (validation.data.description !== undefined) {
+      sanitizedData.description = validation.data.description ? 
+        DOMPurify.sanitize(validation.data.description.trim()) : ''
+    }
+    if (validation.data.unit) {
+      sanitizedData.unit = validation.data.unit
+    }
+    if (validation.data.price !== undefined) {
+      sanitizedData.price = validation.data.price
+    }
+    if (validation.data.stock !== undefined) {
+      sanitizedData.stock = validation.data.stock
+    }
+    if (validation.data.sku !== undefined) {
+      sanitizedData.sku = validation.data.sku ? 
+        DOMPurify.sanitize(validation.data.sku.trim()) : null
+    }
+    if (validation.data.imageUrl !== undefined) {
+      sanitizedData.imageUrl = validation.data.imageUrl || null
+    }
+    if (validation.data.isActive !== undefined) {
+      sanitizedData.isActive = validation.data.isActive
+    }
 
     const updatedProduct = await prisma.product.update({
       where: { id: productId },
-      data: updateData,
+      data: sanitizedData,
       include: {
         sellers: {
           include: {

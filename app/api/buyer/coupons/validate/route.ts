@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import { z } from 'zod'
+import { validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 // POST - Validar cupón
 export async function POST(request: NextRequest) {
@@ -11,15 +14,26 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { code, cartTotal } = body
 
-    if (!code) {
-      return NextResponse.json({ error: 'Código de cupón requerido' }, { status: 400 })
+    // ✅ Validar schema
+    const validateCouponSchema = z.object({
+      code: z.string().min(1).max(50),
+      cartTotal: z.number().min(0) // Required para validaciones
+    })
+
+    const validation = validateSchema(validateCouponSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ error: 'Datos inválidos', details: validation.errors }, { status: 400 })
     }
+
+    const { code, cartTotal } = validation.data
+
+    // ✅ Sanitizar código
+    const sanitizedCode = DOMPurify.sanitize(code.trim()).toUpperCase()
 
     // Buscar cupón
     const coupon = await prisma.coupon.findUnique({
-      where: { code: code.toUpperCase() }
+      where: { code: sanitizedCode }
     })
 
     if (!coupon) {

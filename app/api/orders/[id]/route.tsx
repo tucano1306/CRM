@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { PrismaClient } from '@prisma/client'
+import { updateOrderSchema, validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 const prisma = new PrismaClient()
 
@@ -69,17 +71,17 @@ export async function PATCH(
     const params = await context.params
     const orderId = params.id
     const body = await request.json()
-    const newStatus = body.status
-    const notes = body.notes
 
-    // Validar estado
-    const validStatuses = ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELED']
-    if (newStatus && !validStatuses.includes(newStatus)) {
-      return NextResponse.json(
-        { error: 'Estado inválido' },
-        { status: 400 }
-      )
+    // ✅ VALIDACIÓN CON ZOD
+    const validation = validateSchema(updateOrderSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ 
+        error: 'Datos inválidos',
+        details: validation.errors
+      }, { status: 400 })
     }
+
+    const { status, notes, deliveryAddress, deliveryInstructions } = validation.data
 
     // Verificar que la orden existe
     const existingOrder = await prisma.order.findUnique({
@@ -93,18 +95,23 @@ export async function PATCH(
       )
     }
 
-    // Construir objeto de actualización
-    const updateData: {
-      status?: 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELED'
-      notes?: string | null
-    } = {}
+    // ✅ CONSTRUIR OBJETO DE ACTUALIZACIÓN CON SANITIZACIÓN
+    const updateData: any = {}
     
-    if (newStatus) {
-      updateData.status = newStatus as 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELED'
+    if (status) {
+      updateData.status = status
     }
     
     if (notes !== undefined) {
-      updateData.notes = notes
+      updateData.notes = notes ? DOMPurify.sanitize(notes.trim()) : null
+    }
+    
+    if (deliveryAddress !== undefined) {
+      updateData.deliveryAddress = DOMPurify.sanitize(deliveryAddress.trim())
+    }
+    
+    if (deliveryInstructions !== undefined) {
+      updateData.deliveryInstructions = DOMPurify.sanitize(deliveryInstructions.trim())
     }
 
     const updatedOrder = await prisma.order.update({

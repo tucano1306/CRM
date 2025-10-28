@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import prisma from '@/lib/prisma'
+import { z } from 'zod'
+import { validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 interface RouteParams {
   params: Promise<{
@@ -74,14 +77,26 @@ export async function POST(
 
     const { id } = await params
     const body = await request.json()
-    const { changeType, oldValue, newValue, changedBy } = body
 
-    if (!changeType || !newValue) {
-      return NextResponse.json(
-        { error: 'changeType y newValue son requeridos' },
-        { status: 400 }
-      )
+    // ✅ Validar schema
+    const createHistorySchema = z.object({
+      changeType: z.string().min(1).max(100),
+      oldValue: z.string().max(500).optional(),
+      newValue: z.string().min(1).max(500),
+      changedBy: z.string().uuid().optional()
+    })
+
+    const validation = validateSchema(createHistorySchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ error: 'Datos inválidos', details: validation.errors }, { status: 400 })
     }
+
+    const { changeType, oldValue, newValue, changedBy } = validation.data
+
+    // ✅ Sanitizar campos de texto
+    const sanitizedChangeType = DOMPurify.sanitize(changeType.trim())
+    const sanitizedNewValue = DOMPurify.sanitize(newValue.trim())
+    const sanitizedOldValue = oldValue ? DOMPurify.sanitize(oldValue.trim()) : null
 
     // Verificar que el producto existe
     const product = await prisma.product.findUnique({
@@ -99,9 +114,9 @@ export async function POST(
     const historyEntry = await prisma.productHistory.create({
       data: {
         productId: id,
-        changeType,
-        oldValue: oldValue || null,
-        newValue,
+        changeType: sanitizedChangeType,
+        oldValue: sanitizedOldValue,
+        newValue: sanitizedNewValue,
         changedBy: changedBy || userId,
         changedAt: new Date()
       }

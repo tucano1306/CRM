@@ -2,6 +2,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { useCreditNoteSchema, validateSchema } from '@/lib/validations'
 
 const prisma = new PrismaClient()
 
@@ -18,10 +19,16 @@ export async function POST(
     const { id } = await params
     const body = await request.json()
 
-    // Validar
-    if (!body.orderId || !body.amountToUse) {
-      return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
+    // ✅ VALIDACIÓN CON ZOD
+    const validation = validateSchema(useCreditNoteSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ 
+        error: 'Datos inválidos',
+        details: validation.errors
+      }, { status: 400 })
     }
+
+    const { orderId, amountUsed: amountToUse } = validation.data
 
     // Verificar que la nota de crédito existe y está activa
     const creditNote = await prisma.creditNote.findUnique({
@@ -36,7 +43,7 @@ export async function POST(
       return NextResponse.json({ error: 'Nota de crédito inactiva' }, { status: 400 })
     }
 
-    if (creditNote.balance < body.amountToUse) {
+    if (creditNote.balance < amountToUse) {
       return NextResponse.json({ error: 'Saldo insuficiente en la nota de crédito' }, { status: 400 })
     }
 
@@ -47,7 +54,7 @@ export async function POST(
 
     // Verificar que la orden existe
     const order = await prisma.order.findUnique({
-      where: { id: body.orderId }
+      where: { id: orderId }
     })
 
     if (!order) {

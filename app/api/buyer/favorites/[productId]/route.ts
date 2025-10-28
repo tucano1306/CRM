@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 
 // POST - Agregar a favoritos
+// ✅ No requiere body, solo productId en params
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ productId: string }> }
@@ -67,6 +68,7 @@ export async function POST(
 }
 
 // DELETE - Eliminar de favoritos
+// ✅ No requiere body, solo productId en params
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ productId: string }> }

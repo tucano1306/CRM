@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 /**
  * PATCH /api/notifications/[id]
  * Marcar notificación como leída
+ * ✅ No requiere body, solo marca isRead = true
  */
 export async function PATCH(
   request: NextRequest,
@@ -87,6 +88,7 @@ export async function PATCH(
 /**
  * DELETE /api/notifications/[id]
  * Eliminar una notificación
+ * ✅ No requiere body, solo elimina por ID
  */
 export async function DELETE(
   request: NextRequest,

@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { notifyQuoteUpdated } from '@/lib/notifications'
 import logger, { LogCategory } from '@/lib/logger'
+import { updateQuoteSchema, acceptQuoteSchema, rejectQuoteSchema, validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 // GET - Obtener cotización específica
 export async function GET(
@@ -67,9 +69,31 @@ export async function PATCH(
       return NextResponse.json({ error: 'Cotización no encontrada' }, { status: 404 })
     }
 
-    // No permitir editar si ya fue enviada o convertida (excepto cambio de estado por comprador)
-    const isStatusChange = body.status && ['ACCEPTED', 'REJECTED'].includes(body.status)
+    // ✅ DETERMINAR TIPO DE OPERACIÓN Y VALIDAR
+    const isAccept = body.status === 'ACCEPTED'
+    const isReject = body.status === 'REJECTED'
+    const isStatusChange = isAccept || isReject
     
+    let validation
+    
+    if (isAccept) {
+      validation = validateSchema(acceptQuoteSchema, body)
+    } else if (isReject) {
+      validation = validateSchema(rejectQuoteSchema, body)
+    } else {
+      validation = validateSchema(updateQuoteSchema, body)
+    }
+    
+    if (!validation.success) {
+      return NextResponse.json({ 
+        error: 'Datos inválidos',
+        details: validation.errors
+      }, { status: 400 })
+    }
+
+    const validatedData = validation.data
+
+    // No permitir editar si ya fue enviada o convertida (excepto cambio de estado por comprador)
     if (['SENT', 'ACCEPTED', 'CONVERTED'].includes(existingQuote.status) && !isStatusChange) {
       return NextResponse.json(
         { error: 'No se puede editar una cotización enviada o convertida' },
@@ -77,30 +101,52 @@ export async function PATCH(
       )
     }
 
-    // Preparar datos de actualización
+    // ✅ PREPARAR DATOS DE ACTUALIZACIÓN CON SANITIZACIÓN
     const updateData: any = {}
 
-    if (body.title !== undefined) updateData.title = body.title
-    if (body.description !== undefined) updateData.description = body.description
-    if (body.validUntil !== undefined) updateData.validUntil = new Date(body.validUntil)
-    if (body.notes !== undefined) updateData.notes = body.notes
-    if (body.termsAndConditions !== undefined) updateData.termsAndConditions = body.termsAndConditions
-    if (body.discount !== undefined) updateData.discount = body.discount
+    // Solo para updates normales (no accept/reject)
+    if (!isStatusChange) {
+      if ('title' in validatedData && validatedData.title !== undefined) {
+        updateData.title = DOMPurify.sanitize(validatedData.title.trim())
+      }
+      if ('description' in validatedData && validatedData.description !== undefined) {
+        updateData.description = DOMPurify.sanitize(validatedData.description.trim())
+      }
+      if ('validUntil' in validatedData && validatedData.validUntil !== undefined) {
+        updateData.validUntil = new Date(validatedData.validUntil)
+      }
+      if ('notes' in validatedData && validatedData.notes !== undefined) {
+        updateData.notes = DOMPurify.sanitize(validatedData.notes.trim())
+      }
+      if ('termsAndConditions' in validatedData && validatedData.termsAndConditions !== undefined) {
+        updateData.termsAndConditions = DOMPurify.sanitize(validatedData.termsAndConditions.trim())
+      }
+      if ('discount' in validatedData && validatedData.discount !== undefined) {
+        updateData.discount = validatedData.discount
+      }
+    }
     
     // Manejar cambio de estado (aceptar/rechazar por comprador)
     if (isStatusChange) {
-      updateData.status = body.status
+      if ('status' in validatedData) {
+        updateData.status = validatedData.status
+      }
+      
+      // ✅ SANITIZAR REASON SI EXISTE (para reject)
+      if (isReject && 'reason' in validatedData && validatedData.reason) {
+        updateData.rejectionReason = DOMPurify.sanitize(validatedData.reason.trim())
+      }
       
       // Crear notificación para el vendedor
       if (existingQuote.sellerId) {
-        const statusMessage = body.status === 'ACCEPTED' 
+        const statusMessage = isAccept 
           ? `✅ ha aceptado la cotización #${existingQuote.quoteNumber} por $${existingQuote.totalAmount.toFixed(2)}`
           : `❌ ha rechazado la cotización #${existingQuote.quoteNumber}`
         
         await prisma.notification.create({
           data: {
-            type: body.status === 'ACCEPTED' ? 'QUOTE_ACCEPTED' : 'QUOTE_REJECTED',
-            title: body.status === 'ACCEPTED' ? '✅ Cotización Aceptada' : '❌ Cotización Rechazada',
+            type: isAccept ? 'QUOTE_ACCEPTED' : 'QUOTE_REJECTED',
+            title: isAccept ? '✅ Cotización Aceptada' : '❌ Cotización Rechazada',
             message: `El cliente ${statusMessage}`,
             sellerId: existingQuote.sellerId,
             relatedId: existingQuote.id,
@@ -110,19 +156,27 @@ export async function PATCH(
       }
     }
 
-    // Si se actualizan items
-    if (body.items && Array.isArray(body.items)) {
+    // Si se actualizan items (solo en updates normales, no en accept/reject)
+    if (!isStatusChange && 'items' in validatedData && validatedData.items && Array.isArray(validatedData.items)) {
       // Eliminar items antiguos
       await prisma.quoteItem.deleteMany({
         where: { quoteId: id }
       })
 
+      // ✅ SANITIZAR ITEMS
+      const sanitizedItems = validatedData.items.map((item: any) => ({
+        ...item,
+        productName: DOMPurify.sanitize(item.productName.trim()),
+        description: item.description ? DOMPurify.sanitize(item.description.trim()) : undefined,
+        notes: item.notes ? DOMPurify.sanitize(item.notes.trim()) : undefined
+      }))
+
       // Calcular nuevos totales
-      const subtotal = body.items.reduce((sum: number, item: any) => {
+      const subtotal = sanitizedItems.reduce((sum: number, item: any) => {
         return sum + (item.quantity * item.pricePerUnit)
       }, 0)
       
-      const discount = body.discount || existingQuote.discount
+      const discount = ('discount' in validatedData && validatedData.discount) || existingQuote.discount
       const tax = (subtotal - discount) * 0.10
       const totalAmount = subtotal - discount + tax
 
@@ -131,7 +185,7 @@ export async function PATCH(
       updateData.totalAmount = totalAmount
 
       updateData.items = {
-        create: body.items.map((item: any) => ({
+        create: sanitizedItems.map((item: any) => ({
           productId: item.productId,
           productName: item.productName,
           description: item.description,

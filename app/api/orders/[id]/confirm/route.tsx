@@ -2,13 +2,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
+import DOMPurify from 'isomorphic-dompurify'
+import { z } from 'zod'
 
 const prisma = new PrismaClient()
+
+// ✅ SCHEMA DE VALIDACIÓN
+const confirmOrderSchema = z.object({
+  idempotencyKey: z.string().uuid('Idempotency key debe ser UUID válido').optional(),
+  notes: z.string().max(500, 'Notas no pueden exceder 500 caracteres').optional()
+})
 
 /**
  * PUT /api/orders/[id]/confirm
  * Confirmar orden por el vendedor (PENDING → CONFIRMED)
  * Solo el vendedor asignado puede confirmar
+ * ✅ CON VALIDACIÓN ZOD
  */
 export async function PUT(
   request: NextRequest,
@@ -26,7 +35,24 @@ export async function PUT(
 
     const { id: orderId } = await params
     const body = await request.json()
-    const { idempotencyKey } = body
+
+    // ✅ VALIDACIÓN
+    const validation = confirmOrderSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Datos inválidos',
+          details: validation.error.issues.map(i => i.message)
+        },
+        { status: 400 }
+      )
+    }
+
+    const { idempotencyKey, notes } = validation.data
+    
+    // ✅ SANITIZACIÓN
+    const sanitizedNotes = notes ? DOMPurify.sanitize(notes.trim()) : undefined
 
     // 2. Validar idempotencyKey (opcional)
     if (idempotencyKey) {

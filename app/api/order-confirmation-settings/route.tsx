@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import { z } from 'zod'
+import { validateSchema } from '@/lib/validations'
+import { OrderConfirmationMethod } from '@prisma/client'
 
 // PUT /api/order-confirmation-settings - Update client's confirmation method
 export async function PUT(request: Request) {
@@ -9,15 +12,30 @@ export async function PUT(request: Request) {
     if (!userId) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
     const body = await request.json()
-    const { clientId, method, idempotencyKey } = body
 
-    if (!clientId || !method) {
-      return NextResponse.json({ error: 'clientId y method son requeridos' }, { status: 400 })
+    // ✅ Validar schema
+    const updateSettingsSchema = z.object({
+      clientId: z.string().uuid(),
+      method: z.enum(['WHATSAPP', 'PHONE', 'EMAIL']),
+      idempotencyKey: z.string().optional()
+    })
+
+    const validation = validateSchema(updateSettingsSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ error: 'Datos inválidos', details: validation.errors }, { status: 400 })
     }
+
+    const { clientId, method, idempotencyKey } = validation.data
 
     // Note: clients don't store idempotencyKey in schema; callers should ensure idempotency
 
-    const updated = await prisma.client.update({ where: { id: clientId }, data: { orderConfirmationMethod: method, orderConfirmationEnabled: true } })
+    const updated = await prisma.client.update({ 
+      where: { id: clientId }, 
+      data: { 
+        orderConfirmationMethod: method as OrderConfirmationMethod,
+        orderConfirmationEnabled: true 
+      } 
+    })
 
     // Optionally persist idempotencyKey on client (if column exists)
     try {

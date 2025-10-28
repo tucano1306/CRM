@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient, DayOfWeek } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
+import { z } from 'zod'
+import { validateSchema } from '@/lib/validations'
 
 const prisma = new PrismaClient()
 
@@ -109,33 +111,23 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { schedules } = body
 
-    if (!schedules || !Array.isArray(schedules)) {
-      return NextResponse.json(
-        { success: false, error: 'schedules debe ser un array' },
-        { status: 400 }
-      )
+    // ✅ Validar schema
+    const chatScheduleSchema = z.object({
+      schedules: z.array(z.object({
+        dayOfWeek: z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']),
+        startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de tiempo inválido. Use HH:MM'),
+        endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de tiempo inválido. Use HH:MM'),
+        isActive: z.boolean().optional()
+      })).min(1, 'Debe proporcionar al menos un horario')
+    })
+
+    const validation = validateSchema(chatScheduleSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ success: false, error: 'Datos inválidos', details: validation.errors }, { status: 400 })
     }
 
-    // 3. Validar formato de cada horario
-    for (const schedule of schedules) {
-      if (!schedule.dayOfWeek || !schedule.startTime || !schedule.endTime) {
-        return NextResponse.json(
-          { success: false, error: 'Cada horario debe tener dayOfWeek, startTime y endTime' },
-          { status: 400 }
-        )
-      }
-
-      // Validar formato de tiempo HH:MM
-      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
-      if (!timeRegex.test(schedule.startTime) || !timeRegex.test(schedule.endTime)) {
-        return NextResponse.json(
-          { success: false, error: 'Formato de tiempo inválido. Use HH:MM (ej: 08:00)' },
-          { status: 400 }
-        )
-      }
-    }
+    const { schedules } = validation.data
 
     // 4. Usar transacción para actualizar todos los horarios
     const result = await prisma.$transaction(async (tx) => {
@@ -192,6 +184,7 @@ export async function PUT(request: NextRequest) {
 /**
  * DELETE /api/chat-schedules
  * Eliminar todos los horarios de chat de un vendedor
+ * ✅ No requiere body, elimina todos los horarios del seller autenticado
  */
 export async function DELETE(request: NextRequest) {
   try {

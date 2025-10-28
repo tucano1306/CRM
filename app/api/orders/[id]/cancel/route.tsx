@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
+import { cancelOrderSchema, validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 const prisma = new PrismaClient()
 
@@ -9,6 +11,7 @@ const prisma = new PrismaClient()
  * PUT /api/orders/[id]/cancel
  * Cancelar orden
  * Puede ser cancelada por el cliente (owner) o el vendedor asignado
+ * ✅ CON VALIDACIÓN ZOD
  */
 export async function PUT(
   request: NextRequest,
@@ -26,7 +29,26 @@ export async function PUT(
 
     const { id: orderId } = await params
     const body = await request.json()
-    const { idempotencyKey, reason } = body
+
+    // ✅ VALIDACIÓN CON ZOD
+    const validation = validateSchema(cancelOrderSchema, body)
+    
+    if (!validation.success) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'Datos inválidos',
+          details: validation.errors
+        },
+        { status: 400 }
+      )
+    }
+
+    const { reason } = validation.data
+    const idempotencyKey = body.idempotencyKey // opcional
+    
+    // ✅ SANITIZACIÓN
+    const sanitizedReason = DOMPurify.sanitize(reason.trim())
 
     // 2. Validar idempotencyKey (opcional)
     if (idempotencyKey) {

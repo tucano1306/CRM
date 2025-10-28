@@ -7,6 +7,7 @@ import { EventType } from '@/lib/events/types/event.types'
 import { validateOrderTime, getNextAvailableOrderTime } from '@/lib/scheduleValidation'
 import logger, { LogCategory } from '@/lib/logger'
 import { notifyNewOrder, notifyBuyerOrderCreated } from '@/lib/notifications'
+import DOMPurify from 'isomorphic-dompurify'
 
 const prisma = new PrismaClient()
 
@@ -24,7 +25,17 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const notes = body.notes || null
+    
+    // ✅ VALIDACIÓN BÁSICA
+    if (body.notes && typeof body.notes === 'string' && body.notes.length > 500) {
+      return NextResponse.json(
+        { error: 'Las notas no pueden exceder 500 caracteres' },
+        { status: 400 }
+      )
+    }
+
+    // ✅ SANITIZACIÓN
+    const notes = body.notes ? DOMPurify.sanitize(body.notes.trim()) : null
     const creditNotes = body.creditNotes || [] // Array de { creditNoteId, amountToUse }
     // Idempotency: accept an optional idempotencyKey from client. If provided,
     // return previously created order with the same key.

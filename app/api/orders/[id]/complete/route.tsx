@@ -2,13 +2,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
+import DOMPurify from 'isomorphic-dompurify'
+import { z } from 'zod'
 
 const prisma = new PrismaClient()
+
+// ✅ SCHEMA DE VALIDACIÓN
+const completeOrderSchema = z.object({
+  idempotencyKey: z.string().uuid('Idempotency key debe ser UUID válido').optional(),
+  notes: z.string().max(500, 'Notas no pueden exceder 500 caracteres').optional()
+})
 
 /**
  * PUT /api/orders/[id]/complete
  * Completar orden (CONFIRMED → COMPLETED)
  * Solo el vendedor asignado puede completar
+ * ✅ CON VALIDACIÓN ZOD
  */
 export async function PUT(
   request: NextRequest,
@@ -26,7 +35,24 @@ export async function PUT(
 
     const { id: orderId } = await params
     const body = await request.json()
-    const { idempotencyKey } = body
+
+    // ✅ VALIDACIÓN
+    const validation = completeOrderSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Datos inválidos',
+          details: validation.error.issues.map(i => i.message)
+        },
+        { status: 400 }
+      )
+    }
+
+    const { idempotencyKey, notes } = validation.data
+    
+    // ✅ SANITIZACIÓN
+    const sanitizedNotes = notes ? DOMPurify.sanitize(notes.trim()) : undefined
 
     // 2. Validar idempotencyKey (opcional)
     if (idempotencyKey) {
@@ -90,12 +116,19 @@ export async function PUT(
     // 6. Actualizar orden a COMPLETED usando transacción
     const updatedOrder = await prisma.$transaction(async (tx) => {
       // Actualizar orden
+      const updateData: any = {
+        status: 'COMPLETED',
+        completedAt: new Date()
+      }
+      
+      // ✅ AGREGAR NOTAS SANITIZADAS SI EXISTEN
+      if (sanitizedNotes) {
+        updateData.notes = sanitizedNotes
+      }
+
       const updated = await tx.order.update({
         where: { id: orderId },
-        data: {
-          status: 'COMPLETED',
-          completedAt: new Date()
-        },
+        data: updateData,
         include: {
           client: true,
           seller: true,

@@ -2,6 +2,8 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { formatPrice } from '@/lib/utils'
+import { createRecurringOrderSchema, validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 // GET - Obtener órdenes recurrentes
 export async function GET(request: Request) {
@@ -115,36 +117,58 @@ export async function POST(request: Request) {
 
     const body = await request.json()
 
-    // Validar datos requeridos
-    if (!body.clientId || !body.name || !body.frequency || !body.items || body.items.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'Datos incompletos' },
-        { status: 400 }
-      )
+    // ✅ VALIDACIÓN CON ZOD
+    const validation = validateSchema(createRecurringOrderSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ 
+        success: false,
+        error: 'Datos inválidos',
+        details: validation.errors
+      }, { status: 400 })
+    }
+
+    const validatedData = validation.data
+
+    // ✅ SANITIZACIÓN
+    const sanitizedData = {
+      ...validatedData,
+      name: DOMPurify.sanitize(validatedData.name.trim()),
+      notes: validatedData.notes ? DOMPurify.sanitize(validatedData.notes.trim()) : undefined,
+      deliveryInstructions: validatedData.deliveryInstructions ? 
+        DOMPurify.sanitize(validatedData.deliveryInstructions.trim()) : undefined,
+      customDays: validatedData.customDays || null,
+      dayOfWeek: validatedData.dayOfWeek || null,
+      dayOfMonth: validatedData.dayOfMonth || null
     }
 
     // Calcular total
-    const totalAmount = body.items.reduce((sum: number, item: any) => {
+    const totalAmount = sanitizedData.items.reduce((sum: number, item: any) => {
       return sum + (item.quantity * item.pricePerUnit)
     }, 0)
 
     // Calcular próxima fecha de ejecución
-    const nextDate = calculateNextExecutionDate(body.frequency, body.startDate, body.dayOfWeek, body.dayOfMonth, body.customDays)
+    const nextDate = calculateNextExecutionDate(
+      sanitizedData.frequency, 
+      sanitizedData.startDate, 
+      sanitizedData.dayOfWeek || undefined, 
+      sanitizedData.dayOfMonth || undefined, 
+      sanitizedData.customDays || undefined
+    )
 
     // Crear orden recurrente
     const recurringOrder = await prisma.recurringOrder.create({
       data: {
-        clientId: body.clientId,
-        name: body.name,
-        frequency: body.frequency,
-        customDays: body.customDays,
-        dayOfWeek: body.dayOfWeek,
-        dayOfMonth: body.dayOfMonth,
-        startDate: body.startDate ? new Date(body.startDate) : new Date(),
-        endDate: body.endDate ? new Date(body.endDate) : null,
+        clientId: sanitizedData.clientId,
+        name: sanitizedData.name,
+        frequency: sanitizedData.frequency,
+        customDays: sanitizedData.customDays,
+        dayOfWeek: sanitizedData.dayOfWeek,
+        dayOfMonth: sanitizedData.dayOfMonth,
+        startDate: sanitizedData.startDate ? new Date(sanitizedData.startDate) : new Date(),
+        endDate: sanitizedData.endDate ? new Date(sanitizedData.endDate) : null,
         nextExecutionDate: nextDate,
-        notes: body.notes,
-        deliveryInstructions: body.deliveryInstructions,
+        notes: sanitizedData.notes,
+        deliveryInstructions: sanitizedData.deliveryInstructions,
         totalAmount,
         isActive: true,
         items: {

@@ -52,8 +52,8 @@ export const updateClientSchema = createClientSchema.partial()
 export const createProductSchema = z.object({
   name: z.string().min(2, 'Nombre del producto es requerido'),
   description: z.string().optional(),
-  unit: z.enum(['case', 'unit', 'kg', 'lb', 'box', 'pack'], {
-    message: 'Unidad debe ser: case, unit, kg, lb, box, o pack'
+  unit: z.enum(['case', 'unit', 'kg', 'lb', 'box', 'pk'], {
+    message: 'Unidad debe ser: case, unit, kg, lb, box, o pk'
   }).default('case'),
   price: z.number()
     .positive('Precio debe ser mayor a 0')
@@ -204,6 +204,26 @@ export const searchQuerySchema = z.object({
 )
 
 // ============================================================================
+// SCHEMAS DE ÓRDENES (ORDERS)
+// ============================================================================
+
+export const updateOrderSchema = z.object({
+  status: z.enum(['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELED'], {
+    message: 'Status debe ser: PENDING, CONFIRMED, COMPLETED, o CANCELED'
+  }).optional(),
+  notes: z.string()
+    .max(1000, 'Notas no pueden exceder 1,000 caracteres')
+    .nullable()
+    .optional(),
+  deliveryAddress: z.string()
+    .max(500, 'Dirección de entrega no puede exceder 500 caracteres')
+    .optional(),
+  deliveryInstructions: z.string()
+    .max(500, 'Instrucciones de entrega no pueden exceder 500 caracteres')
+    .optional()
+})
+
+// ============================================================================
 // SCHEMAS DE ADMIN
 // ============================================================================
 
@@ -219,6 +239,312 @@ export const updateUserRoleSchema = z.object({
   role: z.enum(['CLIENT', 'SELLER', 'ADMIN'], {
     message: 'Role debe ser: CLIENT, SELLER, o ADMIN'
   }),
+})
+
+// ============================================================================
+// SCHEMAS DE ÓRDENES (BUYER)
+// ============================================================================
+
+export const createBuyerOrderSchema = z.object({
+  items: z.array(z.object({
+    productId: z.string().uuid('Product ID debe ser un UUID válido'),
+    quantity: z.number()
+      .int('Cantidad debe ser un número entero')
+      .positive('Cantidad debe ser mayor a 0')
+      .max(10000, 'Cantidad máxima: 10,000 unidades')
+  })).min(1, 'Debe haber al menos un item en la orden'),
+  notes: z.string()
+    .max(500, 'Notas no pueden exceder 500 caracteres')
+    .optional(),
+  deliveryInstructions: z.string()
+    .max(500, 'Instrucciones de entrega no pueden exceder 500 caracteres')
+    .optional()
+})
+
+export const updateOrderItemSchema = z.object({
+  quantity: z.number()
+    .int('Cantidad debe ser un número entero')
+    .positive('Cantidad debe ser mayor a 0')
+    .max(10000, 'Cantidad máxima: 10,000 unidades')
+    .optional(),
+  pricePerUnit: z.number()
+    .positive('Precio debe ser mayor a 0')
+    .max(999999, 'Precio máximo: 999,999')
+    .optional(),
+  itemNote: z.string()
+    .max(200, 'Nota del item máximo 200 caracteres')
+    .optional()
+})
+
+// ============================================================================
+// SCHEMAS DE COTIZACIONES (QUOTES)
+// ============================================================================
+
+export const createQuoteSchema = z.object({
+  clientId: z.string().uuid('Client ID debe ser un UUID válido'),
+  title: z.string()
+    .min(5, 'Título debe tener al menos 5 caracteres')
+    .max(200, 'Título no puede exceder 200 caracteres'),
+  description: z.string()
+    .max(1000, 'Descripción no puede exceder 1,000 caracteres')
+    .optional(),
+  items: z.array(z.object({
+    productId: z.string().uuid('Product ID debe ser un UUID válido'),
+    productName: z.string()
+      .min(1, 'Nombre del producto es requerido')
+      .max(200, 'Nombre del producto no puede exceder 200 caracteres'),
+    description: z.string()
+      .max(500, 'Descripción del item no puede exceder 500 caracteres')
+      .optional(),
+    quantity: z.number()
+      .int('Cantidad debe ser un número entero')
+      .positive('Cantidad debe ser mayor a 0')
+      .max(10000, 'Cantidad máxima: 10,000'),
+    pricePerUnit: z.number()
+      .positive('Precio debe ser mayor a 0')
+      .max(999999, 'Precio máximo: 999,999'),
+    discount: z.number()
+      .min(0, 'Descuento mínimo: 0')
+      .max(100, 'Descuento máximo: 100')
+      .optional(),
+    notes: z.string()
+      .max(500, 'Notas del item no pueden exceder 500 caracteres')
+      .optional()
+  })).min(1, 'Debe haber al menos un item'),
+  validUntil: z.string()
+    .datetime('Fecha de validez debe ser formato ISO datetime')
+    .optional(),
+  notes: z.string()
+    .max(1000, 'Notas no pueden exceder 1,000 caracteres')
+    .optional(),
+  discount: z.number()
+    .min(0, 'Descuento mínimo: 0')
+    .max(100, 'Descuento máximo: 100')
+    .optional(),
+  termsAndConditions: z.string()
+    .max(2000, 'Términos y condiciones no pueden exceder 2,000 caracteres')
+    .optional()
+}).refine(
+  (data) => {
+    if (!data.validUntil) return true
+    return new Date(data.validUntil) > new Date()
+  },
+  { message: 'Fecha de validez debe ser futura', path: ['validUntil'] }
+)
+
+export const updateQuoteSchema = createQuoteSchema.partial()
+
+export const acceptQuoteSchema = z.object({
+  status: z.literal('ACCEPTED')
+})
+
+export const rejectQuoteSchema = z.object({
+  status: z.literal('REJECTED'),
+  reason: z.string()
+    .min(10, 'Razón de rechazo debe tener al menos 10 caracteres')
+    .max(500, 'Razón no puede exceder 500 caracteres')
+    .optional()
+})
+
+// ============================================================================
+// SCHEMAS DE DEVOLUCIONES (RETURNS)
+// ============================================================================
+
+export const createReturnSchema = z.object({
+  orderId: z.string().uuid('Order ID debe ser un UUID válido'),
+  reason: z.enum([
+    'DAMAGED', 'EXPIRED', 'WRONG_PRODUCT', 'QUALITY_ISSUE', 
+    'NOT_AS_DESCRIBED', 'OTHER', 'DAMAGED_PRODUCT', 'INCORRECT_PRODUCT',
+    'CUSTOMER_DISSATISFACTION', 'PRICING_ERROR', 'DUPLICATE_ORDER',
+    'GOODWILL', 'OVERCHARGE', 'PROMOTION_ADJUSTMENT', 'COMPENSATION'
+  ], {
+    message: 'Razón de devolución inválida'
+  }),
+  reasonDescription: z.string()
+    .min(10, 'Descripción de la razón mínimo 10 caracteres')
+    .max(500, 'Descripción máximo 500 caracteres')
+    .optional(),
+  refundType: z.enum(['REFUND', 'CREDIT', 'REPLACEMENT'], {
+    message: 'Tipo de reembolso debe ser: REFUND, CREDIT, o REPLACEMENT'
+  }),
+  items: z.array(z.object({
+    orderItemId: z.string().uuid('Order Item ID debe ser un UUID válido'),
+    quantityReturned: z.number()
+      .int('Cantidad debe ser un número entero')
+      .positive('Cantidad debe ser mayor a 0'),
+    notes: z.string()
+      .max(500, 'Notas del item no pueden exceder 500 caracteres')
+      .optional()
+  })).min(1, 'Debe haber al menos un item para devolver'),
+  notes: z.string()
+    .max(1000, 'Notas no pueden exceder 1,000 caracteres')
+    .optional()
+})
+
+export const approveReturnSchema = z.object({
+  refundMethod: z.enum(['CREDIT', 'REFUND', 'REPLACEMENT'], {
+    message: 'Método de reembolso debe ser: CREDIT, REFUND, o REPLACEMENT'
+  }),
+  notes: z.string()
+    .max(500, 'Notas no pueden exceder 500 caracteres')
+    .optional()
+})
+
+export const rejectReturnSchema = z.object({
+  reason: z.string()
+    .min(20, 'Razón de rechazo debe tener al menos 20 caracteres')
+    .max(500, 'Razón no puede exceder 500 caracteres'),
+  notes: z.string()
+    .max(500, 'Notas no pueden exceder 500 caracteres')
+    .optional()
+})
+
+// ============================================================================
+// SCHEMAS DE ÓRDENES RECURRENTES
+// ============================================================================
+
+export const createRecurringOrderSchema = z.object({
+  clientId: z.string().uuid('Client ID debe ser un UUID válido'),
+  name: z.string()
+    .min(3, 'Nombre debe tener al menos 3 caracteres')
+    .max(200, 'Nombre no puede exceder 200 caracteres'),
+  items: z.array(z.object({
+    productId: z.string().uuid('Product ID debe ser un UUID válido'),
+    quantity: z.number()
+      .int('Cantidad debe ser un número entero')
+      .positive('Cantidad debe ser mayor a 0')
+      .max(10000, 'Cantidad máxima: 10,000'),
+    pricePerUnit: z.number()
+      .positive('Precio debe ser mayor a 0')
+      .max(999999, 'Precio máximo: 999,999')
+  })).min(1, 'Debe haber al menos un item'),
+  frequency: z.enum(['DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY'], {
+    message: 'Frecuencia debe ser: DAILY, WEEKLY, BIWEEKLY, o MONTHLY'
+  }),
+  customDays: z.number()
+    .int('Días personalizados debe ser un entero')
+    .min(1)
+    .max(365)
+    .optional(),
+  dayOfWeek: z.number()
+    .int()
+    .min(0, 'Día de la semana debe estar entre 0-6')
+    .max(6, 'Día de la semana debe estar entre 0-6')
+    .optional(),
+  dayOfMonth: z.number()
+    .int()
+    .min(1, 'Día del mes debe estar entre 1-31')
+    .max(31, 'Día del mes debe estar entre 1-31')
+    .optional(),
+  startDate: z.string()
+    .datetime('Fecha de inicio debe ser formato ISO datetime'),
+  endDate: z.string()
+    .datetime('Fecha de fin debe ser formato ISO datetime')
+    .optional(),
+  isActive: z.boolean().default(true),
+  notes: z.string()
+    .max(500, 'Notas no pueden exceder 500 caracteres')
+    .optional(),
+  deliveryInstructions: z.string()
+    .max(500, 'Instrucciones de entrega no pueden exceder 500 caracteres')
+    .optional()
+}).refine(
+  (data) => !data.endDate || new Date(data.startDate) < new Date(data.endDate),
+  { message: 'Fecha de inicio debe ser anterior a fecha de fin', path: ['endDate'] }
+)
+
+export const updateRecurringOrderSchema = createRecurringOrderSchema.partial()
+
+// ============================================================================
+// SCHEMAS DE NOTAS DE CRÉDITO
+// ============================================================================
+
+export const createCreditNoteSchema = z.object({
+  clientId: z.string().uuid('Client ID debe ser un UUID válido'),
+  amount: z.number()
+    .positive('Monto debe ser mayor a 0')
+    .max(999999, 'Monto máximo: 999,999'),
+  reason: z.string()
+    .min(10, 'Razón debe tener al menos 10 caracteres')
+    .max(500, 'Razón no puede exceder 500 caracteres'),
+  orderId: z.string().uuid('Order ID debe ser un UUID válido').optional(),
+  returnId: z.string().uuid('Return ID debe ser un UUID válido').optional(),
+  expiresAt: z.string()
+    .datetime('Fecha de expiración debe ser formato ISO datetime')
+    .optional()
+}).refine(
+  (data) => !data.expiresAt || new Date(data.expiresAt) > new Date(),
+  { message: 'Fecha de expiración debe ser futura', path: ['expiresAt'] }
+)
+
+export const useCreditNoteSchema = z.object({
+  creditNoteId: z.string().uuid('Credit Note ID debe ser un UUID válido'),
+  orderId: z.string().uuid('Order ID debe ser un UUID válido'),
+  amountUsed: z.number()
+    .positive('Monto usado debe ser mayor a 0')
+    .max(999999, 'Monto máximo: 999,999')
+})
+
+// ============================================================================
+// SCHEMAS DE UPLOADS
+// ============================================================================
+
+export const uploadFileSchema = z.object({
+  fileName: z.string()
+    .min(1, 'Nombre de archivo es requerido')
+    .max(255, 'Nombre de archivo máximo 255 caracteres')
+    .regex(/^[a-zA-Z0-9._\-\s]+$/, 'Nombre de archivo contiene caracteres no permitidos'),
+  fileSize: z.number()
+    .positive('Tamaño de archivo debe ser mayor a 0')
+    .max(5 * 1024 * 1024, 'Archivo máximo 5MB'),
+  fileType: z.string()
+    .min(1, 'Tipo de archivo es requerido'),
+  fileExtension: z.enum(['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'csv'], {
+    message: 'Extensión de archivo no permitida'
+  })
+})
+
+// ============================================================================
+// SCHEMAS DE NOTIFICACIONES
+// ============================================================================
+
+export const createNotificationSchema = z.object({
+  type: z.enum(['ORDER_PLACED', 'ORDER_CONFIRMED', 'ORDER_COMPLETED', 'ORDER_CANCELED', 
+                'CHAT_MESSAGE', 'QUOTE_RECEIVED', 'RETURN_APPROVED', 'CREDIT_NOTE_ISSUED', 'OTHER'], {
+    message: 'Tipo de notificación inválido'
+  }),
+  message: z.string()
+    .min(1, 'Mensaje es requerido')
+    .max(500, 'Mensaje no puede exceder 500 caracteres'),
+  link: z.string()
+    .max(500, 'Link no puede exceder 500 caracteres')
+    .optional(),
+  clientId: z.string().uuid('Client ID debe ser un UUID válido').optional(),
+  sellerId: z.string().uuid('Seller ID debe ser un UUID válido').optional()
+}).refine(
+  (data) => data.clientId || data.sellerId,
+  { message: 'Debe especificar clientId o sellerId' }
+)
+
+export const markNotificationReadSchema = z.object({
+  notificationId: z.string().uuid('Notification ID debe ser un UUID válido')
+})
+
+// ============================================================================
+// SCHEMAS DE OPERACIONES MASIVAS
+// ============================================================================
+
+export const bulkUpdateOrdersSchema = z.object({
+  orderIds: z.array(z.string().uuid('Order ID debe ser un UUID válido'))
+    .min(1, 'Debe proporcionar al menos un Order ID')
+    .max(100, 'Máximo 100 órdenes por operación masiva'),
+  status: z.enum(['PENDING', 'CONFIRMED', 'PREPARING', 'READY_FOR_PICKUP', 'IN_DELIVERY', 
+                  'DELIVERED', 'PARTIALLY_DELIVERED', 'COMPLETED', 'CANCELED', 'PAYMENT_PENDING', 'PAID'], {
+    message: 'Status inválido'
+  }),
+  notes: z.string()
+    .max(500, 'Notas no pueden exceder 500 caracteres')
+    .optional()
 })
 
 // ============================================================================
@@ -287,3 +613,20 @@ export type PaginationInput = z.infer<typeof paginationSchema>
 export type SearchQueryInput = z.infer<typeof searchQuerySchema>
 export type UnblockRateLimitInput = z.infer<typeof unblockRateLimitSchema>
 export type UpdateUserRoleInput = z.infer<typeof updateUserRoleSchema>
+export type CreateBuyerOrderInput = z.infer<typeof createBuyerOrderSchema>
+export type UpdateOrderItemInput = z.infer<typeof updateOrderItemSchema>
+export type CreateQuoteInput = z.infer<typeof createQuoteSchema>
+export type UpdateQuoteInput = z.infer<typeof updateQuoteSchema>
+export type AcceptQuoteInput = z.infer<typeof acceptQuoteSchema>
+export type RejectQuoteInput = z.infer<typeof rejectQuoteSchema>
+export type CreateReturnInput = z.infer<typeof createReturnSchema>
+export type ApproveReturnInput = z.infer<typeof approveReturnSchema>
+export type RejectReturnInput = z.infer<typeof rejectReturnSchema>
+export type CreateRecurringOrderInput = z.infer<typeof createRecurringOrderSchema>
+export type UpdateRecurringOrderInput = z.infer<typeof updateRecurringOrderSchema>
+export type CreateCreditNoteInput = z.infer<typeof createCreditNoteSchema>
+export type UseCreditNoteInput = z.infer<typeof useCreditNoteSchema>
+export type UploadFileInput = z.infer<typeof uploadFileSchema>
+export type CreateNotificationInput = z.infer<typeof createNotificationSchema>
+export type MarkNotificationReadInput = z.infer<typeof markNotificationReadSchema>
+export type BulkUpdateOrdersInput = z.infer<typeof bulkUpdateOrdersSchema>

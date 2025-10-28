@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { PrismaClient } from '@prisma/client'
+import { z } from 'zod'
+import { validateSchema } from '@/lib/validations'
 
 const prisma = new PrismaClient()
 
@@ -20,14 +22,18 @@ export async function PUT(request: Request, context: RouteContext) {
     }
 
     const body = await request.json()
-    const quantity = body.quantity
 
-    if (!quantity || quantity < 1) {
-      return NextResponse.json(
-        { error: 'Cantidad inválida' },
-        { status: 400 }
-      )
+    // ✅ Validar schema
+    const updateQuantitySchema = z.object({
+      quantity: z.number().int().min(1).max(9999)
+    })
+
+    const validation = validateSchema(updateQuantitySchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ error: 'Datos inválidos', details: validation.errors }, { status: 400 })
     }
+
+    const { quantity } = validation.data
 
     const params = await context.params
     const itemId = params.itemId
@@ -78,6 +84,7 @@ export async function PUT(request: Request, context: RouteContext) {
 }
 
 // DELETE /api/buyer/cart/items/[itemId] - Eliminar item
+// ✅ No requiere body, solo itemId en params
 export async function DELETE(request: Request, context: RouteContext) {
   try {
     const { userId } = await auth()

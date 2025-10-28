@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// ✅ Este endpoint no requiere body, solo cambia status DRAFT → SENT
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

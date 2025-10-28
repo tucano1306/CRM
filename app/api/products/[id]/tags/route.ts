@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import prisma from '@/lib/prisma'
+import { z } from 'zod'
+import { validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 interface RouteParams {
   params: Promise<{
@@ -73,14 +76,22 @@ export async function POST(
 
     const { id } = await params
     const body = await request.json()
-    const { label, color } = body
 
-    if (!label) {
-      return NextResponse.json(
-        { error: 'El campo label es requerido' },
-        { status: 400 }
-      )
+    // ✅ Validar schema
+    const createTagSchema = z.object({
+      label: z.string().min(1).max(50),
+      color: z.string().regex(/^#[0-9A-F]{6}$/i, 'Color debe ser hexadecimal (#RRGGBB)').optional()
+    })
+
+    const validation = validateSchema(createTagSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ error: 'Datos inválidos', details: validation.errors }, { status: 400 })
     }
+
+    const { label, color } = validation.data
+
+    // ✅ Sanitizar label
+    const sanitizedLabel = DOMPurify.sanitize(label.trim())
 
     // Verificar que el producto existe
     const product = await prisma.product.findUnique({
@@ -98,7 +109,7 @@ export async function POST(
     const existingTag = await prisma.productTag.findFirst({
       where: {
         productId: id,
-        label: label
+        label: sanitizedLabel
       }
     })
 
@@ -112,7 +123,7 @@ export async function POST(
     // Crear la etiqueta
     const tag = await prisma.productTag.create({
       data: {
-        label,
+        label: sanitizedLabel,
         color: color || '#6B7280',
         productId: id
       }
@@ -136,6 +147,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: RouteParams
 ) {
+  // ✅ No requiere body, solo query param tagId
   try {
     const { userId } = await auth()
     

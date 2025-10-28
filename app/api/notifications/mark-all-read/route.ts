@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 /**
  * POST /api/notifications/mark-all-read
  * Marcar todas las notificaciones como leídas
+ * ✅ No requiere body, marca todas isRead = true
  */
 export async function POST(request: NextRequest) {
   try {

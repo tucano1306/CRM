@@ -4,8 +4,14 @@ import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { notifyCreditNoteIssued } from '@/lib/notifications'
 import logger, { LogCategory } from '@/lib/logger'
+import { z } from 'zod'
 
 const prisma = new PrismaClient()
+
+// ✅ SCHEMA SIMPLE INLINE
+const completeReturnSchema = z.object({
+  restockInventory: z.boolean().default(false)
+})
 
 export async function POST(
   request: Request,
@@ -19,6 +25,17 @@ export async function POST(
 
     const { id } = await params
     const body = await request.json()
+
+    // ✅ VALIDACIÓN
+    const validation = completeReturnSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json({ 
+        error: 'Datos inválidos',
+        details: validation.error.issues.map(i => i.message)
+      }, { status: 400 })
+    }
+
+    const { restockInventory } = validation.data
 
     // Verificar que existe
     const returnRecord = await prisma.return.findUnique({
@@ -41,7 +58,7 @@ export async function POST(
     }
 
     // Si se debe restaurar inventario
-    if (body.restockInventory) {
+    if (restockInventory) {
       for (const item of returnRecord.items) {
         await prisma.product.update({
           where: { id: item.productId },

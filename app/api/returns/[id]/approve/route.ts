@@ -4,6 +4,8 @@ import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { notifyReturnApproved } from '@/lib/notifications'
 import logger, { LogCategory } from '@/lib/logger'
+import { approveReturnSchema, validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 const prisma = new PrismaClient()
 
@@ -19,6 +21,20 @@ export async function POST(
 
     const { id } = await params
     const body = await request.json()
+
+    // ✅ VALIDACIÓN CON ZOD
+    const validation = validateSchema(approveReturnSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ 
+        error: 'Datos inválidos',
+        details: validation.errors
+      }, { status: 400 })
+    }
+
+    const { refundMethod, notes } = validation.data
+
+    // ✅ SANITIZACIÓN
+    const sanitizedNotes = notes ? DOMPurify.sanitize(notes.trim()) : undefined
 
     // Verificar que existe
     const returnRecord = await prisma.return.findUnique({
@@ -41,7 +57,8 @@ export async function POST(
         status: 'APPROVED',
         approvedBy: userId,
         approvedAt: new Date(),
-        notes: body.notes || returnRecord.notes
+        refundType: refundMethod, // Actualizar con el método elegido
+        notes: sanitizedNotes || returnRecord.notes
       },
       include: {
         items: true,
@@ -52,7 +69,7 @@ export async function POST(
 
     // Crear nota de crédito si el tipo de devolución es CREDIT
     let creditNote = null
-    if (returnRecord.refundType === 'CREDIT') {
+    if (refundMethod === 'CREDIT') {
       console.log('💳 [RETURN APPROVED] Creando nota de crédito para cliente:', returnRecord.clientId)
       
       const creditNoteNumber = `CN-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`

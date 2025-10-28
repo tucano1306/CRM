@@ -8,6 +8,7 @@ import {
   createClientSchema, 
   paginationSchema 
 } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 import logger, { LogCategory, createRequestLogger } from '@/lib/logger'
 import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
 
@@ -188,10 +189,20 @@ export async function POST(request: NextRequest) {
     
     const validatedData = validation.data
 
+    // ✅ SANITIZACIÓN DE DATOS
+    const sanitizedData = {
+      ...validatedData,
+      name: DOMPurify.sanitize(validatedData.name.trim()),
+      businessName: validatedData.businessName ? 
+        DOMPurify.sanitize(validatedData.businessName.trim()) : undefined,
+      address: DOMPurify.sanitize(validatedData.address.trim()),
+      email: validatedData.email.toLowerCase().trim()
+    }
+
     // Verificar email duplicado
     const existingClient = await withPrismaTimeout(
       () => prisma.client.findFirst({
-        where: { email: validatedData.email }
+        where: { email: sanitizedData.email }
       }),
       5000
     )
@@ -209,15 +220,15 @@ export async function POST(request: NextRequest) {
     const newClient = await withPrismaTimeout(
       () => prisma.client.create({
         data: {
-          name: validatedData.name,
-          businessName: validatedData.businessName,
-          address: validatedData.address,
-          phone: validatedData.phone,
-          email: validatedData.email,
-          orderConfirmationEnabled: validatedData.orderConfirmationEnabled,
-          orderConfirmationMethod: validatedData.orderConfirmationMethod,
-          notificationsEnabled: validatedData.notificationsEnabled,
-          ...(validatedData.sellerId && { sellerId: validatedData.sellerId })
+          name: sanitizedData.name,
+          businessName: sanitizedData.businessName,
+          address: sanitizedData.address,
+          phone: sanitizedData.phone,
+          email: sanitizedData.email,
+          orderConfirmationEnabled: sanitizedData.orderConfirmationEnabled,
+          orderConfirmationMethod: sanitizedData.orderConfirmationMethod,
+          notificationsEnabled: sanitizedData.notificationsEnabled,
+          ...(sanitizedData.sellerId && { sellerId: sanitizedData.sellerId })
         },
         include: {
           seller: true

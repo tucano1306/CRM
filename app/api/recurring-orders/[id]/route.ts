@@ -1,6 +1,8 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { updateRecurringOrderSchema, validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -81,6 +83,18 @@ export async function PATCH(
     const { id } = params
     const body = await request.json()
 
+    // ✅ VALIDACIÓN CON ZOD
+    const validation = validateSchema(updateRecurringOrderSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ 
+        success: false,
+        error: 'Datos inválidos',
+        details: validation.errors
+      }, { status: 400 })
+    }
+
+    const validatedData = validation.data
+
     // Verificar que la orden existe
     const existingOrder = await prisma.recurringOrder.findUnique({
       where: { id },
@@ -94,28 +108,47 @@ export async function PATCH(
       )
     }
 
-    // Preparar datos de actualización
+    // ✅ PREPARAR DATOS DE ACTUALIZACIÓN CON SANITIZACIÓN
     const updateData: any = {}
 
-    if (body.name !== undefined) updateData.name = body.name
-    if (body.frequency !== undefined) updateData.frequency = body.frequency
-    if (body.customDays !== undefined) updateData.customDays = body.customDays
-    if (body.dayOfWeek !== undefined) updateData.dayOfWeek = body.dayOfWeek
-    if (body.dayOfMonth !== undefined) updateData.dayOfMonth = body.dayOfMonth
-    if (body.notes !== undefined) updateData.notes = body.notes
-    if (body.deliveryInstructions !== undefined) updateData.deliveryInstructions = body.deliveryInstructions
-    if (body.endDate !== undefined) updateData.endDate = body.endDate ? new Date(body.endDate) : null
-    if (body.isActive !== undefined) updateData.isActive = body.isActive
+    if ('name' in validatedData && validatedData.name) {
+      updateData.name = DOMPurify.sanitize(validatedData.name.trim())
+    }
+    if ('frequency' in validatedData && validatedData.frequency !== undefined) {
+      updateData.frequency = validatedData.frequency
+    }
+    if ('customDays' in validatedData && validatedData.customDays !== undefined) {
+      updateData.customDays = validatedData.customDays
+    }
+    if ('dayOfWeek' in validatedData && validatedData.dayOfWeek !== undefined) {
+      updateData.dayOfWeek = validatedData.dayOfWeek
+    }
+    if ('dayOfMonth' in validatedData && validatedData.dayOfMonth !== undefined) {
+      updateData.dayOfMonth = validatedData.dayOfMonth
+    }
+    if ('notes' in validatedData) {
+      updateData.notes = validatedData.notes ? DOMPurify.sanitize(validatedData.notes.trim()) : null
+    }
+    if ('deliveryInstructions' in validatedData) {
+      updateData.deliveryInstructions = validatedData.deliveryInstructions ? 
+        DOMPurify.sanitize(validatedData.deliveryInstructions.trim()) : null
+    }
+    if ('endDate' in validatedData && validatedData.endDate !== undefined) {
+      updateData.endDate = validatedData.endDate ? new Date(validatedData.endDate) : null
+    }
+    if ('isActive' in validatedData && validatedData.isActive !== undefined) {
+      updateData.isActive = validatedData.isActive
+    }
 
     // Si se actualizan los items
-    if (body.items && Array.isArray(body.items)) {
+    if ('items' in validatedData && validatedData.items && Array.isArray(validatedData.items)) {
       // Eliminar items antiguos
       await prisma.recurringOrderItem.deleteMany({
         where: { recurringOrderId: id }
       })
 
       // Calcular nuevo total
-      const totalAmount = body.items.reduce((sum: number, item: any) => {
+      const totalAmount = validatedData.items.reduce((sum: number, item: any) => {
         return sum + (item.quantity * item.pricePerUnit)
       }, 0)
 
@@ -123,7 +156,7 @@ export async function PATCH(
 
       // Crear nuevos items
       updateData.items = {
-        create: body.items.map((item: any) => ({
+        create: validatedData.items.map((item: any) => ({
           productId: item.productId,
           productName: item.productName,
           quantity: item.quantity,

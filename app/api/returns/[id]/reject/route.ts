@@ -4,6 +4,8 @@ import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { notifyReturnRejected } from '@/lib/notifications'
 import logger, { LogCategory } from '@/lib/logger'
+import { rejectReturnSchema, validateSchema } from '@/lib/validations'
+import DOMPurify from 'isomorphic-dompurify'
 
 const prisma = new PrismaClient()
 
@@ -19,6 +21,21 @@ export async function POST(
 
     const { id } = await params
     const body = await request.json()
+
+    // ✅ VALIDACIÓN CON ZOD
+    const validation = validateSchema(rejectReturnSchema, body)
+    if (!validation.success) {
+      return NextResponse.json({ 
+        error: 'Datos inválidos',
+        details: validation.errors
+      }, { status: 400 })
+    }
+
+    const { reason, notes } = validation.data
+
+    // ✅ SANITIZACIÓN
+    const sanitizedReason = reason ? DOMPurify.sanitize(reason.trim()) : undefined
+    const sanitizedNotes = notes ? DOMPurify.sanitize(notes.trim()) : undefined
 
     // Verificar que existe
     const returnRecord = await prisma.return.findUnique({
@@ -48,9 +65,9 @@ export async function POST(
         status: 'REJECTED',
         approvedBy: userId,
         approvedAt: new Date(),
-        notes: body.rejectionReason 
-          ? `RECHAZADA: ${body.rejectionReason}${returnRecord.notes ? `\n\nNotas originales: ${returnRecord.notes}` : ''}`
-          : returnRecord.notes
+        notes: sanitizedReason 
+          ? `RECHAZADA: ${sanitizedReason}${returnRecord.notes ? `\n\nNotas originales: ${returnRecord.notes}` : ''}`
+          : sanitizedNotes || returnRecord.notes
       },
       include: {
         items: true,
@@ -65,7 +82,7 @@ export async function POST(
         updatedReturn.clientId,
         updatedReturn.id,
         updatedReturn.returnNumber,
-        body.rejectionReason || 'No se especificó motivo'
+        sanitizedReason || 'No se especificó motivo'
       )
       
       logger.info(
