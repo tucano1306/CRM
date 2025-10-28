@@ -14,3 +14,11 @@ yarn-debug.log*
 /.clerk/
 
 /generated/prisma
+
+# Archivos subidos por usuarios
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# Archivo de sonido de notificación (agregar manualmente)
+/public/notification.mp3
+

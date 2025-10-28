@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
 import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
+import { notifyChatMessage } from '@/lib/notifications'
 
 const prisma = new PrismaClient()
 
@@ -198,7 +199,12 @@ Día: ${dayOfWeek}, Hora actual: ${currentTime}`
           orderId: orderId || null,
           idempotencyKey: idempotencyKey || null,
           userId: authenticatedUser.id,
-          sellerId: senderSeller ? senderSeller.id : null
+          sellerId: senderSeller ? senderSeller.id : null,
+          // Campos de archivo adjunto
+          attachmentUrl: body.attachmentUrl || null,
+          attachmentType: body.attachmentType || null,
+          attachmentName: body.attachmentName || null,
+          attachmentSize: body.attachmentSize || null
         },
         include: {
           order: {
@@ -211,6 +217,55 @@ Día: ${dayOfWeek}, Hora actual: ${currentTime}`
         }
       })
     )
+
+    // 8. ✅ Crear notificación para el receptor
+    try {
+      // Obtener información del receptor
+      const receiverAuth = await prisma.authenticated_users.findUnique({
+        where: { authId: receiverId },
+        include: {
+          sellers: true,
+          clients: true
+        }
+      })
+
+      if (receiverAuth) {
+        const senderName = authenticatedUser.name || 'Usuario'
+        const messagePreview = body.attachmentUrl 
+          ? `📎 ${body.attachmentName || 'Archivo adjunto'}`
+          : message
+
+        // Si el receptor es vendedor, crear notificación para él
+        if (receiverAuth.sellers.length > 0) {
+          await notifyChatMessage(
+            receiverAuth.sellers[0].id,
+            senderName,
+            messagePreview
+          )
+        }
+        
+        // Si el receptor es cliente, crear notificación para él
+        if (receiverAuth.clients.length > 0) {
+          const clientId = receiverAuth.clients[0].id
+          
+          await prisma.notification.create({
+            data: {
+              clientId,
+              type: 'CHAT_MESSAGE',
+              title: '💬 Nuevo Mensaje',
+              message: `${senderName}: ${messagePreview.substring(0, 50)}${messagePreview.length > 50 ? '...' : ''}`,
+              metadata: {
+                senderName,
+                messagePreview: messagePreview.substring(0, 100),
+              }
+            }
+          })
+        }
+      }
+    } catch (notificationError) {
+      // No fallar el envío del mensaje si falla la notificación
+      console.error('Error creando notificación de chat:', notificationError)
+    }
 
     return NextResponse.json({
       success: true,

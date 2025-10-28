@@ -294,6 +294,10 @@ model ChatMessage {
   message             String
   isRead              Boolean             @default(false)
   messageType         String              @default("text")
+  attachmentUrl       String?             // URL del archivo adjunto
+  attachmentType      String?             // 'image' | 'file'
+  attachmentName      String?             // Nombre original del archivo
+  attachmentSize      Int?                // Tamaño en bytes
   idempotencyKey      String?             @unique
   userId              String
   sellerId            String?

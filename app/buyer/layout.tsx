@@ -7,11 +7,13 @@ import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import NotificationBell from '@/components/notifications/NotificationBell'
 import { NotificationProvider } from '@/components/providers/NotificationProvider'
+import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 
 export default function BuyerLayout({ children }: { children: React.ReactNode }) {
   const { user } = useUser()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { unreadCount } = useUnreadMessages()
 
   const navigation = [
     { name: 'Inicio', href: '/buyer/dashboard', icon: Home },
@@ -46,16 +48,33 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
             {navigation.map((item) => {
               const Icon = item.icon
               const isActive = pathname === item.href
+              const isChatItem = item.href === '/buyer/chat'
+              const showBadge = isChatItem && unreadCount > 0
+              
               return (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 font-medium transition ${
+                  className={`flex items-center gap-3 rounded-xl px-4 py-3 font-medium transition relative ${
                     isActive ? 'bg-white text-slate-800 shadow-lg' : 'text-slate-200 hover:bg-slate-700'
                   }`}
                 >
-                  <Icon className="h-5 w-5" />
-                  {item.name}
+                  <div className="relative">
+                    <Icon className="h-5 w-5" />
+                    {showBadge && (
+                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between flex-1">
+                    <span>{item.name}</span>
+                    {showBadge && (
+                      <span className="ml-auto h-5 min-w-[20px] px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
                 </Link>
               )
             })}

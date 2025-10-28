@@ -5,7 +5,7 @@ import { useUser } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Send, Clock, CheckCheck, Check, AlertCircle, Paperclip, Smile, Search, Phone, Video, MoreVertical, Image as ImageIcon, FileText, X } from 'lucide-react'
+import { Send, Clock, CheckCheck, Check, AlertCircle, Paperclip, Smile, Search, Phone, Video, MoreVertical, Image as ImageIcon, FileText, X, Download } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
 
 interface Message {
@@ -17,6 +17,8 @@ interface Message {
   createdAt: string
   attachmentUrl?: string
   attachmentType?: 'image' | 'file'
+  attachmentName?: string
+  attachmentSize?: number
   order?: {
     id: string
     orderNumber: string
@@ -41,6 +43,8 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [uploadingFile, setUploadingFile] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [showSearch, setShowSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isTyping, setIsTyping] = useState(false)
@@ -50,6 +54,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const fetchIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const isFetchingRef = useRef(false)
+  const previousMessageCountRef = useRef(0) // Para detectar nuevos mensajes
 
   // Log inicial para debugging
   console.log('💬 ChatWindow montado con:', {
@@ -103,10 +108,26 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
       const data = await response.json()
 
       if (data.success) {
-        setMessages(data.messages)
+        const newMessages = data.messages
+        
+        // Detectar si hay mensajes nuevos del otro usuario
+        if (previousMessageCountRef.current > 0) {
+          const newIncomingMessages = newMessages.filter((m: Message) => 
+            m.senderId === receiverId && 
+            !messages.find(oldMsg => oldMsg.id === m.id)
+          )
+          
+          if (newIncomingMessages.length > 0) {
+            // Reproducir sonido de notificación
+            playNotificationSound()
+          }
+        }
+        
+        previousMessageCountRef.current = newMessages.length
+        setMessages(newMessages)
         
         // Marcar mensajes no leídos como leídos
-        const unreadIds = data.messages
+        const unreadIds = newMessages
           .filter((m: Message) => !m.isRead && m.receiverId === user?.id)
           .map((m: Message) => m.id)
 
@@ -209,13 +230,66 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
       return
     }
 
-    // TODO: Implementar subida de archivos a servicio de almacenamiento
-    // Por ahora solo mostrar alerta
-    alert(`Archivo seleccionado: ${file.name}\n\nFuncionalidad de subida de archivos próximamente`)
-    
-    // Resetear input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+    setUploadingFile(true)
+    setUploadProgress(0)
+
+    try {
+      // Subir archivo
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!uploadResponse.ok) {
+        throw new Error('Error al subir el archivo')
+      }
+
+      const uploadData = await uploadResponse.json()
+
+      if (!uploadData.success) {
+        throw new Error(uploadData.error || 'Error al subir el archivo')
+      }
+
+      // Enviar mensaje con el archivo adjunto
+      const messageResponse = await fetch('/api/chat-messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          receiverId,
+          message: file.name, // Usar nombre del archivo como mensaje
+          orderId: orderId || null,
+          idempotencyKey: uuidv4(),
+          attachmentUrl: uploadData.url,
+          attachmentType: uploadData.attachmentType,
+          attachmentName: uploadData.fileName,
+          attachmentSize: uploadData.fileSize
+        })
+      })
+
+      const messageData = await messageResponse.json()
+
+      if (messageData.success) {
+        // Refrescar mensajes para mostrar el archivo
+        fetchMessages()
+        alert('✅ Archivo enviado correctamente')
+      } else {
+        throw new Error(messageData.error || 'Error al enviar el archivo')
+      }
+
+    } catch (error) {
+      console.error('Error uploading file:', error)
+      alert('❌ Error al subir el archivo. Intenta nuevamente.')
+    } finally {
+      setUploadingFile(false)
+      setUploadProgress(0)
+      
+      // Resetear input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
     }
   }
 
@@ -410,8 +484,60 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
                             : 'bg-white text-gray-900 rounded-bl-sm'
                         }`}
                       >
-                        {/* Mensaje */}
-                        <p className="text-sm break-words whitespace-pre-wrap">{msg.message}</p>
+                        {/* Archivo adjunto - Imagen */}
+                        {msg.attachmentUrl && msg.attachmentType === 'image' && (
+                          <div className="mb-2">
+                            <img 
+                              src={msg.attachmentUrl} 
+                              alt={msg.attachmentName || 'Imagen'}
+                              className="rounded-lg max-w-full h-auto max-h-64 cursor-pointer hover:opacity-90 transition"
+                              onClick={() => window.open(msg.attachmentUrl, '_blank')}
+                            />
+                          </div>
+                        )}
+
+                        {/* Archivo adjunto - Documento */}
+                        {msg.attachmentUrl && msg.attachmentType === 'file' && (
+                          <div className={`mb-2 p-3 rounded-lg flex items-center gap-2 ${
+                            isOwn ? 'bg-purple-700' : 'bg-gray-100'
+                          }`}>
+                            <FileText className={`h-8 w-8 flex-shrink-0 ${
+                              isOwn ? 'text-purple-200' : 'text-gray-600'
+                            }`} />
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm font-medium truncate ${
+                                isOwn ? 'text-white' : 'text-gray-900'
+                              }`}>
+                                {msg.attachmentName || 'Archivo'}
+                              </p>
+                              <p className={`text-xs ${
+                                isOwn ? 'text-purple-200' : 'text-gray-500'
+                              }`}>
+                                {msg.attachmentSize ? `${(msg.attachmentSize / 1024).toFixed(1)} KB` : 'Archivo'}
+                              </p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => window.open(msg.attachmentUrl, '_blank')}
+                              className={`flex-shrink-0 ${
+                                isOwn ? 'text-white hover:bg-purple-800' : 'text-gray-600 hover:bg-gray-200'
+                              }`}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )}
+
+                        {/* Mensaje de texto */}
+                        {!msg.attachmentUrl && (
+                          <p className="text-sm break-words whitespace-pre-wrap">{msg.message}</p>
+                        )}
+                        
+                        {/* Si hay archivo, mostrar el mensaje como caption */}
+                        {msg.attachmentUrl && msg.message !== msg.attachmentName && (
+                          <p className="text-sm break-words whitespace-pre-wrap">{msg.message}</p>
+                        )}
                         
                         {/* Hora y estado */}
                         <div className={`flex items-center gap-1 mt-1 justify-end text-xs ${
@@ -462,6 +588,16 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
 
         {/* Input */}
         <form onSubmit={sendMessage} className="border-t bg-gray-50 p-2 md:p-4">
+          {/* Indicador de subida de archivo */}
+          {uploadingFile && (
+            <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent" />
+                <p className="text-sm text-blue-700">Subiendo archivo...</p>
+              </div>
+            </div>
+          )}
+
           <div className="flex items-end gap-1 md:gap-2 relative">
             {/* Emoji Picker Button */}
             <button
@@ -469,6 +605,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
               className="p-1.5 md:p-2 text-gray-500 hover:text-gray-700 transition-colors mb-1 flex-shrink-0"
               title="Emoji"
+              disabled={uploadingFile}
             >
               <Smile className="h-4 w-4 md:h-5 md:w-5" />
             </button>
@@ -505,8 +642,9 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="p-1.5 md:p-2 text-gray-500 hover:text-gray-700 transition-colors mb-1 flex-shrink-0 hidden sm:block"
+              className="p-1.5 md:p-2 text-gray-500 hover:text-gray-700 transition-colors mb-1 flex-shrink-0 hidden sm:block disabled:opacity-50"
               title="Adjuntar archivo"
+              disabled={uploadingFile}
             >
               <Paperclip className="h-4 w-4 md:h-5 md:w-5" />
             </button>
@@ -515,9 +653,10 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*,.pdf,.doc,.docx"
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv"
               className="hidden"
               onChange={handleFileSelect}
+              disabled={uploadingFile}
             />
 
             {/* Message Input */}
@@ -537,7 +676,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
             {/* Send Button */}
             <Button 
               type="submit" 
-              disabled={sending || !newMessage.trim()}
+              disabled={sending || uploadingFile || !newMessage.trim()}
               className="rounded-full h-9 w-9 md:h-10 md:w-10 p-0 bg-purple-600 hover:bg-purple-700 flex-shrink-0"
               title="Enviar"
             >

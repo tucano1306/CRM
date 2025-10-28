@@ -23,6 +23,7 @@ import { useState, useEffect } from 'react'
 import ThemeToggle from './ThemeToggle'
 import NotificationBellSeller from '../notifications/NotificationBellSeller'
 import { NotificationProvider } from '../providers/NotificationProvider'
+import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 
 const menuItems = [
   {
@@ -76,6 +77,7 @@ export default function Sidebar() {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const { unreadCount } = useUnreadMessages()
 
   useEffect(() => {
     const handleResize = () => {
@@ -141,13 +143,15 @@ export default function Sidebar() {
           {menuItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
+            const isChatItem = item.href === '/chat'
+            const showBadge = isChatItem && unreadCount > 0
             
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={`
-                  flex items-center px-4 py-3 rounded-lg transition-all duration-200 font-medium
+                  flex items-center px-4 py-3 rounded-lg transition-all duration-200 font-medium relative
                   ${isActive 
                     ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700' 
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
@@ -155,8 +159,24 @@ export default function Sidebar() {
                   ${isCollapsed ? 'justify-center' : 'space-x-3'}
                 `}
               >
-                <Icon className="h-5 w-5 flex-shrink-0" />
-                {!isCollapsed && <span>{item.title}</span>}
+                <div className="relative">
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  {showBadge && isCollapsed && (
+                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </div>
+                {!isCollapsed && (
+                  <div className="flex items-center justify-between flex-1">
+                    <span>{item.title}</span>
+                    {showBadge && (
+                      <span className="ml-auto h-5 min-w-[20px] px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    )}
+                  </div>
+                )}
               </Link>
             )
           })}
@@ -210,6 +230,8 @@ export default function Sidebar() {
           {menuItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
+            const isChatItem = item.href === '/chat'
+            const showBadge = isChatItem && unreadCount > 0
             
             return (
               <Link
@@ -217,15 +239,29 @@ export default function Sidebar() {
                 href={item.href}
                 onClick={() => setIsMobileOpen(false)}
                 className={`
-                  flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium
+                  flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium relative
                   ${isActive 
                     ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700' 
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                   }
                 `}
               >
-                <Icon className="h-5 w-5 flex-shrink-0" />
-                <span>{item.title}</span>
+                <div className="relative">
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  {showBadge && (
+                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center justify-between flex-1">
+                  <span>{item.title}</span>
+                  {showBadge && (
+                    <span className="ml-auto h-5 min-w-[20px] px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </div>
               </Link>
             )
           })}

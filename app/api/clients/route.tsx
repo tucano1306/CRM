@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       ]
     } : {}
 
-    const [clients, total] = await Promise.all([
+    const [clientsRaw, total] = await Promise.all([
       withPrismaTimeout(
         () => prisma.client.findMany({
           where,
@@ -60,6 +60,18 @@ export async function GET(request: NextRequest) {
           take: limit,
           include: {
             seller: true,
+            authenticated_users: {
+              select: {
+                authId: true
+              }
+            },
+            orders: {
+              select: {
+                id: true,
+                totalAmount: true,
+                status: true
+              }
+            },
             _count: {
               select: { orders: true }
             }
@@ -73,6 +85,37 @@ export async function GET(request: NextRequest) {
         5000
       )
     ])
+
+    // Calcular estadísticas para cada cliente
+    const clients = clientsRaw.map(client => {
+      const totalOrders = client.orders.length
+      const totalSpent = client.orders.reduce((sum, order) => {
+        // Solo contar órdenes completadas
+        if (order.status === 'COMPLETED' || order.status === 'DELIVERED') {
+          return sum + Number(order.totalAmount)
+        }
+        return sum
+      }, 0)
+
+      const clerkUserId = client.authenticated_users?.[0]?.authId || null
+
+      return {
+        id: client.id,
+        name: client.name,
+        email: client.email,
+        phone: client.phone,
+        address: client.address,
+        zipCode: client.zipCode,
+        businessName: client.businessName,
+        createdAt: client.createdAt,
+        clerkUserId,
+        seller: client.seller,
+        stats: {
+          totalOrders,
+          totalSpent
+        }
+      }
+    })
 
     requestLogger.end('/api/clients', 'GET', 200)
     logger.debug(LogCategory.API, 'Clients fetched successfully', {
