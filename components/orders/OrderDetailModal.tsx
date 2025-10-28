@@ -82,7 +82,7 @@ interface OrderDetailModalProps {
   isGeneratingInvoice?: boolean
 }
 
-type TabType = 'details' | 'products' | 'delivery' | 'history' | 'invoice'
+type TabType = 'details' | 'products' | 'history' | 'invoice'
 
 export default function OrderDetailModal({ 
   order, 
@@ -101,7 +101,6 @@ export default function OrderDetailModal({
   const tabs: Array<{ id: TabType; label: string; icon: any }> = [
     { id: 'details', label: 'Detalles', icon: Package },
     { id: 'products', label: 'Productos', icon: ShoppingCart },
-    { id: 'delivery', label: 'Entrega', icon: Truck },
     { id: 'history', label: 'Historial', icon: History },
     { id: 'invoice', label: 'Factura', icon: FileText },
   ]
@@ -281,28 +280,6 @@ export default function OrderDetailModal({
                     </span>
                   </div>
                 </div>
-              </div>
-            )}
-
-            {/* TAB: Entrega */}
-            {activeTab === 'delivery' && (
-              <div className="space-y-4">
-                {order.deliveryInstructions ? (
-                  <div className="bg-white rounded-lg shadow-sm p-6 border">
-                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Truck className="h-5 w-5 text-purple-600" />
-                      Instrucciones de Entrega
-                    </h3>
-                    <p className="text-gray-700 whitespace-pre-wrap">
-                      {order.deliveryInstructions}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="bg-gray-50 rounded-lg p-8 text-center border-2 border-dashed border-gray-300">
-                    <Truck className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <p className="text-gray-600">No hay instrucciones de entrega</p>
-                  </div>
-                )}
               </div>
             )}
 

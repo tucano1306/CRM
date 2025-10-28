@@ -77,6 +77,14 @@ export default function CartPage() {
   const [creditAmounts, setCreditAmounts] = useState<Record<string, number>>({}) // Monto a usar de cada crédito
   const [showCreditsSection, setShowCreditsSection] = useState(false)
   const [loadingCredits, setLoadingCredits] = useState(true)
+  
+  // Nuevos estados para el flujo de verificación
+  const [orderStep, setOrderStep] = useState<1 | 2 | 3>(1) // 1: Pedido, 2: Orden Verificada, 3: Listo para envío
+  const [showVerificationModal, setShowVerificationModal] = useState(false)
+  const [showCancelModal, setShowCancelModal] = useState(false)
+  const [cancellingOrder, setCancellingOrder] = useState(false)
+  const [showSaveCartModal, setShowSaveCartModal] = useState(false)
+  const [savingCart, setSavingCart] = useState(false)
 
   const TAX_RATE = 0.10 // 10% de impuestos
   const DELIVERY_FEE = 5.00 // Costo de envío
@@ -482,17 +490,121 @@ export default function CartPage() {
   }
 
   const saveCartForLater = async () => {
-    try {
-      const result = await apiCall('/api/buyer/cart/save-for-later', {
-        method: 'POST',
-      })
+    if (!cart || cart.items.length === 0) {
+      showToast('El carrito está vacío', 'error')
+      return
+    }
 
-      if (result.success) {
-        showToast('Carrito guardado exitosamente', 'success')
+    setShowSaveCartModal(true)
+  }
+
+  // Confirmar guardar carrito y redirigir al catálogo
+  const confirmSaveCart = async () => {
+    setSavingCart(true)
+    
+    try {
+      // Guardar en localStorage
+      const savedCart = {
+        items: cart?.items || [],
+        savedAt: new Date().toISOString(),
+        notes: orderNotes,
+        deliveryMethod: deliveryMethod,
+        appliedCoupon: appliedCoupon,
+        selectedCredits: selectedCredits,
+        creditAmounts: creditAmounts
       }
+      
+      localStorage.setItem('saved-cart', JSON.stringify(savedCart))
+      
+      setSavingCart(false)
+      setShowSaveCartModal(false)
+      showToast('✅ Carrito guardado exitosamente', 'success')
+      
+      // Redirigir al catálogo después de 1 segundo
+      setTimeout(() => {
+        router.push('/buyer/catalog')
+      }, 1000)
     } catch (error) {
+      setSavingCart(false)
       showToast('Error al guardar el carrito', 'error')
       console.error('Error saving cart:', error)
+    }
+  }
+
+  // Cargar carrito guardado si existe
+  useEffect(() => {
+    const savedCartData = localStorage.getItem('saved-cart')
+    if (savedCartData) {
+      try {
+        const parsed = JSON.parse(savedCartData)
+        const savedAt = new Date(parsed.savedAt)
+        const hoursSince = (Date.now() - savedAt.getTime()) / (1000 * 60 * 60)
+        
+        // Mostrar notificación si hay un carrito guardado hace menos de 7 días
+        if (hoursSince < 168) { // 7 días
+          showToast(`💾 Tienes un carrito guardado (${Math.floor(hoursSince)}h)`, 'info')
+        }
+      } catch (e) {
+        console.error('Error parsing saved cart:', e)
+      }
+    }
+  }, [])
+
+  // Restaurar carrito guardado
+  const restoreSavedCart = async () => {
+    const savedCartData = localStorage.getItem('saved-cart')
+    if (!savedCartData) {
+      showToast('No hay carrito guardado', 'error')
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(savedCartData)
+      
+      // Restaurar notas y configuraciones
+      setOrderNotes(parsed.notes || '')
+      setDeliveryMethod(parsed.deliveryMethod || 'delivery')
+      setAppliedCoupon(parsed.appliedCoupon || null)
+      setSelectedCredits(parsed.selectedCredits || [])
+      setCreditAmounts(parsed.creditAmounts || {})
+      
+      // Agregar productos al carrito actual
+      for (const item of parsed.items) {
+        await apiCall('/api/buyer/cart/items', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productId: item.product.id,
+            quantity: item.quantity
+          }),
+        })
+      }
+      
+      // Recargar carrito
+      await fetchCart()
+      
+      // Limpiar carrito guardado
+      localStorage.removeItem('saved-cart')
+      
+      showToast('✅ Carrito restaurado exitosamente', 'success')
+    } catch (error) {
+      showToast('Error al restaurar el carrito', 'error')
+      console.error('Error restoring cart:', error)
+    }
+  }
+
+  // Verificar si hay carrito guardado
+  const hasSavedCart = () => {
+    const savedCartData = localStorage.getItem('saved-cart')
+    if (!savedCartData) return false
+    
+    try {
+      const parsed = JSON.parse(savedCartData)
+      const savedAt = new Date(parsed.savedAt)
+      const hoursSince = (Date.now() - savedAt.getTime()) / (1000 * 60 * 60)
+      return hoursSince < 168 // Menos de 7 días
+    } catch (e) {
+      return false
     }
   }
 
@@ -542,14 +654,66 @@ export default function CartPage() {
     }
   }
 
-  // ✅ createOrder CON TIMEOUT y RETRY
-  const createOrder = async () => {
+  // Función para mostrar modal de verificación
+  const handleConfirmOrder = () => {
     if (!cart || cart.items.length === 0) {
       alert('El carrito está vacío')
       return
     }
+    
+    setShowVerificationModal(true)
+    setOrderStep(2) // Cambiar a "Orden Verificada"
+  }
 
-    if (!confirm('¿Confirmar pedido por ' + formatPrice(calculateTotal()) + '?')) {
+  // Función para modificar orden (volver al carrito)
+  const handleModifyOrder = () => {
+    setShowVerificationModal(false)
+    setOrderStep(1)
+    showToast('Puedes seguir agregando o modificando productos', 'info')
+  }
+
+  // Función para cancelar orden
+  const handleCancelOrder = () => {
+    setShowVerificationModal(false)
+    setShowCancelModal(true)
+  }
+
+  // Confirmar cancelación y redirigir al catálogo
+  const confirmCancelOrder = async () => {
+    setCancellingOrder(true)
+    
+    // Vaciar el carrito
+    try {
+      await apiCall('/api/buyer/cart/clear', {
+        method: 'DELETE',
+        timeout: 5000
+      })
+      
+      setCancellingOrder(false)
+      setShowCancelModal(false)
+      showToast('Pedido cancelado', 'info')
+      
+      // Redirigir al catálogo después de 1 segundo
+      setTimeout(() => {
+        router.push('/buyer/catalog')
+      }, 1000)
+    } catch (err) {
+      setCancellingOrder(false)
+      alert('Error al cancelar el pedido')
+    }
+  }
+
+  // Función para marcar como revisado y pasar a envío
+  const handleMarkAsReviewed = () => {
+    setShowVerificationModal(false)
+    setOrderStep(3) // Cambiar a paso 3 (listo para envío)
+    showToast('¡Orden verificada! Ahora puedes enviar tu pedido', 'success')
+  }
+
+  // ✅ createOrder - Ahora se ejecuta en el paso 3
+  const createOrder = async () => {
+    if (!cart || cart.items.length === 0) {
+      alert('El carrito está vacío')
       return
     }
 
@@ -580,7 +744,7 @@ export default function CartPage() {
       })
 
       if (result.success) {
-        alert('✅ ¡Pedido creado exitosamente!')
+        alert('✅ ¡Pedido enviado exitosamente!')
         router.push('/buyer/orders')
       } else {
         alert(result.error || 'Error creando el pedido')
@@ -680,32 +844,41 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-teal-50 p-6">
       <div className="max-w-6xl mx-auto">
-        {/* Stepper de progreso */}
+        {/* Stepper de progreso - NUEVO */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-blue-100">
           <div className="flex items-center justify-between">
+            {/* Etapa 1: Pedido */}
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold shadow-md">
-                ✓
+              <div className={`w-10 h-10 ${orderStep >= 1 ? 'bg-blue-600' : 'bg-gray-200'} text-white rounded-full flex items-center justify-center font-bold shadow-md transition-all`}>
+                {orderStep >= 1 ? '✓' : '1'}
               </div>
-              <span className="text-sm font-semibold text-blue-600">Carrito</span>
+              <span className={`text-sm font-semibold ${orderStep >= 1 ? 'text-blue-600' : 'text-gray-500'}`}>
+                Pedido
+              </span>
             </div>
             
-            <div className="flex-1 h-1 bg-gray-200 mx-4 rounded"></div>
+            <div className={`flex-1 h-1 mx-4 rounded transition-all ${orderStep >= 2 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
             
+            {/* Etapa 2: Orden Verificada */}
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center font-bold">
-                2
+              <div className={`w-10 h-10 ${orderStep >= 2 ? 'bg-blue-600' : 'bg-gray-200'} ${orderStep >= 2 ? 'text-white' : 'text-gray-500'} rounded-full flex items-center justify-center font-bold shadow-md transition-all`}>
+                {orderStep >= 2 ? '✓' : '2'}
               </div>
-              <span className="text-sm text-gray-500">Confirmación</span>
+              <span className={`text-sm font-semibold ${orderStep >= 2 ? 'text-blue-600' : 'text-gray-500'}`}>
+                Orden Verificada
+              </span>
             </div>
             
-            <div className="flex-1 h-1 bg-gray-200 mx-4 rounded"></div>
+            <div className={`flex-1 h-1 mx-4 rounded transition-all ${orderStep >= 3 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
             
+            {/* Etapa 3: Listo para Envío */}
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center font-bold">
-                3
+              <div className={`w-10 h-10 ${orderStep >= 3 ? 'bg-green-600' : 'bg-gray-200'} ${orderStep >= 3 ? 'text-white' : 'text-gray-500'} rounded-full flex items-center justify-center font-bold shadow-md transition-all`}>
+                {orderStep >= 3 ? '✓' : '3'}
               </div>
-              <span className="text-sm text-gray-500">Pago</span>
+              <span className={`text-sm font-semibold ${orderStep >= 3 ? 'text-green-600' : 'text-gray-500'}`}>
+                Listo para Envío
+              </span>
             </div>
           </div>
         </div>
@@ -723,15 +896,26 @@ export default function CartPage() {
                 {cart?.items.length === 1 ? 'producto' : 'productos'}
               </p>
             </div>
-            {cart && cart.items.length > 0 && (
-              <button
-                onClick={clearCart}
-                className="text-red-600 hover:text-red-700 font-medium flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors"
-              >
-                <Trash2 size={18} />
-                Vaciar carrito
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              {hasSavedCart() && (
+                <button
+                  onClick={restoreSavedCart}
+                  className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors border border-blue-200"
+                >
+                  <Bookmark size={18} />
+                  Restaurar guardado
+                </button>
+              )}
+              {cart && cart.items.length > 0 && (
+                <button
+                  onClick={clearCart}
+                  className="text-red-600 hover:text-red-700 font-medium flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors"
+                >
+                  <Trash2 size={18} />
+                  Vaciar carrito
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -1367,11 +1551,11 @@ export default function CartPage() {
                     💾 Guardar carrito para después
                   </button>
 
-                  {/* Botón confirmar pedido */}
+                  {/* Botón confirmar/enviar pedido - CAMBIA SEGÚN EL PASO */}
                   <button
-                    onClick={createOrder}
+                    onClick={orderStep === 3 ? createOrder : handleConfirmOrder}
                     disabled={creatingOrder}
-                    className="w-full bg-blue-600 text-white py-4 rounded-lg hover:bg-blue-700 transition-colors font-bold text-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+                    className={`w-full ${orderStep === 3 ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white py-4 rounded-lg transition-colors font-bold text-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-md`}
                   >
                     {creatingOrder ? (
                       <>
@@ -1380,8 +1564,17 @@ export default function CartPage() {
                       </>
                     ) : (
                       <>
-                        Confirmar pedido
-                        <ArrowRight size={20} />
+                        {orderStep === 3 ? (
+                          <>
+                            <Truck size={20} />
+                            Enviar pedido
+                          </>
+                        ) : (
+                          <>
+                            Continuar
+                            <ArrowRight size={20} />
+                          </>
+                        )}
                       </>
                     )}
                   </button>
@@ -1461,6 +1654,200 @@ export default function CartPage() {
           </div>
         </div>
       )}
+
+      {/* Modal de Verificación de Orden */}
+      {showVerificationModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 max-w-lg w-full shadow-2xl animate-scale-in border-4 border-blue-500">
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Package className="w-10 h-10 text-blue-600" />
+              </div>
+              <h2 className="text-3xl font-bold text-gray-800 mb-2">
+                ¡Has verificado tu orden!
+              </h2>
+              <p className="text-gray-600 text-lg">
+                Revisa los detalles de tu pedido antes de continuar
+              </p>
+            </div>
+
+            {/* Resumen rápido */}
+            <div className="bg-gradient-to-br from-blue-50 to-slate-50 rounded-xl p-4 mb-6 border border-blue-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-gray-700 font-medium">Total de productos:</span>
+                <span className="text-blue-600 font-bold">{cart?.items.length || 0} items</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-700 font-medium">Total a pagar:</span>
+                <span className="text-2xl font-bold text-green-600">{formatPrice(calculateTotal())}</span>
+              </div>
+            </div>
+
+            {/* Opciones */}
+            <div className="space-y-3">
+              {/* Botón Modificar */}
+              <button
+                onClick={handleModifyOrder}
+                className="w-full bg-yellow-500 text-white py-3 rounded-lg hover:bg-yellow-600 transition-colors font-bold text-lg flex items-center justify-center gap-2 shadow-md"
+              >
+                <ArrowRight className="rotate-180" size={20} />
+                Modificar
+              </button>
+
+              {/* Botón Revisado */}
+              <button
+                onClick={handleMarkAsReviewed}
+                className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-bold text-lg flex items-center justify-center gap-2 shadow-md"
+              >
+                ✓ Revisado
+              </button>
+
+              {/* Botón Cancelar */}
+              <button
+                onClick={handleCancelOrder}
+                className="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors font-bold text-lg flex items-center justify-center gap-2 shadow-md"
+              >
+                <X size={20} />
+                Cancelar
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-500 text-center mt-4">
+              Selecciona una opción para continuar
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación de Cancelación */}
+      {showCancelModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl animate-scale-in border-4 border-red-500">
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <AlertCircle className="w-10 h-10 text-red-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                ¿Cancelar pedido?
+              </h2>
+              <p className="text-gray-600">
+                Tu carrito se vaciará y serás redirigido al catálogo
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={confirmCancelOrder}
+                disabled={cancellingOrder}
+                className="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 transition-colors font-bold text-lg flex items-center justify-center gap-2 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {cancellingOrder ? (
+                  <>
+                    <Loader2 className="animate-spin" size={20} />
+                    Cancelando...
+                  </>
+                ) : (
+                  <>
+                    Sí, cancelar pedido
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowCancelModal(false)
+                  setShowVerificationModal(true)
+                }}
+                disabled={cancellingOrder}
+                className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                No, volver
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Guardar Carrito para Después */}
+      {showSaveCartModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl animate-scale-in border-4 border-blue-500">
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Bookmark className="w-10 h-10 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                💾 Guardar Carrito
+              </h2>
+              <p className="text-gray-600 mb-4">
+                Tu carrito se guardará y podrás continuar más tarde
+              </p>
+              <div className="bg-blue-50 rounded-lg p-4 text-left">
+                <p className="text-sm text-gray-700 mb-2">
+                  <strong>Se guardará:</strong>
+                </p>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>✓ {cart?.items.length || 0} productos</li>
+                  <li>✓ Notas del pedido</li>
+                  <li>✓ Método de entrega</li>
+                  <li>✓ Cupones aplicados</li>
+                  <li>✓ Créditos seleccionados</li>
+                </ul>
+                <p className="text-xs text-gray-500 mt-3">
+                  El carrito estará disponible por 7 días
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={confirmSaveCart}
+                disabled={savingCart}
+                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-bold text-lg flex items-center justify-center gap-2 shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {savingCart ? (
+                  <>
+                    <Loader2 className="animate-spin" size={20} />
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    <Bookmark size={20} />
+                    Sí, guardar y salir
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={() => setShowSaveCartModal(false)}
+                disabled={savingCart}
+                className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Estilos para animaciones */}
+      <style jsx>{`
+        @keyframes scale-in {
+          from {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        :global(.animate-scale-in) {
+          animation: scale-in 0.3s ease-out;
+        }
+      `}</style>
     </div>
   )
 }
+ 
