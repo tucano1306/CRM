@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { formatPrice } from '@/lib/utils'
 import { useSearchParams } from 'next/navigation'
 import { 
   Search, 
@@ -321,7 +322,7 @@ export default function ModernReturnsManager({ role = 'client' }: ModernReturnsM
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Total Reembolsado</p>
-                  <p className="text-2xl font-bold text-orange-600">${stats.totalAmount.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-orange-600">{formatPrice(stats.totalAmount)}</p>
                 </div>
                 <div className="w-12 h-12 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl flex items-center justify-center">
                   <TrendingUp className="h-6 w-6 text-white" />
@@ -489,11 +490,11 @@ export default function ModernReturnsManager({ role = 'client' }: ModernReturnsM
                     <div className="mb-4 bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4">
                       <p className="text-xs text-gray-600 mb-1">Monto Final</p>
                       <p className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                        ${returnItem.finalRefundAmount.toFixed(2)}
+                        {formatPrice(returnItem.finalRefundAmount)}
                       </p>
                       {returnItem.restockFee > 0 && (
                         <p className="text-xs text-gray-500 mt-1">
-                          (Fee: -${returnItem.restockFee.toFixed(2)})
+                          (Fee: -{formatPrice(returnItem.restockFee)})
                         </p>
                       )}
                     </div>

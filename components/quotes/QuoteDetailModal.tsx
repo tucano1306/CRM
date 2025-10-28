@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import { X, FileText, Package, Send, RefreshCw, Trash2, Calendar, DollarSign } from 'lucide-react'
+import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 
@@ -289,14 +290,14 @@ export default function QuoteDetailModal({ quote, isOpen, onClose }: QuoteDetail
                     </div>
                     <div className="text-right">
                       <p className="text-xl font-bold text-purple-600">
-                        ${Number(item.subtotal).toFixed(2)}
+                        {formatPrice(Number(item.subtotal))}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4 text-sm text-gray-600 mt-3 pt-3 border-t">
                     <span>Cantidad: <strong>{item.quantity}</strong></span>
                     <span>•</span>
-                    <span>Precio/u: <strong>${Number(item.pricePerUnit).toFixed(2)}</strong></span>
+                    <span>Precio/u: <strong>{formatPrice(Number(item.pricePerUnit))}</strong></span>
                     {item.discount > 0 && (
                       <>
                         <span>•</span>
@@ -317,21 +318,21 @@ export default function QuoteDetailModal({ quote, isOpen, onClose }: QuoteDetail
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal:</span>
-                    <span>${Number(quote.subtotal).toFixed(2)}</span>
+                    <span>{formatPrice(Number(quote.subtotal))}</span>
                   </div>
                   {quote.discount > 0 && (
                     <div className="flex justify-between text-sm text-orange-600">
                       <span>Descuento ({quote.discount}%):</span>
-                      <span>-${((quote.subtotal * quote.discount) / 100).toFixed(2)}</span>
+                      <span>-{formatPrice(((quote.subtotal * quote.discount) / 100))}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm">
                     <span>Impuesto (10%):</span>
-                    <span>${Number(quote.tax).toFixed(2)}</span>
+                    <span>{formatPrice(Number(quote.tax))}</span>
                   </div>
                   <div className="flex justify-between text-xl font-bold border-t-2 border-purple-300 pt-2">
                     <span>Total:</span>
-                    <span className="text-purple-600">${Number(quote.totalAmount).toFixed(2)}</span>
+                    <span className="text-purple-600">{formatPrice(Number(quote.totalAmount))}</span>
                   </div>
                 </div>
               </div>

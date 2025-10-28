@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { formatPrice } from '@/lib/utils'
 import { 
   FileText, 
   Eye, 
@@ -307,7 +308,7 @@ export default function ModernBuyerQuotes() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Total Aceptado</p>
-                  <p className="text-2xl font-bold text-purple-600">${stats.totalAmount.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-purple-600">{formatPrice(stats.totalAmount)}</p>
                 </div>
                 <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center">
                   <TrendingUp className="h-6 w-6 text-white" />
@@ -452,7 +453,7 @@ export default function ModernBuyerQuotes() {
                     <div className="mb-4 bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-4">
                       <p className="text-xs text-gray-600 mb-1">Monto Total</p>
                       <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                        ${quote.totalAmount.toFixed(2)}
+                        {formatPrice(quote.totalAmount)}
                       </p>
                     </div>
 
@@ -620,10 +621,10 @@ export default function ModernBuyerQuotes() {
                                 <div className="flex items-center gap-4 text-sm text-gray-600">
                                   <span>Cantidad: <span className="font-semibold text-gray-900">{item.quantity}</span></span>
                                   <span>×</span>
-                                  <span>${item.pricePerUnit.toFixed(2)}</span>
+                                  <span>{formatPrice(item.pricePerUnit)}</span>
                                 </div>
                                 <p className="text-lg font-bold text-purple-600">
-                                  ${item.subtotal.toFixed(2)}
+                                  {formatPrice(item.subtotal)}
                                 </p>
                               </div>
                             </div>
@@ -638,7 +639,7 @@ export default function ModernBuyerQuotes() {
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-purple-100 text-sm mb-1">Total de la Cotización</p>
-                            <p className="text-4xl font-bold">${selectedQuote.totalAmount.toFixed(2)}</p>
+                            <p className="text-4xl font-bold">{formatPrice(selectedQuote.totalAmount)}</p>
                           </div>
                           <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
                             <DollarSign className="h-8 w-8" />

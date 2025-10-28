@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, ChevronLeft, ChevronRight, Package, AlertCircle } from 'lucide-react'
+import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 interface Order {
@@ -298,7 +299,7 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
                   <option value="">Selecciona una orden entregada o completada...</option>
                   {orders.map((order) => (
                     <option key={order.id} value={order.id}>
-                      {order.orderNumber} - ${Number(order.totalAmount).toFixed(2)} - {' '}
+                      {order.orderNumber} - {formatPrice(Number(order.totalAmount))} - {' '}
                       {new Date(order.createdAt).toLocaleDateString('es-ES')}
                     </option>
                   ))}
@@ -413,9 +414,9 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
                       <div className="flex-1">
                         <h4 className="font-semibold text-gray-900">{item.productName}</h4>
                         <div className="flex items-center gap-4 mt-1 text-sm text-gray-600">
-                          <span>Precio total en orden: ${(Number(item.pricePerUnit || 0) * item.maxQuantity).toFixed(2)}</span>
+                          <span>Precio total en orden: {formatPrice((Number(item.pricePerUnit || 0) * item.maxQuantity))}</span>
                           <span>Cantidad en orden: {item.maxQuantity}</span>
-                          <span>Precio unitario: ${Number(item.pricePerUnit || 0).toFixed(2)}</span>
+                          <span>Precio unitario: {formatPrice(Number(item.pricePerUnit || 0))}</span>
                         </div>
                       </div>
 
@@ -445,7 +446,7 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
                     {item.quantityReturned > 0 && (
                       <div className="mt-3 pt-3 border-t">
                         <p className="text-sm font-semibold text-purple-600">
-                          Monto a devolver: ${(item.quantityReturned * Number(item.pricePerUnit || 0)).toFixed(2)} ({item.quantityReturned} producto{item.quantityReturned > 1 ? 's' : ''})
+                          Monto a devolver: {formatPrice((item.quantityReturned * Number(item.pricePerUnit || 0)))} ({item.quantityReturned} producto{item.quantityReturned > 1 ? 's' : ''})
                         </p>
                       </div>
                     )}
@@ -501,11 +502,11 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
                       <div>
                         <p className="font-medium text-gray-900">{item.productName}</p>
                         <p className="text-sm text-gray-600">
-                          {item.quantityReturned} × ${Number(item.pricePerUnit || 0).toFixed(2)}
+                          {item.quantityReturned} × {formatPrice(Number(item.pricePerUnit || 0))}
                         </p>
                       </div>
                       <p className="font-semibold text-gray-900">
-                        ${(item.quantityReturned * Number(item.pricePerUnit || 0)).toFixed(2)}
+                        {formatPrice((item.quantityReturned * Number(item.pricePerUnit || 0)))}
                       </p>
                     </div>
                   ))}
@@ -516,15 +517,15 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Monto Total:</span>
-                    <span className="font-semibold text-gray-900">${totalReturnAmount.toFixed(2)}</span>
+                    <span className="font-semibold text-gray-900">{formatPrice(totalReturnAmount)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Cargo por Reposición:</span>
-                    <span className="font-semibold text-gray-900">${restockFee.toFixed(2)}</span>
+                    <span className="font-semibold text-gray-900">{formatPrice(restockFee)}</span>
                   </div>
                   <div className="border-t pt-2 flex justify-between">
                     <span className="font-bold text-gray-900">Reembolso Final:</span>
-                    <span className="font-bold text-2xl text-purple-600">${finalRefundAmount.toFixed(2)}</span>
+                    <span className="font-bold text-2xl text-purple-600">{formatPrice(finalRefundAmount)}</span>
                   </div>
                 </div>
               </div>

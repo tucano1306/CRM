@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, User, Package, CheckCircle, ArrowRight, ArrowLeft, Calendar } from 'lucide-react'
+import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 interface CreateQuoteModalProps {
@@ -341,7 +342,7 @@ export default function CreateQuoteModal({ isOpen, onClose }: CreateQuoteModalPr
                         className="p-3 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 cursor-pointer transition-all"
                       >
                         <h4 className="font-semibold text-gray-900 text-sm">{product.name}</h4>
-                        <p className="text-xs text-gray-600">${product.price.toFixed(2)} / {product.unit}</p>
+                        <p className="text-xs text-gray-600">{formatPrice(product.price)} / {product.unit}</p>
                         <p className="text-xs text-gray-500">Stock: {product.stock}</p>
                       </div>
                     ))}
@@ -403,7 +404,7 @@ export default function CreateQuoteModal({ isOpen, onClose }: CreateQuoteModalPr
                             </div>
                             <div className="text-right">
                               <p className="text-lg font-bold text-purple-600">
-                                ${((item.quantity * item.pricePerUnit) * (1 - item.discount / 100)).toFixed(2)}
+                                {formatPrice(((item.quantity * item.pricePerUnit) * (1 - item.discount / 100)))}
                               </p>
                               <button
                                 onClick={() => removeProduct(item.productId)}
@@ -451,21 +452,21 @@ export default function CreateQuoteModal({ isOpen, onClose }: CreateQuoteModalPr
                   <div className="mt-6 space-y-2 border-t pt-4">
                     <div className="flex justify-between text-sm">
                       <span>Subtotal:</span>
-                      <span>${calculateSubtotal().toFixed(2)}</span>
+                      <span>{formatPrice(calculateSubtotal())}</span>
                     </div>
                     {discount > 0 && (
                       <div className="flex justify-between text-sm text-orange-600">
                         <span>Descuento ({discount}%):</span>
-                        <span>-${(calculateSubtotal() * discount / 100).toFixed(2)}</span>
+                        <span>-{formatPrice((calculateSubtotal() * discount / 100))}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-sm">
                       <span>Impuesto (10%):</span>
-                      <span>${((calculateSubtotal() * (1 - discount / 100)) * 0.10).toFixed(2)}</span>
+                      <span>{formatPrice(((calculateSubtotal() * (1 - discount / 100)) * 0.10))}</span>
                     </div>
                     <div className="flex justify-between text-lg font-bold border-t pt-2">
                       <span>Total:</span>
-                      <span className="text-purple-600">${calculateTotal().toFixed(2)}</span>
+                      <span className="text-purple-600">{formatPrice(calculateTotal())}</span>
                     </div>
                   </div>
                 </div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { X, Package, Info, Settings, CheckCircle, XCircle, Clock, DollarSign } from 'lucide-react'
+import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 interface ReturnItem {
@@ -415,8 +416,8 @@ export default function ReturnDetailModal({ returnRecord, isOpen, onClose, onUpd
                       <h3 className="font-semibold text-green-900 mb-2">Nota de Crédito Generada</h3>
                       <div className="space-y-1 text-sm text-green-800">
                         <p><span className="font-medium">Número:</span> {returnRecord.creditNote.creditNoteNumber}</p>
-                        <p><span className="font-medium">Monto:</span> ${returnRecord.creditNote.amount.toFixed(2)}</p>
-                        <p><span className="font-medium">Balance Disponible:</span> ${returnRecord.creditNote.balance.toFixed(2)}</p>
+                        <p><span className="font-medium">Monto:</span> {formatPrice(returnRecord.creditNote.amount)}</p>
+                        <p><span className="font-medium">Balance Disponible:</span> {formatPrice(returnRecord.creditNote.balance)}</p>
                       </div>
                     </div>
                   </div>
@@ -444,11 +445,11 @@ export default function ReturnDetailModal({ returnRecord, isOpen, onClose, onUpd
                           </div>
                           <div>
                             <p className="text-gray-600">Precio unitario:</p>
-                            <p className="font-semibold text-gray-900">${item.pricePerUnit.toFixed(2)}</p>
+                            <p className="font-semibold text-gray-900">{formatPrice(item.pricePerUnit)}</p>
                           </div>
                           <div>
                             <p className="text-gray-600">Subtotal:</p>
-                            <p className="font-semibold text-gray-900">${item.subtotal.toFixed(2)}</p>
+                            <p className="font-semibold text-gray-900">{formatPrice(item.subtotal)}</p>
                           </div>
                           <div>
                             <p className="text-gray-600">Reabastecido:</p>
@@ -474,15 +475,15 @@ export default function ReturnDetailModal({ returnRecord, isOpen, onClose, onUpd
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-700">Monto Total de Devolución:</span>
-                    <span className="font-semibold text-gray-900">${returnRecord.totalReturnAmount.toFixed(2)}</span>
+                    <span className="font-semibold text-gray-900">{formatPrice(returnRecord.totalReturnAmount)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-700">Cargo por Reposición:</span>
-                    <span className="font-semibold text-gray-900">-${returnRecord.restockFee.toFixed(2)}</span>
+                    <span className="font-semibold text-gray-900">-{formatPrice(returnRecord.restockFee)}</span>
                   </div>
                   <div className="border-t-2 border-purple-300 pt-3 flex justify-between">
                     <span className="font-bold text-gray-900 text-lg">Reembolso Final:</span>
-                    <span className="font-bold text-2xl text-purple-600">${returnRecord.finalRefundAmount.toFixed(2)}</span>
+                    <span className="font-bold text-2xl text-purple-600">{formatPrice(returnRecord.finalRefundAmount)}</span>
                   </div>
                 </div>
               </div>

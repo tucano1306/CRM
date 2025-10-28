@@ -5,6 +5,7 @@ import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
 import { apiCall } from '@/lib/api-client'
 import ClientProfileCard from '@/components/clients/ClientProfileCard'
+import { formatPrice } from '@/lib/utils'
 import { 
   Plus, 
   Clock, 
@@ -317,7 +318,7 @@ export default function ClientsPage() {
             <div>
               <p className="text-purple-100 text-sm font-medium mb-1">Ingresos Totales</p>
               <p className="text-4xl font-bold">
-                ${clients.reduce((sum, c) => sum + (c.stats?.totalSpent || 0), 0).toFixed(2)}
+                {formatPrice(clients.reduce((sum, c) => sum + (c.stats?.totalSpent || 0), 0))}
               </p>
             </div>
             <DollarSign className="w-12 h-12 text-purple-200 opacity-80" />

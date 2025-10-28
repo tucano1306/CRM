@@ -1,6 +1,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { formatPrice } from '@/lib/utils'
 
 // GET - Obtener órdenes recurrentes
 export async function GET(request: Request) {
@@ -177,7 +178,7 @@ export async function POST(request: Request) {
           data: {
             type: 'NEW_ORDER',
             title: '🔄 Nueva Orden Recurrente',
-            message: `${recurringOrder.client.name} ha creado una orden recurrente "${recurringOrder.name}" por $${totalAmount.toFixed(2)}. Frecuencia: ${getFrequencyLabel(recurringOrder.frequency)}`,
+            message: `${recurringOrder.client.name} ha creado una orden recurrente "${recurringOrder.name}" por ${formatPrice(totalAmount)}. Frecuencia: ${getFrequencyLabel(recurringOrder.frequency)}`,
             clientId: body.clientId,
             sellerId: recurringOrder.client.sellerId,
             orderId: recurringOrder.id,

@@ -2,6 +2,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { INVOICE_CONFIG } from './invoice-config'
+import { formatPrice, formatNumber } from './utils'
 
 interface InvoiceItem {
   sku: string | null
@@ -204,8 +205,8 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
     item.name,
     item.quantity.toString(),
     item.unit,
-    `$${Number(item.pricePerUnit).toFixed(2)}`,
-    `$${Number(item.subtotal).toFixed(2)}`
+    formatPrice(Number(item.pricePerUnit)),
+    formatPrice(Number(item.subtotal))
   ])
   
   autoTable(doc, {
@@ -251,7 +252,7 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
   doc.setTextColor(...secondaryColor)
   doc.text('Subtotal:', totalsX, yPos)
   doc.setTextColor(0, 0, 0)
-  doc.text(`$${Number(data.subtotal).toFixed(2)}`, totalsX + totalsWidth, yPos, { align: 'right' })
+  doc.text(formatPrice(Number(data.subtotal)), totalsX + totalsWidth, yPos, { align: 'right' })
   
   yPos += 7
   
@@ -259,7 +260,7 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
   doc.setTextColor(...secondaryColor)
   doc.text(`Impuestos (${(Number(data.taxRate) * 100).toFixed(0)}%):`, totalsX, yPos)
   doc.setTextColor(0, 0, 0)
-  doc.text(`$${Number(data.taxAmount).toFixed(2)}`, totalsX + totalsWidth, yPos, { align: 'right' })
+  doc.text(formatPrice(Number(data.taxAmount)), totalsX + totalsWidth, yPos, { align: 'right' })
   
   yPos += 10
   
@@ -268,7 +269,7 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
   doc.setTextColor(...secondaryColor)
   doc.text('Total Orden:', totalsX, yPos)
   doc.setTextColor(0, 0, 0)
-  doc.text(`$${Number(totalBeforeCredits).toFixed(2)}`, totalsX + totalsWidth, yPos, { align: 'right' })
+  doc.text(formatPrice(Number(totalBeforeCredits)), totalsX + totalsWidth, yPos, { align: 'right' })
   
   yPos += 10
   
@@ -284,7 +285,7 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
       doc.setTextColor(100, 100, 100)
       doc.text(`  ${credit.creditNoteNumber}:`, totalsX + 5, yPos)
       doc.setTextColor(220, 38, 38) // Rojo para mostrar descuento
-      doc.text(`-$${Number(credit.amountUsed).toFixed(2)}`, totalsX + totalsWidth, yPos, { align: 'right' })
+      doc.text(`-${formatPrice(Number(credit.amountUsed)).substring(1)}`, totalsX + totalsWidth, yPos, { align: 'right' })
       yPos += 5
     })
     
@@ -296,7 +297,7 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
       doc.setTextColor(...secondaryColor)
       doc.text('Total Crédito:', totalsX, yPos)
       doc.setTextColor(220, 38, 38)
-      doc.text(`-$${Number(data.totalCreditApplied).toFixed(2)}`, totalsX + totalsWidth, yPos, { align: 'right' })
+      doc.text(`-${formatPrice(Number(data.totalCreditApplied)).substring(1)}`, totalsX + totalsWidth, yPos, { align: 'right' })
       yPos += 10
     }
   }
@@ -309,7 +310,7 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(255, 255, 255)
   doc.text('TOTAL A PAGAR:', totalsX, yPos)
-  doc.text(`$${Number(data.total).toFixed(2)}`, totalsX + totalsWidth, yPos, { align: 'right' })
+  doc.text(formatPrice(Number(data.total)), totalsX + totalsWidth, yPos, { align: 'right' })
   
   yPos += 20
   

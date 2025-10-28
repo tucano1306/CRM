@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { formatPrice } from '@/lib/utils'
 import { 
   FileText, 
   Eye, 
@@ -265,7 +266,7 @@ export default function BuyerQuotesPage() {
                     <div className="mb-4">
                       <p className="text-sm text-gray-600 mb-1">Monto Total</p>
                       <p className="text-2xl font-bold text-gray-900">
-                        ${quote.totalAmount.toFixed(2)}
+                        {formatPrice(quote.totalAmount)}
                       </p>
                     </div>
 
@@ -372,11 +373,11 @@ export default function BuyerQuotesPage() {
                                 <p className="text-sm text-gray-600 mt-1">{item.description}</p>
                               )}
                               <p className="text-sm text-gray-600 mt-1">
-                                Cantidad: {item.quantity} × ${item.pricePerUnit.toFixed(2)}
+                                Cantidad: {item.quantity} × {formatPrice(item.pricePerUnit)}
                               </p>
                             </div>
                             <div className="text-right">
-                              <p className="font-bold text-gray-900">${item.subtotal.toFixed(2)}</p>
+                              <p className="font-bold text-gray-900">{formatPrice(item.subtotal)}</p>
                             </div>
                           </div>
                         ))}
@@ -388,7 +389,7 @@ export default function BuyerQuotesPage() {
                       <div className="flex justify-between items-center">
                         <p className="text-lg font-semibold text-gray-900">Total</p>
                         <p className="text-3xl font-bold text-blue-600">
-                          ${selectedQuote.totalAmount.toFixed(2)}
+                          {formatPrice(selectedQuote.totalAmount)}
                         </p>
                       </div>
                     </div>

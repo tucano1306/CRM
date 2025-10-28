@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { DashboardStatsSkeleton } from '@/components/skeletons'
+import { formatPrice } from '@/lib/utils'
 
 interface BuyerStats {
   totalOrders: number
@@ -304,7 +305,7 @@ export default function BuyerDashboardPage() {
                   <div className="flex-1">
                     <p className="font-medium text-yellow-800">Orden pendiente de pago</p>
                     <p className="text-sm text-yellow-700">
-                      Orden #{order.orderNumber} - ${Number(order.totalAmount).toFixed(2)}
+                      Orden #{order.orderNumber} - {formatPrice(Number(order.totalAmount))}
                     </p>
                   </div>
                   <Link href={`/buyer/orders`}>
@@ -420,7 +421,7 @@ export default function BuyerDashboardPage() {
                 <DollarSign className="w-12 h-12 opacity-80" />
                 <ArrowUpRight className="w-6 h-6" />
               </div>
-              <p className="text-3xl font-bold mb-2">${stats?.totalSpent?.toFixed(2) || '0.00'}</p>
+              <p className="text-3xl font-bold mb-2">{formatPrice(stats?.totalSpent || 0)}</p>
               <p className="text-blue-100">Total Gastado</p>
               <p className="text-xs text-blue-200 mt-2">
                 {stats?.totalSpent && stats.totalSpent > 0 ? `↗️ Ver detalles` : 'Comienza a comprar'}
@@ -461,7 +462,7 @@ export default function BuyerDashboardPage() {
                     <div className="relative w-full">
                       {/* Tooltip on hover */}
                       <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-3 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        ${month.amount.toFixed(2)}
+                        {formatPrice(month.amount)}
                         <div className="text-xs text-gray-300">{month.count} órdenes</div>
                       </div>
                       <div 
@@ -481,7 +482,7 @@ export default function BuyerDashboardPage() {
               <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-2xl font-bold text-blue-600">
-                    ${getMonthlyData().reduce((sum, m) => sum + m.amount, 0).toFixed(2)}
+                    {formatPrice(getMonthlyData().reduce((sum, m) => sum + m.amount, 0))}
                   </p>
                   <p className="text-sm text-gray-600 mt-1">Total del período</p>
                 </div>
@@ -493,7 +494,7 @@ export default function BuyerDashboardPage() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-emerald-600">
-                    ${(getMonthlyData().reduce((sum, m) => sum + m.amount, 0) / Math.max(getMonthlyData().reduce((sum, m) => sum + m.count, 0), 1)).toFixed(2)}
+                    {formatPrice(getMonthlyData().reduce((sum, m) => sum + m.amount, 0) / Math.max(getMonthlyData().reduce((sum, m) => sum + m.count, 0), 1))}
                   </p>
                   <p className="text-sm text-gray-600 mt-1">Promedio por orden</p>
                 </div>
@@ -525,7 +526,7 @@ export default function BuyerDashboardPage() {
                   </div>
                   <h4 className="font-medium text-sm mb-2 text-gray-900 line-clamp-2">{product.name}</h4>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-blue-600 font-bold text-lg">${Number(product.price).toFixed(2)}</span>
+                    <span className="text-blue-600 font-bold text-lg">{formatPrice(Number(product.price))}</span>
                   </div>
                   <button 
                     onClick={() => addToCart(product.id)}
@@ -569,7 +570,7 @@ export default function BuyerDashboardPage() {
                     <Package className="w-12 h-12 text-gray-400" />
                   </div>
                   <p className="text-sm font-medium mb-2 line-clamp-2 text-gray-900">{product.name}</p>
-                  <p className="text-blue-600 font-bold mb-1">${Number(product.price).toFixed(2)}</p>
+                  <p className="text-blue-600 font-bold mb-1">{formatPrice(Number(product.price))}</p>
                   <button 
                     onClick={() => addToCart(product.id)}
                     disabled={addingToCart === product.id}
@@ -858,7 +859,7 @@ export default function BuyerDashboardPage() {
                         })}
                       </p>
                       <p className="text-lg font-bold text-blue-600">
-                        ${Number(order.totalAmount).toFixed(2)}
+                        {formatPrice(Number(order.totalAmount))}
                       </p>
                     </div>
                   </div>

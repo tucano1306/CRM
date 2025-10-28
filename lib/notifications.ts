@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { formatPrice } from './utils'
 
 const prisma = new PrismaClient()
 
@@ -79,7 +80,7 @@ export async function notifyNewOrder(
     sellerId,
     type: 'NEW_ORDER',
     title: '🛒 Nueva Orden Recibida',
-    message: `${clientName} ha creado una nueva orden #${orderNumber} por $${totalAmount.toFixed(2)}`,
+    message: `${clientName} ha creado una nueva orden #${orderNumber} por ${formatPrice(totalAmount)}`,
     orderId,
     metadata: {
       orderNumber,
@@ -102,7 +103,7 @@ export async function notifyBuyerOrderCreated(
     clientId,
     type: 'ORDER_CONFIRMED',
     title: '✅ Orden Creada Exitosamente',
-    message: `Tu orden #${orderNumber} ha sido creada exitosamente por $${totalAmount.toFixed(2)}. El vendedor la revisará pronto.`,
+    message: `Tu orden #${orderNumber} ha sido creada exitosamente por ${formatPrice(totalAmount)}. El vendedor la revisará pronto.`,
     orderId,
     metadata: {
       orderNumber,
@@ -317,7 +318,7 @@ export async function notifyQuoteCreated(
     clientId,
     type: 'QUOTE_CREATED',
     title: '📋 Nueva Cotización',
-    message: `Se ha creado una cotización #${quoteNumber} por $${totalAmount.toFixed(2)}`,
+    message: `Se ha creado una cotización #${quoteNumber} por ${formatPrice(totalAmount)}`,
     relatedId: quoteId,
     metadata: {
       quoteNumber,
@@ -361,7 +362,7 @@ export async function notifyReturnApproved(
     clientId,
     type: 'RETURN_APPROVED',
     title: '✅ Devolución Aprobada',
-    message: `Tu devolución #${returnNumber} fue aprobada. Reembolso: $${refundAmount.toFixed(2)}`,
+    message: `Tu devolución #${returnNumber} fue aprobada. Reembolso: ${formatPrice(refundAmount)}`,
     relatedId: returnId,
     metadata: {
       returnNumber,
@@ -405,7 +406,7 @@ export async function notifyCreditNoteIssued(
     clientId,
     type: 'CREDIT_NOTE_ISSUED',
     title: '💳 Nota de Crédito Emitida',
-    message: `Se emitió una nota de crédito #${creditNoteNumber} por $${amount.toFixed(2)}`,
+    message: `Se emitió una nota de crédito #${creditNoteNumber} por ${formatPrice(amount)}`,
     relatedId: creditNoteId,
     metadata: {
       creditNoteNumber,

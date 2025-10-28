@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { X, AlertCircle, CheckCircle } from 'lucide-react'
+import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 interface Order {
@@ -97,7 +98,7 @@ export default function CreateManualReturnModal({ isOpen, onClose, onSuccess }: 
 
     const selectedOrder = orders.find(o => o.id === selectedOrderId)
     if (selectedOrder && returnAmount > parseFloat(selectedOrder.totalAmount)) {
-      setError(`El monto no puede exceder el total de la orden ($${parseFloat(selectedOrder.totalAmount).toFixed(2)})`)
+      setError(`El monto no puede exceder el total de la orden (${formatPrice(parseFloat(selectedOrder.totalAmount))})`)
       return
     }
 
@@ -198,7 +199,7 @@ export default function CreateManualReturnModal({ isOpen, onClose, onSuccess }: 
                 <option value="">-- Selecciona una orden --</option>
                 {orders.map((order) => (
                   <option key={order.id} value={order.id}>
-                    {order.orderNumber} - {order.client.name} - ${parseFloat(order.totalAmount).toFixed(2)} - {new Date(order.createdAt).toLocaleDateString()}
+                    {order.orderNumber} - {order.client.name} - {formatPrice(parseFloat(order.totalAmount))} - {new Date(order.createdAt).toLocaleDateString()}
                   </option>
                 ))}
               </select>
@@ -207,7 +208,7 @@ export default function CreateManualReturnModal({ isOpen, onClose, onSuccess }: 
               <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800">
                   <strong>Cliente:</strong> {selectedOrder.client.name} | 
-                  <strong> Total:</strong> ${parseFloat(selectedOrder.totalAmount).toFixed(2)}
+                  <strong> Total:</strong> {formatPrice(parseFloat(selectedOrder.totalAmount))}
                 </p>
               </div>
             )}
@@ -271,7 +272,7 @@ export default function CreateManualReturnModal({ isOpen, onClose, onSuccess }: 
             </div>
             {selectedOrder && (
               <p className="text-xs text-gray-500 mt-1">
-                Máximo: ${parseFloat(selectedOrder.totalAmount).toFixed(2)}
+                Máximo: {formatPrice(parseFloat(selectedOrder.totalAmount))}
               </p>
             )}
           </div>

@@ -16,6 +16,7 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react'
+import { formatPrice } from '@/lib/utils'
 
 interface ClientStats {
   totalOrders: number
@@ -163,7 +164,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, colorIndex
         </div>
         <div className={`${colorScheme.stat} rounded-xl p-4 text-center`}>
           <DollarSign className={`w-5 h-5 mx-auto mb-2 ${colorScheme.icon}`} />
-          <p className="text-2xl font-bold">${(client.stats?.totalSpent || 0).toFixed(2)}</p>
+          <p className="text-2xl font-bold">{formatPrice(client.stats?.totalSpent || 0)}</p>
           <p className="text-xs font-medium opacity-75">Gastado</p>
         </div>
       </div>
@@ -250,7 +251,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, colorIndex
                 <div>
                   <p className="text-xs text-gray-500">Promedio por orden</p>
                   <p className="text-gray-800 font-bold">
-                    ${(client.stats.totalSpent / client.stats.totalOrders).toFixed(2)}
+                    {formatPrice(client.stats.totalSpent / client.stats.totalOrders)}
                   </p>
                 </div>
               </div>

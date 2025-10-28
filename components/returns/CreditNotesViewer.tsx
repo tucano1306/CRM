@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { DollarSign, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react'
+import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
 interface CreditNote {
@@ -73,7 +74,7 @@ export default function CreditNotesViewer() {
           <DollarSign className="h-8 w-8" />
           <div>
             <p className="text-sm opacity-90">Crédito Total Disponible</p>
-            <p className="text-4xl font-bold">${totalAvailable.toFixed(2)}</p>
+            <p className="text-4xl font-bold">{formatPrice(totalAvailable)}</p>
           </div>
         </div>
         <p className="text-sm opacity-90 mt-2">
@@ -116,7 +117,7 @@ export default function CreditNotesViewer() {
             </div>
             <div>
               <p className="text-2xl font-bold text-gray-900">
-                ${creditNotes.reduce((sum, cn) => sum + cn.usedAmount, 0).toFixed(2)}
+                {formatPrice(creditNotes.reduce((sum, cn) => sum + cn.usedAmount, 0))}
               </p>
               <p className="text-sm text-gray-600">Total Usado</p>
             </div>
@@ -187,8 +188,8 @@ export default function CreditNotesViewer() {
                         Orden: {note.return.order.orderNumber}
                       </p>
                       <p>
-                        💰 Monto original: ${note.amount.toFixed(2)} | 
-                        Usado: ${note.usedAmount.toFixed(2)}
+                        💰 Monto original: {formatPrice(note.amount)} | 
+                        Usado: {formatPrice(note.usedAmount)}
                       </p>
                       {note.expiresAt && (
                         <p className="flex items-center gap-1">
@@ -207,7 +208,7 @@ export default function CreditNotesViewer() {
                         <div className="space-y-1">
                           {note.usage.map((use: any) => (
                             <div key={use.id} className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
-                              📦 {use.order?.orderNumber || 'N/A'} - ${Number(use.amountUsed).toFixed(2)} - {new Date(use.usedAt).toLocaleDateString('es-ES')}
+                              📦 {use.order?.orderNumber || 'N/A'} - {formatPrice(Number(use.amountUsed))} - {new Date(use.usedAt).toLocaleDateString('es-ES')}
                             </div>
                           ))}
                         </div>
@@ -217,7 +218,7 @@ export default function CreditNotesViewer() {
 
                   <div className="text-right">
                     <p className="text-2xl font-bold text-green-600">
-                      ${note.balance.toFixed(2)}
+                      {formatPrice(note.balance)}
                     </p>
                     <p className="text-xs text-gray-500">Disponible</p>
                     
@@ -260,7 +261,7 @@ export default function CreditNotesViewer() {
           <div className="bg-white rounded-lg p-6 max-w-md w-full">
             <h3 className="text-lg font-semibold mb-4">💳 Usar Crédito</h3>
             <p className="text-gray-600 mb-4">
-              Tienes <span className="font-bold text-green-600">${selectedNote.balance.toFixed(2)}</span> disponible.
+              Tienes <span className="font-bold text-green-600">{formatPrice(selectedNote.balance)}</span> disponible.
               Ve al carrito para aplicar este crédito a tu próxima compra.
             </p>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">

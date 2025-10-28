@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { formatPrice } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -673,7 +674,7 @@ export default function ProductsPage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-green-600">
-                  ${filteredProducts.reduce((sum, p) => sum + p.price, 0).toFixed(2)}
+                  {formatPrice(filteredProducts.reduce((sum, p) => sum + p.price, 0))}
                 </p>
                 <p className="text-sm text-gray-600">Valor Total</p>
               </div>
@@ -1064,7 +1065,7 @@ export default function ProductsPage() {
                         </td>
                         <td className="px-4 py-3">
                           <span className="font-semibold text-green-600">
-                            ${product.price.toFixed(2)}
+                            {formatPrice(product.price)}
                           </span>
                         </td>
                         <td className="px-4 py-3">
@@ -1197,7 +1198,7 @@ export default function ProductsPage() {
                         <p className="text-xs text-gray-600">Precio</p>
                       </div>
                       <p className="text-xl font-bold text-gray-900">
-                        ${product.price.toFixed(2)}
+                        {formatPrice(product.price)}
                       </p>
                     </div>
 

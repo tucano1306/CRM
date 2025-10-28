@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { formatPrice } from '@/lib/utils'
 import { 
   FileText, Plus, Search, Send, Check, X, Eye,
   Clock, DollarSign, RefreshCw, Filter, ChevronRight
@@ -233,7 +234,7 @@ export default function QuotesManager() {
 
                     <div className="text-right">
                       <p className="text-2xl font-bold text-purple-600">
-                        ${Number(quote.totalAmount).toFixed(2)}
+                        {formatPrice(Number(quote.totalAmount))}
                       </p>
                       <p className="text-xs text-gray-500">
                         {new Date(quote.createdAt).toLocaleDateString('es-ES')}

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { formatPrice } from '@/lib/utils'
 
 interface Client {
   id: string
@@ -230,7 +231,7 @@ export default function OrdersListImproved({
                   <div className="text-right">
                     <div className="flex items-center gap-1 text-lg font-bold text-gray-900">
                       <DollarSign className="h-5 w-5 text-green-600" />
-                      {Number(order.totalAmount).toFixed(2)}
+                      {formatPrice(Number(order.totalAmount)).substring(1)}
                     </div>
                   </div>
 
@@ -260,11 +261,11 @@ export default function OrdersListImproved({
                             {item.productName || item.product?.name || 'Producto'}
                           </p>
                           <p className="text-xs text-gray-600">
-                            {item.quantity} × ${Number(item.pricePerUnit || 0).toFixed(2)}
+                            {item.quantity} × {formatPrice(Number(item.pricePerUnit || 0))}
                           </p>
                         </div>
                         <p className="font-semibold text-gray-900">
-                          ${Number(item.subtotal || 0).toFixed(2)}
+                          {formatPrice(Number(item.subtotal || 0))}
                         </p>
                       </div>
                     ))}
@@ -274,7 +275,7 @@ export default function OrdersListImproved({
                   <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
                     <span className="font-semibold text-gray-900">Total:</span>
                     <span className="text-xl font-bold text-green-600">
-                      ${Number(order.totalAmount).toFixed(2)}
+                      {formatPrice(Number(order.totalAmount))}
                     </span>
                   </div>
 

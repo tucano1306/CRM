@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { X, Package, ShoppingCart, Truck, History, FileText, Download, Eye, Loader2 } from 'lucide-react'
+import { formatPrice } from '@/lib/utils'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import OrderStatusHistory from '@/components/orders/OrderStatusHistory'
@@ -254,7 +255,7 @@ export default function OrderDetailModal({
                           <p className="text-xs text-gray-500 font-mono">SKU: {item.product.sku}</p>
                         )}
                         <p className="text-sm text-gray-600 mt-1">
-                          {item.quantity} {item.product.unit} × ${Number(item.pricePerUnit).toFixed(2)}
+                          {item.quantity} {item.product.unit} × {formatPrice(Number(item.pricePerUnit))}
                         </p>
                         {item.itemNote && (
                           <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
@@ -265,7 +266,7 @@ export default function OrderDetailModal({
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-bold text-gray-900">
-                          ${Number(item.subtotal).toFixed(2)}
+                          {formatPrice(Number(item.subtotal))}
                         </p>
                       </div>
                     </div>
@@ -276,7 +277,7 @@ export default function OrderDetailModal({
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-gray-900 text-lg">Total</span>
                     <span className="font-bold text-green-600 text-2xl">
-                      ${Number(order.totalAmount).toFixed(2)}
+                      {formatPrice(Number(order.totalAmount))}
                     </span>
                   </div>
                 </div>
@@ -338,13 +339,13 @@ export default function OrderDetailModal({
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Subtotal:</span>
                           <span className="font-semibold">
-                            ${(Number(order.totalAmount) / 1.1).toFixed(2)}
+                            {formatPrice((Number(order.totalAmount) / 1.1))}
                           </span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-600">Impuestos (10%):</span>
                           <span className="font-semibold">
-                            ${(Number(order.totalAmount) - Number(order.totalAmount) / 1.1).toFixed(2)}
+                            {formatPrice((Number(order.totalAmount) - Number(order.totalAmount) / 1.1))}
                           </span>
                         </div>
 
@@ -354,7 +355,7 @@ export default function OrderDetailModal({
                             <div className="border-t pt-2 flex justify-between text-sm">
                               <span className="font-semibold text-gray-900">Total Orden:</span>
                               <span className="font-semibold text-gray-900">
-                                ${Number(order.totalAmount).toFixed(2)}
+                                {formatPrice(Number(order.totalAmount))}
                               </span>
                             </div>
 
@@ -370,14 +371,14 @@ export default function OrderDetailModal({
                                     {usage.creditNote.creditNoteNumber}:
                                   </span>
                                   <span className="text-green-700 font-semibold">
-                                    -${Number(usage.amountUsed).toFixed(2)}
+                                    -{formatPrice(Number(usage.amountUsed))}
                                   </span>
                                 </div>
                               ))}
                               <div className="flex justify-between text-green-800 font-bold pt-2 border-t border-green-300 text-sm">
                                 <span>Total Crédito:</span>
                                 <span>
-                                  -${order.creditNoteUsages.reduce((sum, usage) => sum + Number(usage.amountUsed), 0).toFixed(2)}
+                                  -{formatPrice(order.creditNoteUsages.reduce((sum, usage) => sum + Number(usage.amountUsed), 0))}
                                 </span>
                               </div>
                             </div>
@@ -386,10 +387,10 @@ export default function OrderDetailModal({
                             <div className="border-t-2 border-purple-200 pt-2 flex justify-between bg-purple-50 -mx-6 px-6 py-3 -mb-2">
                               <span className="font-bold text-purple-900 text-base">TOTAL A PAGAR:</span>
                               <span className="font-bold text-purple-600 text-xl">
-                                ${(
+                                {formatPrice((
                                   Number(order.totalAmount) -
                                   order.creditNoteUsages.reduce((sum, usage) => sum + Number(usage.amountUsed), 0)
-                                ).toFixed(2)}
+                                ))}
                               </span>
                             </div>
                           </>
@@ -400,7 +401,7 @@ export default function OrderDetailModal({
                           <div className="border-t pt-2 flex justify-between">
                             <span className="font-bold text-gray-900">Total:</span>
                             <span className="font-bold text-green-600 text-lg">
-                              ${Number(order.totalAmount).toFixed(2)}
+                              {formatPrice(Number(order.totalAmount))}
                             </span>
                           </div>
                         )}

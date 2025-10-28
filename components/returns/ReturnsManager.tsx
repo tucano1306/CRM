@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Search, Package, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import CreateReturnModal from './CreateReturnModal'
 import ReturnDetailModal from './ReturnDetailModal'
@@ -377,7 +378,7 @@ export default function ReturnsManager({ role = 'seller' }: ReturnsManagerProps)
                     <span className="font-semibold">Items:</span> {returnRecord.items.length}
                   </p>
                   <p className="text-gray-900 font-semibold">
-                    Monto: ${returnRecord.finalRefundAmount.toFixed(2)}
+                    Monto: {formatPrice(returnRecord.finalRefundAmount)}
                   </p>
                   <p className="text-xs text-gray-500">
                     {new Date(returnRecord.createdAt).toLocaleDateString('es-ES', {

@@ -24,6 +24,7 @@ import OrdersListImproved from './OrdersListImproved'
 import OrdersTimelineView from './OrdersTimelineView'
 import OrderDetailModal from './OrderDetailModal'
 import BulkStatusChangeModal from './BulkStatusChangeModal'
+import { formatPrice } from '@/lib/utils'
 
 type OrderStatus = 
   | 'PENDING' 
@@ -243,7 +244,7 @@ export default function ClientsViewWithOrders({
               <DollarSign className="h-5 w-5 opacity-80" />
             </div>
             <p className="text-2xl font-bold">
-              ${orders.reduce((sum, o) => sum + Number(o.totalAmount), 0).toFixed(2)}
+              {formatPrice(orders.reduce((sum, o) => sum + Number(o.totalAmount), 0))}
             </p>
             <p className="text-sm opacity-90">Ventas Totales</p>
           </div>
@@ -253,7 +254,7 @@ export default function ClientsViewWithOrders({
               <Calendar className="h-5 w-5 opacity-80" />
             </div>
             <p className="text-2xl font-bold">
-              ${(orders.reduce((sum, o) => sum + Number(o.totalAmount), 0) / clientsWithOrders.length || 0).toFixed(2)}
+              {formatPrice(orders.reduce((sum, o) => sum + Number(o.totalAmount), 0) / clientsWithOrders.length || 0)}
             </p>
             <p className="text-sm opacity-90">Promedio/Cliente</p>
           </div>
@@ -372,7 +373,7 @@ export default function ClientsViewWithOrders({
                           <span className="text-xs font-medium">Total</span>
                         </div>
                         <p className="text-xl font-bold text-green-900">
-                          ${clientData.totalSpent.toFixed(2)}
+                          {formatPrice(clientData.totalSpent)}
                         </p>
                       </div>
                     </div>
@@ -528,7 +529,7 @@ export default function ClientsViewWithOrders({
                       <DollarSign className="h-5 w-5 text-purple-200" />
                       <p className="text-purple-100 text-xs font-medium uppercase tracking-wide">Total Gastado</p>
                     </div>
-                    <p className="text-3xl font-bold">${selectedClient.totalSpent.toFixed(2)}</p>
+                    <p className="text-3xl font-bold">{formatPrice(selectedClient.totalSpent)}</p>
                     <p className="text-xs text-purple-200 mt-1">Ventas totales</p>
                   </div>
                   <div className="bg-white/15 backdrop-blur-sm rounded-xl p-4 hover:bg-white/20 transition-all">
@@ -537,7 +538,7 @@ export default function ClientsViewWithOrders({
                       <p className="text-purple-100 text-xs font-medium uppercase tracking-wide">Promedio</p>
                     </div>
                     <p className="text-3xl font-bold">
-                      ${(selectedClient.totalSpent / selectedClient.totalOrders).toFixed(2)}
+                      {formatPrice(selectedClient.totalSpent / selectedClient.totalOrders)}
                     </p>
                     <p className="text-xs text-purple-200 mt-1">Por orden</p>
                   </div>

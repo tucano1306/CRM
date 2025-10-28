@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { formatPrice } from '@/lib/utils'
 import { 
   Plus, 
   RefreshCw, 
@@ -246,10 +247,10 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
                   <p className="text-blue-100 text-sm font-medium mb-1">
                     {userRole === 'SELLER' ? 'Valor Recurrente' : 'Valor por Ciclo'}
                   </p>
-                  <p className="text-3xl font-bold">${stats.totalRecurringAmount.toFixed(2)}</p>
+                  <p className="text-3xl font-bold">{formatPrice(stats.totalRecurringAmount)}</p>
                   {stats.totalExecuted > 0 && (
                     <p className="text-blue-200 text-xs mt-1">
-                      Total ejecutado: ${stats.totalExecuted.toFixed(2)}
+                      Total ejecutado: {formatPrice(stats.totalExecuted)}
                     </p>
                   )}
                 </div>
@@ -322,11 +323,11 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
                     {stats.upcomingOrders.length === 1 ? 'Total' : 'Total Combinado'}
                   </p>
                   <p className="text-3xl font-bold text-green-600">
-                    ${stats.upcomingOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0).toFixed(2)}
+                    {formatPrice(stats.upcomingOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0))}
                   </p>
                   {stats.upcomingOrders.length > 1 && (
                     <p className="text-xs text-gray-500 mt-1">
-                      Promedio: ${(stats.upcomingOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0) / stats.upcomingOrders.length).toFixed(2)}
+                      Promedio: {formatPrice((stats.upcomingOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0) / stats.upcomingOrders.length))}
                     </p>
                   )}
                 </div>
@@ -487,7 +488,7 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
                         <p className="text-xs font-medium text-green-600">Total</p>
                       </div>
                       <p className="text-xl font-bold text-green-700">
-                        ${order.totalAmount.toFixed(2)}
+                        {formatPrice(order.totalAmount)}
                       </p>
                     </div>
 

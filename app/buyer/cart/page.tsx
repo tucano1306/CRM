@@ -115,7 +115,7 @@ export default function CartPage() {
         setCreditAmounts({ [creditIdFromUrl]: maxBalance }) // Usar el balance completo por defecto
         setShowCreditsSection(true) // Expandir sección para que vea el crédito aplicado
         
-        showToast(`✓ Crédito de $${maxBalance.toFixed(2)} aplicado automáticamente`, 'success')
+        showToast(`✓ Crédito de ${formatPrice(maxBalance)} aplicado automáticamente`, 'success')
         
         // Limpiar URL (opcional - remueve el parámetro después de aplicarlo)
         const newUrl = window.location.pathname
@@ -382,7 +382,7 @@ export default function CartPage() {
           code: result.data.code,
           discount: result.data.discountAmount
         })
-        showToast(`¡Cupón aplicado! Descuento: $${result.data.discountAmount.toFixed(2)}`, 'success')
+        showToast(`¡Cupón aplicado! Descuento: ${formatPrice(result.data.discountAmount)}`, 'success')
         setCouponCode('')
       }
     } catch (error: any) {
@@ -549,7 +549,7 @@ export default function CartPage() {
       return
     }
 
-    if (!confirm('¿Confirmar pedido por $' + calculateTotal().toFixed(2) + '?')) {
+    if (!confirm('¿Confirmar pedido por ' + formatPrice(calculateTotal()) + '?')) {
       return
     }
 
@@ -1048,7 +1048,7 @@ export default function CartPage() {
                       <p className={`font-medium ${deliveryMethod === 'delivery' ? 'text-blue-600' : 'text-gray-700'}`}>
                         Entrega a domicilio
                       </p>
-                      <p className="text-sm text-gray-500">2-3 días hábiles - ${DELIVERY_FEE.toFixed(2)}</p>
+                      <p className="text-sm text-gray-500">2-3 días hábiles - {formatPrice(DELIVERY_FEE)}</p>
                     </div>
                   </label>
                   
