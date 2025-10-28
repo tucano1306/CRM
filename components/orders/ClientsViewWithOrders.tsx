@@ -92,6 +92,12 @@ export default function ClientsViewWithOrders({
   const [orderSearchTerm, setOrderSearchTerm] = useState('') // Búsqueda de órdenes en modal
   const [selectedOrders, setSelectedOrders] = useState<string[]>([])
   const [showBulkStatusModal, setShowBulkStatusModal] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Detectar cuando el componente está montado en el cliente
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   // Bloquear scroll del body cuando el modal esté abierto
   useEffect(() => {
@@ -504,7 +510,7 @@ export default function ClientsViewWithOrders({
       </div>
 
       {/* Modal con órdenes del cliente seleccionado - RENDERIZADO CON PORTAL */}
-      {selectedClient && typeof window !== 'undefined' && createPortal(
+      {selectedClient && isMounted && createPortal(
         <>
           {/* Overlay - MEJORADO PARA BLOQUEAR SCROLL Y CUBRIR TODO */}
           <div 

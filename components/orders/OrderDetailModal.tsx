@@ -75,7 +75,7 @@ interface OrderDetailModalProps {
   order: Order
   isOpen: boolean
   onClose: () => void
-  userRole?: 'seller' | 'buyer'
+  userRole?: 'seller' | 'buyer' | 'admin'
   onStatusChange?: (orderId: string, newStatus: OrderStatus, notes?: string) => Promise<void>
   onDownloadInvoice?: (order: Order) => Promise<void>
   onViewInvoice?: (order: Order) => Promise<void>
@@ -106,7 +106,7 @@ export default function OrderDetailModal({
   ]
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
+    <div className="fixed inset-0 overflow-hidden" style={{ zIndex: 9999999 }}>
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
@@ -188,6 +188,7 @@ export default function OrderDetailModal({
                         orderId={order.id}
                         currentStatus={order.status}
                         onStatusChange={(newStatus, notes) => onStatusChange(order.id, newStatus, notes)}
+                        userRole={userRole}
                       />
                     </div>
                   </div>

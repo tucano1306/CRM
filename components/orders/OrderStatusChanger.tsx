@@ -33,6 +33,7 @@ interface OrderStatusChangerProps {
   currentStatus: OrderStatus
   onStatusChange?: (newStatus: OrderStatus, notes?: string) => Promise<void>
   disabled?: boolean
+  userRole?: 'seller' | 'buyer' | 'admin'
 }
 
 const statusOptions: { value: OrderStatus; label: string; icon: any; color: string; description: string }[] = [
@@ -119,7 +120,8 @@ export default function OrderStatusChanger({
   orderId, 
   currentStatus, 
   onStatusChange,
-  disabled = false
+  disabled = false,
+  userRole
 }: OrderStatusChangerProps) {
   const [isChanging, setIsChanging] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
@@ -128,6 +130,21 @@ export default function OrderStatusChanger({
   const [notes, setNotes] = useState('')
   const [error, setError] = useState<string | null>(null)
 
+  // Filtrar estados disponibles según el rol del usuario
+  const getAvailableStatuses = () => {
+    if (userRole === 'seller') {
+      // Vendedor solo puede cambiar a: Confirmada, En Entrega, Completada
+      return statusOptions.filter(opt => 
+        opt.value === 'CONFIRMED' || 
+        opt.value === 'IN_DELIVERY' || 
+        opt.value === 'COMPLETED'
+      )
+    }
+    // Admin o sin rol específico: todos los estados
+    return statusOptions
+  }
+
+  const availableStatuses = getAvailableStatuses()
   const currentOption = statusOptions.find(opt => opt.value === currentStatus)
   const CurrentIcon = currentOption?.icon || Clock
 
@@ -226,7 +243,7 @@ export default function OrderStatusChanger({
                   Estado Actual: {currentOption?.label}
                 </p>
               </div>
-              {statusOptions.map((option) => {
+              {availableStatuses.map((option) => {
                 const OptionIcon = option.icon
                 const isSelected = option.value === currentStatus
                 const isFinalState = option.value === 'COMPLETED' || option.value === 'CANCELED'

@@ -238,21 +238,6 @@ export function isStatusTransitionAllowed(
   newStatus: OrderStatus,
   userRole: string
 ): { allowed: boolean; reason?: string } {
-  // Reglas de negocio para transiciones de estado
-  const transitions: Record<OrderStatus, OrderStatus[]> = {
-    PENDING: ['CONFIRMED', 'CANCELED'],
-    CONFIRMED: ['PREPARING', 'CANCELED'],
-    PREPARING: ['READY_FOR_PICKUP', 'CANCELED'],
-    READY_FOR_PICKUP: ['IN_DELIVERY', 'DELIVERED', 'CANCELED'],
-    IN_DELIVERY: ['DELIVERED', 'PARTIALLY_DELIVERED'],
-    DELIVERED: ['COMPLETED'],
-    PARTIALLY_DELIVERED: ['COMPLETED', 'IN_DELIVERY'],
-    COMPLETED: [], // Estado final
-    CANCELED: [], // Estado final
-    PAYMENT_PENDING: ['PAID', 'CANCELED'],
-    PAID: ['CONFIRMED'],
-  };
-
   // Solo ADMIN y SELLER pueden cambiar estados
   if (userRole !== 'ADMIN' && userRole !== 'SELLER') {
     return {
@@ -261,8 +246,23 @@ export function isStatusTransitionAllowed(
     };
   }
 
+  // Reglas simplificadas para vendedores (flujo: PENDING -> CONFIRMED -> IN_DELIVERY -> COMPLETED)
+  const simplifiedTransitions: Record<OrderStatus, OrderStatus[]> = {
+    PENDING: ['CONFIRMED', 'IN_DELIVERY', 'COMPLETED', 'CANCELED'], // Permite saltar a cualquiera de los 3 estados del vendedor
+    CONFIRMED: ['IN_DELIVERY', 'COMPLETED', 'PREPARING', 'CANCELED'], // Permite saltar a IN_DELIVERY o COMPLETED directamente
+    PREPARING: ['READY_FOR_PICKUP', 'IN_DELIVERY', 'COMPLETED', 'CANCELED'], // Permite saltar a IN_DELIVERY o COMPLETED
+    READY_FOR_PICKUP: ['IN_DELIVERY', 'DELIVERED', 'COMPLETED', 'CANCELED'], // Permite saltar a COMPLETED
+    IN_DELIVERY: ['COMPLETED', 'DELIVERED', 'PARTIALLY_DELIVERED'], // Permite ir directo a COMPLETED
+    DELIVERED: ['COMPLETED'],
+    PARTIALLY_DELIVERED: ['COMPLETED', 'IN_DELIVERY'],
+    COMPLETED: [], // Estado final
+    CANCELED: [], // Estado final
+    PAYMENT_PENDING: ['PAID', 'CANCELED'],
+    PAID: ['CONFIRMED'],
+  };
+
   // Verificar si la transición está permitida
-  const allowedTransitions = transitions[currentStatus] || [];
+  const allowedTransitions = simplifiedTransitions[currentStatus] || [];
   if (!allowedTransitions.includes(newStatus)) {
     return {
       allowed: false,
