@@ -1467,35 +1467,35 @@ export default function OrdersPage() {
 
           {/* Controles de paginación */}
           {filteredAndSortedOrders.length > ordersPerPage && (
-            <div className="mt-8 bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
-              <div className="flex items-center justify-between">
+            <div className="mt-8 bg-white rounded-2xl shadow-lg p-4 md:p-6 border border-purple-100">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 {/* Info de página */}
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 text-center md:text-left">
                   Mostrando <strong>{startIndex + 1}</strong> - <strong>{Math.min(endIndex, filteredAndSortedOrders.length)}</strong> de <strong>{filteredAndSortedOrders.length}</strong> órdenes
                 </div>
 
                 {/* Botones de navegación */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap justify-center">
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                    className={`px-3 md:px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1 md:gap-2 text-sm md:text-base ${
                       currentPage === 1
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
                     }`}
                   >
                     <ChevronLeft className="w-4 h-4" />
-                    Anterior
+                    <span className="hidden sm:inline">Anterior</span>
                   </button>
 
                   {/* Números de página */}
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 overflow-x-auto max-w-[200px] md:max-w-none">
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-10 h-10 rounded-lg font-medium transition-colors ${
+                        className={`w-8 h-8 md:w-10 md:h-10 rounded-lg font-medium transition-colors flex-shrink-0 text-sm md:text-base ${
                           currentPage === page
                             ? 'bg-purple-600 text-white'
                             : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -1509,13 +1509,13 @@ export default function OrdersPage() {
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                    className={`px-3 md:px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1 md:gap-2 text-sm md:text-base ${
                       currentPage === totalPages
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
                     }`}
                   >
-                    Siguiente
+                    <span className="hidden sm:inline">Siguiente</span>
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>

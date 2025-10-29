@@ -53,7 +53,7 @@ Write-Host ""
 $url = "http://localhost:3000/sign-in"
 
 Write-Host "[1/2] Abriendo Microsoft Edge para VENDEDOR..." -ForegroundColor Blue
-Write-Host "      Despues de login ira a: /products (Sistema con Tags)" -ForegroundColor Cyan
+Write-Host "      Despues de login ira a: /dashboard (Panel Principal)" -ForegroundColor Cyan
 
 # Intentar abrir Edge
 $edgeOpened = $false
@@ -123,7 +123,7 @@ if ($finalCheck) {
     Write-Host "Estado del servidor: CORRIENDO" -ForegroundColor Green
     Write-Host ""
     Write-Host "URLs Abiertas:" -ForegroundColor Cyan
-    Write-Host "  VENDEDOR:  http://localhost:3000/products-modern" -ForegroundColor Blue
+    Write-Host "  VENDEDOR:  http://localhost:3000/dashboard" -ForegroundColor Blue
     Write-Host "  COMPRADOR: http://localhost:3000/buyer" -ForegroundColor Magenta
     Write-Host ""
     Write-Host "Servidor principal: http://localhost:3000" -ForegroundColor Gray
@@ -141,13 +141,13 @@ Write-Host "IMPORTANTE: Debes iniciar sesion con usuarios DIFERENTES" -Foregroun
 Write-Host ""
 Write-Host "Microsoft Edge (VENDEDOR):" -ForegroundColor Blue
 Write-Host "  Email: tucano0109@gmail.com" -ForegroundColor White
-Write-Host "  Ira automaticamente a: /products (CON SISTEMA DE TAGS)" -ForegroundColor Green
+Write-Host "  Ira automaticamente a: /dashboard (PANEL PRINCIPAL)" -ForegroundColor Green
 Write-Host ""
 Write-Host "Chrome Incognito (COMPRADOR):" -ForegroundColor Magenta
 Write-Host "  Email: l3oyucon1978@gmail.com" -ForegroundColor White
 Write-Host "  Ira a: /buyer/dashboard (interfaz morada)" -ForegroundColor Gray
 Write-Host ""
-Write-Host "NUEVO: Sistema de Tags en /products" -ForegroundColor Cyan
+Write-Host "Sistema de Tags disponible en /products" -ForegroundColor Cyan
 Write-Host "  - Haz clic en 'Detalles & Tags' en cualquier producto" -ForegroundColor Gray
 Write-Host "  - Tab 'Promociones' para gestionar etiquetas" -ForegroundColor Gray
 Write-Host "  - 17 etiquetas predefinidas + etiquetas personalizadas" -ForegroundColor Gray

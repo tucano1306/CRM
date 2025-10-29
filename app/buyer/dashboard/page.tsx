@@ -12,6 +12,7 @@ import {
 import Link from 'next/link'
 import { DashboardStatsSkeleton } from '@/components/skeletons'
 import { formatPrice } from '@/lib/utils'
+import { useCartCount } from '@/hooks/useCartCount'
 
 interface BuyerStats {
   totalOrders: number
@@ -32,6 +33,7 @@ interface RecentOrder {
 
 export default function BuyerDashboardPage() {
   const { user } = useUser()
+  const { cartCount } = useCartCount()
   const [stats, setStats] = useState<BuyerStats | null>(null)
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
   const [loading, setLoading] = useState(true)
@@ -282,9 +284,14 @@ export default function BuyerDashboardPage() {
               <p className="text-slate-200 text-lg">Bienvenido a tu panel de compras</p>
             </div>
             <Link href="/buyer/cart">
-              <Button className="bg-white text-slate-800 hover:bg-slate-100 font-semibold px-6 py-3">
+              <Button className="bg-white text-slate-800 hover:bg-slate-100 font-semibold px-6 py-3 relative">
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 Mi Carrito
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 h-6 min-w-[24px] px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg">
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
+                )}
               </Button>
             </Link>
           </div>
@@ -660,12 +667,21 @@ export default function BuyerDashboardPage() {
                 </Link>
 
                 <Link href="/buyer/cart">
-                  <div className="p-4 bg-green-50 hover:bg-green-100 rounded-xl transition cursor-pointer">
+                  <div className="p-4 bg-green-50 hover:bg-green-100 rounded-xl transition cursor-pointer relative">
                     <div className="flex items-center gap-3">
-                      <ShoppingCart className="h-8 w-8 text-green-600" />
+                      <div className="relative">
+                        <ShoppingCart className="h-8 w-8 text-green-600" />
+                        {cartCount > 0 && (
+                          <span className="absolute -top-2 -right-2 h-5 min-w-[20px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                            {cartCount > 9 ? '9+' : cartCount}
+                          </span>
+                        )}
+                      </div>
                       <div>
                         <h3 className="font-semibold text-green-900">Mi Carrito</h3>
-                        <p className="text-sm text-green-700">Ver productos en carrito</p>
+                        <p className="text-sm text-green-700">
+                          {cartCount > 0 ? `${cartCount} ${cartCount === 1 ? 'producto' : 'productos'}` : 'Ver productos en carrito'}
+                        </p>
                       </div>
                     </div>
                   </div>

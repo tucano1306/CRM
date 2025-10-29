@@ -292,84 +292,92 @@ export default function OrdersTimelineView({
                     <div
                       className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-200 hover:border-purple-300 group ml-4"
                     >
-                      <div className="p-4">
-                        <div className="flex items-center gap-3">
-                          {/* Checkbox de selección (solo para vendedor) */}
-                          {userRole === 'SELLER' && onToggleSelection && (
+                      <div className="p-3 sm:p-4">
+                        {/* Layout responsive: columna en móvil, fila en desktop */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                          {/* Primera fila en móvil: Checkbox + Icono + Info básica */}
+                          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                            {/* Checkbox de selección (solo para vendedor) */}
+                            {userRole === 'SELLER' && onToggleSelection && (
+                              <div 
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  onToggleSelection(order.id)
+                                }}
+                                className="flex-shrink-0 cursor-pointer"
+                              >
+                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                                  isSelected(order.id)
+                                    ? 'bg-purple-600 border-purple-600'
+                                    : 'border-gray-300 hover:border-purple-400'
+                                }`}>
+                                  {isSelected(order.id) && (
+                                    <Check className="h-3 w-3 text-white" />
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Icono de Estado */}
                             <div 
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                onToggleSelection(order.id)
-                              }}
-                              className="flex-shrink-0 cursor-pointer"
+                              className={`${config.bg} p-2 sm:p-2.5 rounded-lg flex-shrink-0 cursor-pointer`}
+                              onClick={() => onOrderClick(order)}
                             >
-                              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                                isSelected(order.id)
-                                  ? 'bg-purple-600 border-purple-600'
-                                  : 'border-gray-300 hover:border-purple-400'
-                              }`}>
-                                {isSelected(order.id) && (
-                                  <Check className="h-3 w-3 text-white" />
+                              <StatusIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${config.color}`} />
+                            </div>
+
+                            {/* Info Principal */}
+                            <div 
+                              className="flex-1 min-w-0 cursor-pointer"
+                              onClick={() => onOrderClick(order)}
+                            >
+                              <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
+                                <h4 className="font-semibold text-gray-900 text-sm">
+                                  #{order.orderNumber}
+                                </h4>
+                                <span className={`
+                                  text-xs font-medium px-1.5 sm:px-2 py-0.5 rounded-full whitespace-nowrap
+                                  ${config.bg} ${config.color}
+                                `}>
+                                  {config.label}
+                                </span>
+                                {isFirst && (
+                                  <span className="text-xs bg-gradient-to-r from-purple-600 to-purple-700 text-white px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex items-center gap-1 whitespace-nowrap">
+                                    <TrendingUp className="h-3 w-3" />
+                                    <span className="hidden sm:inline">Reciente</span>
+                                  </span>
                                 )}
                               </div>
-                            </div>
-                          )}
-
-                          {/* Icono de Estado */}
-                          <div 
-                            className={`${config.bg} p-2.5 rounded-lg flex-shrink-0 cursor-pointer`}
-                            onClick={() => onOrderClick(order)}
-                          >
-                            <StatusIcon className={`h-5 w-5 ${config.color}`} />
-                          </div>
-
-                          {/* Info Principal */}
-                          <div 
-                            className="flex-1 min-w-0 cursor-pointer"
-                            onClick={() => onOrderClick(order)}
-                          >
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="font-semibold text-gray-900 text-sm">
-                                #{order.orderNumber}
-                              </h4>
-                              <span className={`
-                                text-xs font-medium px-2 py-0.5 rounded-full
-                                ${config.bg} ${config.color}
-                              `}>
-                                {config.label}
-                              </span>
-                              {isFirst && (
-                                <span className="text-xs bg-gradient-to-r from-purple-600 to-purple-700 text-white px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
-                                  <TrendingUp className="h-3 w-3" />
-                                  Reciente
+                              
+                              <div className="flex items-center gap-2 sm:gap-3 text-xs text-gray-600 flex-wrap">
+                                <span className="flex items-center gap-1 whitespace-nowrap">
+                                  <Package className="h-3 w-3" />
+                                  <span className="hidden sm:inline">{order.orderItems?.length || 0} {order.orderItems?.length === 1 ? 'producto' : 'productos'}</span>
+                                  <span className="sm:hidden">{order.orderItems?.length || 0} prod.</span>
                                 </span>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center gap-3 text-xs text-gray-600">
-                              <span className="flex items-center gap-1">
-                                <Package className="h-3 w-3" />
-                                {order.orderItems?.length || 0} {order.orderItems?.length === 1 ? 'producto' : 'productos'}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {new Date(order.createdAt).toLocaleTimeString('es-ES', {
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </span>
+                                <span className="flex items-center gap-1 whitespace-nowrap">
+                                  <Clock className="h-3 w-3" />
+                                  {new Date(order.createdAt).toLocaleTimeString('es-ES', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </span>
+                              </div>
                             </div>
                           </div>
 
-                          {/* Precio */}
-                          <div className="text-right flex-shrink-0">
-                            <p className="text-xl font-bold text-purple-600">
-                              ${Number(order.totalAmount).toFixed(2)}
-                            </p>
-                          </div>
+                          {/* Segunda fila en móvil: Precio + Flecha */}
+                          <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 sm:flex-shrink-0">
+                            {/* Precio */}
+                            <div className="text-left sm:text-right cursor-pointer" onClick={() => onOrderClick(order)}>
+                              <p className="text-lg sm:text-xl font-bold text-purple-600">
+                                ${Number(order.totalAmount).toFixed(2)}
+                              </p>
+                            </div>
 
-                          {/* Flecha */}
-                          <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-purple-600 transition-colors flex-shrink-0" />
+                            {/* Flecha */}
+                            <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-purple-600 transition-colors flex-shrink-0" />
+                          </div>
                         </div>
                       </div>
                     </div>

@@ -207,10 +207,18 @@ export default clerkMiddleware(async (auth, req) => {
   // Redirección desde raíz
   if (req.nextUrl.pathname === '/') {
     if (userRole === 'CLIENT') {
+      logger.info(LogCategory.AUTH, '🔄 Redirecting CLIENT to /buyer/dashboard', {
+        userId: userId || undefined,
+        userRole
+      })
       return NextResponse.redirect(new URL('/buyer/dashboard', req.url))
     } else {
-      // Vendedor/Admin → Redirigir a products con sistema de tags
-      return NextResponse.redirect(new URL('/products', req.url))
+      // Vendedor/Admin → Redirigir a dashboard
+      logger.info(LogCategory.AUTH, '🔄 Redirecting SELLER/ADMIN to /dashboard', {
+        userId: userId || undefined,
+        userRole
+      })
+      return NextResponse.redirect(new URL('/dashboard', req.url))
     }
   }
 
