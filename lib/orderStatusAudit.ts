@@ -238,23 +238,56 @@ export function isStatusTransitionAllowed(
   newStatus: OrderStatus,
   userRole: string
 ): { allowed: boolean; reason?: string } {
-  // Solo ADMIN y SELLER pueden cambiar estados
-  if (userRole !== 'ADMIN' && userRole !== 'SELLER') {
+  // SELLER y ADMIN pueden cambiar estados
+  if (userRole !== 'ADMIN' && userRole !== 'SELLER' && userRole !== 'CLIENT') {
     return {
       allowed: false,
-      reason: 'Solo administradores y vendedores pueden cambiar estados de órdenes',
+      reason: 'No tienes permisos para cambiar estados de órdenes',
     };
   }
 
-  // Reglas simplificadas para vendedores (flujo: PENDING -> CONFIRMED -> IN_DELIVERY -> COMPLETED)
+  // CLIENTE (BUYER) solo puede marcar como RECIBIDA (DELIVERED) o CANCELAR
+  if (userRole === 'CLIENT') {
+    // Puede marcar como recibida
+    if (newStatus === 'DELIVERED') {
+      // Puede marcar como recibida desde IN_DELIVERY, PARTIALLY_DELIVERED o CONFIRMED
+      if (currentStatus !== 'IN_DELIVERY' && currentStatus !== 'PARTIALLY_DELIVERED' && currentStatus !== 'CONFIRMED') {
+        return {
+          allowed: false,
+          reason: 'Solo puedes marcar como recibida una orden que esté en camino',
+        };
+      }
+      return { allowed: true };
+    }
+    
+    // Puede cancelar orden
+    if (newStatus === 'CANCELED') {
+      // Solo puede cancelar si está en PENDING o CONFIRMED (antes de envío)
+      if (currentStatus !== 'PENDING' && currentStatus !== 'CONFIRMED') {
+        return {
+          allowed: false,
+          reason: 'Solo puedes cancelar órdenes pendientes o confirmadas',
+        };
+      }
+      return { allowed: true };
+    }
+    
+    // Cualquier otro cambio no está permitido
+    return {
+      allowed: false,
+      reason: 'Los clientes solo pueden marcar órdenes como recibidas o cancelarlas',
+    };
+  }
+
+  // Reglas simplificadas para vendedores (flujo: PENDING -> CONFIRMED -> IN_DELIVERY -> DELIVERED por comprador)
   const simplifiedTransitions: Record<OrderStatus, OrderStatus[]> = {
-    PENDING: ['CONFIRMED', 'IN_DELIVERY', 'COMPLETED', 'CANCELED'], // Permite saltar a cualquiera de los 3 estados del vendedor
-    CONFIRMED: ['IN_DELIVERY', 'COMPLETED', 'PREPARING', 'CANCELED'], // Permite saltar a IN_DELIVERY o COMPLETED directamente
-    PREPARING: ['READY_FOR_PICKUP', 'IN_DELIVERY', 'COMPLETED', 'CANCELED'], // Permite saltar a IN_DELIVERY o COMPLETED
-    READY_FOR_PICKUP: ['IN_DELIVERY', 'DELIVERED', 'COMPLETED', 'CANCELED'], // Permite saltar a COMPLETED
-    IN_DELIVERY: ['COMPLETED', 'DELIVERED', 'PARTIALLY_DELIVERED'], // Permite ir directo a COMPLETED
-    DELIVERED: ['COMPLETED'],
-    PARTIALLY_DELIVERED: ['COMPLETED', 'IN_DELIVERY'],
+    PENDING: ['CONFIRMED', 'IN_DELIVERY', 'CANCELED'], // Vendedor confirma o envía
+    CONFIRMED: ['IN_DELIVERY', 'PREPARING', 'CANCELED'], // Vendedor pone en camino
+    PREPARING: ['READY_FOR_PICKUP', 'IN_DELIVERY', 'CANCELED'],
+    READY_FOR_PICKUP: ['IN_DELIVERY', 'DELIVERED', 'CANCELED'],
+    IN_DELIVERY: ['DELIVERED', 'PARTIALLY_DELIVERED'], // Solo comprador puede marcar DELIVERED
+    DELIVERED: ['COMPLETED'], // Estado final que confirma recepción
+    PARTIALLY_DELIVERED: ['DELIVERED', 'IN_DELIVERY'],
     COMPLETED: [], // Estado final
     CANCELED: [], // Estado final
     PAYMENT_PENDING: ['PAID', 'CANCELED'],

@@ -72,7 +72,7 @@ const statusConfig: Record<string, { label: string; color: string; bg: string; i
     icon: Truck 
   },
   DELIVERED: { 
-    label: 'Entregado', 
+    label: 'Recibida', 
     color: 'text-green-600', 
     bg: 'bg-green-50',
     icon: CheckCircle 
@@ -127,6 +127,7 @@ export default function OrdersListImproved({
         // Determinar si necesita animación (órdenes no completadas ni canceladas)
         const needsAttention = !['COMPLETED', 'DELIVERED', 'CANCELED'].includes(order.status)
         const isCompleted = order.status === 'COMPLETED' || order.status === 'DELIVERED'
+        const isReceived = order.status === 'DELIVERED' // Orden recibida por el comprador
 
         return (
           <Card 
@@ -136,8 +137,21 @@ export default function OrdersListImproved({
               animation: 'orderPulse 3s ease-in-out infinite',
             } : {}}
           >
-            {/* Sticker de Completada */}
-            {isCompleted && (
+            {/* Sticker de Recibida - Con badge especial para vendedor */}
+            {isReceived && (
+              <div className="absolute top-0 right-0 z-10"
+                style={{
+                  animation: 'stickerBounce 0.8s ease-out',
+                }}
+              >
+                <div className="bg-gradient-to-br from-green-500 via-emerald-500 to-teal-600 text-white px-4 py-2 rounded-bl-2xl shadow-xl flex items-center gap-2 border-2 border-white">
+                  <CheckCircle className="h-5 w-5 animate-pulse" />
+                  <span className="font-bold text-sm">✅ Recibida</span>
+                </div>
+              </div>
+            )}
+            {/* Sticker de Completada (otros casos) */}
+            {isCompleted && !isReceived && (
               <div className="absolute top-0 right-0 z-10"
                 style={{
                   animation: 'stickerBounce 0.8s ease-out',

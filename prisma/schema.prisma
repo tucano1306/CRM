@@ -255,6 +255,7 @@ enum NotificationType {
   ORDER_STATUS_CHANGED   // Vendedor → Comprador
   ORDER_CONFIRMED        // Vendedor → Comprador
   ORDER_COMPLETED        // Vendedor → Comprador
+  ORDER_RECEIVED         // Comprador → Vendedor (mercancía recibida)
   PAYMENT_RECEIVED       // Vendedor → Comprador
   CHAT_MESSAGE           // Bidireccional
   RETURN_REQUEST         // Comprador → Vendedor

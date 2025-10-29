@@ -29,6 +29,8 @@ import {
   MapPin,
   MessageCircle,
   Star,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import OrderCountdown from '@/components/buyer/OrderCountdown'
 import { OrderCardSkeleton } from '@/components/skeletons'
@@ -139,12 +141,12 @@ const statusConfig = {
     border: 'border-purple-200',
   },
   DELIVERED: {
-    label: 'Entregado',
-    description: 'Tu pedido fue entregado',
+    label: 'Recibida',
+    description: 'Confirmaste que recibiste tu pedido',
     icon: PackageCheck,
-    color: 'text-teal-600',
-    bg: 'bg-teal-50',
-    border: 'border-teal-200',
+    color: 'text-green-600',
+    bg: 'bg-green-50',
+    border: 'border-green-200',
   },
   PARTIALLY_DELIVERED: {
     label: 'Entrega Parcial',
@@ -225,6 +227,11 @@ export default function OrdersPage() {
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [toastStatus, setToastStatus] = useState('')
+  
+  // Paginación y filtro por fecha
+  const [currentPage, setCurrentPage] = useState(1)
+  const [dateRange, setDateRange] = useState<'7days' | '30days' | '90days' | 'all'>('30days')
+  const ordersPerPage = 10
 
   useEffect(() => {
     fetchOrders()
@@ -237,6 +244,11 @@ export default function OrdersPage() {
       return () => clearTimeout(timer)
     }
   }, [showToast])
+
+  // Resetear a página 1 cuando cambian los filtros
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filterStatus, searchQuery, dateRange, sortBy])
 
   // Función para calcular porcentaje de progreso según el estado
   const getProgressPercentage = (status: OrderStatus): number => {
@@ -447,21 +459,53 @@ export default function OrdersPage() {
     if (reason === null) return
 
     try {
-      const result = await apiCall(`/api/orders/${orderId}/cancel`, {
-        method: 'PUT',
+      const result = await apiCall(`/api/orders/${orderId}/status`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          idempotencyKey: uuidv4(),
-          reason 
+          status: 'CANCELED',
+          notes: reason || 'Cancelada por el cliente'
         }),
         timeout: 5000,
       })
 
       if (result.success) {
         alert('✅ Orden cancelada')
-        fetchOrders()
+        // Cerrar el modal si está abierto con esta orden
+        if (selectedOrder?.id === orderId) {
+          closeOrderModal()
+        }
+        // Recargar las órdenes para actualizar la vista
+        await fetchOrders()
       } else {
         alert(result.error || 'Error cancelando orden')
+      }
+    } catch (err) {
+      alert(getErrorMessage(err))
+    }
+  }
+
+  // ✅ markAsReceived - Marcar orden como recibida por el comprador
+  const markAsReceived = async (orderId: string) => {
+    if (!confirm('¿Confirmas que recibiste todos los productos de esta orden?')) return
+
+    try {
+      const result = await apiCall(`/api/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          status: 'DELIVERED',
+          notes: 'Mercancía recibida por el cliente'
+        }),
+        timeout: 5000,
+      })
+
+      if (result.success) {
+        alert('✅ Orden marcada como recibida. ¡Gracias por confirmar!')
+        fetchOrders()
+        closeOrderModal()
+      } else {
+        alert(result.error || 'Error al marcar como recibida')
       }
     } catch (err) {
       alert(getErrorMessage(err))
@@ -534,7 +578,7 @@ export default function OrdersPage() {
     if (e) e.stopPropagation()
     // Redirigir al chat con el vendedor
     if (order.seller?.id) {
-      router.push(`/chat?seller=${order.seller.id}&order=${order.id}`)
+      router.push(`/buyer/chat?seller=${order.seller.id}&order=${order.id}`)
     } else {
       alert('No se puede contactar al vendedor en este momento')
     }
@@ -629,7 +673,16 @@ export default function OrdersPage() {
         if (!matchesOrderNumber && !matchesId && !matchesTotal) return false
       }
 
-      // Filtro por rango de fechas
+      // Filtro por rango de fechas predefinido
+      if (dateRange !== 'all') {
+        const orderDate = new Date(order.createdAt)
+        const now = new Date()
+        const daysAgo = dateRange === '7days' ? 7 : dateRange === '30days' ? 30 : 90
+        const cutoffDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000))
+        if (orderDate < cutoffDate) return false
+      }
+
+      // Filtro por rango de fechas manual
       if (dateFrom) {
         const orderDate = new Date(order.createdAt)
         const fromDate = new Date(dateFrom)
@@ -658,6 +711,12 @@ export default function OrdersPage() {
           return 0
       }
     })
+
+  // Paginación
+  const totalPages = Math.ceil(filteredAndSortedOrders.length / ordersPerPage)
+  const startIndex = (currentPage - 1) * ordersPerPage
+  const endIndex = startIndex + ordersPerPage
+  const paginatedOrders = filteredAndSortedOrders.slice(startIndex, endIndex)
 
   return (
     <>
@@ -794,6 +853,18 @@ export default function OrdersPage() {
               <option value="highest">Mayor monto</option>
               <option value="lowest">Menor monto</option>
             </select>
+
+            {/* Filtro por rango de fecha */}
+            <select 
+              value={dateRange}
+              onChange={(e) => setDateRange(e.target.value as any)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none bg-white"
+            >
+              <option value="7days">Últimos 7 días</option>
+              <option value="30days">Últimos 30 días</option>
+              <option value="90days">Últimos 3 meses</option>
+              <option value="all">Todo el historial</option>
+            </select>
           </div>
 
           {/* Indicador de resultados filtrados */}
@@ -852,16 +923,6 @@ export default function OrdersPage() {
               Confirmadas ({orders.filter(o => o.status === 'CONFIRMED').length})
             </button>
             <button
-              onClick={() => setFilterStatus('PREPARING')}
-              className={`px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
-                filterStatus === 'PREPARING'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              En Preparación ({orders.filter(o => o.status === 'PREPARING' || o.status === 'PROCESSING').length})
-            </button>
-            <button
               onClick={() => setFilterStatus('DELIVERED')}
               className={`px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
                 filterStatus === 'DELIVERED'
@@ -869,7 +930,7 @@ export default function OrdersPage() {
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              Entregadas ({orders.filter(o => o.status === 'DELIVERED' || o.status === 'COMPLETED').length})
+              Recibidas ({orders.filter(o => o.status === 'DELIVERED' || o.status === 'COMPLETED').length})
             </button>
             <button
               onClick={() => setFilterStatus('CANCELED')}
@@ -902,8 +963,9 @@ export default function OrdersPage() {
             </Link>
           </div>
         ) : (
+          <>
           <div className={viewMode === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : 'space-y-4'}>
-            {filteredAndSortedOrders.map((order) => {
+            {paginatedOrders.map((order) => {
               const config = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.PENDING
               const StatusIcon = config.icon
               
@@ -920,7 +982,7 @@ export default function OrdersPage() {
                     animation: 'orderPulse 3s ease-in-out infinite',
                   } : {}}
                 >
-                  {/* Sticker de Completada */}
+                  {/* Sticker de Recibida */}
                   {isCompleted && (
                     <div className="absolute top-0 right-0 z-10"
                       style={{
@@ -929,7 +991,7 @@ export default function OrdersPage() {
                     >
                       <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white px-4 py-2 rounded-bl-2xl shadow-lg flex items-center gap-2">
                         <CheckCircle className="h-5 w-5" />
-                        <span className="font-bold text-sm">¡Completada!</span>
+                        <span className="font-bold text-sm">✅ Recibida</span>
                       </div>
                     </div>
                   )}
@@ -965,6 +1027,99 @@ export default function OrdersPage() {
                         {config.label}
                       </span>
                     </div>
+                  </div>
+
+                  {/* Animaciones según estado */}
+                  <div className="mb-4 flex justify-center">
+                    {order.status === 'CONFIRMED' && (
+                      <div className="relative w-20 h-20">
+                        <svg viewBox="0 0 100 100" className="w-full h-full">
+                          {/* Clipboard/Lista */}
+                          <rect x="25" y="15" width="50" height="70" fill="#fff" stroke="#3b82f6" strokeWidth="2" rx="3" />
+                          <rect x="35" y="10" width="30" height="8" fill="#3b82f6" rx="2" />
+                          
+                          {/* Items de la lista con checkmarks animados */}
+                          {/* Item 1 - Ya marcado */}
+                          <circle cx="35" cy="30" r="4" fill="#10b981" />
+                          <path d="M 33 30 L 35 32 L 38 28" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                          <line x1="42" y1="30" x2="65" y2="30" stroke="#d1d5db" strokeWidth="2" />
+                          
+                          {/* Item 2 - Marcándose (animado) */}
+                          <circle cx="35" cy="45" r="4" fill="#10b981">
+                            <animate attributeName="fill" values="#e5e7eb;#10b981" dur="2s" begin="0s" fill="freeze" />
+                          </circle>
+                          <path d="M 33 45 L 35 47 L 38 43" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round">
+                            <animate attributeName="stroke-dasharray" values="0,20;20,0" dur="2s" begin="0s" fill="freeze" />
+                            <animate attributeName="stroke-dashoffset" values="20;0" dur="2s" begin="0s" fill="freeze" />
+                          </path>
+                          <line x1="42" y1="45" x2="65" y2="45" stroke="#d1d5db" strokeWidth="2" />
+                          
+                          {/* Item 3 - Por marcar */}
+                          <circle cx="35" cy="60" r="4" fill="#e5e7eb">
+                            <animate attributeName="fill" values="#e5e7eb;#e5e7eb;#10b981" dur="4s" begin="0s" repeatCount="indefinite" />
+                          </circle>
+                          <path d="M 33 60 L 35 62 L 38 58" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round">
+                            <animate attributeName="stroke-dasharray" values="0,20;0,20;20,0" dur="4s" begin="0s" repeatCount="indefinite" />
+                          </path>
+                          <line x1="42" y1="60" x2="65" y2="60" stroke="#d1d5db" strokeWidth="2" />
+                          
+                          {/* Item 4 - Por marcar */}
+                          <circle cx="35" cy="75" r="4" fill="#e5e7eb" />
+                          <line x1="42" y1="75" x2="65" y2="75" stroke="#d1d5db" strokeWidth="2" />
+                          
+                          {/* Estrella de confirmación */}
+                          <text x="72" y="25" fontSize="14" fill="#fbbf24" className="animate-ping">⭐</text>
+                        </svg>
+                      </div>
+                    )}
+
+                    {order.status === 'IN_DELIVERY' && (
+                      <div className="relative w-20 h-20">
+                        <svg viewBox="0 0 100 100" className="w-full h-full">
+                          {/* Road */}
+                          <line x1="0" y1="70" x2="100" y2="70" stroke="#9ca3af" strokeWidth="2" strokeDasharray="5,5">
+                            <animate attributeName="stroke-dashoffset" from="0" to="10" dur="0.5s" repeatCount="indefinite" />
+                          </line>
+                          {/* Truck */}
+                          <g className="animate-truck-move">
+                            <rect x="10" y="50" width="15" height="15" fill="#8b5cf6" rx="2" />
+                            <rect x="12" y="52" width="5" height="6" fill="#ddd6fe" rx="1" />
+                            <rect x="25" y="45" width="25" height="20" fill="#a78bfa" rx="2" />
+                            <line x1="35" y1="45" x2="35" y2="65" stroke="#8b5cf6" strokeWidth="1" />
+                            <line x1="42" y1="45" x2="42" y2="65" stroke="#8b5cf6" strokeWidth="1" />
+                            <circle cx="18" cy="68" r="4" fill="#374151">
+                              <animateTransform attributeName="transform" type="rotate" from="0 18 68" to="360 18 68" dur="0.5s" repeatCount="indefinite" />
+                            </circle>
+                            <circle cx="43" cy="68" r="4" fill="#374151">
+                              <animateTransform attributeName="transform" type="rotate" from="0 43 68" to="360 43 68" dur="0.5s" repeatCount="indefinite" />
+                            </circle>
+                            <line x1="5" y1="55" x2="0" y2="55" stroke="#8b5cf6" strokeWidth="2" opacity="0.5">
+                              <animate attributeName="x1" values="5;0;5" dur="0.3s" repeatCount="indefinite" />
+                            </line>
+                          </g>
+                          {/* Clouds */}
+                          <ellipse cx="70" cy="20" rx="10" ry="6" fill="#e0e7ff" opacity="0.7">
+                            <animate attributeName="cx" values="70;75;70" dur="3s" repeatCount="indefinite" />
+                          </ellipse>
+                        </svg>
+                      </div>
+                    )}
+
+                    {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && (
+                      <div className="relative w-20 h-20">
+                        <svg viewBox="0 0 100 100" className="w-full h-full">
+                          <rect x="30" y="35" width="40" height="40" fill="#10b981" rx="2" className="animate-wiggle" />
+                          <line x1="30" y1="55" x2="70" y2="55" stroke="#059669" strokeWidth="3" />
+                          <line x1="50" y1="35" x2="50" y2="75" stroke="#059669" strokeWidth="3" />
+                          <circle cx="50" cy="55" r="18" fill="#fff" className="animate-scale-in" />
+                          <path d="M 42 55 L 48 62 L 60 48" stroke="#10b981" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" className="animate-draw-check" />
+                          <circle cx="25" cy="20" r="2" fill="#fbbf24" className="animate-confetti-1" />
+                          <circle cx="75" cy="25" r="2" fill="#ec4899" className="animate-confetti-2" />
+                          <circle cx="20" cy="80" r="2" fill="#3b82f6" className="animate-confetti-3" />
+                          <circle cx="80" cy="75" r="2" fill="#8b5cf6" className="animate-confetti-4" />
+                        </svg>
+                      </div>
+                    )}
                   </div>
                   
                   {/* Productos */}
@@ -1002,7 +1157,8 @@ export default function OrdersPage() {
 
                   {/* Acciones rápidas */}
                   <div className="flex gap-2">
-                    {order.status === 'PENDING' && (
+                    {/* Botón cancelar para PENDING y CONFIRMED */}
+                    {(order.status === 'PENDING' || order.status === 'CONFIRMED') && (
                       <button 
                         onClick={(e) => handleQuickCancel(order.id, e)}
                         className="flex-1 bg-red-100 text-red-600 py-2 rounded-lg hover:bg-red-200 transition-colors font-medium text-sm flex items-center justify-center gap-2"
@@ -1070,6 +1226,7 @@ export default function OrdersPage() {
                   } : {}}
                 >
                   {/* Sticker de Completada (también en lista) */}
+                  {/* Sticker de Recibida (vista lista) */}
                   {isCompleted && (
                     <div className="absolute top-0 right-0 z-10"
                       style={{
@@ -1078,17 +1235,97 @@ export default function OrdersPage() {
                     >
                       <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white px-3 py-1 rounded-bl-xl shadow-lg flex items-center gap-1">
                         <CheckCircle className="h-4 w-4" />
-                        <span className="font-bold text-xs">¡Completada!</span>
+                        <span className="font-bold text-xs">✅ Recibida</span>
                       </div>
                     </div>
                   )}
 
                   <div className="flex items-center justify-between gap-4">
-                    {/* Izquierda: Info básica */}
+                    {/* Izquierda: Info básica con animación */}
                     <div className="flex items-center gap-4 flex-1">
-                      <div className={`p-3 rounded-lg ${config.bg} flex-shrink-0`}>
-                        <StatusIcon className={`${config.color} w-6 h-6`} />
+                      {/* Animaciones según estado */}
+                      <div className="flex-shrink-0">
+                        {order.status === 'CONFIRMED' && (
+                          <div className="relative w-16 h-16">
+                            <svg viewBox="0 0 100 100" className="w-full h-full">
+                              {/* Clipboard/Lista */}
+                              <rect x="25" y="15" width="50" height="70" fill="#fff" stroke="#3b82f6" strokeWidth="2" rx="3" />
+                              <rect x="35" y="10" width="30" height="8" fill="#3b82f6" rx="2" />
+                              
+                              {/* Items con checkmarks animados */}
+                              <circle cx="35" cy="30" r="4" fill="#10b981" />
+                              <path d="M 33 30 L 35 32 L 38 28" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                              <line x1="42" y1="30" x2="65" y2="30" stroke="#d1d5db" strokeWidth="2" />
+                              
+                              <circle cx="35" cy="45" r="4" fill="#10b981">
+                                <animate attributeName="fill" values="#e5e7eb;#10b981" dur="2s" begin="0s" fill="freeze" />
+                              </circle>
+                              <path d="M 33 45 L 35 47 L 38 43" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round">
+                                <animate attributeName="stroke-dasharray" values="0,20;20,0" dur="2s" begin="0s" fill="freeze" />
+                              </path>
+                              <line x1="42" y1="45" x2="65" y2="45" stroke="#d1d5db" strokeWidth="2" />
+                              
+                              <circle cx="35" cy="60" r="4" fill="#e5e7eb">
+                                <animate attributeName="fill" values="#e5e7eb;#e5e7eb;#10b981" dur="4s" begin="0s" repeatCount="indefinite" />
+                              </circle>
+                              <path d="M 33 60 L 35 62 L 38 58" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round">
+                                <animate attributeName="stroke-dasharray" values="0,20;0,20;20,0" dur="4s" begin="0s" repeatCount="indefinite" />
+                              </path>
+                              <line x1="42" y1="60" x2="65" y2="60" stroke="#d1d5db" strokeWidth="2" />
+                              
+                              <circle cx="35" cy="75" r="4" fill="#e5e7eb" />
+                              <line x1="42" y1="75" x2="65" y2="75" stroke="#d1d5db" strokeWidth="2" />
+                              
+                              <text x="72" y="25" fontSize="12" fill="#fbbf24" className="animate-ping">⭐</text>
+                            </svg>
+                          </div>
+                        )}
+
+                        {order.status === 'IN_DELIVERY' && (
+                          <div className="relative w-16 h-16">
+                            <svg viewBox="0 0 100 100" className="w-full h-full">
+                              <line x1="0" y1="70" x2="100" y2="70" stroke="#9ca3af" strokeWidth="2" strokeDasharray="5,5">
+                                <animate attributeName="stroke-dashoffset" from="0" to="10" dur="0.5s" repeatCount="indefinite" />
+                              </line>
+                              <g className="animate-truck-move">
+                                <rect x="10" y="50" width="15" height="15" fill="#8b5cf6" rx="2" />
+                                <rect x="12" y="52" width="5" height="6" fill="#ddd6fe" rx="1" />
+                                <rect x="25" y="45" width="25" height="20" fill="#a78bfa" rx="2" />
+                                <circle cx="18" cy="68" r="4" fill="#374151">
+                                  <animateTransform attributeName="transform" type="rotate" from="0 18 68" to="360 18 68" dur="0.5s" repeatCount="indefinite" />
+                                </circle>
+                                <circle cx="43" cy="68" r="4" fill="#374151">
+                                  <animateTransform attributeName="transform" type="rotate" from="0 43 68" to="360 43 68" dur="0.5s" repeatCount="indefinite" />
+                                </circle>
+                              </g>
+                              <ellipse cx="70" cy="20" rx="10" ry="6" fill="#e0e7ff" opacity="0.7">
+                                <animate attributeName="cx" values="70;75;70" dur="3s" repeatCount="indefinite" />
+                              </ellipse>
+                            </svg>
+                          </div>
+                        )}
+
+                        {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && (
+                          <div className="relative w-16 h-16">
+                            <svg viewBox="0 0 100 100" className="w-full h-full">
+                              <rect x="30" y="35" width="40" height="40" fill="#10b981" rx="2" className="animate-wiggle" />
+                              <line x1="30" y1="55" x2="70" y2="55" stroke="#059669" strokeWidth="3" />
+                              <line x1="50" y1="35" x2="50" y2="75" stroke="#059669" strokeWidth="3" />
+                              <circle cx="50" cy="55" r="18" fill="#fff" className="animate-scale-in" />
+                              <path d="M 42 55 L 48 62 L 60 48" stroke="#10b981" strokeWidth="4" fill="none" strokeLinecap="round" className="animate-draw-check" />
+                              <circle cx="25" cy="20" r="2" fill="#fbbf24" className="animate-confetti-1" />
+                              <circle cx="75" cy="25" r="2" fill="#ec4899" className="animate-confetti-2" />
+                            </svg>
+                          </div>
+                        )}
+
+                        {!['CONFIRMED', 'IN_DELIVERY', 'DELIVERED', 'COMPLETED'].includes(order.status) && (
+                          <div className={`p-3 rounded-lg ${config.bg}`}>
+                            <StatusIcon className={`${config.color} w-6 h-6`} />
+                          </div>
+                        )}
                       </div>
+                      
                       <div className="flex-1">
                         <h3 className="font-bold text-gray-900">
                           {order.orderNumber || `#${order.id.slice(0, 8)}`}
@@ -1145,7 +1382,8 @@ export default function OrdersPage() {
 
                     {/* Derecha: Acciones */}
                     <div className="flex gap-2 flex-shrink-0">
-                      {order.status === 'PENDING' && (
+                      {/* Botón cancelar para PENDING y CONFIRMED */}
+                      {(order.status === 'PENDING' || order.status === 'CONFIRMED') && (
                         <button 
                           onClick={(e) => handleQuickCancel(order.id, e)}
                           className="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition-colors"
@@ -1226,6 +1464,65 @@ export default function OrdersPage() {
               </div>
             )}
           </div>
+
+          {/* Controles de paginación */}
+          {filteredAndSortedOrders.length > ordersPerPage && (
+            <div className="mt-8 bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
+              <div className="flex items-center justify-between">
+                {/* Info de página */}
+                <div className="text-sm text-gray-600">
+                  Mostrando <strong>{startIndex + 1}</strong> - <strong>{Math.min(endIndex, filteredAndSortedOrders.length)}</strong> de <strong>{filteredAndSortedOrders.length}</strong> órdenes
+                </div>
+
+                {/* Botones de navegación */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                      currentPage === 1
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
+                    }`}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Anterior
+                  </button>
+
+                  {/* Números de página */}
+                  <div className="flex gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-10 h-10 rounded-lg font-medium transition-colors ${
+                          currentPage === page
+                            ? 'bg-purple-600 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                      currentPage === totalPages
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
+                    }`}
+                  >
+                    Siguiente
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          </>
         )}
 
         {/* Order Detail Modal */}
@@ -1418,9 +1715,127 @@ export default function OrdersPage() {
                         return (
                           <div className={`p-6 rounded-xl ${config.bg} border ${config.border}`}>
                             <div className="flex items-center gap-4">
+                              {/* Animación personalizada según el estado */}
                               <div className="flex-shrink-0">
-                                <StatusIcon className={`w-12 h-12 ${config.color}`} />
+                                {selectedOrder.status === 'CONFIRMED' && (
+                                  <div className="relative w-24 h-24">
+                                    <svg viewBox="0 0 100 100" className="w-full h-full">
+                                      {/* Clipboard/Lista */}
+                                      <rect x="25" y="15" width="50" height="70" fill="#fff" stroke="#3b82f6" strokeWidth="2" rx="3" />
+                                      <rect x="35" y="10" width="30" height="8" fill="#3b82f6" rx="2" />
+                                      
+                                      {/* Items de la lista con checkmarks animados */}
+                                      {/* Item 1 - Ya marcado */}
+                                      <circle cx="35" cy="30" r="4" fill="#10b981" />
+                                      <path d="M 33 30 L 35 32 L 38 28" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+                                      <line x1="42" y1="30" x2="65" y2="30" stroke="#d1d5db" strokeWidth="2" />
+                                      
+                                      {/* Item 2 - Marcándose (animado) */}
+                                      <circle cx="35" cy="45" r="4" fill="#10b981">
+                                        <animate attributeName="fill" values="#e5e7eb;#10b981" dur="2s" begin="0s" fill="freeze" />
+                                      </circle>
+                                      <path d="M 33 45 L 35 47 L 38 43" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round">
+                                        <animate attributeName="stroke-dasharray" values="0,20;20,0" dur="2s" begin="0s" fill="freeze" />
+                                        <animate attributeName="stroke-dashoffset" values="20;0" dur="2s" begin="0s" fill="freeze" />
+                                      </path>
+                                      <line x1="42" y1="45" x2="65" y2="45" stroke="#d1d5db" strokeWidth="2" />
+                                      
+                                      {/* Item 3 - Por marcar (loop) */}
+                                      <circle cx="35" cy="60" r="4" fill="#e5e7eb">
+                                        <animate attributeName="fill" values="#e5e7eb;#e5e7eb;#10b981" dur="4s" begin="0s" repeatCount="indefinite" />
+                                      </circle>
+                                      <path d="M 33 60 L 35 62 L 38 58" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round">
+                                        <animate attributeName="stroke-dasharray" values="0,20;0,20;20,0" dur="4s" begin="0s" repeatCount="indefinite" />
+                                      </path>
+                                      <line x1="42" y1="60" x2="65" y2="60" stroke="#d1d5db" strokeWidth="2" />
+                                      
+                                      {/* Item 4 - Por marcar */}
+                                      <circle cx="35" cy="75" r="4" fill="#e5e7eb" />
+                                      <line x1="42" y1="75" x2="65" y2="75" stroke="#d1d5db" strokeWidth="2" />
+                                      
+                                      {/* Estrella de confirmación */}
+                                      <text x="72" y="25" fontSize="14" fill="#fbbf24" className="animate-ping">⭐</text>
+                                    </svg>
+                                  </div>
+                                )}
+                                
+                                {selectedOrder.status === 'IN_DELIVERY' && (
+                                  <div className="relative w-24 h-24">
+                                    {/* Animación de camión moviéndose */}
+                                    <svg viewBox="0 0 100 100" className="w-full h-full">
+                                      {/* Carretera */}
+                                      <line x1="0" y1="70" x2="100" y2="70" stroke="#9ca3af" strokeWidth="2" strokeDasharray="5,5">
+                                        <animate attributeName="stroke-dashoffset" from="0" to="10" dur="0.5s" repeatCount="indefinite" />
+                                      </line>
+                                      
+                                      {/* Camión animado */}
+                                      <g className="animate-truck-move">
+                                        {/* Cabina */}
+                                        <rect x="10" y="50" width="15" height="15" fill="#8b5cf6" stroke="#6d28d9" strokeWidth="1.5" rx="2" />
+                                        <rect x="12" y="52" width="5" height="5" fill="#ddd6fe" />
+                                        {/* Contenedor */}
+                                        <rect x="25" y="45" width="25" height="20" fill="#a78bfa" stroke="#6d28d9" strokeWidth="1.5" rx="2" />
+                                        <line x1="32" y1="45" x2="32" y2="65" stroke="#6d28d9" strokeWidth="1" />
+                                        <line x1="40" y1="45" x2="40" y2="65" stroke="#6d28d9" strokeWidth="1" />
+                                        {/* Ruedas */}
+                                        <circle cx="18" cy="68" r="4" fill="#374151" stroke="#1f2937" strokeWidth="1">
+                                          <animateTransform attributeName="transform" type="rotate" from="0 18 68" to="360 18 68" dur="0.5s" repeatCount="indefinite" />
+                                        </circle>
+                                        <circle cx="42" cy="68" r="4" fill="#374151" stroke="#1f2937" strokeWidth="1">
+                                          <animateTransform attributeName="transform" type="rotate" from="0 42 68" to="360 42 68" dur="0.5s" repeatCount="indefinite" />
+                                        </circle>
+                                        {/* Líneas de velocidad */}
+                                        <line x1="5" y1="55" x2="0" y2="55" stroke="#8b5cf6" strokeWidth="2" opacity="0.5">
+                                          <animate attributeName="x1" values="5;0;5" dur="0.3s" repeatCount="indefinite" />
+                                          <animate attributeName="x2" values="0;-5;0" dur="0.3s" repeatCount="indefinite" />
+                                        </line>
+                                        <line x1="5" y1="60" x2="0" y2="60" stroke="#8b5cf6" strokeWidth="2" opacity="0.5">
+                                          <animate attributeName="x1" values="5;0;5" dur="0.3s" repeatCount="indefinite" begin="0.1s" />
+                                          <animate attributeName="x2" values="0;-5;0" dur="0.3s" repeatCount="indefinite" begin="0.1s" />
+                                        </line>
+                                      </g>
+                                      
+                                      {/* Nubes de fondo */}
+                                      <ellipse cx="70" cy="20" rx="10" ry="6" fill="#e0e7ff" opacity="0.6">
+                                        <animate attributeName="cx" values="70;75;70" dur="3s" repeatCount="indefinite" />
+                                      </ellipse>
+                                      <ellipse cx="85" cy="25" rx="8" ry="5" fill="#e0e7ff" opacity="0.6">
+                                        <animate attributeName="cx" values="85;90;85" dur="4s" repeatCount="indefinite" />
+                                      </ellipse>
+                                    </svg>
+                                  </div>
+                                )}
+
+                                {selectedOrder.status === 'DELIVERED' && (
+                                  <div className="relative w-24 h-24">
+                                    {/* Animación de paquete con check */}
+                                    <svg viewBox="0 0 100 100" className="w-full h-full">
+                                      {/* Paquete */}
+                                      <rect x="30" y="35" width="40" height="40" fill="#10b981" stroke="#059669" strokeWidth="2" rx="4" className="animate-wiggle" />
+                                      <line x1="50" y1="35" x2="50" y2="75" stroke="#059669" strokeWidth="2" />
+                                      <line x1="30" y1="55" x2="70" y2="55" stroke="#059669" strokeWidth="2" />
+                                      
+                                      {/* Check grande animado */}
+                                      <circle cx="50" cy="55" r="18" fill="#fff" opacity="0.9" className="animate-scale-in" />
+                                      <path d="M 42 55 L 48 62 L 60 48" stroke="#10b981" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" className="animate-draw-check" />
+                                      
+                                      {/* Confeti */}
+                                      <circle cx="25" cy="20" r="2" fill="#fbbf24" className="animate-confetti-1" />
+                                      <circle cx="75" cy="25" r="2" fill="#ec4899" className="animate-confetti-2" />
+                                      <circle cx="20" cy="80" r="2" fill="#3b82f6" className="animate-confetti-3" />
+                                      <circle cx="80" cy="75" r="2" fill="#8b5cf6" className="animate-confetti-4" />
+                                      <rect x="30" y="15" width="3" height="3" fill="#ef4444" className="animate-confetti-1" transform="rotate(45 31.5 16.5)" />
+                                      <rect x="70" y="80" width="3" height="3" fill="#10b981" className="animate-confetti-2" transform="rotate(45 71.5 81.5)" />
+                                    </svg>
+                                  </div>
+                                )}
+
+                                {/* Para otros estados, mostrar el ícono normal */}
+                                {!['CONFIRMED', 'IN_DELIVERY', 'DELIVERED'].includes(selectedOrder.status) && (
+                                  <StatusIcon className={`w-12 h-12 ${config.color}`} />
+                                )}
                               </div>
+                              
                               <div>
                                 <h4 className={`text-xl font-bold ${config.color}`}>
                                   {config.label}
@@ -1434,6 +1849,34 @@ export default function OrdersPage() {
                         )
                       })()}
                     </div>
+
+                    {/* Botón para marcar como recibida (solo si está EN_DELIVERY) */}
+                    {selectedOrder.status === 'IN_DELIVERY' && (
+                      <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-6 animate-pulse">
+                        <div className="flex items-start gap-4">
+                          <div className="flex-shrink-0">
+                            <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                              <PackageCheck className="w-7 h-7 text-white" />
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-lg font-bold text-green-900 mb-2">
+                              ¿Ya recibiste tu pedido?
+                            </h4>
+                            <p className="text-sm text-green-800 mb-4">
+                              Una vez que confirmes que recibiste todos los productos, el vendedor será notificado automáticamente.
+                            </p>
+                            <button
+                              onClick={() => markAsReceived(selectedOrder.id)}
+                              className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-lg font-bold hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
+                            >
+                              <CheckCircle className="w-5 h-5" />
+                              Confirmar que Recibí el Pedido
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Countdown para órdenes pendientes */}
                     {selectedOrder.status === 'PENDING' && selectedOrder.confirmationDeadline && (
@@ -1677,6 +2120,117 @@ export default function OrdersPage() {
             transform: scale(2);
             opacity: 0;
           }
+        }
+
+        /* Animaciones personalizadas para estados de orden */
+        @keyframes truck-move {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(5px); }
+        }
+
+        .animate-truck-move {
+          animation: truck-move 0.5s ease-in-out infinite;
+        }
+
+        @keyframes wiggle {
+          0%, 100% { transform: rotate(-3deg); }
+          50% { transform: rotate(3deg); }
+        }
+
+        .animate-wiggle {
+          animation: wiggle 1s ease-in-out infinite;
+        }
+
+        @keyframes scale-in {
+          0% { 
+            transform: scale(0);
+            opacity: 0;
+          }
+          50% {
+            transform: scale(1.2);
+          }
+          100% { 
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+
+        .animate-scale-in {
+          animation: scale-in 0.8s ease-out;
+        }
+
+        @keyframes draw-check {
+          0% {
+            stroke-dasharray: 0, 100;
+          }
+          100% {
+            stroke-dasharray: 100, 0;
+          }
+        }
+
+        .animate-draw-check {
+          stroke-dasharray: 100;
+          animation: draw-check 0.8s ease-out 0.3s forwards;
+        }
+
+        @keyframes confetti-1 {
+          0% { 
+            transform: translateY(0) rotate(0deg);
+            opacity: 1;
+          }
+          100% { 
+            transform: translateY(-30px) rotate(180deg);
+            opacity: 0;
+          }
+        }
+
+        @keyframes confetti-2 {
+          0% { 
+            transform: translateY(0) rotate(0deg);
+            opacity: 1;
+          }
+          100% { 
+            transform: translateY(-40px) rotate(-180deg);
+            opacity: 0;
+          }
+        }
+
+        @keyframes confetti-3 {
+          0% { 
+            transform: translateY(0) rotate(0deg);
+            opacity: 1;
+          }
+          100% { 
+            transform: translateY(30px) rotate(90deg);
+            opacity: 0;
+          }
+        }
+
+        @keyframes confetti-4 {
+          0% { 
+            transform: translateY(0) rotate(0deg);
+            opacity: 1;
+          }
+          100% { 
+            transform: translateY(35px) rotate(-90deg);
+            opacity: 0;
+          }
+        }
+
+        .animate-confetti-1 {
+          animation: confetti-1 2s ease-out infinite;
+        }
+
+        .animate-confetti-2 {
+          animation: confetti-2 2.2s ease-out infinite;
+        }
+
+        .animate-confetti-3 {
+          animation: confetti-3 1.8s ease-out infinite;
+        }
+
+        .animate-confetti-4 {
+          animation: confetti-4 2.5s ease-out infinite;
         }
       `}</style>
     </div>

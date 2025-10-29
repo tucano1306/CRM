@@ -3,22 +3,27 @@ import { formatPrice } from './utils'
 
 const prisma = new PrismaClient()
 
+// Tipo definido manualmente para coincidir con el schema de Prisma
 export type NotificationType = 
-  | 'NEW_ORDER'              // Comprador → Vendedor
-  | 'ORDER_MODIFIED'         // Comprador → Vendedor
-  | 'ORDER_CANCELLED'        // Comprador → Vendedor
-  | 'ORDER_STATUS_CHANGED'   // Vendedor → Comprador
-  | 'ORDER_CONFIRMED'        // Vendedor → Comprador
-  | 'ORDER_COMPLETED'        // Vendedor → Comprador
-  | 'PAYMENT_RECEIVED'       // Vendedor → Comprador
-  | 'CHAT_MESSAGE'           // Bidireccional
-  | 'RETURN_REQUEST'         // Comprador → Vendedor
-  | 'RETURN_APPROVED'        // Vendedor → Comprador
-  | 'RETURN_REJECTED'        // Vendedor → Comprador
-  | 'QUOTE_CREATED'          // Vendedor → Comprador
-  | 'QUOTE_UPDATED'          // Vendedor → Comprador
-  | 'CREDIT_NOTE_ISSUED'     // Vendedor → Comprador
-  | 'LOW_STOCK_ALERT'        // Sistema → Vendedor
+  | 'NEW_ORDER'
+  | 'ORDER_MODIFIED'
+  | 'ORDER_CANCELLED'
+  | 'ORDER_STATUS_CHANGED'
+  | 'ORDER_CONFIRMED'
+  | 'ORDER_COMPLETED'
+  | 'ORDER_RECEIVED'
+  | 'PAYMENT_RECEIVED'
+  | 'CHAT_MESSAGE'
+  | 'RETURN_REQUEST'
+  | 'RETURN_APPROVED'
+  | 'RETURN_REJECTED'
+  | 'QUOTE_CREATED'
+  | 'QUOTE_UPDATED'
+  | 'QUOTE_SENT'
+  | 'QUOTE_ACCEPTED'
+  | 'QUOTE_REJECTED'
+  | 'CREDIT_NOTE_ISSUED'
+  | 'LOW_STOCK_ALERT'
 
 interface CreateNotificationParams {
   sellerId?: string    // Para notificaciones al vendedor
@@ -306,6 +311,29 @@ export async function notifyOrderCompleted(
 }
 
 /**
+ * Notificar al vendedor que el comprador recibió la orden
+ */
+export async function notifyOrderReceived(
+  sellerId: string,
+  orderId: string,
+  orderNumber: string,
+  clientName: string
+) {
+  return createNotification({
+    clientId: sellerId, // Notificar al vendedor
+    type: 'ORDER_RECEIVED',
+    title: '✅ Mercancía Recibida',
+    message: `${clientName} confirmó que recibió la orden #${orderNumber}`,
+    orderId,
+    metadata: {
+      orderNumber,
+      clientName,
+      receivedAt: new Date().toISOString(),
+    },
+  })
+}
+
+/**
  * Notificar al comprador que se creó una cotización
  */
 export async function notifyQuoteCreated(
@@ -413,4 +441,101 @@ export async function notifyCreditNoteIssued(
       amount,
     },
   })
+}
+
+/**
+ * Enviar mensaje automático al chat cuando se cancela una orden
+ */
+export async function sendAutomaticCancellationMessage(
+  sellerId: string,
+  clientAuthId: string,
+  orderNumber: string,
+  reason?: string
+) {
+  try {
+    console.log('🔍 Iniciando envío de mensaje automático de cancelación:', {
+      sellerId,
+      clientAuthId,
+      orderNumber,
+      reason
+    })
+
+    const now = new Date()
+    const formattedDate = now.toLocaleDateString('es-ES', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+    const formattedTime = now.toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+
+    const message = `🤖 ═══════════════════════════════\n` +
+      `   MENSAJE AUTOMÁTICO DEL SISTEMA\n` +
+      `═══════════════════════════════\n\n` +
+      `❌ ORDEN CANCELADA\n\n` +
+      `📦 Orden: #${orderNumber}\n` +
+      `📅 Fecha: ${formattedDate}\n` +
+      `🕒 Hora: ${formattedTime}\n` +
+      `${reason ? `\n📝 Motivo de cancelación:\n"${reason}"\n` : '\n⚠️ Sin motivo especificado\n'}` +
+      `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      `⚡ Acción requerida: Por favor, toma las medidas necesarias para procesar esta cancelación.`
+
+    // Verificar que el cliente existe en authenticated_users
+    const clientUser = await prisma.authenticated_users.findUnique({
+      where: { authId: clientAuthId },
+      select: { id: true, authId: true, role: true }
+    })
+
+    if (!clientUser) {
+      console.error('❌ Cliente no encontrado en authenticated_users:', clientAuthId)
+      return
+    }
+
+    console.log('✅ Cliente encontrado:', clientUser)
+
+    // Buscar el usuario autenticado del vendedor a través de la relación many-to-many
+    // Filtrar usuarios reales de Clerk (authId empieza con "user_")
+    const sellerUser = await prisma.authenticated_users.findFirst({
+      where: { 
+        sellers: {
+          some: {
+            id: sellerId
+          }
+        },
+        authId: {
+          startsWith: 'user_' // Solo usuarios reales de Clerk
+        }
+      },
+      select: { id: true, authId: true }
+    })
+
+    if (!sellerUser?.authId) {
+      console.error('❌ Vendedor no encontrado en authenticated_users para sellerId:', sellerId)
+      return
+    }
+
+    console.log('✅ Vendedor encontrado:', sellerUser)
+
+    // Crear el mensaje en el chat usando el ID interno de authenticated_users
+    const chatMessage = await prisma.chatMessage.create({
+      data: {
+        senderId: clientAuthId, // Clerk authId del cliente
+        receiverId: sellerUser.authId, // Clerk authId del vendedor
+        userId: clientUser.id, // ID interno de authenticated_users
+        sellerId: sellerId, // ID del vendedor
+        message,
+        isRead: false,
+        messageType: 'text',
+        idempotencyKey: `cancel-${orderNumber}-${now.getTime()}`,
+      },
+    })
+
+    console.log('✅ Mensaje automático de cancelación enviado al chat:', chatMessage.id)
+  } catch (error) {
+    console.error('❌ Error enviando mensaje automático al chat:', error)
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'N/A')
+    // No lanzar error para no bloquear la cancelación
+  }
 }

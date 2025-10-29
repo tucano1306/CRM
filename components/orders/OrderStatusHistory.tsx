@@ -48,7 +48,7 @@ const statusConfig: Record<OrderStatus, { label: string; icon: any; color: strin
   PREPARING: { label: 'Preparando', icon: Box, color: 'text-indigo-600' },
   READY_FOR_PICKUP: { label: 'Listo para Recoger', icon: Package, color: 'text-cyan-600' },
   IN_DELIVERY: { label: 'En Entrega', icon: Truck, color: 'text-purple-600' },
-  DELIVERED: { label: 'Entregado', icon: CheckCircle, color: 'text-teal-600' },
+  DELIVERED: { label: 'Recibida', icon: CheckCircle, color: 'text-green-600' },
   PARTIALLY_DELIVERED: { label: 'Entrega Parcial', icon: AlertCircle, color: 'text-orange-600' },
   COMPLETED: { label: 'Completada', icon: CheckCircle, color: 'text-green-600' },
   CANCELED: { label: 'Cancelada', icon: XCircle, color: 'text-red-600' },

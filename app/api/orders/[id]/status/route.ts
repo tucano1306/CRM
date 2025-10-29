@@ -6,7 +6,10 @@ import { OrderStatus } from '@prisma/client'
 import { 
   notifyOrderStatusChanged, 
   notifyOrderConfirmed, 
-  notifyOrderCompleted 
+  notifyOrderCompleted,
+  notifyOrderReceived,
+  notifyOrderCancelled,
+  sendAutomaticCancellationMessage
 } from '@/lib/notifications'
 import logger, { LogCategory } from '@/lib/logger'
 
@@ -189,6 +192,32 @@ export async function PATCH(
           order.clientId,
           orderId,
           updatedOrder?.orderNumber || 'N/A'
+        )
+      } else if (status === 'DELIVERED' && user.role === 'CLIENT') {
+        // Si el comprador marca como RECIBIDA, notificar al vendedor
+        await notifyOrderReceived(
+          order.sellerId,
+          orderId,
+          updatedOrder?.orderNumber || 'N/A',
+          user.name
+        )
+      } else if (status === 'CANCELED' && user.role === 'CLIENT') {
+        // 🚨 COMBO: Notificación + Mensaje automático al chat
+        // Notificar al vendedor que la orden fue cancelada
+        await notifyOrderCancelled(
+          order.sellerId,
+          orderId,
+          updatedOrder?.orderNumber || 'N/A',
+          user.name,
+          notes // Razón de cancelación
+        )
+        
+        // Enviar mensaje automático al chat
+        await sendAutomaticCancellationMessage(
+          order.sellerId,
+          userId, // authId del cliente
+          updatedOrder?.orderNumber || 'N/A',
+          notes // Razón de cancelación
         )
       }
 

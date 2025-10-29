@@ -74,10 +74,10 @@ const statusOptions: { value: OrderStatus; label: string; icon: any; color: stri
   },
   { 
     value: 'DELIVERED', 
-    label: 'Entregado', 
+    label: 'Recibida', 
     icon: CheckCircle, 
-    color: 'text-teal-600',
-    description: 'Entregado al cliente'
+    color: 'text-green-600',
+    description: 'Mercancía recibida por el cliente'
   },
   { 
     value: 'PARTIALLY_DELIVERED', 
@@ -133,14 +133,19 @@ export default function OrderStatusChanger({
   // Filtrar estados disponibles según el rol del usuario
   const getAvailableStatuses = () => {
     if (userRole === 'seller') {
-      // Vendedor solo puede cambiar a: Confirmada, En Entrega, Completada
+      // Vendedor solo puede cambiar a: Confirmada, En Entrega (sin Completada/Recibida - eso lo hace el comprador)
       return statusOptions.filter(opt => 
         opt.value === 'CONFIRMED' || 
-        opt.value === 'IN_DELIVERY' || 
-        opt.value === 'COMPLETED'
+        opt.value === 'IN_DELIVERY'
       )
     }
-    // Admin o sin rol específico: todos los estados
+    if (userRole === 'buyer') {
+      // Comprador solo puede marcar como: Recibida
+      return statusOptions.filter(opt => 
+        opt.value === 'DELIVERED'
+      )
+    }
+    // Admin: todos los estados
     return statusOptions
   }
 
