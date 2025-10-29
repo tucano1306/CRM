@@ -22,17 +22,17 @@ export default function ReturnsPage() {
           {/* Header responsivo: vertical en móvil, horizontal en desktop */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
                 🔄 Devoluciones y Créditos
               </h1>
-              <p className="text-gray-600">
+              <p className="text-gray-700 font-medium">
                 Gestiona las devoluciones de productos y notas de crédito de tus clientes
               </p>
             </div>
             
             <Button
               onClick={() => setShowManualReturnModal(true)}
-              className="bg-orange-600 hover:bg-orange-700 text-white whitespace-nowrap md:self-start"
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white whitespace-nowrap md:self-start shadow-lg"
             >
               <Plus className="w-4 h-4 mr-2" />
               <span className="hidden sm:inline">Crear Devolución Manual</span>

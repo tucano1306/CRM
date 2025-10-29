@@ -11,13 +11,28 @@ if (typeof window === 'undefined') {
 }
 
 export const metadata = {
-  title: 'Food Orders CRM',
+  title: 'Bargain - Food Orders CRM',
   description: 'Sistema de gestión de pedidos de comida',
   viewport: {
     width: 'device-width',
     initialScale: 1,
     maximumScale: 5,
     userScalable: true,
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.png', sizes: 'any' },
+      { url: '/logo.png', sizes: '192x192', type: 'image/png' },
+    ],
+    apple: '/apple-touch-icon.png',
+    shortcut: '/favicon.png',
+  },
+  manifest: '/site.webmanifest',
+  themeColor: '#7c3aed',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Bargain',
   },
 }
 

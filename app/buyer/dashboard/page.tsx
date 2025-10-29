@@ -199,8 +199,8 @@ export default function BuyerDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
-        <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-xl">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50">
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-xl">
           <div className="container mx-auto px-6 py-8">
             <h1 className="text-4xl font-bold mb-2">
               ¡Hola, Comprador! 👋
@@ -272,23 +272,23 @@ export default function BuyerDashboardPage() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-slate-800 to-blue-900 text-white shadow-xl">
+      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-xl">
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold mb-2">
                 ¡Hola, {user?.firstName || 'Comprador'}! 👋
               </h1>
-              <p className="text-slate-200 text-lg">Bienvenido a tu panel de compras</p>
+              <p className="text-purple-100 text-lg">Bienvenido a tu panel de compras</p>
             </div>
             <Link href="/buyer/cart">
-              <Button className="bg-white text-slate-800 hover:bg-slate-100 font-semibold px-6 py-3 relative">
+              <Button className="bg-white text-purple-600 hover:bg-purple-50 font-semibold px-6 py-3 relative shadow-lg hover:shadow-xl transition-all">
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 Mi Carrito
                 {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 h-6 min-w-[24px] px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg">
+                  <span className="absolute -top-2 -right-2 h-6 min-w-[24px] px-1.5 bg-gradient-to-r from-rose-500 to-red-600 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-lg">
                     {cartCount > 99 ? '99+' : cartCount}
                   </span>
                 )}
@@ -307,16 +307,18 @@ export default function BuyerDashboardPage() {
               .filter(order => order.status === 'PAYMENT_PENDING')
               .slice(0, 2)
               .map(order => (
-                <div key={order.id} className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg flex items-start gap-3 shadow-md hover:shadow-lg transition-shadow">
-                  <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <div key={order.id} className="bg-gradient-to-r from-amber-50 to-yellow-50 border-l-4 border-amber-500 p-4 rounded-xl flex items-start gap-3 shadow-lg hover:shadow-xl transition-all">
+                  <div className="bg-gradient-to-br from-amber-500 to-yellow-600 p-2 rounded-xl shadow-md">
+                    <AlertCircle className="w-5 h-5 text-white" />
+                  </div>
                   <div className="flex-1">
-                    <p className="font-medium text-yellow-800">Orden pendiente de pago</p>
-                    <p className="text-sm text-yellow-700">
+                    <p className="font-bold text-amber-900">Orden pendiente de pago</p>
+                    <p className="text-sm text-amber-700 font-medium">
                       Orden #{order.orderNumber} - {formatPrice(Number(order.totalAmount))}
                     </p>
                   </div>
                   <Link href={`/buyer/orders`}>
-                    <button className="bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700 transition-colors font-medium">
+                    <button className="bg-gradient-to-r from-amber-600 to-yellow-600 text-white px-4 py-2 rounded-lg hover:from-amber-700 hover:to-yellow-700 transition-all font-semibold shadow-md">
                       Pagar ahora
                     </button>
                   </Link>
@@ -328,16 +330,18 @@ export default function BuyerDashboardPage() {
               .filter(order => order.status === 'READY_FOR_PICKUP')
               .slice(0, 2)
               .map(order => (
-                <div key={order.id} className="bg-green-50 border-l-4 border-green-400 p-4 rounded-lg flex items-start gap-3 shadow-md hover:shadow-lg transition-shadow">
-                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <div key={order.id} className="bg-gradient-to-r from-emerald-50 to-green-50 border-l-4 border-emerald-500 p-4 rounded-xl flex items-start gap-3 shadow-lg hover:shadow-xl transition-all">
+                  <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-xl shadow-md">
+                    <CheckCircle className="w-5 h-5 text-white" />
+                  </div>
                   <div className="flex-1">
-                    <p className="font-medium text-green-800">¡Tu orden está lista!</p>
-                    <p className="text-sm text-green-700">
+                    <p className="font-bold text-emerald-900">¡Tu orden está lista!</p>
+                    <p className="text-sm text-emerald-700 font-medium">
                       Orden #{order.orderNumber} - Puedes recogerla hoy
                     </p>
                   </div>
                   <Link href={`/buyer/orders`}>
-                    <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                    <button className="bg-gradient-to-r from-emerald-600 to-green-600 text-white px-4 py-2 rounded-lg hover:from-emerald-700 hover:to-green-700 transition-all font-semibold shadow-md">
                       Ver detalles
                     </button>
                   </Link>
@@ -347,18 +351,18 @@ export default function BuyerDashboardPage() {
         )}
 
         {/* Programa de Fidelidad */}
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-2xl p-6 text-white shadow-xl">
+        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-2xl font-bold mb-2">🎁 Programa de Fidelidad</h3>
-              <p className="text-emerald-100 mb-4">Acumula puntos con cada compra</p>
+              <p className="text-purple-100 mb-4 font-medium">Acumula puntos con cada compra</p>
               <div className="flex items-baseline gap-2">
                 <span className="text-5xl font-bold">{loyaltyData.currentPoints.toLocaleString()}</span>
                 <span className="text-xl">puntos</span>
               </div>
             </div>
             <div className="text-right">
-              <p className="text-sm text-emerald-100 mb-2">Próxima recompensa en</p>
+              <p className="text-sm text-purple-100 mb-2 font-medium">Próxima recompensa en</p>
               <p className="text-3xl font-bold">{loyaltyData.pointsToNextReward}</p>
               <p className="text-sm">puntos</p>
             </div>
@@ -366,71 +370,79 @@ export default function BuyerDashboardPage() {
           
           {/* Barra de progreso */}
           <div className="mt-6">
-            <div className="bg-white/30 rounded-full h-3 overflow-hidden">
+            <div className="bg-white/20 rounded-full h-3 overflow-hidden backdrop-blur-sm">
               <div 
-                className="bg-white h-3 rounded-full transition-all" 
+                className="bg-white h-3 rounded-full transition-all shadow-lg" 
                 style={{ width: `${loyaltyData.progressPercentage}%` }} 
               />
             </div>
-            <p className="text-sm text-emerald-100 mt-2">
+            <p className="text-sm text-purple-100 mt-2 font-medium">
               {loyaltyData.progressPercentage}% hacia tu siguiente nivel ({loyaltyData.nextLevel})
             </p>
           </div>
         </div>
 
         {/* Stats Cards Interactivas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <Link href="/buyer/orders?status=all">
-            <div className="bg-gradient-to-br from-slate-700 to-slate-800 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
-              <div className="flex items-center justify-between mb-4">
-                <Package className="w-12 h-12 opacity-80" />
-                <ArrowUpRight className="w-6 h-6" />
+            <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-purple-500 cursor-pointer">
+              <div className="flex items-center justify-between mb-2">
+                <div className="bg-gradient-to-br from-purple-500 to-purple-700 p-2 rounded-xl shadow-md">
+                  <Package className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-purple-400" />
               </div>
-              <p className="text-4xl font-bold mb-2">{stats?.totalOrders || 0}</p>
-              <p className="text-slate-200">Total Órdenes</p>
-              <p className="text-xs text-slate-300 mt-2">
+              <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Total Órdenes</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stats?.totalOrders || 0}</p>
+              <p className="text-xs text-gray-500 font-medium">
                 {stats?.totalOrders && stats.totalOrders > 0 ? `↗️ Ver todas` : 'Aún no tienes órdenes'}
               </p>
             </div>
           </Link>
 
           <Link href="/buyer/orders?status=PENDING">
-            <div className="bg-gradient-to-br from-amber-500 to-amber-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
-              <div className="flex items-center justify-between mb-4">
-                <Clock className="w-12 h-12 opacity-80" />
-                <ArrowUpRight className="w-6 h-6" />
+            <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-amber-500 cursor-pointer">
+              <div className="flex items-center justify-between mb-2">
+                <div className="bg-gradient-to-br from-amber-500 to-amber-700 p-2 rounded-xl shadow-md">
+                  <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-amber-400" />
               </div>
-              <p className="text-4xl font-bold mb-2">{stats?.pendingOrders || 0}</p>
-              <p className="text-amber-100">En Proceso</p>
-              <p className="text-xs text-amber-200 mt-2">
+              <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">En Proceso</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stats?.pendingOrders || 0}</p>
+              <p className="text-xs text-gray-500 font-medium">
                 {stats?.pendingOrders && stats.pendingOrders > 0 ? `↗️ ${stats.pendingOrders} pendientes` : 'Todo al día'}
               </p>
             </div>
           </Link>
 
           <Link href="/buyer/orders?status=COMPLETED">
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
-              <div className="flex items-center justify-between mb-4">
-                <CheckCircle className="w-12 h-12 opacity-80" />
-                <ArrowUpRight className="w-6 h-6" />
+            <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-emerald-500 cursor-pointer">
+              <div className="flex items-center justify-between mb-2">
+                <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-xl shadow-md">
+                  <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-emerald-400" />
               </div>
-              <p className="text-4xl font-bold mb-2">{stats?.completedOrders || 0}</p>
-              <p className="text-emerald-100">Completadas</p>
-              <p className="text-xs text-emerald-200 mt-2">
+              <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Completadas</p>
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stats?.completedOrders || 0}</p>
+              <p className="text-xs text-gray-500 font-medium">
                 {stats?.completedOrders && stats.completedOrders > 0 ? `↗️ ${stats.completedOrders} exitosas` : 'Sin completar aún'}
               </p>
             </div>
           </Link>
 
           <Link href="/buyer/orders">
-            <div className="bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-2xl p-6 shadow-lg hover:shadow-2xl hover:scale-105 transition-all cursor-pointer">
-              <div className="flex items-center justify-between mb-4">
-                <DollarSign className="w-12 h-12 opacity-80" />
-                <ArrowUpRight className="w-6 h-6" />
+            <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-cyan-500 cursor-pointer">
+              <div className="flex items-center justify-between mb-2">
+                <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-2 rounded-xl shadow-md">
+                  <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                </div>
+                <ArrowUpRight className="w-4 h-4 text-cyan-400" />
               </div>
-              <p className="text-3xl font-bold mb-2">{formatPrice(stats?.totalSpent || 0)}</p>
-              <p className="text-blue-100">Total Gastado</p>
-              <p className="text-xs text-blue-200 mt-2">
+              <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Total Gastado</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">{formatPrice(stats?.totalSpent || 0)}</p>
+              <p className="text-xs text-gray-500 font-medium">
                 {stats?.totalSpent && stats.totalSpent > 0 ? `↗️ Ver detalles` : 'Comienza a comprar'}
               </p>
             </div>
@@ -438,15 +450,15 @@ export default function BuyerDashboardPage() {
         </div>
 
         {/* Gráfico de Gastos Mensuales */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-2">
               📊 Gastos Mensuales
             </h3>
             <select 
               value={chartPeriod}
               onChange={(e) => setChartPeriod(e.target.value as any)}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+              className="px-4 py-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-medium text-gray-700 bg-white shadow-sm hover:border-purple-400 transition-colors"
             >
               <option value="6months">Últimos 6 meses</option>
               <option value="year">Este año</option>
@@ -456,9 +468,9 @@ export default function BuyerDashboardPage() {
           
           {recentOrders.length === 0 ? (
             <div className="text-center py-12">
-              <TrendingUp className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No hay datos para mostrar aún</p>
-              <p className="text-sm text-gray-400 mt-2">Realiza tu primera compra para ver estadísticas</p>
+              <TrendingUp className="w-16 h-16 text-purple-200 mx-auto mb-4" />
+              <p className="text-gray-600 font-medium">No hay datos para mostrar aún</p>
+              <p className="text-sm text-gray-500 mt-2">Realiza tu primera compra para ver estadísticas</p>
             </div>
           ) : (
             <>
@@ -468,19 +480,19 @@ export default function BuyerDashboardPage() {
                   <div key={index} className="flex-1 flex flex-col items-center group">
                     <div className="relative w-full">
                       {/* Tooltip on hover */}
-                      <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-3 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                      <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-3 py-1 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
                         {formatPrice(month.amount)}
-                        <div className="text-xs text-gray-300">{month.count} órdenes</div>
+                        <div className="text-xs text-purple-100">{month.count} órdenes</div>
                       </div>
                       <div 
-                        className="w-full bg-gradient-to-t from-blue-500 to-teal-500 rounded-t-lg hover:from-blue-600 hover:to-teal-600 transition-all cursor-pointer"
+                        className="w-full bg-gradient-to-t from-purple-500 to-indigo-500 rounded-t-lg hover:from-purple-600 hover:to-indigo-600 transition-all cursor-pointer shadow-md"
                         style={{ 
                           height: `${Math.max(month.percentage, 5)}%`,
                           minHeight: month.amount > 0 ? '20px' : '5px'
                         }}
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-2 font-medium">{month.name}</p>
+                    <p className="text-xs text-gray-600 mt-2 font-semibold">{month.name}</p>
                   </div>
                 ))}
               </div>
@@ -488,22 +500,22 @@ export default function BuyerDashboardPage() {
               {/* Resumen del gráfico */}
               <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
                     {formatPrice(getMonthlyData().reduce((sum, m) => sum + m.amount, 0))}
                   </p>
-                  <p className="text-sm text-gray-600 mt-1">Total del período</p>
+                  <p className="text-sm text-gray-600 mt-1 font-medium">Total del período</p>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-slate-700">
+                  <p className="text-2xl font-bold text-gray-900">
                     {getMonthlyData().reduce((sum, m) => sum + m.count, 0)}
                   </p>
-                  <p className="text-sm text-gray-600 mt-1">Órdenes realizadas</p>
+                  <p className="text-sm text-gray-600 mt-1 font-medium">Órdenes realizadas</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-emerald-600">
                     {formatPrice(getMonthlyData().reduce((sum, m) => sum + m.amount, 0) / Math.max(getMonthlyData().reduce((sum, m) => sum + m.count, 0), 1))}
                   </p>
-                  <p className="text-sm text-gray-600 mt-1">Promedio por orden</p>
+                  <p className="text-sm text-gray-600 mt-1 font-medium">Promedio por orden</p>
                 </div>
               </div>
             </>
@@ -511,34 +523,34 @@ export default function BuyerDashboardPage() {
         </div>
 
         {/* Productos Destacados */}
-        <div className="bg-gradient-to-r from-blue-50 to-slate-50 rounded-2xl p-6 mb-8 shadow-lg">
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-6 mb-8 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-gray-900">✨ Productos Destacados</h3>
-            <Link href="/buyer/catalog" className="text-blue-600 hover:text-blue-700 font-medium text-sm flex items-center gap-1">
+            <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">✨ Productos Destacados</h3>
+            <Link href="/buyer/catalog" className="text-purple-600 hover:text-purple-700 font-semibold text-sm flex items-center gap-1 transition-colors">
               Ver todos <ArrowUpRight className="w-4 h-4" />
             </Link>
           </div>
           
           {featuredProducts.length === 0 ? (
             <div className="text-center py-8">
-              <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">No hay productos destacados disponibles</p>
+              <Package className="w-12 h-12 text-purple-200 mx-auto mb-3" />
+              <p className="text-gray-600 text-sm font-medium">No hay productos destacados disponibles</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {featuredProducts.map(product => (
-                <div key={product.id} className="bg-white rounded-xl p-4 shadow-md hover:shadow-xl transition-all group">
-                  <div className="relative h-32 bg-gradient-to-br from-blue-100 to-slate-100 rounded-lg mb-3 overflow-hidden flex items-center justify-center">
-                    <Package className="w-16 h-16 text-slate-400 group-hover:scale-110 transition-transform" />
+                <div key={product.id} className="bg-white rounded-xl p-4 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 group">
+                  <div className="relative h-32 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg mb-3 overflow-hidden flex items-center justify-center">
+                    <Package className="w-16 h-16 text-purple-400 group-hover:scale-110 transition-transform" />
                   </div>
-                  <h4 className="font-medium text-sm mb-2 text-gray-900 line-clamp-2">{product.name}</h4>
+                  <h4 className="font-semibold text-sm mb-2 text-gray-900 line-clamp-2">{product.name}</h4>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-blue-600 font-bold text-lg">{formatPrice(Number(product.price))}</span>
+                    <span className="text-purple-600 font-bold text-lg">{formatPrice(Number(product.price))}</span>
                   </div>
                   <button 
                     onClick={() => addToCart(product.id)}
                     disabled={addingToCart === product.id}
-                    className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 shadow-md"
                   >
                     {addingToCart === product.id ? (
                       <>Agregando...</>
@@ -556,15 +568,15 @@ export default function BuyerDashboardPage() {
         </div>
 
         {/* Compra Nuevamente - Productos Frecuentes */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-6">🔁 Compra Nuevamente</h3>
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 mb-8">
+          <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6">🔁 Compra Nuevamente</h3>
           
           {frequentProducts.length === 0 ? (
             <div className="text-center py-8">
-              <RefreshCw className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">Realiza tu primera compra para ver recomendaciones</p>
+              <RefreshCw className="w-12 h-12 text-purple-200 mx-auto mb-3" />
+              <p className="text-gray-600 text-sm font-medium">Realiza tu primera compra para ver recomendaciones</p>
               <Link href="/buyer/catalog">
-                <Button className="mt-4 bg-blue-600 hover:bg-blue-700">
+                <Button className="mt-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md">
                   Explorar Catálogo
                 </Button>
               </Link>
@@ -572,16 +584,16 @@ export default function BuyerDashboardPage() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {frequentProducts.map(product => (
-                <div key={product.id} className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-md transition-all">
-                  <div className="w-full h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3 flex items-center justify-center">
-                    <Package className="w-12 h-12 text-gray-400" />
+                <div key={product.id} className="border-2 border-gray-200 rounded-xl p-4 hover:border-purple-400 hover:shadow-lg transition-all">
+                  <div className="w-full h-24 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg mb-3 flex items-center justify-center">
+                    <Package className="w-12 h-12 text-purple-400" />
                   </div>
-                  <p className="text-sm font-medium mb-2 line-clamp-2 text-gray-900">{product.name}</p>
-                  <p className="text-blue-600 font-bold mb-1">{formatPrice(Number(product.price))}</p>
+                  <p className="text-sm font-semibold mb-2 line-clamp-2 text-gray-900">{product.name}</p>
+                  <p className="text-purple-600 font-bold mb-1">{formatPrice(Number(product.price))}</p>
                   <button 
                     onClick={() => addToCart(product.id)}
                     disabled={addingToCart === product.id}
-                    className="w-full bg-blue-100 text-blue-700 py-2 rounded-lg hover:bg-blue-200 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 py-2 rounded-lg hover:from-purple-200 hover:to-indigo-200 text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {addingToCart === product.id ? 'Agregando...' : 'Agregar'}
                   </button>
@@ -592,18 +604,18 @@ export default function BuyerDashboardPage() {
         </div>
 
         {/* Tips/Ayuda Contextual */}
-        <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 mb-8">
+        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-6 mb-8 shadow-md hover:shadow-lg transition-all">
           <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
               <Lightbulb className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
-              <h4 className="font-bold text-blue-900 mb-2">💡 Tip del día</h4>
-              <p className="text-blue-800 mb-3">
+              <h4 className="font-bold text-purple-900 mb-2 text-lg">💡 Tip del día</h4>
+              <p className="text-purple-800 mb-3 font-medium">
                 Completa tu perfil para recibir recomendaciones personalizadas y ofertas exclusivas basadas en tus preferencias.
               </p>
               <Link href="/buyer/profile">
-                <button className="text-blue-600 hover:text-blue-700 font-medium text-sm hover:underline transition-all">
+                <button className="text-purple-600 hover:text-purple-700 font-semibold text-sm hover:underline transition-all">
                   Completar perfil →
                 </button>
               </Link>
@@ -612,17 +624,17 @@ export default function BuyerDashboardPage() {
         </div>
 
         {/* Acciones Rápidas con Tabs */}
-        <div className="bg-white rounded-2xl shadow-lg mb-8 overflow-hidden">
-          <div className="bg-gradient-to-r from-slate-700 to-blue-800 p-6">
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all mb-8 overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6">
             <h2 className="text-2xl font-bold text-white">Acciones Rápidas</h2>
           </div>
           
-          <div className="flex border-b">
+          <div className="flex border-b border-gray-200">
             <button 
               onClick={() => setActiveTab('shop')}
-              className={`flex-1 py-4 font-medium transition-colors ${
+              className={`flex-1 py-4 font-semibold transition-all ${
                 activeTab === 'shop' 
-                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50' 
+                  ? 'border-b-2 border-purple-600 text-purple-600 bg-purple-50' 
                   : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
@@ -630,9 +642,9 @@ export default function BuyerDashboardPage() {
             </button>
             <button 
               onClick={() => setActiveTab('manage')}
-              className={`flex-1 py-4 font-medium transition-colors ${
+              className={`flex-1 py-4 font-semibold transition-all ${
                 activeTab === 'manage' 
-                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50' 
+                  ? 'border-b-2 border-purple-600 text-purple-600 bg-purple-50' 
                   : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
@@ -640,9 +652,9 @@ export default function BuyerDashboardPage() {
             </button>
             <button 
               onClick={() => setActiveTab('support')}
-              className={`flex-1 py-4 font-medium transition-colors ${
+              className={`flex-1 py-4 font-semibold transition-all ${
                 activeTab === 'support' 
-                  ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50' 
+                  ? 'border-b-2 border-purple-600 text-purple-600 bg-purple-50' 
                   : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
@@ -655,31 +667,33 @@ export default function BuyerDashboardPage() {
             {activeTab === 'shop' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link href="/buyer/catalog">
-                  <div className="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition cursor-pointer">
+                  <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 hover:from-purple-100 hover:to-indigo-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-purple-200">
                     <div className="flex items-center gap-3">
-                      <Store className="h-8 w-8 text-blue-600" />
+                      <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-lg">
+                        <Store className="h-6 w-6 text-white" />
+                      </div>
                       <div>
-                        <h3 className="font-semibold text-blue-900">Ver Catálogo</h3>
-                        <p className="text-sm text-blue-700">Explora productos disponibles</p>
+                        <h3 className="font-bold text-purple-900">Ver Catálogo</h3>
+                        <p className="text-sm text-purple-700 font-medium">Explora productos disponibles</p>
                       </div>
                     </div>
                   </div>
                 </Link>
 
                 <Link href="/buyer/cart">
-                  <div className="p-4 bg-green-50 hover:bg-green-100 rounded-xl transition cursor-pointer relative">
+                  <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 rounded-xl transition-all cursor-pointer relative shadow-md hover:shadow-lg border border-emerald-200">
                     <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <ShoppingCart className="h-8 w-8 text-green-600" />
+                      <div className="relative bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-lg">
+                        <ShoppingCart className="h-6 w-6 text-white" />
                         {cartCount > 0 && (
-                          <span className="absolute -top-2 -right-2 h-5 min-w-[20px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                          <span className="absolute -top-2 -right-2 h-5 min-w-[20px] px-1 bg-gradient-to-r from-rose-500 to-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
                             {cartCount > 9 ? '9+' : cartCount}
                           </span>
                         )}
                       </div>
                       <div>
-                        <h3 className="font-semibold text-green-900">Mi Carrito</h3>
-                        <p className="text-sm text-green-700">
+                        <h3 className="font-bold text-emerald-900">Mi Carrito</h3>
+                        <p className="text-sm text-emerald-700 font-medium">
                           {cartCount > 0 ? `${cartCount} ${cartCount === 1 ? 'producto' : 'productos'}` : 'Ver productos en carrito'}
                         </p>
                       </div>
@@ -688,24 +702,28 @@ export default function BuyerDashboardPage() {
                 </Link>
 
                 <Link href="/buyer/recurring-orders">
-                  <div className="p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition cursor-pointer">
+                  <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-amber-200">
                     <div className="flex items-center gap-3">
-                      <RefreshCw className="h-8 w-8 text-orange-600" />
+                      <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2 rounded-lg">
+                        <RefreshCw className="h-6 w-6 text-white" />
+                      </div>
                       <div>
-                        <h3 className="font-semibold text-orange-900">Órdenes Recurrentes</h3>
-                        <p className="text-sm text-orange-700">Automatiza tus pedidos</p>
+                        <h3 className="font-bold text-amber-900">Órdenes Recurrentes</h3>
+                        <p className="text-sm text-amber-700 font-medium">Automatiza tus pedidos</p>
                       </div>
                     </div>
                   </div>
                 </Link>
 
                 <Link href="/buyer/catalog?featured=true">
-                  <div className="p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition cursor-pointer">
+                  <div className="p-4 bg-gradient-to-r from-rose-50 to-pink-50 hover:from-rose-100 hover:to-pink-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-rose-200">
                     <div className="flex items-center gap-3">
-                      <Heart className="h-8 w-8 text-purple-600" />
+                      <div className="bg-gradient-to-br from-rose-500 to-pink-600 p-2 rounded-lg">
+                        <Heart className="h-6 w-6 text-white" />
+                      </div>
                       <div>
-                        <h3 className="font-semibold text-purple-900">Favoritos</h3>
-                        <p className="text-sm text-purple-700">Productos que te gustan</p>
+                        <h3 className="font-bold text-rose-900">Favoritos</h3>
+                        <p className="text-sm text-rose-700 font-medium">Productos que te gustan</p>
                       </div>
                     </div>
                   </div>
@@ -717,48 +735,56 @@ export default function BuyerDashboardPage() {
             {activeTab === 'manage' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link href="/buyer/orders">
-                  <div className="p-4 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition cursor-pointer">
+                  <div className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-indigo-200">
                     <div className="flex items-center gap-3">
-                      <Package className="h-8 w-8 text-indigo-600" />
+                      <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-2 rounded-lg">
+                        <Package className="h-6 w-6 text-white" />
+                      </div>
                       <div>
-                        <h3 className="font-semibold text-indigo-900">Mis Órdenes</h3>
-                        <p className="text-sm text-indigo-700">Ver historial de pedidos</p>
+                        <h3 className="font-bold text-indigo-900">Mis Órdenes</h3>
+                        <p className="text-sm text-indigo-700 font-medium">Ver historial de pedidos</p>
                       </div>
                     </div>
                   </div>
                 </Link>
 
                 <Link href="/buyer/returns">
-                  <div className="p-4 bg-red-50 hover:bg-red-100 rounded-xl transition cursor-pointer">
+                  <div className="p-4 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-100 hover:to-rose-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-red-200">
                     <div className="flex items-center gap-3">
-                      <RefreshCw className="h-8 w-8 text-red-600" />
+                      <div className="bg-gradient-to-br from-red-500 to-rose-600 p-2 rounded-lg">
+                        <RefreshCw className="h-6 w-6 text-white" />
+                      </div>
                       <div>
-                        <h3 className="font-semibold text-red-900">Devoluciones</h3>
-                        <p className="text-sm text-red-700">Gestionar devoluciones</p>
+                        <h3 className="font-bold text-red-900">Devoluciones</h3>
+                        <p className="text-sm text-red-700 font-medium">Gestionar devoluciones</p>
                       </div>
                     </div>
                   </div>
                 </Link>
 
                 <Link href="/buyer/credit-notes">
-                  <div className="p-4 bg-teal-50 hover:bg-teal-100 rounded-xl transition cursor-pointer">
+                  <div className="p-4 bg-gradient-to-r from-teal-50 to-cyan-50 hover:from-teal-100 hover:to-cyan-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-teal-200">
                     <div className="flex items-center gap-3">
-                      <FileText className="h-8 w-8 text-teal-600" />
+                      <div className="bg-gradient-to-br from-teal-500 to-cyan-600 p-2 rounded-lg">
+                        <FileText className="h-6 w-6 text-white" />
+                      </div>
                       <div>
-                        <h3 className="font-semibold text-teal-900">Notas de Crédito</h3>
-                        <p className="text-sm text-teal-700">Ver tus créditos</p>
+                        <h3 className="font-bold text-teal-900">Notas de Crédito</h3>
+                        <p className="text-sm text-teal-700 font-medium">Ver tus créditos</p>
                       </div>
                     </div>
                   </div>
                 </Link>
 
                 <Link href="/buyer/orders">
-                  <div className="p-4 bg-amber-50 hover:bg-amber-100 rounded-xl transition cursor-pointer">
+                  <div className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-amber-200">
                     <div className="flex items-center gap-3">
-                      <CreditCard className="h-8 w-8 text-amber-600" />
+                      <div className="bg-gradient-to-br from-amber-500 to-yellow-600 p-2 rounded-lg">
+                        <CreditCard className="h-6 w-6 text-white" />
+                      </div>
                       <div>
-                        <h3 className="font-semibold text-amber-900">Pagos</h3>
-                        <p className="text-sm text-amber-700">Historial de pagos</p>
+                        <h3 className="font-bold text-amber-900">Pagos</h3>
+                        <p className="text-sm text-amber-700 font-medium">Historial de pagos</p>
                       </div>
                     </div>
                   </div>
@@ -770,43 +796,51 @@ export default function BuyerDashboardPage() {
             {activeTab === 'support' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link href="/buyer/chat">
-                  <div className="p-4 bg-gradient-to-r from-slate-700 to-blue-700 hover:from-slate-800 hover:to-blue-800 rounded-xl transition cursor-pointer">
+                  <div className="p-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-xl transition-all cursor-pointer shadow-lg hover:shadow-xl">
                     <div className="flex items-center gap-3">
-                      <MessageCircle className="h-8 w-8 text-white" />
+                      <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
+                        <MessageCircle className="h-6 w-6 text-white" />
+                      </div>
                       <div>
-                        <h3 className="font-semibold text-white">Chat con Vendedor</h3>
-                        <p className="text-sm text-slate-200">Envía mensajes directos</p>
+                        <h3 className="font-bold text-white">Chat con Vendedor</h3>
+                        <p className="text-sm text-purple-100 font-medium">Envía mensajes directos</p>
                       </div>
                     </div>
                   </div>
                 </Link>
 
-                <div className="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition cursor-pointer">
+                <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-blue-200">
                   <div className="flex items-center gap-3">
-                    <MessageCircle className="h-8 w-8 text-blue-600" />
+                    <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-2 rounded-lg">
+                      <MessageCircle className="h-6 w-6 text-white" />
+                    </div>
                     <div>
-                      <h3 className="font-semibold text-blue-900">Centro de Ayuda</h3>
-                      <p className="text-sm text-blue-700">Preguntas frecuentes</p>
+                      <h3 className="font-bold text-blue-900">Centro de Ayuda</h3>
+                      <p className="text-sm text-blue-700 font-medium">Preguntas frecuentes</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-green-50 hover:bg-green-100 rounded-xl transition cursor-pointer">
+                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-green-200">
                   <div className="flex items-center gap-3">
-                    <Package className="h-8 w-8 text-green-600" />
+                    <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2 rounded-lg">
+                      <Package className="h-6 w-6 text-white" />
+                    </div>
                     <div>
-                      <h3 className="font-semibold text-green-900">Rastreo de Envío</h3>
-                      <p className="text-sm text-green-700">Sigue tus pedidos</p>
+                      <h3 className="font-bold text-green-900">Rastreo de Envío</h3>
+                      <p className="text-sm text-green-700 font-medium">Sigue tus pedidos</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-yellow-50 hover:bg-yellow-100 rounded-xl transition cursor-pointer">
+                <div className="p-4 bg-gradient-to-r from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-yellow-200">
                   <div className="flex items-center gap-3">
-                    <AlertCircle className="h-8 w-8 text-yellow-600" />
+                    <div className="bg-gradient-to-br from-yellow-500 to-amber-600 p-2 rounded-lg">
+                      <AlertCircle className="h-6 w-6 text-white" />
+                    </div>
                     <div>
-                      <h3 className="font-semibold text-yellow-900">Reportar Problema</h3>
-                      <p className="text-sm text-yellow-700">Ayúdanos a mejorar</p>
+                      <h3 className="font-bold text-yellow-900">Reportar Problema</h3>
+                      <p className="text-sm text-yellow-700 font-medium">Ayúdanos a mejorar</p>
                     </div>
                   </div>
                 </div>
@@ -816,20 +850,20 @@ export default function BuyerDashboardPage() {
         </div>
 
         {/* Órdenes Recientes */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold text-gray-900">📦 Órdenes Recientes</h3>
-            <Link href="/buyer/orders" className="text-purple-600 hover:text-purple-700 font-medium text-sm flex items-center gap-1">
+            <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">📦 Órdenes Recientes</h3>
+            <Link href="/buyer/orders" className="text-purple-600 hover:text-purple-700 font-semibold text-sm flex items-center gap-1 transition-colors">
               Ver todas <ArrowUpRight className="w-4 h-4" />
             </Link>
           </div>
           
           {recentOrders.length === 0 ? (
             <div className="text-center py-12">
-              <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500 font-medium">No hay órdenes aún</p>
+              <Package className="h-16 w-16 text-purple-200 mx-auto mb-4" />
+              <p className="text-gray-600 font-medium">No hay órdenes aún</p>
               <Link href="/buyer/catalog">
-                <Button className="mt-4 bg-purple-600 hover:bg-purple-700">
+                <Button className="mt-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md">
                   Explorar Catálogo
                 </Button>
               </Link>
@@ -839,19 +873,19 @@ export default function BuyerDashboardPage() {
               {recentOrders.slice(0, 5).map((order) => (
                 <Link key={order.id} href="/buyer/orders">
                   <div 
-                    className="border border-gray-200 rounded-xl p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer"
+                    className="border-2 border-gray-200 rounded-xl p-4 hover:border-purple-400 hover:shadow-lg transition-all cursor-pointer"
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <ShoppingBag className="w-6 h-6 text-blue-600" />
+                        <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg flex items-center justify-center">
+                          <ShoppingBag className="w-6 h-6 text-purple-600" />
                         </div>
                         <div>
                           <p className="font-bold text-gray-900">#{order.orderNumber}</p>
-                          <p className="text-sm text-gray-500">{order.itemsCount} productos</p>
+                          <p className="text-sm text-gray-600 font-medium">{order.itemsCount} productos</p>
                         </div>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
+                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(order.status)}`}>
                         {statusLabels[order.status] || order.status}
                       </span>
                     </div>
@@ -860,21 +894,21 @@ export default function BuyerDashboardPage() {
                     <div className="mb-3">
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
-                          className="bg-gradient-to-r from-blue-500 to-teal-500 h-2 rounded-full transition-all"
+                          className="bg-gradient-to-r from-purple-500 to-indigo-500 h-2 rounded-full transition-all shadow-sm"
                           style={{ width: `${getOrderProgress(order.status)}%` }}
                         />
                       </div>
                     </div>
                     
                     <div className="flex items-center justify-between">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 font-medium">
                         {new Date(order.createdAt).toLocaleDateString('es-ES', { 
                           day: 'numeric', 
                           month: 'short', 
                           year: 'numeric' 
                         })}
                       </p>
-                      <p className="text-lg font-bold text-blue-600">
+                      <p className="text-lg font-bold text-purple-600">
                         {formatPrice(Number(order.totalAmount))}
                       </p>
                     </div>
@@ -887,32 +921,32 @@ export default function BuyerDashboardPage() {
       </div>
 
       {/* Quick Actions Flotantes */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-6 right-4 sm:right-6 z-50">
         <button 
           onClick={() => setShowQuickActions(!showQuickActions)}
-          className="w-14 h-14 bg-gradient-to-r from-slate-700 to-blue-700 rounded-full shadow-2xl flex items-center justify-center text-white hover:scale-110 transition-transform"
+          className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full shadow-2xl flex items-center justify-center text-white hover:scale-110 transition-all hover:shadow-purple-500/50"
         >
-          {showQuickActions ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
+          {showQuickActions ? <X className="w-5 h-5 sm:w-6 sm:w-6" /> : <Plus className="w-5 h-5 sm:w-6 sm:h-6" />}
         </button>
         
         {/* Menu de acciones */}
         {showQuickActions && (
-          <div className="absolute bottom-20 right-0 space-y-3 animate-scale-in">
+          <div className="absolute bottom-16 sm:bottom-20 right-0 space-y-2 sm:space-y-3 animate-scale-in min-w-[180px] sm:min-w-[200px]">
             <Link href="/buyer/catalog">
-              <button className="flex items-center gap-3 bg-white shadow-lg rounded-full px-6 py-3 hover:shadow-xl transition-all w-full">
-                <ShoppingCart className="w-5 h-5 text-purple-600" />
-                <span className="font-medium text-gray-900">Nueva orden</span>
+              <button className="flex items-center gap-2 sm:gap-3 bg-white shadow-lg rounded-full px-4 sm:px-6 py-2 sm:py-3 hover:shadow-xl transition-all w-full whitespace-nowrap border-2 border-purple-200 hover:border-purple-400">
+                <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 flex-shrink-0" />
+                <span className="font-semibold text-gray-900 text-sm sm:text-base">Nueva orden</span>
               </button>
             </Link>
             <Link href="/buyer/chat">
-              <button className="flex items-center gap-3 bg-white shadow-lg rounded-full px-6 py-3 hover:shadow-xl transition-all w-full">
-                <MessageCircle className="w-5 h-5 text-blue-600" />
-                <span className="font-medium text-gray-900">Chat</span>
+              <button className="flex items-center gap-2 sm:gap-3 bg-white shadow-lg rounded-full px-4 sm:px-6 py-2 sm:py-3 hover:shadow-xl transition-all w-full whitespace-nowrap border-2 border-indigo-200 hover:border-indigo-400">
+                <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 flex-shrink-0" />
+                <span className="font-semibold text-gray-900 text-sm sm:text-base">Chat</span>
               </button>
             </Link>
-            <button className="flex items-center gap-3 bg-white shadow-lg rounded-full px-6 py-3 hover:shadow-xl transition-all w-full">
-              <Phone className="w-5 h-5 text-green-600" />
-              <span className="font-medium text-gray-900">Ayuda</span>
+            <button className="flex items-center gap-2 sm:gap-3 bg-white shadow-lg rounded-full px-4 sm:px-6 py-2 sm:py-3 hover:shadow-xl transition-all w-full whitespace-nowrap border-2 border-emerald-200 hover:border-emerald-400">
+              <Phone className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 flex-shrink-0" />
+              <span className="font-semibold text-gray-900 text-sm sm:text-base">Ayuda</span>
             </button>
           </div>
         )}

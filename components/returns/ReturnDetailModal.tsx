@@ -221,88 +221,93 @@ export default function ReturnDetailModal({ returnRecord, isOpen, onClose, onUpd
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      <div className="bg-white w-full sm:max-w-4xl sm:rounded-lg shadow-xl max-h-[100vh] sm:max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/90 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-white w-full h-full sm:h-auto sm:max-w-4xl sm:rounded-lg shadow-xl sm:max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-start justify-between p-6 border-b bg-gradient-to-r from-purple-50 to-pink-50">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <h2 className="text-2xl font-bold text-gray-900">{returnRecord.returnNumber}</h2>
-              {getStatusBadge()}
-              
-              {/* Badge de origen de devolución */}
-              {returnRecord.isManual ? (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-100 border border-orange-300">
-                  <span className="text-xs font-semibold text-orange-800">
-                    🛠️ Devolución Manual por Vendedor
-                  </span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 border border-blue-300">
-                  <span className="text-xs font-semibold text-blue-800">
-                    📝 Solicitud del Cliente
-                  </span>
-                </div>
-              )}
-            </div>
-            <p className="text-sm text-gray-600">
-              Orden: {returnRecord.order.orderNumber} | {' '}
-              Creada: {new Date(returnRecord.createdAt).toLocaleDateString('es-ES', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
-              })}
-            </p>
+        <div className="p-4 sm:p-6 border-b bg-gradient-to-r from-purple-50 to-pink-50">
+          <div className="flex items-start justify-between gap-2 mb-3">
+            <h2 className="text-lg sm:text-2xl font-bold text-gray-900 flex-1">{returnRecord.returnNumber}</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+            >
+              <X className="h-5 w-5 sm:h-6 sm:w-6" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="h-6 w-6" />
-          </button>
+          
+          <div className="flex flex-col gap-2 mb-3">
+            {getStatusBadge()}
+            
+            {/* Badge de origen de devolución */}
+            {returnRecord.isManual ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-100 border border-orange-300 w-fit">
+                <span className="text-xs font-semibold text-orange-800">
+                  🛠️ Devolución Manual por Vendedor
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-100 border border-blue-300 w-fit">
+                <span className="text-xs font-semibold text-blue-800">
+                  📝 Solicitud del Cliente
+                </span>
+              </div>
+            )}
+          </div>
+          
+          <p className="text-xs sm:text-sm text-gray-600">
+            Orden: {returnRecord.order.orderNumber}<br className="sm:hidden" />
+            <span className="hidden sm:inline"> | </span>
+            Creada: {new Date(returnRecord.createdAt).toLocaleDateString('es-ES', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            })}
+          </p>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b bg-gray-50">
+        <div className="flex border-b bg-gray-50 overflow-x-auto">
           <button
             onClick={() => setActiveTab('info')}
-            className={`flex-1 px-6 py-3 font-medium transition-colors flex items-center justify-center gap-2 ${
+            className={`flex-1 min-w-[100px] px-3 sm:px-6 py-3 font-medium transition-colors flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base ${
               activeTab === 'info'
                 ? 'text-purple-600 border-b-2 border-purple-600 bg-white'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            <Info className="h-5 w-5" />
-            Información
+            <Info className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="hidden sm:inline">Información</span>
+            <span className="sm:hidden">Info</span>
           </button>
           <button
             onClick={() => setActiveTab('items')}
-            className={`flex-1 px-6 py-3 font-medium transition-colors flex items-center justify-center gap-2 ${
+            className={`flex-1 min-w-[120px] px-3 sm:px-6 py-3 font-medium transition-colors flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base ${
               activeTab === 'items'
                 ? 'text-purple-600 border-b-2 border-purple-600 bg-white'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            <Package className="h-5 w-5" />
-            Productos ({returnRecord.items.length})
+            <Package className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="hidden sm:inline">Productos ({returnRecord.items.length})</span>
+            <span className="sm:hidden">({returnRecord.items.length})</span>
           </button>
           {role === 'seller' && (
             <button
               onClick={() => setActiveTab('actions')}
-              className={`flex-1 px-6 py-3 font-medium transition-colors flex items-center justify-center gap-2 ${
+              className={`flex-1 min-w-[100px] px-3 sm:px-6 py-3 font-medium transition-colors flex items-center justify-center gap-1 sm:gap-2 text-sm sm:text-base ${
                 activeTab === 'actions'
                   ? 'text-purple-600 border-b-2 border-purple-600 bg-white'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <Settings className="h-5 w-5" />
-              Acciones
+              <Settings className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span>Acciones</span>
             </button>
           )}
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {/* TAB: Información */}
           {activeTab === 'info' && (
             <div className="space-y-6">
@@ -495,19 +500,19 @@ export default function ReturnDetailModal({ returnRecord, isOpen, onClose, onUpd
             <div className="space-y-6">
               {/* Aprobar */}
               {canApprove && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                  <div className="flex items-start gap-4">
-                    <CheckCircle className="h-8 w-8 text-blue-600 flex-shrink-0" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-2">Aprobar Devolución</h3>
-                      <p className="text-sm text-gray-700 mb-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+                    <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 flex-shrink-0" />
+                    <div className="flex-1 w-full">
+                      <h3 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Aprobar Devolución</h3>
+                      <p className="text-xs sm:text-sm text-gray-700 mb-4">
                         Al aprobar esta devolución, cambiarás su estado a APROBADA. 
                         Luego podrás completarla para procesar el reembolso o crédito.
                       </p>
                       <Button
                         onClick={handleApprove}
                         disabled={loading}
-                        className="bg-blue-600 hover:bg-blue-700"
+                        className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                       >
                         {loading ? 'Procesando...' : 'Aprobar Devolución'}
                       </Button>
@@ -518,12 +523,12 @@ export default function ReturnDetailModal({ returnRecord, isOpen, onClose, onUpd
 
               {/* Rechazar */}
               {canReject && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                  <div className="flex items-start gap-4">
-                    <XCircle className="h-8 w-8 text-red-600 flex-shrink-0" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-2">Rechazar Devolución</h3>
-                      <p className="text-sm text-gray-700 mb-4">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+                    <XCircle className="h-6 w-6 sm:h-8 sm:w-8 text-red-600 flex-shrink-0" />
+                    <div className="flex-1 w-full">
+                      <h3 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Rechazar Devolución</h3>
+                      <p className="text-xs sm:text-sm text-gray-700 mb-4">
                         Si no procede esta devolución, puedes rechazarla proporcionando un motivo.
                       </p>
                       <textarea
@@ -531,12 +536,12 @@ export default function ReturnDetailModal({ returnRecord, isOpen, onClose, onUpd
                         onChange={(e) => setRejectionReason(e.target.value)}
                         placeholder="Motivo del rechazo..."
                         rows={3}
-                        className="w-full px-4 py-3 border rounded-lg mb-3 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        className="w-full px-3 sm:px-4 py-2 sm:py-3 border rounded-lg mb-3 focus:ring-2 focus:ring-red-500 focus:border-transparent text-sm"
                       />
                       <Button
                         onClick={handleReject}
                         disabled={loading || !rejectionReason.trim()}
-                        className="bg-red-600 hover:bg-red-700"
+                        className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
                       >
                         {loading ? 'Procesando...' : 'Rechazar Devolución'}
                       </Button>
@@ -547,24 +552,24 @@ export default function ReturnDetailModal({ returnRecord, isOpen, onClose, onUpd
 
               {/* Completar */}
               {canComplete && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                  <div className="flex items-start gap-4">
-                    <CheckCircle className="h-8 w-8 text-green-600 flex-shrink-0" />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 mb-2">Completar Devolución</h3>
-                      <p className="text-sm text-gray-700 mb-4">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
+                    <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-green-600 flex-shrink-0" />
+                    <div className="flex-1 w-full">
+                      <h3 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">Completar Devolución</h3>
+                      <p className="text-xs sm:text-sm text-gray-700 mb-4">
                         Al completar, se procesará el {returnRecord.refundType === 'CREDIT' ? 'crédito' : 'reembolso'}.
                         {returnRecord.refundType === 'CREDIT' && ' Se generará una nota de crédito automáticamente.'}
                       </p>
                       
-                      <label className="flex items-center gap-2 mb-4 cursor-pointer">
+                      <label className="flex items-start gap-2 mb-4 cursor-pointer">
                         <input
                           type="checkbox"
                           checked={restockInventory}
                           onChange={(e) => setRestockInventory(e.target.checked)}
-                          className="rounded text-green-600"
+                          className="rounded text-green-600 mt-0.5 flex-shrink-0"
                         />
-                        <span className="text-sm text-gray-700">
+                        <span className="text-xs sm:text-sm text-gray-700">
                           Restaurar inventario de productos devueltos
                         </span>
                       </label>
@@ -572,7 +577,7 @@ export default function ReturnDetailModal({ returnRecord, isOpen, onClose, onUpd
                       <Button
                         onClick={handleComplete}
                         disabled={loading}
-                        className="bg-green-600 hover:bg-green-700"
+                        className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                       >
                         {loading ? 'Procesando...' : 'Completar Devolución'}
                       </Button>
@@ -618,8 +623,8 @@ export default function ReturnDetailModal({ returnRecord, isOpen, onClose, onUpd
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end p-6 border-t bg-gray-50">
-          <Button onClick={onClose} variant="outline">
+        <div className="flex items-center justify-end p-4 sm:p-6 border-t bg-gray-50">
+          <Button onClick={onClose} variant="outline" className="w-full sm:w-auto">
             Cerrar
           </Button>
         </div>

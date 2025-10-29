@@ -32,7 +32,7 @@ import RevenueChart from '@/components/dashboard/RevenueChart'
 type Stats = {
   totalOrders: number
   pendingOrders: number
-  processingOrders: number
+  canceledOrders: number
   completedOrders: number
   totalRevenue: number
   totalProducts: number
@@ -274,39 +274,39 @@ export default function DashboardPage() {
       title: 'Órdenes Totales',
       value: stats.totalOrders,
       icon: ShoppingCart,
-      color: 'bg-blue-500',
+      color: 'bg-gradient-to-br from-purple-500 to-purple-700',
       trend: stats.ordersGrowth,
     },
     {
       title: 'Pendientes',
       value: stats.pendingOrders,
       icon: Clock,
-      color: 'bg-yellow-500',
+      color: 'bg-gradient-to-br from-amber-500 to-orange-600',
     },
     {
-      title: 'En Proceso',
-      value: stats.processingOrders,
-      icon: Package,
-      color: 'bg-purple-500',
+      title: 'Canceladas',
+      value: stats.canceledOrders,
+      icon: X,
+      color: 'bg-gradient-to-br from-rose-500 to-red-600',
     },
     {
       title: 'Completadas',
       value: stats.completedOrders,
-      icon: Package,
-      color: 'bg-green-500',
+      icon: CheckCircle,
+      color: 'bg-gradient-to-br from-emerald-500 to-green-600',
     },
     {
       title: 'Ingresos Totales',
       value: formatPrice(stats.totalRevenue || 0),
       icon: DollarSign,
-      color: 'bg-emerald-500',
+      color: 'bg-gradient-to-br from-cyan-500 to-blue-600',
       trend: stats.revenueGrowth,
     },
     {
       title: 'Productos',
       value: stats.totalProducts,
       icon: Package,
-      color: 'bg-indigo-500',
+      color: 'bg-gradient-to-br from-indigo-500 to-purple-600',
       trend: stats.productsGrowth,
     },
     {
@@ -327,27 +327,27 @@ export default function DashboardPage() {
   return (
     <MainLayout>
       <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center gap-2 sm:gap-3">
-          <TrendingUp className="text-blue-600" size={28} />
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+          <TrendingUp className="text-purple-600" size={28} />
           <span className="sm:inline">Dashboard</span>
         </h1>
-        <p className="text-sm sm:text-base text-gray-600 mt-1">
+        <p className="text-sm sm:text-base text-gray-700 mt-1">
           Resumen general de tu negocio
         </p>
       </div>
 
       {/* Tabs de navegación */}
-      <div className="mb-6 flex gap-1 sm:gap-2 border-b border-gray-200 overflow-x-auto">
+      <div className="mb-6 flex gap-1 sm:gap-2 border-b-2 border-purple-200 overflow-x-auto bg-white rounded-t-lg px-2">
         {tabs.map((tab) => {
           const TabIcon = tab.icon
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 font-medium transition-colors whitespace-nowrap text-sm sm:text-base ${
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 font-medium transition-all whitespace-nowrap text-sm sm:text-base rounded-t-lg ${
                 activeTab === tab.id
-                  ? 'text-blue-600 border-b-2 border-blue-600'
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? 'text-white bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg'
+                  : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
               }`}
             >
               <TabIcon size={16} className="sm:w-[18px] sm:h-[18px]" />
@@ -361,7 +361,7 @@ export default function DashboardPage() {
       {activeTab === 'resumen' && (
         <>
           {/* Grid de estadísticas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
         {statCards.map((card, index) => {
           const Icon = card.icon
           const hasTrend = card.trend !== undefined
@@ -372,33 +372,33 @@ export default function DashboardPage() {
           return (
             <div
               key={index}
-              className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow"
+              className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-3 border-l-4 border-purple-500"
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className={`${card.color} p-3 rounded-lg`}>
-                  <Icon className="text-white" size={24} />
+              <div className="flex items-center justify-between mb-2">
+                <div className={`${card.color} p-1.5 rounded-xl shadow-md`}>
+                  <Icon className="text-white" size={14} />
                 </div>
               </div>
-              <h3 className="text-gray-600 text-sm font-medium">
+              <h3 className="text-gray-600 text-xs font-semibold uppercase tracking-wide">
                 {card.title}
               </h3>
-              <div className="flex items-baseline justify-between mt-2">
-                <p className="text-3xl font-bold text-gray-800">
+              <div className="flex items-baseline justify-between mt-1">
+                <p className="text-lg font-bold text-gray-900">
                   {card.value}
                 </p>
                 {hasTrend && (
                   <div
-                    className={`flex items-center gap-1 text-sm font-semibold ${
-                      isPositive ? 'text-green-600' : 'text-red-600'
+                    className={`flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                      isPositive ? 'text-emerald-700 bg-emerald-100' : 'text-red-700 bg-red-100'
                     }`}
                   >
-                    <TrendIcon size={16} />
+                    <TrendIcon size={12} />
                     {Math.abs(card.trend!)}%
                   </div>
                 )}
               </div>
               {hasTrend && (
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-[10px] text-gray-500 mt-1">
                   vs mes anterior
                 </p>
               )}
@@ -409,17 +409,17 @@ export default function DashboardPage() {
 
       {/* Alertas con botones de acción */}
       {stats.lowStockProducts > 0 && (
-        <div className="mt-6 bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
+        <div className="mt-6 bg-gradient-to-r from-rose-50 to-red-50 border-2 border-rose-300 rounded-xl p-3 sm:p-4 shadow-lg">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
-              <p className="text-red-800 font-semibold text-sm sm:text-base">
+              <AlertCircle className="text-rose-600 flex-shrink-0" size={20} />
+              <p className="text-rose-900 font-semibold text-sm sm:text-base">
                 ⚠️ Tienes {stats.lowStockProducts} producto(s) con stock bajo
               </p>
             </div>
             <button
               onClick={openLowStockModal}
-              className="w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-rose-600 to-red-600 text-white rounded-lg hover:from-rose-700 hover:to-red-700 transition-all shadow-md hover:shadow-xl text-sm font-medium flex items-center justify-center gap-2"
             >
               <Eye size={16} />
               <span>Ver productos</span>
@@ -429,17 +429,17 @@ export default function DashboardPage() {
       )}
 
       {stats.pendingOrders > 0 && (
-        <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4">
+        <div className="mt-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-xl p-3 sm:p-4 shadow-lg">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <Clock className="text-yellow-600 flex-shrink-0" size={20} />
-              <p className="text-yellow-800 font-semibold text-sm sm:text-base">
+              <Clock className="text-amber-600 flex-shrink-0" size={20} />
+              <p className="text-amber-900 font-semibold text-sm sm:text-base">
                 📦 Tienes {stats.pendingOrders} orden(es) pendiente(s) de atención
               </p>
             </div>
             <button
               onClick={openPendingOrdersModal}
-              className="w-full sm:w-auto px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+              className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all shadow-md hover:shadow-xl text-sm font-medium flex items-center justify-center gap-2"
             >
               <Eye size={16} />
               <span>Ver órdenes</span>
@@ -633,7 +633,7 @@ export default function DashboardPage() {
       {/* Botón flotante de acciones rápidas */}
       <button
         onClick={() => setShowQuickActionsModal(true)}
-        className="fixed bottom-8 right-8 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all hover:scale-110 z-50"
+        className="fixed bottom-8 right-8 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-full shadow-2xl hover:from-purple-700 hover:to-indigo-700 transition-all hover:scale-110 z-50 ring-4 ring-purple-200"
         title="Acciones rápidas"
       >
         <Plus size={28} />
@@ -758,33 +758,34 @@ export default function DashboardPage() {
 
       {/* Modal de Acciones Rápidas */}
       {showQuickActionsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-md w-full">
-            <div className="border-b border-gray-200 p-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-gray-800">
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-[10000] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-white to-purple-50 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border-2 border-purple-200">
+            <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 sm:p-4 flex items-center justify-between rounded-t-2xl">
+              <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
+                <Plus size={20} />
                 Acciones Rápidas
               </h3>
               <button
                 onClick={() => setShowQuickActionsModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-white hover:bg-white/20 rounded-full p-1 transition-colors"
               >
-                <X size={24} />
+                <X size={20} className="sm:w-6 sm:h-6" />
               </button>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
               <button
                 onClick={() => {
                   setShowQuickActionsModal(false)
                   router.push('/orders')
                 }}
-                className="w-full flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
               >
-                <div className="bg-blue-100 p-3 rounded-lg">
-                  <ShoppingCart className="text-blue-600" size={24} />
+                <div className="bg-blue-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
+                  <ShoppingCart className="text-blue-600" size={18} />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-gray-800">Nueva Orden</p>
-                  <p className="text-sm text-gray-600">Crear orden de compra</p>
+                  <p className="font-semibold text-gray-800 text-sm sm:text-base">Ver Órdenes</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Gestionar órdenes</p>
                 </div>
               </button>
 
@@ -793,14 +794,14 @@ export default function DashboardPage() {
                   setShowQuickActionsModal(false)
                   router.push('/products')
                 }}
-                className="w-full flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors"
+                className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-4 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-colors"
               >
-                <div className="bg-green-100 p-3 rounded-lg">
-                  <Package className="text-green-600" size={24} />
+                <div className="bg-green-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
+                  <Package className="text-green-600" size={18} />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-gray-800">Nuevo Producto</p>
-                  <p className="text-sm text-gray-600">Agregar al inventario</p>
+                  <p className="font-semibold text-gray-800 text-sm sm:text-base">Productos</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Gestionar inventario</p>
                 </div>
               </button>
 
@@ -809,46 +810,46 @@ export default function DashboardPage() {
                   setShowQuickActionsModal(false)
                   router.push('/clients')
                 }}
-                className="w-full flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors"
+                className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors"
               >
-                <div className="bg-purple-100 p-3 rounded-lg">
-                  <Users className="text-purple-600" size={24} />
+                <div className="bg-purple-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
+                  <Users className="text-purple-600" size={18} />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-gray-800">Nuevo Cliente</p>
-                  <p className="text-sm text-gray-600">Agregar cliente</p>
+                  <p className="font-semibold text-gray-800 text-sm sm:text-base">Clientes</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Ver clientes</p>
                 </div>
               </button>
 
               <button
                 onClick={() => {
                   setShowQuickActionsModal(false)
-                  router.push('/orders')
+                  router.push('/quotes')
                 }}
-                className="w-full flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-orange-50 hover:border-orange-300 transition-colors"
+                className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-4 border border-gray-200 rounded-lg hover:bg-orange-50 hover:border-orange-300 transition-colors"
               >
-                <div className="bg-orange-100 p-3 rounded-lg">
-                  <FileText className="text-orange-600" size={24} />
+                <div className="bg-orange-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
+                  <FileText className="text-orange-600" size={18} />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-gray-800">Nueva Cotización</p>
-                  <p className="text-sm text-gray-600">Generar cotización</p>
+                  <p className="font-semibold text-gray-800 text-sm sm:text-base">Cotizaciones</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Ver cotizaciones</p>
                 </div>
               </button>
 
               <button
                 onClick={() => {
                   setShowQuickActionsModal(false)
-                  router.push('/orders')
+                  router.push('/returns')
                 }}
-                className="w-full flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors"
+                className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-4 border border-gray-200 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors"
               >
-                <div className="bg-red-100 p-3 rounded-lg">
-                  <RotateCw className="text-red-600" size={24} />
+                <div className="bg-red-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
+                  <RotateCw className="text-red-600" size={18} />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-gray-800">Registrar Devolución</p>
-                  <p className="text-sm text-gray-600">Procesar devolución</p>
+                  <p className="font-semibold text-gray-800 text-sm sm:text-base">Devoluciones</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Ver devoluciones</p>
                 </div>
               </button>
 
@@ -857,30 +858,30 @@ export default function DashboardPage() {
                   setShowQuickActionsModal(false)
                   router.push('/chat')
                 }}
-                className="w-full flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
+                className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-4 border border-gray-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition-colors"
               >
-                <div className="bg-indigo-100 p-3 rounded-lg">
-                  <MessageSquare className="text-indigo-600" size={24} />
+                <div className="bg-indigo-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
+                  <MessageSquare className="text-indigo-600" size={18} />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-gray-800">Ver Chat</p>
-                  <p className="text-sm text-gray-600">Mensajes de clientes</p>
+                  <p className="font-semibold text-gray-800 text-sm sm:text-base">Chat</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Mensajes de clientes</p>
                 </div>
               </button>
 
               <button
                 onClick={() => {
                   setShowQuickActionsModal(false)
-                  router.push('/dashboard')
+                  router.push('/recurring-orders')
                 }}
-                className="w-full flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors"
+                className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-4 border border-gray-200 rounded-lg hover:bg-teal-50 hover:border-teal-300 transition-colors"
               >
-                <div className="bg-gray-100 p-3 rounded-lg">
-                  <FileText className="text-gray-600" size={24} />
+                <div className="bg-teal-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
+                  <RotateCcw className="text-teal-600" size={18} />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-gray-800">Generar Reporte</p>
-                  <p className="text-sm text-gray-600">Exportar datos</p>
+                  <p className="font-semibold text-gray-800 text-sm sm:text-base">Órdenes Recurrentes</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Gestionar recurrentes</p>
                 </div>
               </button>
             </div>

@@ -32,20 +32,24 @@ export default function BuyerRecurringOrdersPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <RefreshCw className="h-8 w-8 animate-spin text-purple-600" />
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50">
+        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 rounded-xl shadow-md">
+          <RefreshCw className="h-8 w-8 animate-spin text-white" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
-      {clientId && (
-        <ModernRecurringOrdersManager 
-          userRole="CLIENT"
-          clientId={clientId}
-        />
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 py-8 px-4">
+      <div className="container mx-auto max-w-7xl">
+        {clientId && (
+          <ModernRecurringOrdersManager 
+            userRole="CLIENT"
+            clientId={clientId}
+          />
+        )}
+      </div>
     </div>
   )
 }

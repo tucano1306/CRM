@@ -203,63 +203,55 @@ export default function ReturnsManager({ role = 'seller' }: ReturnsManagerProps)
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-6 text-white">
-          <div className="flex items-center gap-3">
-            <Package className="h-8 w-8" />
-            <div>
-              <p className="text-3xl font-bold">{stats.total}</p>
-              <p className="text-sm opacity-90">Total</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+        <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-purple-500">
+          <div className="flex items-center justify-between mb-2">
+            <div className="bg-gradient-to-br from-purple-500 to-purple-700 p-2 rounded-xl shadow-md">
+              <Package className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
           </div>
+          <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Total</p>
+          <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.total}</p>
         </div>
 
-        <div className="bg-white rounded-lg border p-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-yellow-100 p-3 rounded-lg">
-              <Clock className="h-6 w-6 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
-              <p className="text-sm text-gray-600">Pendientes</p>
+        <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-amber-500">
+          <div className="flex items-center justify-between mb-2">
+            <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2 rounded-xl shadow-md">
+              <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
           </div>
+          <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Pendientes</p>
+          <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.pending}</p>
         </div>
 
-        <div className="bg-white rounded-lg border p-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-100 p-3 rounded-lg">
-              <CheckCircle className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.approved}</p>
-              <p className="text-sm text-gray-600">Aprobadas</p>
+        <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-cyan-500">
+          <div className="flex items-center justify-between mb-2">
+            <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-2 rounded-xl shadow-md">
+              <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
           </div>
+          <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Aprobadas</p>
+          <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.approved}</p>
         </div>
 
-        <div className="bg-white rounded-lg border p-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-red-100 p-3 rounded-lg">
-              <XCircle className="h-6 w-6 text-red-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.rejected}</p>
-              <p className="text-sm text-gray-600">Rechazadas</p>
+        <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-rose-500">
+          <div className="flex items-center justify-between mb-2">
+            <div className="bg-gradient-to-br from-rose-500 to-red-600 p-2 rounded-xl shadow-md">
+              <XCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
           </div>
+          <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Rechazadas</p>
+          <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.rejected}</p>
         </div>
 
-        <div className="bg-white rounded-lg border p-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-green-100 p-3 rounded-lg">
-              <CheckCircle className="h-6 w-6 text-green-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
-              <p className="text-sm text-gray-600">Completadas</p>
+        <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-emerald-500">
+          <div className="flex items-center justify-between mb-2">
+            <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-xl shadow-md">
+              <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
             </div>
           </div>
+          <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Completadas</p>
+          <p className="text-2xl sm:text-3xl font-bold text-gray-900">{stats.completed}</p>
         </div>
       </div>
 

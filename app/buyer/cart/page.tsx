@@ -797,21 +797,23 @@ export default function CartPage() {
   // ✅ ESTADO DE TIMEOUT
   if (timedOut) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-teal-50 p-6 flex items-center justify-center">
-        <div className="max-w-md bg-white rounded-2xl shadow-lg p-8 border border-yellow-200">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6 flex items-center justify-center">
+        <div className="max-w-md bg-white rounded-2xl shadow-xl p-8 border-2 border-amber-300">
           <div className="flex items-center gap-3 mb-4">
-            <Clock className="h-8 w-8 text-yellow-600" />
-            <h2 className="text-xl font-bold text-yellow-900">
+            <div className="bg-gradient-to-br from-amber-500 to-yellow-600 p-2 rounded-lg">
+              <Clock className="h-6 w-6 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-amber-900">
               Tiempo de espera excedido
             </h2>
           </div>
-          <p className="text-gray-700 mb-6">
+          <p className="text-gray-700 mb-6 font-medium">
             La carga del carrito está tardando más de lo esperado. 
             Esto puede ser temporal.
           </p>
           <button
             onClick={fetchCart}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-semibold shadow-md"
           >
             Reintentar
           </button>
@@ -823,16 +825,18 @@ export default function CartPage() {
   // ✅ ESTADO DE ERROR
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-teal-50 p-6 flex items-center justify-center">
-        <div className="max-w-md bg-white rounded-2xl shadow-lg p-8 border border-red-200">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6 flex items-center justify-center">
+        <div className="max-w-md bg-white rounded-2xl shadow-xl p-8 border-2 border-red-300">
           <div className="flex items-center gap-3 mb-4">
-            <AlertCircle className="h-8 w-8 text-red-600" />
+            <div className="bg-gradient-to-br from-red-500 to-rose-600 p-2 rounded-lg">
+              <AlertCircle className="h-6 w-6 text-white" />
+            </div>
             <h2 className="text-xl font-bold text-red-900">Error</h2>
           </div>
-          <p className="text-gray-700 mb-6">{error}</p>
+          <p className="text-gray-700 mb-6 font-medium">{error}</p>
           <button
             onClick={fetchCart}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold"
+            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-semibold shadow-md"
           >
             Reintentar
           </button>
@@ -842,41 +846,41 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-teal-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Stepper de progreso - NUEVO */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-blue-100">
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 mb-6 border-2 border-purple-200">
           <div className="flex items-center justify-between">
             {/* Etapa 1: Pedido */}
             <div className="flex items-center gap-2">
-              <div className={`w-10 h-10 ${orderStep >= 1 ? 'bg-blue-600' : 'bg-gray-200'} text-white rounded-full flex items-center justify-center font-bold shadow-md transition-all`}>
+              <div className={`w-10 h-10 ${orderStep >= 1 ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gray-200'} text-white rounded-full flex items-center justify-center font-bold shadow-md transition-all`}>
                 {orderStep >= 1 ? '✓' : '1'}
               </div>
-              <span className={`text-sm font-semibold ${orderStep >= 1 ? 'text-blue-600' : 'text-gray-500'}`}>
+              <span className={`text-sm font-semibold ${orderStep >= 1 ? 'text-purple-600' : 'text-gray-500'}`}>
                 Pedido
               </span>
             </div>
             
-            <div className={`flex-1 h-1 mx-4 rounded transition-all ${orderStep >= 2 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
+            <div className={`flex-1 h-1 mx-4 rounded transition-all ${orderStep >= 2 ? 'bg-gradient-to-r from-purple-500 to-indigo-500' : 'bg-gray-200'}`}></div>
             
             {/* Etapa 2: Orden Verificada */}
             <div className="flex items-center gap-2">
-              <div className={`w-10 h-10 ${orderStep >= 2 ? 'bg-blue-600' : 'bg-gray-200'} ${orderStep >= 2 ? 'text-white' : 'text-gray-500'} rounded-full flex items-center justify-center font-bold shadow-md transition-all`}>
+              <div className={`w-10 h-10 ${orderStep >= 2 ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gray-200'} ${orderStep >= 2 ? 'text-white' : 'text-gray-500'} rounded-full flex items-center justify-center font-bold shadow-md transition-all`}>
                 {orderStep >= 2 ? '✓' : '2'}
               </div>
-              <span className={`text-sm font-semibold ${orderStep >= 2 ? 'text-blue-600' : 'text-gray-500'}`}>
+              <span className={`text-sm font-semibold ${orderStep >= 2 ? 'text-purple-600' : 'text-gray-500'}`}>
                 Orden Verificada
               </span>
             </div>
             
-            <div className={`flex-1 h-1 mx-4 rounded transition-all ${orderStep >= 3 ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
+            <div className={`flex-1 h-1 mx-4 rounded transition-all ${orderStep >= 3 ? 'bg-gradient-to-r from-emerald-500 to-green-500' : 'bg-gray-200'}`}></div>
             
             {/* Etapa 3: Listo para Envío */}
             <div className="flex items-center gap-2">
-              <div className={`w-10 h-10 ${orderStep >= 3 ? 'bg-green-600' : 'bg-gray-200'} ${orderStep >= 3 ? 'text-white' : 'text-gray-500'} rounded-full flex items-center justify-center font-bold shadow-md transition-all`}>
+              <div className={`w-10 h-10 ${orderStep >= 3 ? 'bg-gradient-to-r from-emerald-600 to-green-600' : 'bg-gray-200'} ${orderStep >= 3 ? 'text-white' : 'text-gray-500'} rounded-full flex items-center justify-center font-bold shadow-md transition-all`}>
                 {orderStep >= 3 ? '✓' : '3'}
               </div>
-              <span className={`text-sm font-semibold ${orderStep >= 3 ? 'text-green-600' : 'text-gray-500'}`}>
+              <span className={`text-sm font-semibold ${orderStep >= 3 ? 'text-emerald-600' : 'text-gray-500'}`}>
                 Listo para Envío
               </span>
             </div>
@@ -884,14 +888,14 @@ export default function CartPage() {
         </div>
 
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-blue-100">
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 mb-6 border-2 border-purple-200">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                <ShoppingCart className="text-blue-600" size={32} />
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-3">
+                <ShoppingCart className="text-purple-600" size={32} />
                 Mi Carrito
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-gray-600 mt-1 font-medium">
                 {cart?.items.length || 0}{' '}
                 {cart?.items.length === 1 ? 'producto' : 'productos'}
               </p>
@@ -900,7 +904,7 @@ export default function CartPage() {
               {hasSavedCart() && (
                 <button
                   onClick={restoreSavedCart}
-                  className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors border border-blue-200"
+                  className="text-purple-600 hover:text-purple-700 font-semibold flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-purple-50 transition-all border-2 border-purple-200 shadow-sm"
                 >
                   <Bookmark size={18} />
                   Restaurar guardado
@@ -909,7 +913,7 @@ export default function CartPage() {
               {cart && cart.items.length > 0 && (
                 <button
                   onClick={clearCart}
-                  className="text-red-600 hover:text-red-700 font-medium flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors"
+                  className="text-red-600 hover:text-red-700 font-semibold flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-red-50 transition-all border-2 border-red-200 shadow-sm"
                 >
                   <Trash2 size={18} />
                   Vaciar carrito
@@ -921,17 +925,17 @@ export default function CartPage() {
 
         {/* Carrito vacío */}
         {(!cart || cart.items.length === 0) && (
-          <div className="bg-white rounded-2xl shadow-lg p-12 text-center border border-blue-100">
-            <ShoppingCart className="mx-auto text-gray-300 mb-4" size={96} strokeWidth={1.5} />
-            <h3 className="text-3xl font-bold text-gray-700 mb-3">
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-12 text-center border-2 border-purple-200">
+            <ShoppingCart className="mx-auto text-purple-200 mb-4" size={96} strokeWidth={1.5} />
+            <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3">
               Tu carrito está vacío
             </h3>
-            <p className="text-gray-500 mb-8 text-lg">
+            <p className="text-gray-600 mb-8 text-lg font-medium">
               ¡Agrega productos desde el catálogo!
             </p>
             <button
               onClick={() => router.push('/buyer/catalog')}
-              className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold inline-flex items-center gap-2 shadow-md"
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-semibold inline-flex items-center gap-2 shadow-md"
             >
               <Package size={20} />
               Ir al Catálogo
@@ -940,26 +944,26 @@ export default function CartPage() {
             {/* Productos más vendidos */}
             {popularProducts.length > 0 && (
               <div className="mt-12">
-                <h4 className="text-xl font-bold text-gray-800 mb-6 flex items-center justify-center gap-2">
+                <h4 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6 flex items-center justify-center gap-2">
                   🔥 Los más vendidos
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {popularProducts.map(product => (
-                    <div key={product.id} className="bg-gradient-to-br from-blue-50 to-slate-50 p-4 rounded-xl border border-blue-100 hover:shadow-lg transition-shadow cursor-pointer group">
+                    <div key={product.id} className="bg-gradient-to-br from-purple-50 to-indigo-50 p-4 rounded-xl border-2 border-purple-200 hover:shadow-lg hover:border-purple-400 transition-all cursor-pointer group">
                       <div className="aspect-square bg-white rounded-lg flex items-center justify-center mb-3 shadow-sm">
-                        <Package className="w-12 h-12 text-blue-400 group-hover:text-blue-600 transition-colors" />
+                        <Package className="w-12 h-12 text-purple-400 group-hover:text-purple-600 transition-colors" />
                       </div>
                       <p className="font-semibold text-gray-800 text-sm line-clamp-2 mb-2">
                         {product.name}
                       </p>
                       <div className="flex items-center justify-between">
-                        <p className="text-blue-600 font-bold text-base">
+                        <p className="text-purple-600 font-bold text-base">
                           {formatPrice(product.price)}
                         </p>
                       </div>
                       <button 
                         onClick={() => addToCart(product.id)}
-                        className="w-full mt-3 bg-blue-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                        className="w-full mt-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 rounded-lg text-sm font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all shadow-sm"
                       >
                         + Agregar
                       </button>
@@ -979,7 +983,7 @@ export default function CartPage() {
               {cart.items.map((item) => (
                 <div
                   key={item.id}
-                  className={`bg-white rounded-xl shadow-md border border-blue-100 hover:shadow-lg transition-all duration-300 hover:scale-[1.02] overflow-hidden ${
+                  className={`bg-white rounded-xl shadow-lg border-2 border-purple-200 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 overflow-hidden ${
                     updating === item.id ? 'opacity-75 pointer-events-none' : ''
                   }`}
                 >
@@ -989,15 +993,15 @@ export default function CartPage() {
                       <img 
                         src={item.product.imageUrl || '/placeholder-food.jpg'}
                         alt={item.product.name}
-                        className="w-24 h-24 object-cover rounded-lg shadow-sm"
+                        className="w-24 h-24 object-cover rounded-lg shadow-md"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement
                           target.style.display = 'none'
                           const parent = target.parentElement
                           if (parent) {
-                            parent.classList.add('flex', 'items-center', 'justify-center', 'bg-gradient-to-br', 'from-blue-100', 'to-slate-100', 'w-24', 'h-24', 'rounded-lg')
+                            parent.classList.add('flex', 'items-center', 'justify-center', 'bg-gradient-to-br', 'from-purple-100', 'to-indigo-100', 'w-24', 'h-24', 'rounded-lg')
                             const packageIcon = document.createElement('div')
-                            packageIcon.innerHTML = '<svg class="w-12 h-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>'
+                            packageIcon.innerHTML = '<svg class="w-12 h-12 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>'
                             parent.appendChild(packageIcon.firstChild!)
                           }
                         }}
@@ -1008,16 +1012,16 @@ export default function CartPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex-1">
-                          <h3 className="text-lg font-bold text-gray-800">
+                          <h3 className="text-lg font-bold text-gray-900">
                             {item.product.name}
                           </h3>
                           {item.product.description && (
-                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                            <p className="text-sm text-gray-600 mt-1 line-clamp-2 font-medium">
                               {item.product.description}
                             </p>
                           )}
                           {item.product.sku && (
-                            <p className="text-xs text-gray-400 mt-1">
+                            <p className="text-xs text-gray-500 mt-1 font-medium">
                               SKU: {item.product.sku}
                             </p>
                           )}
@@ -1026,14 +1030,14 @@ export default function CartPage() {
 
                       {/* PRECIO Y STOCK */}
                       <div className="flex items-center gap-4 mt-3">
-                        <span className="text-blue-600 font-bold text-base">
+                        <span className="text-purple-600 font-bold text-base">
                           {formatPrice(item.price)}
                         </span>
-                        <span className="text-gray-500 text-sm">
+                        <span className="text-gray-600 text-sm font-medium">
                           / {item.product.unit}
                         </span>
                         {item.product.stock < 10 && (
-                          <span className="text-orange-600 text-sm font-medium flex items-center gap-1">
+                          <span className="text-amber-600 text-sm font-semibold flex items-center gap-1">
                             <Info className="w-4 h-4" />
                             Solo {item.product.stock} disponibles
                           </span>
@@ -1045,17 +1049,17 @@ export default function CartPage() {
                         <div className="flex items-center justify-between">
                           {/* Controles de cantidad */}
                           <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+                            <div className="flex items-center gap-2 bg-purple-50 border-2 border-purple-200 rounded-lg p-1">
                               <button
                                 onClick={() =>
                                   updateQuantity(item.id, item.quantity - 1)
                                 }
                                 disabled={updating === item.id || item.quantity <= 1}
-                                className="bg-white rounded p-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="bg-white rounded p-2 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-purple-600 font-bold"
                               >
                                 <Minus size={16} />
                               </button>
-                              <span className="w-12 text-center font-bold text-gray-800">
+                              <span className="w-12 text-center font-bold text-purple-600">
                                 {updating === item.id ? (
                                   <Loader2 className="w-4 h-4 animate-spin mx-auto" />
                                 ) : (
@@ -1070,7 +1074,7 @@ export default function CartPage() {
                                   updating === item.id ||
                                   item.quantity >= item.product.stock
                                 }
-                                className="bg-white rounded p-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="bg-white rounded p-2 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all text-purple-600 font-bold"
                               >
                                 <Plus size={16} />
                               </button>
@@ -1081,14 +1085,14 @@ export default function CartPage() {
                               <button 
                                 onClick={() => updateQuantity(item.id, 10)}
                                 disabled={updating === item.id || item.product.stock < 10}
-                                className="text-xs px-2 py-1 bg-gray-100 rounded hover:bg-blue-100 hover:text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                                className="text-xs px-2 py-1 bg-white border-2 border-purple-200 text-purple-600 rounded hover:bg-purple-50 hover:border-purple-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                               >
                                 10
                               </button>
                               <button 
                                 onClick={() => updateQuantity(item.id, 25)}
                                 disabled={updating === item.id || item.product.stock < 25}
-                                className="text-xs px-2 py-1 bg-gray-100 rounded hover:bg-blue-100 hover:text-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                                className="text-xs px-2 py-1 bg-white border-2 border-purple-200 text-purple-600 rounded hover:bg-purple-50 hover:border-purple-400 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                               >
                                 25
                               </button>

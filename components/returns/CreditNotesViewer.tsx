@@ -61,7 +61,9 @@ export default function CreditNotesViewer() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Clock className="h-8 w-8 animate-spin text-green-600" />
+        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 rounded-xl shadow-md">
+          <Clock className="h-8 w-8 animate-spin text-white" />
+        </div>
       </div>
     )
   }
@@ -69,40 +71,45 @@ export default function CreditNotesViewer() {
   return (
     <div className="space-y-6">
       {/* Header con Total Disponible */}
-      <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-6 text-white">
-        <div className="flex items-center gap-3 mb-2">
-          <DollarSign className="h-8 w-8" />
+      <div className="bg-white rounded-xl shadow-xl border-2 border-purple-200 p-8 transition-all hover:shadow-2xl">
+        <div className="flex items-center gap-4">
+          <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-4 rounded-xl shadow-md">
+            <DollarSign className="h-10 w-10 text-white" />
+          </div>
           <div>
-            <p className="text-sm opacity-90">Crédito Total Disponible</p>
-            <p className="text-4xl font-bold">{formatPrice(totalAvailable)}</p>
+            <p className="text-sm text-gray-600 font-medium">Crédito Total Disponible</p>
+            <p className="text-5xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
+              {formatPrice(totalAvailable)}
+            </p>
           </div>
         </div>
-        <p className="text-sm opacity-90 mt-2">
+        <p className="text-sm text-gray-600 mt-4 flex items-center gap-2">
+          <span className="bg-gradient-to-br from-purple-100 to-indigo-100 p-1.5 rounded-lg">💡</span>
           Puedes usar tu crédito en tu próxima orden
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-white rounded-xl shadow-lg border-2 border-purple-200 p-6 transition-all hover:shadow-xl hover:-translate-y-1">
           <div className="flex items-center gap-3">
-            <div className="bg-blue-100 p-3 rounded-lg">
-              <DollarSign className="h-6 w-6 text-blue-600" />
+            <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 rounded-xl shadow-md">
+              <DollarSign className="h-6 w-6 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{creditNotes.length}</p>
+              <p className="text-2xl font-bold text-purple-600">{creditNotes.length}</p>
               <p className="text-sm text-gray-600">Total de Créditos</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-white rounded-xl shadow-lg border-2 border-emerald-200 p-6 transition-all hover:shadow-xl hover:-translate-y-1">
           <div className="flex items-center gap-3">
-            <div className="bg-green-100 p-3 rounded-lg">
-              <CheckCircle className="h-6 w-6 text-green-600" />
+            <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-3 rounded-xl shadow-md">
+              <CheckCircle className="h-6 w-6 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-emerald-600">
                 {creditNotes.filter(cn => cn.isActive && cn.balance > 0).length}
               </p>
               <p className="text-sm text-gray-600">Activos</p>
@@ -110,13 +117,13 @@ export default function CreditNotesViewer() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg border p-4">
+        <div className="bg-white rounded-xl shadow-lg border-2 border-amber-200 p-6 transition-all hover:shadow-xl hover:-translate-y-1">
           <div className="flex items-center gap-3">
-            <div className="bg-orange-100 p-3 rounded-lg">
-              <DollarSign className="h-6 w-6 text-orange-600" />
+            <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-3 rounded-xl shadow-md">
+              <DollarSign className="h-6 w-6 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-2xl font-bold text-amber-600">
                 {formatPrice(creditNotes.reduce((sum, cn) => sum + cn.usedAmount, 0))}
               </p>
               <p className="text-sm text-gray-600">Total Usado</p>
@@ -127,9 +134,11 @@ export default function CreditNotesViewer() {
 
       {/* Lista de Créditos */}
       {creditNotes.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-          <DollarSign className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <div className="bg-white rounded-xl shadow-lg border-2 border-purple-200 p-12 text-center">
+          <div className="bg-gradient-to-br from-purple-100 to-indigo-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <DollarSign className="h-10 w-10 text-purple-600" />
+          </div>
+          <h3 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
             No tienes créditos disponibles
           </h3>
           <p className="text-gray-600">
@@ -145,38 +154,38 @@ export default function CreditNotesViewer() {
             return (
               <div
                 key={note.id}
-                className={`bg-white rounded-lg shadow-sm border p-4 transition-all ${
+                className={`bg-white rounded-xl shadow-lg border-2 p-6 transition-all ${
                   hasBalance && !isExpired
-                    ? 'border-green-200 hover:border-green-300 hover:shadow-md'
-                    : 'border-gray-200 opacity-75'
+                    ? 'border-emerald-200 hover:border-emerald-300 hover:shadow-xl hover:-translate-y-1'
+                    : 'border-gray-200 opacity-75 hover:shadow-xl'
                 }`}
               >
                 <div className="flex items-start gap-4">
-                  <div className={`p-3 rounded-lg ${
-                    hasBalance && !isExpired ? 'bg-green-100' : 'bg-gray-100'
+                  <div className={`p-3 rounded-xl shadow-md ${
+                    hasBalance && !isExpired 
+                      ? 'bg-gradient-to-br from-emerald-500 to-green-600' 
+                      : 'bg-gradient-to-br from-gray-400 to-gray-500'
                   }`}>
-                    <DollarSign className={`h-6 w-6 ${
-                      hasBalance && !isExpired ? 'text-green-600' : 'text-gray-400'
-                    }`} />
+                    <DollarSign className="h-6 w-6 text-white" />
                   </div>
 
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-gray-900">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-semibold text-purple-600 text-lg">
                         {note.creditNoteNumber}
                       </h3>
                       {hasBalance && !isExpired && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-800">
+                        <span className="text-xs px-3 py-1 rounded-full bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 text-emerald-700 font-semibold">
                           Disponible
                         </span>
                       )}
                       {isExpired && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-800">
+                        <span className="text-xs px-3 py-1 rounded-full bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 text-red-700 font-semibold">
                           Expirado
                         </span>
                       )}
                       {!hasBalance && !isExpired && (
-                        <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-800">
+                        <span className="text-xs px-3 py-1 rounded-full bg-gradient-to-br from-gray-50 to-slate-50 border-2 border-gray-200 text-gray-700 font-semibold">
                           Usado completamente
                         </span>
                       )}
@@ -201,13 +210,13 @@ export default function CreditNotesViewer() {
 
                     {/* Historial de uso */}
                     {note.usage && note.usage.length > 0 && (
-                      <div className="mt-3 pt-3 border-t">
-                        <p className="text-xs font-semibold text-gray-700 mb-2">
+                      <div className="mt-4 pt-4 border-t-2 border-purple-100">
+                        <p className="text-xs font-semibold text-purple-600 mb-2">
                           Historial de uso:
                         </p>
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                           {note.usage.map((use: any) => (
-                            <div key={use.id} className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                            <div key={use.id} className="text-xs text-gray-600 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 p-2 rounded-lg">
                               📦 {use.order?.orderNumber || 'N/A'} - {formatPrice(Number(use.amountUsed))} - {new Date(use.usedAt).toLocaleDateString('es-ES')}
                             </div>
                           ))}
@@ -217,7 +226,7 @@ export default function CreditNotesViewer() {
                   </div>
 
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-green-600">
+                    <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
                       {formatPrice(note.balance)}
                     </p>
                     <p className="text-xs text-gray-500">Disponible</p>
@@ -226,7 +235,7 @@ export default function CreditNotesViewer() {
                       <Button
                         onClick={() => setSelectedNote(note)}
                         size="sm"
-                        className="mt-2 bg-green-600 hover:bg-green-700 text-xs"
+                        className="mt-3 bg-gradient-to-br from-emerald-600 to-green-600 hover:shadow-lg transition-all text-white border-0 text-xs font-semibold"
                       >
                         Usar Crédito
                       </Button>
@@ -240,12 +249,17 @@ export default function CreditNotesViewer() {
       )}
 
       {/* Info adicional */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-blue-800">
-            <p className="font-semibold mb-1">💡 ¿Cómo usar tus créditos?</p>
-            <ul className="list-disc list-inside space-y-1 text-blue-700">
+      <div className="bg-white rounded-xl shadow-lg border-2 border-cyan-200 p-6">
+        <div className="flex items-start gap-4">
+          <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-2 rounded-xl shadow-md flex-shrink-0">
+            <AlertCircle className="h-6 w-6 text-white" />
+          </div>
+          <div className="text-sm text-gray-700">
+            <p className="font-semibold text-purple-600 mb-2 flex items-center gap-2">
+              <span className="text-lg">💡</span>
+              ¿Cómo usar tus créditos?
+            </p>
+            <ul className="list-disc list-inside space-y-1.5 text-gray-600">
               <li>Los créditos se aplican automáticamente al hacer una nueva orden</li>
               <li>Puedes usar múltiples créditos en una sola orden</li>
               <li>Los créditos expiran después de 1 año</li>
@@ -258,22 +272,37 @@ export default function CreditNotesViewer() {
       {/* Modal usar crédito */}
       {selectedNote && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full">
-            <h3 className="text-lg font-semibold mb-4">💳 Usar Crédito</h3>
-            <p className="text-gray-600 mb-4">
-              Tienes <span className="font-bold text-green-600">{formatPrice(selectedNote.balance)}</span> disponible.
+          <div className="bg-white rounded-xl shadow-2xl border-2 border-purple-200 p-8 max-w-md w-full">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 rounded-xl shadow-md">
+                <span className="text-2xl">💳</span>
+              </div>
+              <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                Usar Crédito
+              </h3>
+            </div>
+            
+            <p className="text-gray-600 mb-6">
+              Tienes <span className="font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent text-xl">{formatPrice(selectedNote.balance)}</span> disponible.
               Ve al carrito para aplicar este crédito a tu próxima compra.
             </p>
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-              <p className="text-sm text-blue-800">
-                💡 El crédito se aplicará automáticamente al confirmar tu pedido desde el carrito.
-              </p>
+            
+            <div className="bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 rounded-xl p-4 mb-6">
+              <div className="flex items-start gap-3">
+                <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-1.5 rounded-lg flex-shrink-0">
+                  <span className="text-sm">💡</span>
+                </div>
+                <p className="text-sm text-cyan-800">
+                  El crédito se aplicará automáticamente al confirmar tu pedido desde el carrito.
+                </p>
+              </div>
             </div>
-            <div className="flex gap-2">
+            
+            <div className="flex gap-3">
               <Button
                 onClick={() => setSelectedNote(null)}
                 variant="outline"
-                className="flex-1"
+                className="flex-1 border-2 border-purple-200 hover:border-purple-300 hover:bg-purple-50 transition-all"
               >
                 Cerrar
               </Button>
@@ -297,7 +326,7 @@ export default function CreditNotesViewer() {
                     alert('Error al verificar el carrito. Por favor intenta de nuevo.')
                   }
                 }}
-                className="flex-1 bg-green-600 hover:bg-green-700"
+                className="flex-1 bg-gradient-to-br from-emerald-600 to-green-600 hover:shadow-lg transition-all text-white border-0"
               >
                 Ir al Carrito
               </Button>

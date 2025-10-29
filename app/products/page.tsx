@@ -589,52 +589,60 @@ export default function ProductsPage() {
 
         {/* Tarjetas de Estadísticas de Stock */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 border-l-4 border-blue-500">
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-3 sm:p-4 border-l-4 border-purple-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm text-gray-600">Total Productos</p>
+                <p className="text-xs sm:text-sm text-gray-600 font-semibold uppercase tracking-wide">Total Productos</p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.total}</p>
               </div>
-              <Package className="h-8 w-8 sm:h-10 sm:w-10 text-blue-500 opacity-80" />
+              <div className="bg-gradient-to-br from-purple-500 to-purple-700 p-2 rounded-xl shadow-md">
+                <Package className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 border-l-4 border-green-500">
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-3 sm:p-4 border-l-4 border-emerald-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm text-gray-600">Stock Normal</p>
+                <p className="text-xs sm:text-sm text-gray-600 font-semibold uppercase tracking-wide">Stock Normal</p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.normalStock}</p>
-                <p className="text-xs text-green-600 hidden sm:block">
+                <p className="text-xs text-emerald-600 font-semibold hidden sm:block px-2 py-0.5 bg-emerald-100 rounded-full inline-block mt-1">
                   {stats.normalStockPercentage.toFixed(0)}% del total
                 </p>
               </div>
-              <CheckCircle className="h-8 w-8 sm:h-10 sm:w-10 text-green-500 opacity-80" />
+              <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-xl shadow-md">
+                <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 border-l-4 border-yellow-500">
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-3 sm:p-4 border-l-4 border-amber-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm text-gray-600">Stock Bajo</p>
+                <p className="text-xs sm:text-sm text-gray-600 font-semibold uppercase tracking-wide">Stock Bajo</p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.lowStock}</p>
-                <p className="text-xs text-yellow-600 hidden sm:block">
+                <p className="text-xs text-amber-600 font-semibold hidden sm:block px-2 py-0.5 bg-amber-100 rounded-full inline-block mt-1">
                   {stats.lowStockPercentage.toFixed(0)}% del total
                 </p>
               </div>
-              <AlertCircle className="h-8 w-8 sm:h-10 sm:w-10 text-yellow-500 opacity-80" />
+              <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2 rounded-xl shadow-md">
+                <AlertCircle className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4 border-l-4 border-red-500">
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-3 sm:p-4 border-l-4 border-rose-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm text-gray-600">Agotados</p>
+                <p className="text-xs sm:text-sm text-gray-600 font-semibold uppercase tracking-wide">Agotados</p>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.outOfStock}</p>
-                <p className="text-xs text-red-600 hidden sm:block">
+                <p className="text-xs text-rose-600 font-semibold hidden sm:block px-2 py-0.5 bg-rose-100 rounded-full inline-block mt-1">
                   {stats.outOfStockPercentage.toFixed(0)}% del total
                 </p>
               </div>
-              <TrendingDown className="h-8 w-8 sm:h-10 sm:w-10 text-red-500 opacity-80" />
+              <div className="bg-gradient-to-br from-rose-500 to-red-600 p-2 rounded-xl shadow-md">
+                <TrendingDown className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
+              </div>
             </div>
           </div>
         </div>

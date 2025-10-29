@@ -31,6 +31,8 @@ import {
   Star,
   ChevronLeft,
   ChevronRight,
+  TrendingUp,
+  BarChart3,
 } from 'lucide-react'
 import OrderCountdown from '@/components/buyer/OrderCountdown'
 import { OrderCardSkeleton } from '@/components/skeletons'
@@ -587,14 +589,16 @@ export default function OrdersPage() {
   // ✅ ESTADO DE LOADING
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6">
         <div className="max-w-6xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-              <ShoppingBag className="text-purple-600" size={32} />
+          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 mb-6 border-2 border-purple-200">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-3">
+              <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-xl shadow-md">
+                <ShoppingBag className="text-white" size={32} />
+              </div>
               Mis Órdenes
             </h1>
-            <p className="text-gray-600 mt-1">Cargando órdenes...</p>
+            <p className="text-gray-600 mt-1 ml-14">Cargando órdenes...</p>
           </div>
           <div className="space-y-4">
             <OrderCardSkeleton />
@@ -610,11 +614,13 @@ export default function OrdersPage() {
   // ✅ ESTADO DE TIMEOUT
   if (timedOut) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6 flex items-center justify-center">
-        <div className="max-w-md bg-white rounded-2xl shadow-lg p-8 border border-yellow-200">
-          <div className="flex items-center gap-3 mb-4">
-            <Clock className="h-8 w-8 text-yellow-600" />
-            <h2 className="text-xl font-bold text-yellow-900">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6 flex items-center justify-center">
+        <div className="max-w-md bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-8 border-2 border-amber-200">
+          <div className="bg-gradient-to-br from-amber-100 to-yellow-100 p-4 rounded-xl mb-4 flex items-center gap-3">
+            <div className="bg-gradient-to-br from-amber-500 to-yellow-600 p-2 rounded-xl shadow-md">
+              <Clock className="h-6 w-6 text-white" />
+            </div>
+            <h2 className="text-xl font-bold bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent">
               Tiempo de espera excedido
             </h2>
           </div>
@@ -623,7 +629,7 @@ export default function OrdersPage() {
           </p>
           <button
             onClick={fetchOrders}
-            className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
+            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold"
           >
             Reintentar
           </button>
@@ -635,16 +641,18 @@ export default function OrdersPage() {
   // ✅ ESTADO DE ERROR
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6 flex items-center justify-center">
-        <div className="max-w-md bg-white rounded-2xl shadow-lg p-8 border border-red-200">
-          <div className="flex items-center gap-3 mb-4">
-            <AlertCircle className="h-8 w-8 text-red-600" />
-            <h2 className="text-xl font-bold text-red-900">Error</h2>
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6 flex items-center justify-center">
+        <div className="max-w-md bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-8 border-2 border-red-200">
+          <div className="bg-gradient-to-br from-red-100 to-rose-100 p-4 rounded-xl mb-4 flex items-center gap-3">
+            <div className="bg-gradient-to-br from-red-500 to-rose-600 p-2 rounded-xl shadow-md">
+              <AlertCircle className="h-6 w-6 text-white" />
+            </div>
+            <h2 className="text-xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">Error</h2>
           </div>
           <p className="text-gray-700 mb-6">{error}</p>
           <button
             onClick={fetchOrders}
-            className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
+            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold"
           >
             Reintentar
           </button>
@@ -722,29 +730,31 @@ export default function OrdersPage() {
     <>
       {/* Toast Notification */}
       {showToast && (
-        <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 animate-slide-in">
+        <div className="fixed top-4 right-4 bg-gradient-to-r from-emerald-500 to-green-600 text-white px-6 py-4 rounded-lg shadow-xl border-2 border-emerald-300 z-50 animate-slide-in">
           <p className="font-medium">{toastMessage}</p>
-          <p className="text-sm">Estado: {toastStatus}</p>
+          <p className="text-sm opacity-90">Estado: {toastStatus}</p>
         </div>
       )}
 
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-rose-50 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-purple-100">
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 mb-6 border-2 border-purple-200">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                <ShoppingBag className="text-purple-600" size={32} />
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-3">
+                <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-xl shadow-md">
+                  <ShoppingBag className="text-white" size={32} />
+                </div>
                 Mis Órdenes
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-gray-600 mt-1 ml-14">
                 {orders.length} {orders.length === 1 ? 'orden' : 'órdenes'}
               </p>
             </div>
             <button
               onClick={() => router.push('/buyer/catalog')}
-              className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold"
             >
               Nueva orden
             </button>
@@ -755,23 +765,35 @@ export default function OrdersPage() {
         {orders.length > 0 && (() => {
           const stats = getMonthlyStats()
           return (
-            <div className="bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl shadow-lg p-6 mb-6 border border-purple-200">
-              <h3 className="font-bold text-lg mb-4 text-gray-800">Resumen del mes</h3>
+            <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 mb-6 border-2 border-purple-200">
+              <h3 className="font-bold text-lg mb-4 bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Resumen del mes</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
-                <div className="bg-white/50 rounded-lg p-4">
+                <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-4 border-2 border-purple-200 hover:border-purple-300 hover:shadow-lg transition-all">
+                  <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-xl shadow-md w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                    <ShoppingBag className="text-white" size={24} />
+                  </div>
                   <p className="text-2xl font-bold text-purple-600">{stats.totalOrders}</p>
                   <p className="text-sm text-gray-600 mt-1">Órdenes</p>
                 </div>
-                <div className="bg-white/50 rounded-lg p-4">
-                  <p className="text-xl font-bold text-green-600">{formatPrice(stats.totalSpent)}</p>
+                <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg p-4 border-2 border-emerald-200 hover:border-emerald-300 hover:shadow-lg transition-all">
+                  <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-xl shadow-md w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                    <TrendingUp className="text-white" size={24} />
+                  </div>
+                  <p className="text-xl font-bold text-emerald-600">{formatPrice(stats.totalSpent)}</p>
                   <p className="text-sm text-gray-600 mt-1">Gastado</p>
                 </div>
-                <div className="bg-white/50 rounded-lg p-4">
-                  <p className="text-xl font-bold text-blue-600">{formatPrice(stats.estimatedSavings)}</p>
+                <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg p-4 border-2 border-cyan-200 hover:border-cyan-300 hover:shadow-lg transition-all">
+                  <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-2 rounded-xl shadow-md w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                    <DollarSign className="text-white" size={24} />
+                  </div>
+                  <p className="text-xl font-bold text-cyan-600">{formatPrice(stats.estimatedSavings)}</p>
                   <p className="text-sm text-gray-600 mt-1">Ahorrado</p>
                 </div>
-                <div className="bg-white/50 rounded-lg p-4">
-                  <p className="text-xl font-bold text-orange-600">{formatPrice(stats.averageOrder)}</p>
+                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-4 border-2 border-amber-200 hover:border-amber-300 hover:shadow-lg transition-all">
+                  <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2 rounded-xl shadow-md w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                    <BarChart3 className="text-white" size={24} />
+                  </div>
+                  <p className="text-xl font-bold text-amber-600">{formatPrice(stats.averageOrder)}</p>
                   <p className="text-sm text-gray-600 mt-1">Promedio</p>
                 </div>
               </div>
@@ -780,18 +802,18 @@ export default function OrdersPage() {
         })()}
 
         {/* Buscador y Filtros */}
-        <div className="bg-white rounded-2xl shadow-lg p-4 mb-6 border border-purple-100">
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-4 mb-6 border-2 border-purple-200">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-700">Filtros de búsqueda</h3>
+            <h3 className="font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Filtros de búsqueda</h3>
             {/* Toggle Vista Grid/List */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600 mr-2">Vista:</span>
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-colors ${
+                className={`p-2 rounded-lg transition-all ${
                   viewMode === 'grid' 
-                    ? 'bg-purple-600 text-white' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md' 
+                    : 'border-2 border-purple-200 text-gray-600 hover:border-purple-400 hover:bg-purple-50'
                 }`}
                 title="Vista en cuadrícula"
               >
@@ -799,10 +821,10 @@ export default function OrdersPage() {
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-colors ${
+                className={`p-2 rounded-lg transition-all ${
                   viewMode === 'list' 
-                    ? 'bg-purple-600 text-white' 
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md' 
+                    : 'border-2 border-purple-200 text-gray-600 hover:border-purple-400 hover:bg-purple-50'
                 }`}
                 title="Vista en lista"
               >
@@ -814,13 +836,13 @@ export default function OrdersPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Búsqueda */}
             <div className="relative">
-              <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-3 top-3 w-5 h-5 text-purple-400" />
               <input
                 type="text"
                 placeholder="Buscar por número de orden..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
+                className="w-full pl-10 pr-4 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none transition-all"
               />
             </div>
             
@@ -830,14 +852,14 @@ export default function OrdersPage() {
                 type="date" 
                 value={dateFrom}
                 onChange={(e) => setDateFrom(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none" 
+                className="flex-1 px-3 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none transition-all" 
                 placeholder="Desde"
               />
               <input 
                 type="date" 
                 value={dateTo}
                 onChange={(e) => setDateTo(e.target.value)}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none" 
+                className="flex-1 px-3 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none transition-all" 
                 placeholder="Hasta"
               />
             </div>
@@ -846,7 +868,7 @@ export default function OrdersPage() {
             <select 
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none bg-white"
+              className="px-4 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none bg-white transition-all"
             >
               <option value="newest">Más recientes</option>
               <option value="oldest">Más antiguos</option>
@@ -858,7 +880,7 @@ export default function OrdersPage() {
             <select 
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value as any)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none bg-white"
+              className="px-4 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none bg-white transition-all"
             >
               <option value="7days">Últimos 7 días</option>
               <option value="30days">Últimos 30 días</option>
@@ -869,9 +891,9 @@ export default function OrdersPage() {
 
           {/* Indicador de resultados filtrados */}
           {(searchQuery || dateFrom || dateTo || filterStatus !== 'ALL') && (
-            <div className="mt-4 pt-4 border-t border-gray-200 flex items-center justify-between">
+            <div className="mt-4 pt-4 border-t border-purple-100 flex items-center justify-between">
               <p className="text-sm text-gray-600">
-                Mostrando <strong>{filteredAndSortedOrders.length}</strong> de <strong>{orders.length}</strong> órdenes
+                Mostrando <strong className="text-purple-600">{filteredAndSortedOrders.length}</strong> de <strong className="text-purple-600">{orders.length}</strong> órdenes
               </p>
               <button
                 onClick={() => {
@@ -881,7 +903,7 @@ export default function OrdersPage() {
                   setFilterStatus('ALL')
                   setSortBy('newest')
                 }}
-                className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1 px-3 py-1 rounded-lg hover:bg-purple-50 transition-all"
               >
                 Limpiar filtros
               </button>
@@ -894,50 +916,50 @@ export default function OrdersPage() {
           <div className="flex gap-2 overflow-x-auto pb-2">
             <button
               onClick={() => setFilterStatus('ALL')}
-              className={`px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
+              className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
                 filterStatus === 'ALL'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
+                  : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
               }`}
             >
               Todas ({orders.length})
             </button>
             <button
               onClick={() => setFilterStatus('PENDING')}
-              className={`px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
+              className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
                 filterStatus === 'PENDING'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
+                  : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
               }`}
             >
               Pendientes ({orders.filter(o => o.status === 'PENDING').length})
             </button>
             <button
               onClick={() => setFilterStatus('CONFIRMED')}
-              className={`px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
+              className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
                 filterStatus === 'CONFIRMED'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
+                  : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
               }`}
             >
               Confirmadas ({orders.filter(o => o.status === 'CONFIRMED').length})
             </button>
             <button
               onClick={() => setFilterStatus('DELIVERED')}
-              className={`px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
+              className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
                 filterStatus === 'DELIVERED'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
+                  : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
               }`}
             >
               Recibidas ({orders.filter(o => o.status === 'DELIVERED' || o.status === 'COMPLETED').length})
             </button>
             <button
               onClick={() => setFilterStatus('CANCELED')}
-              className={`px-6 py-3 rounded-lg font-medium transition-colors whitespace-nowrap ${
+              className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
                 filterStatus === 'CANCELED'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
+                  : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
               }`}
             >
               Canceladas ({orders.filter(o => o.status === 'CANCELED' || o.status === 'CANCELLED').length})
@@ -947,16 +969,18 @@ export default function OrdersPage() {
 
         {/* Lista de órdenes */}
         {orders.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl shadow-lg border border-purple-100">
-            <ShoppingBag className="w-24 h-24 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-2xl font-bold text-gray-700 mb-2">
+          <div className="text-center py-16 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all border-2 border-purple-200">
+            <div className="bg-gradient-to-br from-purple-100 to-indigo-100 p-6 rounded-full w-32 h-32 mx-auto mb-6 flex items-center justify-center">
+              <ShoppingBag className="w-16 h-16 text-purple-400" />
+            </div>
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
               No tienes órdenes aún
             </h3>
             <p className="text-gray-500 mb-6">
               Explora el catálogo y realiza tu primera compra
             </p>
             <Link href="/buyer/catalog">
-              <button className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold inline-flex items-center gap-2">
+              <button className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold inline-flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5" />
                 Ir al Catálogo
               </button>
@@ -977,7 +1001,7 @@ export default function OrdersPage() {
                 // Vista GRID (Card)
                 <div
                   key={order.id}
-                  className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 border-l-4 border-purple-500 relative"
+                  className="bg-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all p-6 border-2 border-purple-200 hover:border-purple-300 relative"
                   style={needsAttention ? {
                     animation: 'orderPulse 3s ease-in-out infinite',
                   } : {}}
@@ -989,7 +1013,7 @@ export default function OrdersPage() {
                         animation: 'stickerBounce 0.8s ease-out',
                       }}
                     >
-                      <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white px-4 py-2 rounded-bl-2xl shadow-lg flex items-center gap-2">
+                      <div className="bg-gradient-to-br from-emerald-500 to-green-600 text-white px-4 py-2 rounded-bl-2xl shadow-lg flex items-center gap-2">
                         <CheckCircle className="h-5 w-5" />
                         <span className="font-bold text-sm">✅ Recibida</span>
                       </div>
@@ -998,7 +1022,7 @@ export default function OrdersPage() {
                   {/* Header */}
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="font-bold text-lg text-gray-900">
+                      <h3 className="font-bold text-lg text-purple-600">
                         {order.orderNumber || `#${order.id.slice(0, 8)}`}
                       </h3>
                       <p className="text-sm text-gray-500">
@@ -1012,7 +1036,7 @@ export default function OrdersPage() {
                     <div className="relative">
                       {needsAttention && (
                         <div 
-                          className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"
+                          className="absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full"
                           style={{
                             animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite',
                           }}
@@ -1141,7 +1165,7 @@ export default function OrdersPage() {
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
-                          className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500"
+                          className="bg-gradient-to-r from-purple-600 to-indigo-600 h-2 rounded-full transition-all duration-500"
                           style={{ width: `${getProgressPercentage(order.status)}%` }}
                         />
                       </div>
@@ -1149,7 +1173,7 @@ export default function OrdersPage() {
                   )}
                   
                   {/* Total */}
-                  <div className="mb-4 pt-4 border-t">
+                  <div className="mb-4 pt-4 border-t border-purple-100">
                     <span className="text-xl font-bold text-purple-600">
                       {formatPrice(order.totalAmount)}
                     </span>
@@ -1161,7 +1185,7 @@ export default function OrdersPage() {
                     {(order.status === 'PENDING' || order.status === 'CONFIRMED') && (
                       <button 
                         onClick={(e) => handleQuickCancel(order.id, e)}
-                        className="flex-1 bg-red-100 text-red-600 py-2 rounded-lg hover:bg-red-200 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                        className="flex-1 bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 text-red-600 py-2 rounded-lg hover:border-red-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
                       >
                         <XCircle className="w-4 h-4" />
                         Cancelar
@@ -1171,7 +1195,7 @@ export default function OrdersPage() {
                     {(order.status === 'CONFIRMED' || order.status === 'PREPARING' || order.status === 'IN_DELIVERY') && (
                       <button 
                         onClick={(e) => handleQuickTrack(order, e)}
-                        className="flex-1 bg-blue-100 text-blue-600 py-2 rounded-lg hover:bg-blue-200 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                        className="flex-1 bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 text-cyan-600 py-2 rounded-lg hover:border-cyan-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
                       >
                         <MapPin className="w-4 h-4" />
                         Rastrear
@@ -1182,14 +1206,14 @@ export default function OrdersPage() {
                       <>
                         <button 
                           onClick={(e) => handleQuickReorder(order, e)}
-                          className="flex-1 bg-green-100 text-green-600 py-2 rounded-lg hover:bg-green-200 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                          className="flex-1 bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 text-emerald-600 py-2 rounded-lg hover:border-emerald-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
                         >
                           <RotateCcw className="w-4 h-4" />
                           Reordenar
                         </button>
                         <button 
                           onClick={(e) => handleQuickInvoice(order, e)}
-                          className="flex-1 bg-purple-100 text-purple-600 py-2 rounded-lg hover:bg-purple-200 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                          className="flex-1 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 text-purple-600 py-2 rounded-lg hover:border-purple-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
                         >
                           <FileText className="w-4 h-4" />
                           Factura
@@ -1199,17 +1223,17 @@ export default function OrdersPage() {
 
                     <button 
                       onClick={() => openOrderModal(order)}
-                      className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                      className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-medium text-sm"
                     >
                       Detalles
                     </button>
                   </div>
 
                   {/* Botón contactar vendedor */}
-                  <div className="mt-4 pt-4 border-t border-gray-100">
+                  <div className="mt-4 pt-4 border-t border-purple-100">
                     <button 
                       onClick={(e) => handleContactSeller(order, e)}
-                      className="w-full flex items-center justify-center gap-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 py-2 rounded-lg transition-colors font-medium text-sm"
+                      className="w-full flex items-center justify-center gap-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 py-2 rounded-lg border-2 border-purple-200 hover:border-purple-300 transition-all font-medium text-sm"
                     >
                       <MessageCircle className="w-4 h-4" />
                       Contactar vendedor
@@ -1220,7 +1244,7 @@ export default function OrdersPage() {
                 // Vista LIST (Fila)
                 <div
                   key={order.id}
-                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all p-4 border-l-4 border-purple-500 relative"
+                  className="bg-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all p-4 border-2 border-purple-200 hover:border-purple-300 relative"
                   style={needsAttention ? {
                     animation: 'orderPulse 3s ease-in-out infinite',
                   } : {}}
@@ -1233,7 +1257,7 @@ export default function OrdersPage() {
                         animation: 'stickerBounce 0.8s ease-out',
                       }}
                     >
-                      <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white px-3 py-1 rounded-bl-xl shadow-lg flex items-center gap-1">
+                      <div className="bg-gradient-to-br from-emerald-500 to-green-600 text-white px-3 py-1 rounded-bl-xl shadow-lg flex items-center gap-1">
                         <CheckCircle className="h-4 w-4" />
                         <span className="font-bold text-xs">✅ Recibida</span>
                       </div>
@@ -1327,7 +1351,7 @@ export default function OrdersPage() {
                       </div>
                       
                       <div className="flex-1">
-                        <h3 className="font-bold text-gray-900">
+                        <h3 className="font-bold text-purple-600">
                           {order.orderNumber || `#${order.id.slice(0, 8)}`}
                         </h3>
                         <p className="text-sm text-gray-500">
@@ -1343,7 +1367,7 @@ export default function OrdersPage() {
                           <div className="mt-2 max-w-xs">
                             <div className="w-full bg-gray-200 rounded-full h-1.5">
                               <div
-                                className="bg-gradient-to-r from-purple-500 to-pink-500 h-1.5 rounded-full transition-all duration-500"
+                                className="bg-gradient-to-r from-purple-600 to-indigo-600 h-1.5 rounded-full transition-all duration-500"
                                 style={{ width: `${getProgressPercentage(order.status)}%` }}
                               />
                             </div>
@@ -1360,7 +1384,7 @@ export default function OrdersPage() {
                       <div className="relative inline-block mb-2">
                         {needsAttention && (
                           <div 
-                            className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full"
+                            className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full"
                             style={{
                               animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite',
                             }}
@@ -1386,7 +1410,7 @@ export default function OrdersPage() {
                       {(order.status === 'PENDING' || order.status === 'CONFIRMED') && (
                         <button 
                           onClick={(e) => handleQuickCancel(order.id, e)}
-                          className="bg-red-100 text-red-600 p-2 rounded-lg hover:bg-red-200 transition-colors"
+                          className="bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 text-red-600 p-2 rounded-lg hover:border-red-300 hover:shadow-lg transition-all"
                           title="Cancelar orden"
                         >
                           <XCircle className="w-5 h-5" />
@@ -1396,7 +1420,7 @@ export default function OrdersPage() {
                       {(order.status === 'CONFIRMED' || order.status === 'PREPARING' || order.status === 'IN_DELIVERY') && (
                         <button 
                           onClick={(e) => handleQuickTrack(order, e)}
-                          className="bg-blue-100 text-blue-600 p-2 rounded-lg hover:bg-blue-200 transition-colors"
+                          className="bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 text-cyan-600 p-2 rounded-lg hover:border-cyan-300 hover:shadow-lg transition-all"
                           title="Rastrear orden"
                         >
                           <MapPin className="w-5 h-5" />
@@ -1407,14 +1431,14 @@ export default function OrdersPage() {
                         <>
                           <button 
                             onClick={(e) => handleQuickReorder(order, e)}
-                            className="bg-green-100 text-green-600 p-2 rounded-lg hover:bg-green-200 transition-colors"
+                            className="bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 text-emerald-600 p-2 rounded-lg hover:border-emerald-300 hover:shadow-lg transition-all"
                             title="Reordenar"
                           >
                             <RotateCcw className="w-5 h-5" />
                           </button>
                           <button 
                             onClick={(e) => handleQuickInvoice(order, e)}
-                            className="bg-purple-100 text-purple-600 p-2 rounded-lg hover:bg-purple-200 transition-colors"
+                            className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 text-purple-600 p-2 rounded-lg hover:border-purple-300 hover:shadow-lg transition-all"
                             title="Ver factura"
                           >
                             <FileText className="w-5 h-5" />
@@ -1424,14 +1448,14 @@ export default function OrdersPage() {
 
                       <button 
                         onClick={() => openOrderModal(order)}
-                        className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+                        className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-medium text-sm"
                       >
                         Detalles
                       </button>
 
                       <button 
                         onClick={(e) => handleContactSeller(order, e)}
-                        className="bg-purple-50 text-purple-600 p-2 rounded-lg hover:bg-purple-100 transition-colors"
+                        className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 text-purple-600 p-2 rounded-lg hover:border-purple-300 hover:shadow-lg transition-all"
                         title="Contactar vendedor"
                       >
                         <MessageCircle className="w-5 h-5" />
@@ -1467,11 +1491,11 @@ export default function OrdersPage() {
 
           {/* Controles de paginación */}
           {filteredAndSortedOrders.length > ordersPerPage && (
-            <div className="mt-8 bg-white rounded-2xl shadow-lg p-4 md:p-6 border border-purple-100">
+            <div className="mt-8 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-4 md:p-6 border-2 border-purple-200">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 {/* Info de página */}
                 <div className="text-sm text-gray-600 text-center md:text-left">
-                  Mostrando <strong>{startIndex + 1}</strong> - <strong>{Math.min(endIndex, filteredAndSortedOrders.length)}</strong> de <strong>{filteredAndSortedOrders.length}</strong> órdenes
+                  Mostrando <strong className="text-purple-600">{startIndex + 1}</strong> - <strong className="text-purple-600">{Math.min(endIndex, filteredAndSortedOrders.length)}</strong> de <strong className="text-purple-600">{filteredAndSortedOrders.length}</strong> órdenes
                 </div>
 
                 {/* Botones de navegación */}
@@ -1479,10 +1503,10 @@ export default function OrdersPage() {
                   <button
                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className={`px-3 md:px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1 md:gap-2 text-sm md:text-base ${
+                    className={`px-3 md:px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-1 md:gap-2 text-sm md:text-base ${
                       currentPage === 1
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
+                        : 'border-2 border-purple-200 text-purple-600 hover:border-purple-400 hover:bg-purple-50'
                     }`}
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -1495,10 +1519,10 @@ export default function OrdersPage() {
                       <button
                         key={page}
                         onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 md:w-10 md:h-10 rounded-lg font-medium transition-colors flex-shrink-0 text-sm md:text-base ${
+                        className={`w-8 h-8 md:w-10 md:h-10 rounded-lg font-medium transition-all flex-shrink-0 text-sm md:text-base ${
                           currentPage === page
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+                            : 'border-2 border-purple-200 text-gray-600 hover:border-purple-400 hover:bg-purple-50'
                         }`}
                       >
                         {page}
@@ -1509,10 +1533,10 @@ export default function OrdersPage() {
                   <button
                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className={`px-3 md:px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-1 md:gap-2 text-sm md:text-base ${
+                    className={`px-3 md:px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-1 md:gap-2 text-sm md:text-base ${
                       currentPage === totalPages
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
+                        : 'border-2 border-purple-200 text-purple-600 hover:border-purple-400 hover:bg-purple-50'
                     }`}
                   >
                     <span className="hidden sm:inline">Siguiente</span>

@@ -165,73 +165,57 @@ export default function StatsPage() {
         </div>
 
         {/* Cards de resumen */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="shadow-lg border-0">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Ingresos</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                   ${Number(totalRevenue).toFixed(2)}
-                  </p>
-                </div>
-                <div className="bg-green-100 p-3 rounded-lg">
-                  <DollarSign className="h-6 w-6 text-green-600" />
-                </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-emerald-500">
+            <div className="flex items-center justify-between mb-2">
+              <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-xl shadow-md">
+                <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Ingresos</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900">
+              ${Number(totalRevenue).toFixed(2)}
+            </p>
+          </div>
 
-          <Card className="shadow-lg border-0">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Órdenes</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {totalOrders}
-                  </p>
-                </div>
-                <div className="bg-blue-100 p-3 rounded-lg">
-                  <ShoppingCart className="h-6 w-6 text-blue-600" />
-                </div>
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-cyan-500">
+            <div className="flex items-center justify-between mb-2">
+              <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-2 rounded-xl shadow-md">
+                <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Órdenes</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900">
+              {totalOrders}
+            </p>
+          </div>
 
-          <Card className="shadow-lg border-0">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Promedio</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    ${averageOrderValue.toFixed(2)}
-                  </p>
-                </div>
-                <div className="bg-purple-100 p-3 rounded-lg">
-                  <TrendingUp className="h-6 w-6 text-purple-600" />
-                </div>
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-purple-500">
+            <div className="flex items-center justify-between mb-2">
+              <div className="bg-gradient-to-br from-purple-500 to-purple-700 p-2 rounded-xl shadow-md">
+                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Promedio</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900">
+              ${averageOrderValue.toFixed(2)}
+            </p>
+          </div>
 
-          <Card className="shadow-lg border-0">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 mb-1">Productos</p>
-                  <p className="text-3xl font-bold text-gray-900">
-                    {productStats.stats.totalProducts}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {productStats.stats.lowStockCount} con stock bajo
-                  </p>
-                </div>
-                <div className="bg-orange-100 p-3 rounded-lg">
-                  <Package className="h-6 w-6 text-orange-600" />
-                </div>
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-amber-500">
+            <div className="flex items-center justify-between mb-2">
+              <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2 rounded-xl shadow-md">
+                <Package className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Productos</p>
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900">
+              {productStats.stats.totalProducts}
+            </p>
+            <p className="text-xs text-amber-600 font-semibold mt-1 px-2 py-0.5 bg-amber-100 rounded-full inline-block">
+              {productStats.stats.lowStockCount} con stock bajo
+            </p>
+          </div>
         </div>
 
         {/* Gráfico de ventas */}

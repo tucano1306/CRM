@@ -385,23 +385,23 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
     : messages
 
   return (
-    <Card className="flex flex-col h-[600px] md:h-[700px] overflow-hidden">
+    <Card className="flex flex-col h-[600px] md:h-[700px] overflow-hidden rounded-xl shadow-xl border-2 border-purple-200">
       {/* Header estilo WhatsApp */}
-      <CardHeader className="border-b bg-gradient-to-r from-purple-600 to-blue-600 text-white p-2 md:p-3">
+      <CardHeader className="border-b-2 border-purple-300 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 md:p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
             {/* Avatar */}
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-sm md:text-base flex-shrink-0">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center font-bold text-base md:text-lg flex-shrink-0 border-2 border-white/30">
               {receiverName.charAt(0).toUpperCase()}
             </div>
             
             {/* Info */}
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold truncate text-sm md:text-base">{receiverName}</h3>
+              <h3 className="font-bold truncate text-base md:text-lg">{receiverName}</h3>
               {otherUserTyping ? (
-                <p className="text-xs text-white/80 italic">escribiendo...</p>
+                <p className="text-xs text-white/90 italic font-medium">escribiendo...</p>
               ) : (
-                <p className="text-xs text-white/70">
+                <p className="text-xs text-white/80">
                   {orderId ? 'Orden relacionada' : 'En línea'}
                 </p>
               )}
@@ -414,36 +414,36 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
               variant="ghost"
               size="sm"
               onClick={() => setShowSearch(!showSearch)}
-              className="text-white hover:bg-white/20 h-7 w-7 md:h-8 md:w-8 p-0"
+              className="text-white hover:bg-white/20 h-8 w-8 md:h-10 md:w-10 p-0 rounded-lg transition-all"
             >
-              <Search className="h-3 w-3 md:h-4 md:w-4" />
+              <Search className="h-4 w-4 md:h-5 md:w-5" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="text-white hover:bg-white/20 h-7 w-7 md:h-8 md:w-8 p-0 hidden sm:flex"
+              className="text-white hover:bg-white/20 h-8 w-8 md:h-10 md:w-10 p-0 rounded-lg transition-all hidden sm:flex"
             >
-              <MoreVertical className="h-4 w-4" />
+              <MoreVertical className="h-4 w-4 md:h-5 md:w-5" />
             </Button>
           </div>
         </div>
 
         {/* Barra de búsqueda */}
         {showSearch && (
-          <div className="mt-2">
+          <div className="mt-3">
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Buscar mensajes..."
-              className="bg-white/20 border-white/30 text-white placeholder:text-white/60 focus:bg-white/30 text-sm"
+              className="bg-white/20 border-2 border-white/30 text-white placeholder:text-white/70 focus:bg-white/30 text-sm rounded-lg"
             />
           </div>
         )}
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-0 bg-gray-50"
+      <CardContent className="flex-1 flex flex-col p-0 bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50"
         style={{
-          backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 0h100v100H0z\' fill=\'%23f3f4f6\'/%3E%3Cpath d=\'M20 20l10 10-10 10zm30 0l10 10-10 10zm30 0l10 10-10 10z\' fill=\'%23e5e7eb\' opacity=\'.1\'/%3E%3C/svg%3E")',
+          backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M0 0h100v100H0z\' fill=\'%23f8fafc\'/%3E%3Cpath d=\'M20 20l10 10-10 10zm30 0l10 10-10 10zm30 0l10 10-10 10z\' fill=\'%23c7d2fe\' opacity=\'.05\'/%3E%3C/svg%3E")',
           backgroundSize: '100px 100px'
         }}
       >
@@ -451,12 +451,16 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
         <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2">
           {loading && messages.length === 0 ? (
             <div className="flex justify-center items-center h-full">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+              <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 rounded-xl shadow-md">
+                <div className="animate-spin rounded-full h-8 w-8 border-4 border-white border-t-transparent" />
+              </div>
             </div>
           ) : filteredMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-gray-400">
-              <Search className="h-12 w-12 mb-2" />
-              <p>No se encontraron mensajes</p>
+              <div className="bg-gradient-to-br from-purple-100 to-indigo-100 p-4 rounded-full mb-3">
+                <Search className="h-12 w-12 text-purple-600" />
+              </div>
+              <p className="font-semibold text-gray-600">No se encontraron mensajes</p>
               <p className="text-sm">Intenta con otra búsqueda</p>
             </div>
           ) : (
@@ -578,8 +582,8 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
 
         {/* Error */}
         {error && (
-          <div className="mx-4 mb-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600 flex items-center gap-2">
+          <div className="mx-4 mb-2 p-3 bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 rounded-xl shadow-sm">
+            <p className="text-sm text-red-600 flex items-center gap-2 font-medium">
               <AlertCircle className="h-4 w-4" />
               {error}
             </p>
@@ -587,13 +591,13 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
         )}
 
         {/* Input */}
-        <form onSubmit={sendMessage} className="border-t bg-gray-50 p-2 md:p-4">
+        <form onSubmit={sendMessage} className="border-t-2 border-purple-200 bg-gradient-to-br from-white to-purple-50 p-3 md:p-4">
           {/* Indicador de subida de archivo */}
           {uploadingFile && (
-            <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mb-2 p-3 bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 rounded-xl shadow-sm">
               <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent" />
-                <p className="text-sm text-blue-700">Subiendo archivo...</p>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-cyan-600 border-t-transparent" />
+                <p className="text-sm text-cyan-700 font-medium">Subiendo archivo...</p>
               </div>
             </div>
           )}
@@ -603,24 +607,24 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
             <button
               type="button"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="p-1.5 md:p-2 text-gray-500 hover:text-gray-700 transition-colors mb-1 flex-shrink-0"
+              className="p-2 md:p-2.5 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-all mb-1 flex-shrink-0"
               title="Emoji"
               disabled={uploadingFile}
             >
-              <Smile className="h-4 w-4 md:h-5 md:w-5" />
+              <Smile className="h-5 w-5 md:h-6 md:w-6" />
             </button>
 
             {/* Emoji Picker Dropdown */}
             {showEmojiPicker && (
-              <div className="emoji-picker-container absolute bottom-full left-0 mb-2 bg-white rounded-lg shadow-xl border p-2 md:p-3 z-10 w-64 md:w-72">
-                <div className="flex items-center justify-between mb-2 pb-2 border-b">
-                  <h4 className="text-xs md:text-sm font-medium text-gray-700">Selecciona un emoji</h4>
+              <div className="emoji-picker-container absolute bottom-full left-0 mb-2 bg-white rounded-xl shadow-2xl border-2 border-purple-200 p-3 md:p-4 z-10 w-64 md:w-72">
+                <div className="flex items-center justify-between mb-3 pb-3 border-b-2 border-purple-100">
+                  <h4 className="text-xs md:text-sm font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Selecciona un emoji</h4>
                   <button
                     type="button"
                     onClick={() => setShowEmojiPicker(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-gray-400 hover:text-purple-600 hover:bg-purple-50 p-1 rounded-lg transition-all"
                   >
-                    <X className="h-3 w-3 md:h-4 md:w-4" />
+                    <X className="h-4 w-4 md:h-5 md:w-5" />
                   </button>
                 </div>
                 <div className="grid grid-cols-6 md:grid-cols-8 gap-1 md:gap-2 max-h-40 md:max-h-48 overflow-y-auto">
@@ -629,7 +633,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
                       key={idx}
                       type="button"
                       onClick={() => insertEmoji(emoji)}
-                      className="text-xl md:text-2xl hover:bg-gray-100 rounded p-0.5 md:p-1 transition-colors"
+                      className="text-xl md:text-2xl hover:bg-purple-50 rounded-lg p-1 md:p-1.5 transition-all"
                     >
                       {emoji}
                     </button>
@@ -642,11 +646,11 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="p-1.5 md:p-2 text-gray-500 hover:text-gray-700 transition-colors mb-1 flex-shrink-0 hidden sm:block disabled:opacity-50"
+              className="p-2 md:p-2.5 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-all mb-1 flex-shrink-0 hidden sm:block disabled:opacity-50"
               title="Adjuntar archivo"
               disabled={uploadingFile}
             >
-              <Paperclip className="h-4 w-4 md:h-5 md:w-5" />
+              <Paperclip className="h-5 w-5 md:h-6 md:w-6" />
             </button>
             
             {/* Hidden File Input */}
@@ -669,7 +673,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
                 }}
                 placeholder="Escribe un mensaje..."
                 disabled={sending}
-                className="rounded-full bg-white text-sm md:text-base h-9 md:h-10"
+                className="rounded-full bg-white border-2 border-purple-200 focus:border-purple-300 text-sm md:text-base h-10 md:h-11"
               />
             </div>
 
@@ -677,13 +681,13 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
             <Button 
               type="submit" 
               disabled={sending || uploadingFile || !newMessage.trim()}
-              className="rounded-full h-9 w-9 md:h-10 md:w-10 p-0 bg-purple-600 hover:bg-purple-700 flex-shrink-0"
+              className="rounded-full h-10 w-10 md:h-11 md:w-11 p-0 bg-gradient-to-br from-purple-600 to-indigo-600 hover:shadow-lg transition-all flex-shrink-0 border-0"
               title="Enviar"
             >
               {sending ? (
-                <div className="animate-spin rounded-full h-3 w-3 md:h-4 md:w-4 border-2 border-white border-t-transparent" />
+                <div className="animate-spin rounded-full h-4 w-4 md:h-5 md:w-5 border-2 border-white border-t-transparent" />
               ) : (
-                <Send className="h-3 w-3 md:h-4 md:w-4" />
+                <Send className="h-4 w-4 md:h-5 md:w-5 text-white" />
               )}
             </Button>
           </div>

@@ -159,7 +159,9 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
     return (
       <div className="flex items-center justify-center py-20">
         <div className="text-center">
-          <RefreshCw className="h-12 w-12 animate-spin text-purple-600 mx-auto mb-4" />
+          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 rounded-xl shadow-md w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+            <RefreshCw className="h-8 w-8 animate-spin text-white" />
+          </div>
           <p className="text-gray-600 font-medium">Cargando tus órdenes recurrentes...</p>
         </div>
       </div>
@@ -170,13 +172,15 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
     <div className="space-y-6">
       
       {/* Header con Título y Botón Principal */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 border-2 border-purple-200">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <Repeat className="w-8 h-8 text-purple-600" />
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-3">
+            <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-xl shadow-md">
+              <Repeat className="w-6 h-6 text-white" />
+            </div>
             {userRole === 'SELLER' ? 'Órdenes Recurrentes de Clientes' : 'Órdenes Recurrentes'}
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 font-medium mt-1 ml-14">
             {userRole === 'SELLER' 
               ? 'Gestiona todas las órdenes programadas de tus clientes'
               : 'Automatiza tus pedidos y ahorra tiempo'
@@ -187,16 +191,16 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
         <div className="flex gap-3">
           <button
             onClick={fetchOrders}
-            className="px-4 py-2 border-2 border-gray-200 rounded-xl hover:border-purple-300 hover:bg-purple-50 transition-all flex items-center gap-2"
+            className="px-4 py-2 border-2 border-purple-200 rounded-xl hover:border-purple-400 hover:bg-purple-50 transition-all flex items-center gap-2"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-4 w-4 text-purple-600" />
             Actualizar
           </button>
           
           {userRole === 'CLIENT' && (
             <button
               onClick={() => setCreateModalOpen(true)}
-              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl hover:from-purple-700 hover:to-purple-800 shadow-lg hover:shadow-xl transition-all flex items-center gap-2 font-semibold"
+              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center gap-2 font-semibold"
             >
               <Plus className="h-5 w-5" />
               Nueva Orden Recurrente
@@ -208,63 +212,63 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
       {orders.length > 0 && (
         <>
           {/* Panel de Estadísticas */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl shadow-lg p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100 text-sm font-medium mb-1">
-                    {userRole === 'SELLER' ? 'Total de Órdenes' : 'Mis Órdenes'}
-                  </p>
-                  <p className="text-4xl font-bold">{stats.total}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-2 border-purple-200">
+              <div className="flex items-center justify-between mb-2">
+                <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-xl shadow-md">
+                  <Repeat className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <Repeat className="w-12 h-12 text-purple-200 opacity-80" />
               </div>
+              <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">
+                {userRole === 'SELLER' ? 'Total de Órdenes' : 'Mis Órdenes'}
+              </p>
+              <p className="text-2xl sm:text-4xl font-bold text-purple-600">{stats.total}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl shadow-lg p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100 text-sm font-medium mb-1">Activas</p>
-                  <p className="text-4xl font-bold">{stats.active}</p>
+            <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-2 border-emerald-200">
+              <div className="flex items-center justify-between mb-2">
+                <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-xl shadow-md">
+                  <CheckCircle2 className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <CheckCircle2 className="w-12 h-12 text-green-200 opacity-80" />
               </div>
+              <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Activas</p>
+              <p className="text-2xl sm:text-4xl font-bold text-emerald-600">{stats.active}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl shadow-lg p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-100 text-sm font-medium mb-1">Pausadas</p>
-                  <p className="text-4xl font-bold">{stats.paused}</p>
+            <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-2 border-amber-200">
+              <div className="flex items-center justify-between mb-2">
+                <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2 rounded-xl shadow-md">
+                  <Pause className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <Pause className="w-12 h-12 text-orange-200 opacity-80" />
               </div>
+              <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Pausadas</p>
+              <p className="text-2xl sm:text-4xl font-bold text-amber-600">{stats.paused}</p>
             </div>
 
-            <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl shadow-lg p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100 text-sm font-medium mb-1">
-                    {userRole === 'SELLER' ? 'Valor Recurrente' : 'Valor por Ciclo'}
-                  </p>
-                  <p className="text-3xl font-bold">{formatPrice(stats.totalRecurringAmount)}</p>
-                  {stats.totalExecuted > 0 && (
-                    <p className="text-blue-200 text-xs mt-1">
-                      Total ejecutado: {formatPrice(stats.totalExecuted)}
-                    </p>
-                  )}
+            <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-2 border-cyan-200">
+              <div className="flex items-center justify-between mb-2">
+                <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-2 rounded-xl shadow-md">
+                  <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <TrendingUp className="w-12 h-12 text-blue-200 opacity-80" />
               </div>
+              <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">
+                {userRole === 'SELLER' ? 'Valor Recurrente' : 'Valor por Ciclo'}
+              </p>
+              <p className="text-xl sm:text-3xl font-bold text-cyan-600">{formatPrice(stats.totalRecurringAmount)}</p>
+              {stats.totalExecuted > 0 && (
+                <p className="text-cyan-700 text-xs font-semibold mt-1 px-2 py-0.5 bg-cyan-100 rounded-full inline-block">
+                  Total ejecutado: {formatPrice(stats.totalExecuted)}
+                </p>
+              )}
             </div>
           </div>
 
           {/* Próximas Ejecuciones Destacadas */}
           {stats.upcomingOrders.length > 0 && (
-            <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-200 rounded-2xl p-6">
+            <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 border-2 border-purple-200">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg">
+                  <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-md">
                     <CalendarCheck className="w-8 h-8 text-white" />
                   </div>
                   <div>
@@ -281,7 +285,7 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
                     
                     {stats.upcomingOrders.length === 1 ? (
                       <>
-                        <p className="text-2xl font-bold text-gray-900">{stats.upcomingOrders[0].name}</p>
+                        <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">{stats.upcomingOrders[0].name}</p>
                         <p className="text-gray-600 mt-1">
                           {userRole === 'SELLER' && stats.upcomingOrders[0].client && (
                             <>
@@ -300,7 +304,7 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
                       </>
                     ) : (
                       <>
-                        <p className="text-2xl font-bold text-gray-900">
+                        <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
                           Próxima: {getDaysUntilNext(stats.upcomingOrders[0].nextExecutionDate).text}
                         </p>
                         <p className="text-gray-600 mt-1">
@@ -322,7 +326,7 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
                   <p className="text-sm text-gray-600 mb-1">
                     {stats.upcomingOrders.length === 1 ? 'Total' : 'Total Combinado'}
                   </p>
-                  <p className="text-3xl font-bold text-green-600">
+                  <p className="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">
                     {formatPrice(stats.upcomingOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0))}
                   </p>
                   {stats.upcomingOrders.length > 1 && (
@@ -341,8 +345,8 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
               onClick={() => setFilterStatus('all')}
               className={`px-4 py-2 rounded-xl font-medium transition-all ${
                 filterStatus === 'all'
-                  ? 'bg-purple-600 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
+                  : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
               }`}
             >
               Todas ({stats.total})
@@ -351,8 +355,8 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
               onClick={() => setFilterStatus('active')}
               className={`px-4 py-2 rounded-xl font-medium transition-all ${
                 filterStatus === 'active'
-                  ? 'bg-green-600 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-lg'
+                  : 'border-2 border-emerald-200 text-gray-700 hover:border-emerald-400 hover:bg-emerald-50'
               }`}
             >
               Activas ({stats.active})
@@ -361,8 +365,8 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
               onClick={() => setFilterStatus('paused')}
               className={`px-4 py-2 rounded-xl font-medium transition-all ${
                 filterStatus === 'paused'
-                  ? 'bg-orange-600 text-white shadow-lg'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg'
+                  : 'border-2 border-amber-200 text-gray-700 hover:border-amber-400 hover:bg-amber-50'
               }`}
             >
               Pausadas ({stats.paused})
@@ -373,12 +377,12 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
 
       {/* Lista de Órdenes */}
       {filteredOrders.length === 0 ? (
-        <div className="text-center py-16 bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl border-2 border-dashed border-purple-200">
+        <div className="text-center py-16 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all border-2 border-purple-200">
           <div className="max-w-md mx-auto">
-            <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-purple-200 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Repeat className="h-10 w-10 text-purple-600" />
+            <div className="bg-gradient-to-br from-purple-100 to-indigo-100 p-6 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6">
+              <Repeat className="h-16 w-16 text-purple-400" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3">
               {filterStatus === 'all' 
                 ? userRole === 'SELLER' 
                   ? 'No hay órdenes recurrentes de clientes'
@@ -407,7 +411,7 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
             {userRole === 'CLIENT' && filterStatus === 'all' && (
               <button
                 onClick={() => setCreateModalOpen(true)}
-                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl hover:from-purple-700 hover:to-purple-800 shadow-lg hover:shadow-xl transition-all font-semibold text-lg inline-flex items-center gap-3"
+                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold text-lg inline-flex items-center gap-3"
               >
                 <Zap className="h-6 w-6" />
                 Crear Mi Primera Orden Recurrente
@@ -425,7 +429,7 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
             return (
               <div
                 key={order.id}
-                className="group bg-white rounded-2xl border-2 border-gray-200 hover:border-purple-300 hover:shadow-2xl transition-all overflow-hidden"
+                className="group bg-white rounded-2xl border-2 border-purple-200 hover:border-purple-300 hover:shadow-xl transform hover:-translate-y-1 transition-all overflow-hidden"
                 style={{ 
                   animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`,
                 }}
@@ -433,7 +437,7 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
                 {/* Header con Estado */}
                 <div className={`relative p-6 bg-gradient-to-r ${
                   order.isActive 
-                    ? 'from-green-500 to-green-600' 
+                    ? 'from-emerald-500 to-green-600' 
                     : 'from-gray-400 to-gray-500'
                 } text-white`}>
                   <div className="flex items-start justify-between mb-3">
@@ -461,13 +465,13 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
                 {/* Contenido */}
                 <div className="p-6 space-y-4">
                   {/* Próxima Ejecución */}
-                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 border border-purple-100">
+                  <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border-2 border-purple-200">
                     <div className="flex items-center gap-2 mb-2">
                       <Clock className="w-4 h-4 text-purple-600" />
                       <p className="text-xs font-medium text-purple-600">Próxima Orden</p>
                     </div>
                     <p className={`text-2xl font-bold mb-1 ${
-                      nextInfo.urgent ? 'text-red-600' : 'text-gray-900'
+                      nextInfo.urgent ? 'text-red-600' : 'text-purple-600'
                     }`}>
                       {nextInfo.text}
                     </p>
@@ -482,22 +486,22 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
 
                   {/* Detalles en Grid */}
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-green-50 rounded-xl p-3 border border-green-100">
+                    <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-3 border-2 border-emerald-200">
                       <div className="flex items-center gap-2 mb-1">
-                        <DollarSign className="w-4 h-4 text-green-600" />
-                        <p className="text-xs font-medium text-green-600">Total</p>
+                        <DollarSign className="w-4 h-4 text-emerald-600" />
+                        <p className="text-xs font-medium text-emerald-600">Total</p>
                       </div>
-                      <p className="text-xl font-bold text-green-700">
+                      <p className="text-xl font-bold text-emerald-700">
                         {formatPrice(order.totalAmount)}
                       </p>
                     </div>
 
-                    <div className="bg-blue-50 rounded-xl p-3 border border-blue-100">
+                    <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl p-3 border-2 border-cyan-200">
                       <div className="flex items-center gap-2 mb-1">
-                        <Zap className="w-4 h-4 text-blue-600" />
-                        <p className="text-xs font-medium text-blue-600">Ejecutadas</p>
+                        <Zap className="w-4 h-4 text-cyan-600" />
+                        <p className="text-xs font-medium text-cyan-600">Ejecutadas</p>
                       </div>
-                      <p className="text-xl font-bold text-blue-700">
+                      <p className="text-xl font-bold text-cyan-700">
                         {order.executionCount || 0}
                       </p>
                     </div>
@@ -505,7 +509,7 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
 
                   {/* Cliente (solo para vendedor) */}
                   {userRole === 'SELLER' && order.client && (
-                    <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
+                    <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-3 border-2 border-purple-200">
                       <div className="flex items-center gap-2 mb-1">
                         <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -520,7 +524,7 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
 
                   {/* Productos Preview */}
                   {order.items && order.items.length > 0 && (
-                    <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                    <div className="bg-gray-50 rounded-xl p-3 border-2 border-gray-200">
                       <div className="flex items-center gap-2 mb-2">
                         <Package className="w-4 h-4 text-gray-600" />
                         <p className="text-xs font-medium text-gray-600">
@@ -544,10 +548,10 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
                 </div>
 
                 {/* Acciones */}
-                <div className="border-t-2 border-gray-100 p-4 bg-gray-50 flex gap-2">
+                <div className="border-t-2 border-purple-100 p-4 bg-gradient-to-br from-slate-50 to-purple-50 flex gap-2">
                   <button
                     onClick={() => handleViewDetails(order)}
-                    className={`${userRole === 'SELLER' ? 'flex-1' : 'flex-1'} px-4 py-2.5 bg-white border-2 border-gray-200 rounded-xl hover:border-purple-300 hover:bg-purple-50 transition-all font-semibold text-sm flex items-center justify-center gap-2`}
+                    className={`${userRole === 'SELLER' ? 'flex-1' : 'flex-1'} px-4 py-2.5 bg-white border-2 border-purple-200 rounded-xl hover:border-purple-400 hover:bg-purple-50 transition-all font-semibold text-sm flex items-center justify-center gap-2`}
                   >
                     <Eye className="h-4 w-4" />
                     Ver Detalles
@@ -560,8 +564,8 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
                         disabled={isProcessing}
                         className={`px-4 py-2.5 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
                           order.isActive
-                            ? 'bg-orange-100 border-2 border-orange-300 text-orange-700 hover:bg-orange-200'
-                            : 'bg-green-100 border-2 border-green-300 text-green-700 hover:bg-green-200'
+                            ? 'bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 text-amber-700 hover:border-amber-400 hover:shadow-lg'
+                            : 'bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-300 text-emerald-700 hover:border-emerald-400 hover:shadow-lg'
                         } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {isProcessing ? (
@@ -582,7 +586,7 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
                       <button
                         onClick={() => handleDelete(order.id, order.name)}
                         disabled={isProcessing}
-                        className={`px-4 py-2.5 bg-red-50 border-2 border-red-200 text-red-600 rounded-xl hover:bg-red-100 hover:border-red-300 transition-all font-semibold text-sm ${
+                        className={`px-4 py-2.5 bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 text-red-600 rounded-xl hover:border-red-300 hover:shadow-lg transition-all font-semibold text-sm ${
                           isProcessing ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                       >

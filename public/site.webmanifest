@@ -1,0 +1,22 @@
+{
+  "name": "Bargain - Food Orders CRM",
+  "short_name": "Bargain",
+  "description": "Sistema de gestión de pedidos de comida",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#7c3aed",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/"
+}

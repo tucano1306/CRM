@@ -9,10 +9,10 @@ export default function QuotesPage() {
     <MainLayout>
       <div className="container mx-auto py-8 px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
             💰 Cotizaciones
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-700 font-medium">
             Crea, envía y gestiona cotizaciones para tus clientes
           </p>
         </div>

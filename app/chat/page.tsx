@@ -98,10 +98,10 @@ export default function SellerChatPage() {
         <div className="hidden md:block md:col-span-4 lg:col-span-3">
           <Card>
             <CardContent className="p-0">
-              <div className="p-3 md:p-4 border-b bg-gray-50">
+              <div className="p-3 md:p-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50">
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
-                  <h3 className="text-sm md:text-base font-semibold">
+                  <Users className="h-4 w-4 md:h-5 md:w-5 text-purple-600" />
+                  <h3 className="text-sm md:text-base font-semibold text-gray-900">
                     Clientes ({clients.length})
                   </h3>
                 </div>
@@ -118,9 +118,9 @@ export default function SellerChatPage() {
                     <div
                       key={client.id}
                       onClick={() => setSelectedClient(client)}
-                      className={`p-3 md:p-4 cursor-pointer hover:bg-gray-50 transition-colors ${
+                      className={`p-3 md:p-4 cursor-pointer hover:bg-purple-50 transition-all ${
                         selectedClient?.id === client.id
-                          ? 'bg-blue-50 border-l-4 border-blue-600'
+                          ? 'bg-gradient-to-r from-purple-50 to-indigo-50 border-l-4 border-purple-600 shadow-sm'
                           : ''
                       }`}
                     >
@@ -134,7 +134,7 @@ export default function SellerChatPage() {
                           </p>
                         </div>
                         {client.unreadCount > 0 && (
-                          <div className="bg-red-500 text-white text-xs rounded-full h-5 w-5 md:h-6 md:w-6 flex items-center justify-center font-bold flex-shrink-0 ml-2">
+                          <div className="bg-gradient-to-r from-rose-500 to-red-600 text-white text-xs rounded-full h-5 w-5 md:h-6 md:w-6 flex items-center justify-center font-bold flex-shrink-0 ml-2 shadow-md">
                             {client.unreadCount}
                           </div>
                         )}

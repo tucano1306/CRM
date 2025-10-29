@@ -110,31 +110,51 @@ export default function QuotesManager() {
     <>
       <div className="space-y-6">
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-4 text-white">
-            <FileText className="h-5 w-5 opacity-80 mb-2" />
-            <p className="text-2xl font-bold">{stats.total}</p>
-            <p className="text-sm opacity-90">Total</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-3 sm:p-4 border-l-4 border-purple-500">
+            <div className="flex items-center justify-between mb-2">
+              <div className="bg-gradient-to-br from-purple-500 to-purple-700 p-1.5 sm:p-2 rounded-xl shadow-md">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+            </div>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.total}</p>
+            <p className="text-xs sm:text-sm text-gray-600 font-semibold uppercase tracking-wide">Total</p>
           </div>
-          <div className="bg-gradient-to-br from-gray-500 to-gray-600 rounded-lg p-4 text-white">
-            <FileText className="h-5 w-5 opacity-80 mb-2" />
-            <p className="text-2xl font-bold">{stats.draft}</p>
-            <p className="text-sm opacity-90">Borradores</p>
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-3 sm:p-4 border-l-4 border-gray-500">
+            <div className="flex items-center justify-between mb-2">
+              <div className="bg-gradient-to-br from-gray-500 to-gray-700 p-1.5 sm:p-2 rounded-xl shadow-md">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+            </div>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.draft}</p>
+            <p className="text-xs sm:text-sm text-gray-600 font-semibold uppercase tracking-wide">Borradores</p>
           </div>
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 text-white">
-            <Send className="h-5 w-5 opacity-80 mb-2" />
-            <p className="text-2xl font-bold">{stats.sent}</p>
-            <p className="text-sm opacity-90">Enviadas</p>
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-3 sm:p-4 border-l-4 border-cyan-500">
+            <div className="flex items-center justify-between mb-2">
+              <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-1.5 sm:p-2 rounded-xl shadow-md">
+                <Send className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+            </div>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.sent}</p>
+            <p className="text-xs sm:text-sm text-gray-600 font-semibold uppercase tracking-wide">Enviadas</p>
           </div>
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-4 text-white">
-            <Check className="h-5 w-5 opacity-80 mb-2" />
-            <p className="text-2xl font-bold">{stats.accepted}</p>
-            <p className="text-sm opacity-90">Aceptadas</p>
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-3 sm:p-4 border-l-4 border-emerald-500">
+            <div className="flex items-center justify-between mb-2">
+              <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-1.5 sm:p-2 rounded-xl shadow-md">
+                <Check className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+            </div>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.accepted}</p>
+            <p className="text-xs sm:text-sm text-gray-600 font-semibold uppercase tracking-wide">Aceptadas</p>
           </div>
-          <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg p-4 text-white">
-            <RefreshCw className="h-5 w-5 opacity-80 mb-2" />
-            <p className="text-2xl font-bold">{stats.converted}</p>
-            <p className="text-sm opacity-90">Convertidas</p>
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-3 sm:p-4 border-l-4 border-indigo-500">
+            <div className="flex items-center justify-between mb-2">
+              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-1.5 sm:p-2 rounded-xl shadow-md">
+                <RefreshCw className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+            </div>
+            <p className="text-xl sm:text-2xl font-bold text-gray-900">{stats.converted}</p>
+            <p className="text-xs sm:text-sm text-gray-600 font-semibold uppercase tracking-wide">Convertidas</p>
           </div>
         </div>
 

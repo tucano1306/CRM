@@ -457,14 +457,14 @@ export default function CatalogPage() {
   // ✅ UI States
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-            <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-              <Package className="text-blue-600" size={32} />
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-3">
+              <Package className="text-purple-600" size={32} />
               Catálogo de Productos
             </h1>
-            <p className="text-gray-600 mt-1">Cargando productos...</p>
+            <p className="text-gray-600 mt-1 font-medium">Cargando productos...</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             <ProductCardSkeleton />
@@ -483,20 +483,22 @@ export default function CatalogPage() {
 
   if (timedOut) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50 p-6">
-        <div className="max-w-md mx-auto mt-8 bg-amber-50 border border-amber-200 p-6 rounded-lg">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6">
+        <div className="max-w-md mx-auto mt-8 bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-300 p-6 rounded-xl shadow-lg">
           <div className="flex items-center gap-3 mb-4">
-            <Clock className="h-8 w-8 text-amber-600" />
+            <div className="bg-gradient-to-br from-amber-500 to-yellow-600 p-2 rounded-lg">
+              <Clock className="h-6 w-6 text-white" />
+            </div>
             <h2 className="text-xl font-bold text-amber-900">
               Tiempo de espera excedido
             </h2>
           </div>
-          <p className="text-gray-700 mb-4">
+          <p className="text-gray-700 mb-4 font-medium">
             La carga del catálogo está tardando más de lo esperado.
           </p>
           <button
             onClick={fetchProducts}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 rounded-lg hover:from-purple-700 hover:to-indigo-700 font-semibold shadow-md transition-all"
           >
             Reintentar
           </button>
@@ -507,16 +509,18 @@ export default function CatalogPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50 p-6">
-        <div className="max-w-md mx-auto mt-8 bg-red-50 border border-red-200 p-6 rounded-lg">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6">
+        <div className="max-w-md mx-auto mt-8 bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-300 p-6 rounded-xl shadow-lg">
           <div className="flex items-center gap-3 mb-4">
-            <AlertCircle className="h-8 w-8 text-red-600" />
+            <div className="bg-gradient-to-br from-red-500 to-rose-600 p-2 rounded-lg">
+              <AlertCircle className="h-6 w-6 text-white" />
+            </div>
             <h2 className="text-xl font-bold text-red-900">Error</h2>
           </div>
-          <p className="text-gray-700 mb-4">{error}</p>
+          <p className="text-gray-700 mb-4 font-medium">{error}</p>
           <button
             onClick={fetchProducts}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 rounded-lg hover:from-purple-700 hover:to-indigo-700 font-semibold shadow-md transition-all"
           >
             Reintentar
           </button>
@@ -526,23 +530,23 @@ export default function CatalogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-50 to-blue-50 p-3 sm:p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-3 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header - RESPONSIVE */}
-        <div className="bg-white rounded-2xl shadow-lg p-4 md:p-6 mb-6">
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-4 md:p-6 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 flex items-center gap-3">
-                <Package className="text-blue-600" size={28} />
+              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-3">
+                <Package className="text-purple-600" size={28} />
                 Catálogo de Productos
               </h1>
-              <p className="text-sm md:text-base text-gray-600 mt-1">
+              <p className="text-sm md:text-base text-gray-600 mt-1 font-medium">
                 {sortedProducts.length} productos disponibles
               </p>
             </div>
             <button
               onClick={() => setShowCart(true)}
-              className="bg-blue-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2 transition-colors"
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:from-purple-700 hover:to-indigo-700 flex items-center justify-center gap-2 transition-all font-semibold shadow-md"
             >
               <ShoppingCart size={20} />
               <span className="hidden sm:inline">Ver Carrito</span>
@@ -566,28 +570,28 @@ export default function CatalogPage() {
                 onChange={(e) => handleSearchChange(e.target.value)}
                 onFocus={() => search.length >= 2 && setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2.5 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 transition-all font-medium"
               />
               
               {/* Sugerencias */}
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 bg-white shadow-lg rounded-b-lg mt-1 z-20 border border-gray-200 max-h-80 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 bg-white shadow-xl rounded-b-lg mt-1 z-20 border-2 border-purple-200 max-h-80 overflow-y-auto">
                   <div className="p-2">
-                    <p className="text-xs text-gray-500 mb-2 px-2">Sugerencias</p>
+                    <p className="text-xs text-purple-600 mb-2 px-2 font-semibold uppercase tracking-wide">Sugerencias</p>
                     {suggestions.map((product) => (
                       <button
                         key={product.id}
                         onClick={() => selectSuggestion(product)}
-                        className="w-full text-left px-3 py-2 hover:bg-blue-50 rounded flex items-center gap-3 transition-colors"
+                        className="w-full text-left px-3 py-2 hover:bg-purple-50 rounded flex items-center gap-3 transition-all"
                       >
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-100 to-slate-100 rounded flex items-center justify-center flex-shrink-0">
-                          <Package className="w-5 h-5 text-slate-400" />
+                        <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-indigo-100 rounded flex items-center justify-center flex-shrink-0">
+                          <Package className="w-5 h-5 text-purple-500" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-800 truncate">
+                          <p className="text-sm font-semibold text-gray-900 truncate">
                             {product.name}
                           </p>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-purple-600 font-medium">
                             {formatPrice(product.price)} / {product.unit}
                           </p>
                         </div>
@@ -603,10 +607,10 @@ export default function CatalogPage() {
               {/* Botón de filtros */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors ${
+                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-all font-semibold shadow-md ${
                   showFilters 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white' 
+                    : 'bg-white border-2 border-purple-200 text-purple-700 hover:border-purple-400'
                 }`}
               >
                 <Filter size={18} />
@@ -617,7 +621,7 @@ export default function CatalogPage() {
               <select 
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="flex-1 sm:flex-none px-3 md:px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm md:text-base"
+                className="flex-1 sm:flex-none px-3 md:px-4 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 bg-white text-sm md:text-base font-medium transition-all"
               >
                 <option value="relevant">Más relevantes</option>
                 <option value="price-asc">Menor precio</option>
@@ -630,10 +634,10 @@ export default function CatalogPage() {
               <div className="flex gap-2">
                 <button 
                   onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded transition-colors ${
+                  className={`p-2 rounded-lg transition-all shadow-md ${
                     viewMode === 'grid' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white' 
+                      : 'bg-white border-2 border-purple-200 text-purple-600 hover:border-purple-400'
                   }`}
                   title="Vista en cuadrícula"
                 >
@@ -641,10 +645,10 @@ export default function CatalogPage() {
                 </button>
                 <button 
                   onClick={() => setViewMode('list')}
-                  className={`p-2 rounded transition-colors ${
+                  className={`p-2 rounded-lg transition-all shadow-md ${
                     viewMode === 'list' 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white' 
+                      : 'bg-white border-2 border-purple-200 text-purple-600 hover:border-purple-400'
                   }`}
                   title="Vista en lista"
                 >
@@ -660,10 +664,10 @@ export default function CatalogPage() {
               <button
                 key={category.id}
                 onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all ${
+                className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all font-semibold shadow-md ${
                   selectedCategory === category.id
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
+                    : 'bg-white border-2 border-purple-200 text-purple-700 hover:border-purple-400'
                 }`}
               >
                 {category.emoji} {category.name} ({getCategoryCount(category.id)})
@@ -677,16 +681,16 @@ export default function CatalogPage() {
           {/* Sidebar de Filtros Avanzados - RESPONSIVE */}
           {showFilters && (
             <div className="w-full lg:w-72 lg:flex-shrink-0">
-              <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg lg:sticky lg:top-6">
+              <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all lg:sticky lg:top-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-bold text-base md:text-lg text-gray-800">Filtros Avanzados</h3>
+                  <h3 className="font-bold text-base md:text-lg bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Filtros Avanzados</h3>
                   <button
                     onClick={() => {
                       setPriceRange([0, 100])
                       setOnlyInStock(false)
                       setSelectedUnits([])
                     }}
-                    className="text-sm text-blue-600 hover:text-blue-700"
+                    className="text-sm text-purple-600 hover:text-purple-700 font-semibold"
                   >
                     Limpiar
                   </button>
@@ -793,17 +797,17 @@ export default function CatalogPage() {
           {sortedProducts.map((product) => (
             <div
               key={product.id}
-              className={`bg-white rounded-xl shadow-md overflow-hidden hover:shadow-2xl transition-all duration-300 group border border-transparent hover:border-blue-200 ${
-                viewMode === 'grid' ? 'cursor-pointer transform hover:-translate-y-1' : 'cursor-pointer flex flex-col sm:flex-row hover:bg-blue-50/30'
-              } ${cart[product.id] ? 'ring-2 ring-blue-400 ring-opacity-50' : ''}`}
+              className={`bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 group border-2 border-transparent hover:border-purple-300 ${
+                viewMode === 'grid' ? 'cursor-pointer transform hover:-translate-y-1' : 'cursor-pointer flex flex-col sm:flex-row hover:bg-purple-50/30'
+              } ${cart[product.id] ? 'ring-2 ring-purple-400 ring-opacity-50 border-purple-300' : ''}`}
               onClick={() => setSelectedProduct(product)}
             >
               {/* Imagen del producto con tags - RESPONSIVE + MEJORADA */}
-              <div className={`relative bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden ${
+              <div className={`relative bg-gradient-to-br from-purple-50 to-indigo-50 overflow-hidden ${
                 viewMode === 'grid' ? 'h-40 sm:h-48 rounded-t-lg' : 'w-32 sm:w-48 h-32 sm:h-48 flex-shrink-0'
               }`}>
                 {/* Overlay de hover */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[5]" />
+                <div className="absolute inset-0 bg-gradient-to-t from-purple-600/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-[5]" />
                 
                 {/* Checkbox de comparación - MEJORADO */}
                 <div className="absolute top-2 left-2 z-20 transform transition-transform group-hover:scale-110">
@@ -818,7 +822,7 @@ export default function CatalogPage() {
                       onClick={(e) => e.stopPropagation()}
                       className="sr-only peer"
                     />
-                    <div className="w-5 h-5 bg-white border-2 border-gray-300 rounded peer-checked:bg-blue-600 peer-checked:border-blue-600 shadow-lg flex items-center justify-center transition-all">
+                    <div className="w-5 h-5 bg-white border-2 border-purple-300 rounded peer-checked:bg-gradient-to-r peer-checked:from-purple-600 peer-checked:to-indigo-600 peer-checked:border-purple-600 shadow-lg flex items-center justify-center transition-all">
                       {compareList.includes(product.id) && (
                         <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
@@ -946,9 +950,9 @@ export default function CatalogPage() {
                     <div className="flex-1 bg-gray-200 rounded-full h-2.5 overflow-hidden shadow-inner">
                       <div 
                         className={`h-2.5 rounded-full transition-all duration-500 ${
-                          product.stock > 50 ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' : 
-                          product.stock > 10 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' : 
-                          product.stock > 0 ? 'bg-gradient-to-r from-red-400 to-red-600' : 'bg-gray-400'
+                          product.stock > 50 ? 'bg-gradient-to-r from-emerald-400 to-green-600' : 
+                          product.stock > 10 ? 'bg-gradient-to-r from-amber-400 to-yellow-600' : 
+                          product.stock > 0 ? 'bg-gradient-to-r from-red-400 to-rose-600' : 'bg-gray-400'
                         }`}
                         style={{ width: `${Math.min((product.stock / 100) * 100, 100)}%` }}
                       />
@@ -964,12 +968,12 @@ export default function CatalogPage() {
                       updateQuantity(product.id, -1)
                     }}
                     disabled={(cart[product.id] || 0) === 0}
-                    className="bg-gradient-to-br from-gray-100 to-gray-200 p-2 rounded-lg hover:from-gray-200 hover:to-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow active:scale-95"
+                    className="bg-white border-2 border-purple-200 p-2 rounded-lg hover:border-purple-400 hover:bg-purple-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow active:scale-95"
                   >
-                    <Minus size={16} className="text-gray-700" />
+                    <Minus size={16} className="text-purple-600" />
                   </button>
                   <div className="flex-1 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-gray-800 min-w-[3rem] text-center">
+                    <span className="text-2xl font-bold text-purple-600 min-w-[3rem] text-center">
                       {cart[product.id] || 0}
                     </span>
                   </div>
@@ -979,7 +983,7 @@ export default function CatalogPage() {
                       updateQuantity(product.id, 1)
                     }}
                     disabled={(cart[product.id] || 0) >= product.stock || product.stock === 0}
-                    className="bg-gradient-to-br from-blue-500 to-blue-600 p-2 rounded-lg hover:from-blue-600 hover:to-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow active:scale-95"
+                    className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-lg hover:from-purple-600 hover:to-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
                   >
                     <Plus size={16} className="text-white" />
                   </button>
@@ -991,7 +995,7 @@ export default function CatalogPage() {
                     addToCart(product.id, cart[product.id] || 1)
                   }}
                   disabled={(cart[product.id] || 0) === 0 || product.stock === 0}
-                  className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2.5 rounded-lg hover:from-blue-700 hover:to-blue-800 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2.5 rounded-lg hover:from-purple-700 hover:to-indigo-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all duration-200 font-semibold shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                   <ShoppingCart size={18} />
                   <span>{cart[product.id] > 0 ? 'Agregar al Carrito' : 'Selecciona cantidad'}</span>

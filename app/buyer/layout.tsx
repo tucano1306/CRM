@@ -33,11 +33,11 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
 
   return (
     <NotificationProvider>
-      <div className="flex h-screen bg-gray-50">
+      <div className="flex h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50">
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-slate-800 to-blue-900 shadow-2xl transition-transform lg:translate-x-0 lg:static`}>
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-purple-600 to-indigo-600 shadow-2xl transition-transform lg:translate-x-0 lg:static`}>
         <div className="flex h-full flex-col">
-          <div className="flex h-20 items-center justify-between px-6 border-b border-slate-700">
+          <div className="flex h-20 items-center justify-between px-6 border-b border-purple-500/30">
             <div className="flex items-center">
               <Image 
                 src="/logo.png" 
@@ -66,19 +66,19 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 font-medium transition relative ${
-                    isActive ? 'bg-white text-slate-800 shadow-lg' : 'text-slate-200 hover:bg-slate-700'
+                  className={`flex items-center gap-3 rounded-xl px-4 py-3 font-semibold transition relative ${
+                    isActive ? 'bg-white text-purple-700 shadow-lg' : 'text-white hover:bg-white/20 hover:backdrop-blur-sm'
                   }`}
                 >
                   <div className="relative">
                     <Icon className="h-5 w-5" />
                     {showChatBadge && (
-                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-gradient-to-r from-rose-500 to-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
                         {unreadCount > 9 ? '9+' : unreadCount}
                       </span>
                     )}
                     {showCartBadge && (
-                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                      <span className="absolute -top-1 -right-1 h-4 w-4 bg-gradient-to-r from-rose-500 to-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
                         {cartCount > 9 ? '9+' : cartCount}
                       </span>
                     )}
@@ -86,12 +86,12 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
                   <div className="flex items-center justify-between flex-1">
                     <span>{item.name}</span>
                     {showChatBadge && (
-                      <span className="ml-auto h-5 min-w-[20px] px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                      <span className="ml-auto h-5 min-w-[20px] px-1.5 bg-gradient-to-r from-rose-500 to-red-600 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
                         {unreadCount > 99 ? '99+' : unreadCount}
                       </span>
                     )}
                     {showCartBadge && (
-                      <span className="ml-auto h-5 min-w-[20px] px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                      <span className="ml-auto h-5 min-w-[20px] px-1.5 bg-gradient-to-r from-rose-500 to-red-600 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
                         {cartCount > 99 ? '99+' : cartCount}
                       </span>
                     )}
@@ -101,12 +101,12 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
             })}
           </nav>
 
-          <div className="border-t border-slate-700 p-4 bg-slate-900">
+          <div className="border-t border-purple-500/30 p-4 bg-purple-700/30 backdrop-blur-sm">
             <div className="flex items-center gap-3">
               <UserButton afterSignOutUrl="/sign-in" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">{user?.firstName}</p>
-                <p className="text-xs text-slate-400">{user?.primaryEmailAddress?.emailAddress}</p>
+                <p className="text-sm font-semibold text-white truncate">{user?.firstName}</p>
+                <p className="text-xs text-purple-100">{user?.primaryEmailAddress?.emailAddress}</p>
               </div>
               <NotificationBell />
             </div>
