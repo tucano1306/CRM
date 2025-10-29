@@ -3,6 +3,7 @@
 import { useUser, UserButton } from '@clerk/nextjs'
 import { Home, Package, ShoppingCart, User, Menu, X, Store, RefreshCw, RotateCcw, DollarSign, FileText, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
 import NotificationBell from '@/components/notifications/NotificationBell'
@@ -37,9 +38,15 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
       <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-slate-800 to-blue-900 shadow-2xl transition-transform lg:translate-x-0 lg:static`}>
         <div className="flex h-full flex-col">
           <div className="flex h-20 items-center justify-between px-6 border-b border-slate-700">
-            <div>
-              <h1 className="text-2xl font-bold text-white">Food CRM</h1>
-              <p className="text-xs text-slate-300">Comprador</p>
+            <div className="flex items-center">
+              <Image 
+                src="/logo.png" 
+                alt="Bargain Logo" 
+                width={120} 
+                height={40}
+                className="object-contain"
+                priority
+              />
             </div>
             <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white">
               <X className="h-6 w-6" />
