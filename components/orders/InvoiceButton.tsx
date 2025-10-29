@@ -35,6 +35,15 @@ interface OrderData {
       unit: string
     }
   }>
+  creditNoteUsages?: Array<{
+    amountUsed: number
+    creditNote: {
+      id: string
+      creditNoteNumber: string
+      amount: number
+      balance: number
+    }
+  }>
 }
 
 interface InvoiceButtonProps {
@@ -64,7 +73,19 @@ export default function InvoiceButton({
     const subtotal = order.orderItems.reduce((sum, item) => sum + item.subtotal, 0)
     const taxRate = defaults.taxRate
     const taxAmount = subtotal * taxRate
-    const total = subtotal + taxAmount
+    const totalBeforeCredits = subtotal + taxAmount
+    
+    // Calcular créditos aplicados (si existen)
+    const creditNotesUsed = order.creditNoteUsages?.map(usage => ({
+      creditNoteId: usage.creditNote.id,
+      creditNoteNumber: usage.creditNote.creditNoteNumber,
+      amountUsed: usage.amountUsed,
+      originalAmount: usage.creditNote.amount,
+      remainingAmount: usage.creditNote.balance
+    })) || []
+    
+    const totalCreditApplied = creditNotesUsed.reduce((sum, credit) => sum + credit.amountUsed, 0)
+    const total = totalBeforeCredits - totalCreditApplied
 
     // Calcular fecha de vencimiento
     const invoiceDate = new Date(order.createdAt)
@@ -101,6 +122,9 @@ export default function InvoiceButton({
       subtotal,
       taxRate,
       taxAmount,
+      totalBeforeCredits,
+      creditNotesUsed: creditNotesUsed.length > 0 ? creditNotesUsed : undefined,
+      totalCreditApplied: totalCreditApplied > 0 ? totalCreditApplied : undefined,
       total,
       
       // Información adicional (desde configuración centralizada)

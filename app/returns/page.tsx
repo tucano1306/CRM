@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import MainLayout from '@/components/shared/MainLayout'
 import ReturnsManager from '@/components/returns/ReturnsManager'
 import CreateManualReturnModal from '@/components/returns/CreateManualReturnModal'
 
-export default function ReturnsPage() {
+function ReturnsPageContent() {
   const [showManualReturnModal, setShowManualReturnModal] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -41,7 +41,9 @@ export default function ReturnsPage() {
           </div>
         </div>
 
-        <ReturnsManager key={refreshKey} role="seller" />
+        <Suspense fallback={<div className="flex justify-center items-center py-12">Cargando...</div>}>
+          <ReturnsManager key={refreshKey} role="seller" />
+        </Suspense>
 
         <CreateManualReturnModal
           isOpen={showManualReturnModal}
@@ -50,5 +52,13 @@ export default function ReturnsPage() {
         />
       </div>
     </MainLayout>
+  )
+}
+
+export default function ReturnsPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Cargando...</div>}>
+      <ReturnsPageContent />
+    </Suspense>
   )
 }

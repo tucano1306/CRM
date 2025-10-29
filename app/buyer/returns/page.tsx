@@ -1,11 +1,12 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ReturnsManager from '@/components/returns/ReturnsManager'
 
-export default function BuyerReturnsPage() {
+function BuyerReturnsPageContent() {
   const router = useRouter()
 
   return (
@@ -28,7 +29,17 @@ export default function BuyerReturnsPage() {
         </p>
       </div>
 
-      <ReturnsManager role="client" />
+      <Suspense fallback={<div className="flex justify-center items-center py-12">Cargando...</div>}>
+        <ReturnsManager role="client" />
+      </Suspense>
     </div>
+  )
+}
+
+export default function BuyerReturnsPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Cargando...</div>}>
+      <BuyerReturnsPageContent />
+    </Suspense>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { v4 as uuidv4 } from 'uuid'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
@@ -53,7 +53,7 @@ type Cart = {
   items: CartItem[]
 }
 
-export default function CartPage() {
+function CartPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [cart, setCart] = useState<Cart | null>(null)
@@ -1852,6 +1852,20 @@ export default function CartPage() {
         }
       `}</style>
     </div>
+  )
+}
+
+export default function CartPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 rounded-xl shadow-md">
+          <Loader2 className="h-8 w-8 animate-spin text-white" />
+        </div>
+      </div>
+    }>
+      <CartPageContent />
+    </Suspense>
   )
 }
  

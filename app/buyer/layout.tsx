@@ -34,6 +34,14 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
   return (
     <NotificationProvider>
       <div className="flex h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50">
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
       {/* Sidebar */}
       <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-purple-600 to-indigo-600 shadow-2xl transition-transform lg:translate-x-0 lg:static`}>
         <div className="flex h-full flex-col">
@@ -66,6 +74,7 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
                 <Link
                   key={item.name}
                   href={item.href}
+                  onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 rounded-xl px-4 py-3 font-semibold transition relative ${
                     isActive ? 'bg-white text-purple-700 shadow-lg' : 'text-white hover:bg-white/20 hover:backdrop-blur-sm'
                   }`}

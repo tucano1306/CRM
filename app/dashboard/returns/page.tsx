@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import ReturnsManager from '@/components/returns/ReturnsManager'
 import CreateManualReturnModal from '@/components/returns/CreateManualReturnModal'
 
-export default function SellerReturnsPage() {
+function ReturnsPageContent() {
   const router = useRouter()
   const [showManualReturnModal, setShowManualReturnModal] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -48,7 +48,9 @@ export default function SellerReturnsPage() {
         </div>
       </div>
 
-      <ReturnsManager key={refreshKey} role="seller" />
+      <Suspense fallback={<div className="flex justify-center items-center py-12">Cargando...</div>}>
+        <ReturnsManager key={refreshKey} role="seller" />
+      </Suspense>
 
       <CreateManualReturnModal
         isOpen={showManualReturnModal}
@@ -56,5 +58,13 @@ export default function SellerReturnsPage() {
         onSuccess={handleManualReturnSuccess}
       />
     </div>
+  )
+}
+
+export default function SellerReturnsPage() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Cargando...</div>}>
+      <ReturnsPageContent />
+    </Suspense>
   )
 }
