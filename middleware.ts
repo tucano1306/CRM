@@ -174,15 +174,33 @@ export default clerkMiddleware(async (auth, req) => {
     hasPublicMetadata: !!(sessionClaims?.public_metadata)
   })
 
-  // Proteger rutas de vendedor
+  // Proteger rutas de vendedor y redirigir a la versión de buyer cuando aplique
   if (isSellerRoute(req)) {
     if (userRole !== 'SELLER' && userRole !== 'ADMIN') {
-      logger.warn(LogCategory.AUTH, 'Unauthorized seller route access attempt', {
+      const path = req.nextUrl.pathname
+
+      const mapToBuyer = (p: string) => {
+        // Mapea rutas de vendedor a su equivalente en buyer, preservando subrutas
+        if (p === '/dashboard') return '/buyer/dashboard'
+        if (p.startsWith('/orders')) return p.replace('/orders', '/buyer/orders')
+        if (p.startsWith('/quotes')) return p.replace('/quotes', '/buyer/quotes')
+        if (p.startsWith('/recurring-orders')) return p.replace('/recurring-orders', '/buyer/recurring-orders')
+        if (p.startsWith('/returns')) return p.replace('/returns', '/buyer/returns')
+        if (p.startsWith('/clients')) return '/buyer/dashboard'
+        if (p.startsWith('/products')) return '/buyer/catalog'
+        if (p.startsWith('/stats')) return '/buyer/dashboard'
+        return '/buyer/dashboard'
+      }
+
+      const target = mapToBuyer(path)
+
+      logger.warn(LogCategory.AUTH, 'Unauthorized seller route access attempt - redirecting to buyer equivalent', {
         userId: userId || undefined,
         userRole,
-        endpoint: req.nextUrl.pathname
+        from: path,
+        to: target
       })
-      return NextResponse.redirect(new URL('/buyer/dashboard', req.url))
+      return NextResponse.redirect(new URL(target, req.url))
     }
   }
 
@@ -214,6 +232,33 @@ export default clerkMiddleware(async (auth, req) => {
         userRole
       })
       return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+  }
+
+  // Asegurar que usuarios CLIENT usen siempre rutas de buyer si caen en rutas generales
+  if (userRole === 'CLIENT') {
+    const path = req.nextUrl.pathname
+    const mapGeneralToBuyer = (p: string) => {
+      if (p === '/dashboard') return '/buyer/dashboard'
+      if (p === '/chat' || p.startsWith('/chat')) return '/buyer/chat'
+      if (p === '/orders' || p.startsWith('/orders')) return p.replace('/orders', '/buyer/orders')
+      if (p === '/quotes' || p.startsWith('/quotes')) return p.replace('/quotes', '/buyer/quotes')
+      if (p === '/recurring-orders' || p.startsWith('/recurring-orders')) return p.replace('/recurring-orders', '/buyer/recurring-orders')
+      if (p === '/returns' || p.startsWith('/returns')) return p.replace('/returns', '/buyer/returns')
+      if (p === '/credit-notes' || p.startsWith('/credit-notes')) return p.replace('/credit-notes', '/buyer/credit-notes')
+      if (p === '/cart' || p.startsWith('/cart')) return p.replace('/cart', '/buyer/cart')
+      if (p === '/products' || p.startsWith('/products')) return '/buyer/catalog'
+      return null
+    }
+
+    const buyerPath = mapGeneralToBuyer(path)
+    if (buyerPath && buyerPath !== path) {
+      logger.info(LogCategory.AUTH, 'Redirecting CLIENT to buyer route equivalent', {
+        userId: userId || undefined,
+        from: path,
+        to: buyerPath
+      })
+      return NextResponse.redirect(new URL(buyerPath, req.url))
     }
   }
 
