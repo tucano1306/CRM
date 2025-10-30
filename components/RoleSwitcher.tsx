@@ -1,43 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { useUser } from '@clerk/nextjs'
-import { UserCog, Loader2, ArrowRight } from 'lucide-react'
+import { UserCog, Loader2, ArrowRight, RefreshCw } from 'lucide-react'
+import { useRoleSwitch } from '@/hooks/useRoleSwitch'
 
 export default function RoleSwitcher() {
-  const { user } = useUser()
-  const router = useRouter()
-  const [switching, setSwitching] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const currentRole = (user?.publicMetadata?.role as string) || 'CLIENT'
-
-  const switchRole = async (newRole: 'CLIENT' | 'SELLER') => {
-    try {
-      setSwitching(true)
-      setError(null)
-
-      const response = await fetch('/api/switch-role', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: newRole })
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al cambiar rol')
-      }
-
-      // Recargar para actualizar sesión de Clerk
-      window.location.href = data.redirect
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido')
-      setSwitching(false)
-    }
-  }
+  const { currentRole, switching, error, switchRole, switchRoleWithReauth, clearError } = useRoleSwitch()
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
@@ -56,7 +23,13 @@ export default function RoleSwitcher() {
         {/* Error */}
         {error && (
           <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-xs text-red-600">{error}</p>
+            <p className="text-xs text-red-600 mb-2">{error}</p>
+            <button
+              onClick={clearError}
+              className="text-xs text-red-500 hover:text-red-700 underline"
+            >
+              Cerrar
+            </button>
           </div>
         )}
 
@@ -103,9 +76,17 @@ export default function RoleSwitcher() {
 
         {/* Info */}
         <div className="mt-3 pt-3 border-t border-gray-200">
-          <p className="text-xs text-gray-500 text-center">
+          <p className="text-xs text-gray-500 text-center mb-2">
             Cambiar entre vistas sin cerrar sesión
           </p>
+          <button
+            onClick={() => switchRoleWithReauth(currentRole === 'CLIENT' ? 'SELLER' : 'CLIENT')}
+            disabled={switching}
+            className="w-full flex items-center justify-center gap-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 py-1 px-2 rounded transition-colors"
+          >
+            <RefreshCw className="h-3 w-3" />
+            <span>Cambiar con re-login (más seguro)</span>
+          </button>
         </div>
       </div>
     </div>
