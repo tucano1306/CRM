@@ -42,35 +42,35 @@ jobs:
         run: npx tsc --noEmit || echo "Type check failed but continuing..."
 
   # ==============================================================================
-  # Unit Tests (DISABLED - En configuración)
+  # Unit Tests
   # ==============================================================================
-  # test-unit:
-  #   name: Unit Tests
-  #   runs-on: ubuntu-latest
-  #   needs: [lint]
-  #   
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '22'
-  #         cache: 'npm'
-  #
-  #     - name: Install dependencies
-  #       run: npm ci
-  #
-  #     - name: Run unit tests
-  #       run: npm run test:unit -- --coverage
-  #
-  #     - name: Upload coverage
-  #       uses: codecov/codecov-action@v3
-  #       with:
-  #         files: ./coverage/lcov.info
-  #         flags: unittests
-  #         name: codecov-umbrella
+  test-unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: [lint]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm run test:unit -- --coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
 
   # ==============================================================================
   # Database Validation
@@ -173,7 +173,7 @@ jobs:
   build:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
-    needs: [lint, database]
+    needs: [lint, test-unit, database]
     if: github.event_name == 'push'
     permissions:
       contents: read
