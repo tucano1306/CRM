@@ -200,7 +200,11 @@ export default clerkMiddleware(async (auth, req) => {
         from: path,
         to: target
       })
-      return NextResponse.redirect(new URL(target, req.url))
+      const r = NextResponse.redirect(new URL(target, req.url))
+      r.headers.set('x-debug-role', userRole)
+      r.headers.set('x-debug-from', path)
+      r.headers.set('x-debug-to', target)
+      return r
     }
   }
 
@@ -213,7 +217,11 @@ export default clerkMiddleware(async (auth, req) => {
         userRole,
         endpoint: req.nextUrl.pathname
       })
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+      const r = NextResponse.redirect(new URL('/dashboard', req.url))
+      r.headers.set('x-debug-role', userRole)
+      r.headers.set('x-debug-from', req.nextUrl.pathname)
+      r.headers.set('x-debug-to', '/dashboard')
+      return r
     }
   }
 
@@ -224,14 +232,22 @@ export default clerkMiddleware(async (auth, req) => {
         userId: userId || undefined,
         userRole
       })
-      return NextResponse.redirect(new URL('/buyer/dashboard', req.url))
+      const r = NextResponse.redirect(new URL('/buyer/dashboard', req.url))
+      r.headers.set('x-debug-role', userRole)
+      r.headers.set('x-debug-from', '/')
+      r.headers.set('x-debug-to', '/buyer/dashboard')
+      return r
     } else {
       // Vendedor/Admin → Redirigir a dashboard
       logger.info(LogCategory.AUTH, '🔄 Redirecting SELLER/ADMIN to /dashboard', {
         userId: userId || undefined,
         userRole
       })
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+      const r = NextResponse.redirect(new URL('/dashboard', req.url))
+      r.headers.set('x-debug-role', userRole)
+      r.headers.set('x-debug-from', '/')
+      r.headers.set('x-debug-to', '/dashboard')
+      return r
     }
   }
 
@@ -258,7 +274,11 @@ export default clerkMiddleware(async (auth, req) => {
         from: path,
         to: buyerPath
       })
-      return NextResponse.redirect(new URL(buyerPath, req.url))
+      const r = NextResponse.redirect(new URL(buyerPath, req.url))
+      r.headers.set('x-debug-role', userRole)
+      r.headers.set('x-debug-from', path)
+      r.headers.set('x-debug-to', buyerPath)
+      return r
     }
   }
 
@@ -266,6 +286,8 @@ export default clerkMiddleware(async (auth, req) => {
   // CORS - Agregar headers a todas las responses
   // ============================================================================
   const response = NextResponse.next()
+  response.headers.set('x-debug-role', userRole)
+  response.headers.set('x-debug-path', req.nextUrl.pathname)
   return addCorsHeaders(response, req)
 })
 
