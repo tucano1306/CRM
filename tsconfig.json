@@ -38,6 +38,10 @@
   "exclude": [
     "node_modules",
     "__tests__",
+    "e2e",
+    "jest.setup.js",
+    "jest.config.js",
+    "playwright.config.ts",
     "app/api/products/[id]/rate",
     "app/api/orders/[id]/rate"
   ]
