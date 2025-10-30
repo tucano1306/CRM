@@ -2,12 +2,48 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const { userId } = await auth()
+    const { userId, sessionClaims } = await auth()
 
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
+    // Si se pide diagnóstico de rol, retornar info de autenticación
+    const url = new URL(request.url)
+    if (url.searchParams.get('debug') === 'role') {
+      let userRole = 'CLIENT'
+      let roleSource = 'default'
+      
+      try {
+        if ((sessionClaims as any)?.role) {
+          userRole = (sessionClaims as any).role
+          roleSource = 'sessionClaims.role'
+        } else if (sessionClaims?.public_metadata) {
+          const metadata = sessionClaims.public_metadata as any
+          userRole = metadata?.role || 'CLIENT'
+          roleSource = metadata?.role ? 'sessionClaims.public_metadata.role' : 'default (CLIENT)'
+        }
+      } catch (error) {
+        console.error('Error getting role:', error)
+      }
+
+      return NextResponse.json({
+        authenticated: true,
+        userId,
+        detectedRole: userRole,
+        roleSource,
+        sessionClaims: {
+          hasRole: !!(sessionClaims as any)?.role,
+          hasPublicMetadata: !!sessionClaims?.public_metadata,
+          publicMetadata: sessionClaims?.public_metadata || null,
+        },
+        message: `Your role is detected as: ${userRole} (from ${roleSource})`,
+        recommendation: userRole !== 'CLIENT' 
+          ? '⚠️ Para acceder a rutas de buyer, necesitas rol CLIENT en Clerk public_metadata'
+          : '✅ Tienes el rol correcto para buyer routes'
+      })
     }
 
     console.log('🔍 Buscando cliente para userId:', userId)

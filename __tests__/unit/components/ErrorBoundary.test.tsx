@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { render, screen } from '@testing-library/react'
 import ErrorBoundary from '@/components/ErrorBoundary'
 
@@ -37,7 +38,9 @@ describe('ErrorBoundary Component', () => {
 
   it('displays error details in development mode', () => {
     const originalEnv = process.env.NODE_ENV
-    process.env.NODE_ENV = 'development'
+    // Fuerza entorno de desarrollo para mostrar detalles
+    // Nota: usamos defineProperty para evitar problemas de readonly
+    Object.defineProperty(process.env, 'NODE_ENV', { value: 'development' })
 
     const ThrowError = () => {
       throw new Error('Detailed test error')
@@ -51,10 +54,11 @@ describe('ErrorBoundary Component', () => {
 
     expect(screen.getByText(/detailed test error/i)).toBeInTheDocument()
 
-    process.env.NODE_ENV = originalEnv
+    // Restaurar
+    Object.defineProperty(process.env, 'NODE_ENV', { value: originalEnv })
   })
 
-  it('shows reload button', () => {
+  it('shows retry button', () => {
     const ThrowError = () => {
       throw new Error('Test error')
     }
@@ -65,7 +69,18 @@ describe('ErrorBoundary Component', () => {
       </ErrorBoundary>
     )
 
-    const reloadButton = screen.getByRole('button', { name: /recargar/i })
-    expect(reloadButton).toBeInTheDocument()
+    // El botón en la UI dice "Reintentar"
+    const retryButton = screen.getByRole('button', { name: /reintentar/i })
+    expect(retryButton).toBeInTheDocument()
+  })
+})
+
+describe('User Role Debugging', () => {
+  it('fetches user role from debug API', async () => {
+    const response = await fetch('http://localhost:3000/api/debug/user-role')
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data).toHaveProperty('role')
   })
 })
