@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Decimal } from '@prisma/client/runtime/library';
 
 // GET - Análisis de clientes
 export async function GET(request: NextRequest) {
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     // Obtener detalles de top clientes
     const topClientsWithDetails = await Promise.all(
       topClientsBySpending
-        .filter(item => item.clientId !== null)
+        .filter((item): item is typeof item & { clientId: string } => item.clientId !== null)
         .map(async (item) => {
           const client = await prisma.client.findUnique({
             where: { id: item.clientId as string },
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
               totalOrders: item._count,
               totalSpent: Number(item._sum.totalAmount || 0),
               averageOrderValue: item._sum.totalAmount 
-                ? Number((Number(item._sum.totalAmount) / item._count).toFixed(2))
+                ? Number((Number(item._sum.totalAmount) / Number(item._count)).toFixed(2))
                 : 0,
               lastOrderDate: lastOrder?.createdAt,
               lastOrderStatus: lastOrder?.status
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
 
     const frequentClientsWithDetails = await Promise.all(
       topClientsByFrequency
-        .filter(item => item.clientId !== null)
+        .filter((item): item is typeof item & { clientId: string } => item.clientId !== null)
         .map(async (item) => {
           const client = await prisma.client.findUnique({
             where: { id: item.clientId as string },

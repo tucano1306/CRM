@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { PrismaClient } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
 
 const prisma = new PrismaClient();
 
@@ -89,7 +90,7 @@ export async function GET() {
       }
     });
 
-    const dailyStats = dailyOrders.map(day => ({
+    const dailyStats = dailyOrders.map((day) => ({
       date: day.createdAt.toISOString().split('T')[0],
       orders: day._count.id,
       revenue: Number(day._sum.totalAmount || 0)
@@ -158,8 +159,8 @@ export async function GET() {
         ],
         recentPerformance: {
           last7Days: {
-            orders: dailyStats.reduce((acc, day) => acc + day.orders, 0),
-            revenue: dailyStats.reduce((acc, day) => acc + day.revenue, 0),
+            orders: dailyStats.reduce((acc: number, day: { orders: number }) => acc + day.orders, 0),
+            revenue: dailyStats.reduce((acc: number, day: { revenue: number }) => acc + day.revenue, 0),
           },
           currentMonth: {
             orders: totalOrders,
@@ -167,7 +168,7 @@ export async function GET() {
           },
           dailyStats: dailyStats  // ✅ Agregar esto
         },
-        topProducts: topProducts.map(p => ({
+        topProducts: topProducts.map((p) => ({
           productId: p.productId,
           productName: p.productName,
           totalSold: p._sum.quantity || 0,
