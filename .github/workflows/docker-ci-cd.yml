@@ -143,7 +143,7 @@ jobs:
             NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
 
       - name: Image digest
-        run: echo ${{ steps.meta.outputs.tags }}
+        run: echo "${{ steps.meta.outputs.tags }}"
 
   # ==============================================================================
   # Security Scan
