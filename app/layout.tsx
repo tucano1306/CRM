@@ -2,6 +2,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { ClerkProvider } from '@clerk/nextjs'
 import { initializeEventHandlers } from '@/lib/events/handlers'
+import RoleSwitcher from '@/components/RoleSwitcher'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -46,6 +47,7 @@ export default function RootLayout({
       <html lang="es" suppressHydrationWarning>
         <body className={inter.className}>
           {children}
+          <RoleSwitcher />
         </body>
       </html>
     </ClerkProvider>
