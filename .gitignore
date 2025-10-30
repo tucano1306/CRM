@@ -64,3 +64,38 @@ RESUMEN-*.md
 
 # Script de limpieza
 cleanup-project.ps1
+
+# ==============================================================================
+# Docker & DevOps
+# ==============================================================================
+
+# Docker volumes y datos persistentes
+postgres_data/
+postgres_dev_data/
+redis_data/
+app_uploads/
+nginx_logs/
+
+# SSL Certificates (nunca commitear)
+nginx/ssl/*.crt
+nginx/ssl/*.key
+nginx/ssl/*.pem
+
+# Environment files con secrets
+.env.docker
+.env.production
+.env.staging
+
+# Docker override personalizado
+docker-compose.override.yml
+
+# Backups de base de datos
+backups/*.sql
+backups/*.sql.gz
+
+# Logs
+logs/
+*.log
+
+# Build artifacts de Docker
+.dockerignore.bak

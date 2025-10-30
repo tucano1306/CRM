@@ -45,11 +45,17 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
   const fetchOrders = async () => {
     setLoading(true)
     try {
+      console.log('Fetching recurring orders...') // Debug
       const response = await fetch('/api/recurring-orders')
       const result = await response.json()
       
+      console.log('Recurring orders response:', result) // Debug
+      
       if (result.success) {
         setOrders(result.data)
+        console.log('Orders loaded:', result.data.length) // Debug
+      } else {
+        console.error('Failed to fetch orders:', result.error)
       }
     } catch (error) {
       console.error('Error fetching recurring orders:', error)
