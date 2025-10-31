@@ -16,6 +16,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+    "types": ["jest", "@testing-library/jest-dom"],
     "plugins": [
       {
         "name": "next"
@@ -42,18 +43,14 @@
     "types/**/*.tsx",
     "hooks/**/*.ts",
     "hooks/**/*.tsx",
-    "middleware.ts"
+    "middleware.ts",
+    "__tests__/**/*",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ],
   "exclude": [
     "node_modules",
-    "__tests__/**/*",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/*.spec.ts",
-    "**/*.spec.tsx",
     "e2e/**/*",
-    "jest.setup.js",
-    "jest.config.js",
     "playwright.config.ts",
     "app/api/products/[id]/rate",
     "app/api/orders/[id]/rate"

@@ -1,3 +1,4 @@
+/// <reference types="jest" />
 import { getSeller, getClient, validateSellerClientRelation, validateSellerOrderRelation, validateClientOrderRelation, validateSellerProductRelation, UnauthorizedError } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 
