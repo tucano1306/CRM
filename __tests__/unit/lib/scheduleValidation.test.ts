@@ -623,6 +623,16 @@ describe('scheduleValidation - Async Functions', () => {
   })
 
   describe('isSellerAvailableNow', () => {
+    beforeEach(() => {
+      // Mock Date to return Monday 2024-01-08 at 15:00 (within all test schedules)
+      jest.useFakeTimers()
+      jest.setSystemTime(new Date('2024-01-08T15:00:00'))
+    })
+
+    afterEach(() => {
+      jest.useRealTimers()
+    })
+
     it('should return availability for both orders and chat', async () => {
       // Mock: Both order and chat are available
       ;(prisma.orderSchedule.findFirst as jest.Mock).mockResolvedValue({
