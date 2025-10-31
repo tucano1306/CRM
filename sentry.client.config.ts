@@ -15,8 +15,7 @@ Sentry.init({
   // Additional context
   environment: process.env.NODE_ENV,
   
-  // Capture all console.error automatically
-  integrations: [
-    new Sentry.BrowserTracing(),
-  ],
+  // Replay integration for session recording
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1.0,
 });
