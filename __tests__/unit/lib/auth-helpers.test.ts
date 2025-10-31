@@ -1,5 +1,5 @@
 /// <reference types="jest" />
-import { getSeller, getClient, validateSellerClientRelation, validateSellerOrderRelation, validateClientOrderRelation, validateSellerProductRelation, UnauthorizedError } from '@/lib/auth-helpers'
+import { getSeller, getClient, validateSellerClientRelation, validateSellerOrderRelation, validateClientOrderRelation, validateSellerProductRelation, UnauthorizedError, handleAuthError } from '@/lib/auth-helpers'
 import { prisma } from '@/lib/prisma'
 
 // Mock Prisma
@@ -263,6 +263,48 @@ describe('auth-helpers', () => {
       ;(prisma.seller.findFirst as jest.Mock).mockRejectedValue(new Error('Database error'))
 
       await expect(getSeller('user-123')).rejects.toThrow('Database error')
+    })
+
+    it('should throw UnauthorizedError when userId is empty', async () => {
+      await expect(getSeller('')).rejects.toThrow('No autorizado')
+    })
+  })
+
+  describe('getClient', () => {
+    it('should throw UnauthorizedError when userId is empty', async () => {
+      await expect(getClient('')).rejects.toThrow('No autorizado')
+    })
+  })
+
+  describe('handleAuthError', () => {
+    it('should handle UnauthorizedError correctly', async () => {
+      const error = new UnauthorizedError('Test unauthorized', 403)
+      const result = await handleAuthError(error)
+
+      expect(result.error).toBe('Test unauthorized')
+      expect(result.statusCode).toBe(403)
+    })
+
+    it('should handle generic errors', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+      const error = new Error('Something went wrong')
+      const result = await handleAuthError(error)
+
+      expect(result.error).toBe('Error interno del servidor')
+      expect(result.statusCode).toBe(500)
+      expect(consoleSpy).toHaveBeenCalledWith('Unexpected error in auth handler:', error)
+
+      consoleSpy.mockRestore()
+    })
+
+    it('should handle unknown error types', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
+      const result = await handleAuthError('string error')
+
+      expect(result.error).toBe('Error interno del servidor')
+      expect(result.statusCode).toBe(500)
+
+      consoleSpy.mockRestore()
     })
   })
 })

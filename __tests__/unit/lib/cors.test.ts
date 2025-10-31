@@ -319,5 +319,43 @@ describe('cors', () => {
       }) as Record<string, string>
       expect(headers3['Access-Control-Allow-Origin']).toBeUndefined()
     })
+
+    it('should handle origin denied scenario in getCorsHeaders', () => {
+      const headers = getCorsHeaders('https://evil.com', {
+        origin: ['https://allowed.com']
+      }) as Record<string, string>
+      
+      // When origin is denied and not wildcard, header should be undefined
+      expect(headers['Access-Control-Allow-Origin']).toBeUndefined()
+    })
+
+    it('should handle wildcard origin with non-matching request origin', () => {
+      // When origin config is wildcard, it's accepted by isOriginAllowed
+      // and getCorsHeaders uses the actual origin (line 96)
+      const headers = getCorsHeaders('https://some-origin.com', {
+        origin: '*'
+      }) as Record<string, string>
+      
+      // With wildcard, it uses the request origin
+      expect(headers['Access-Control-Allow-Origin']).toBe('https://some-origin.com')
+    })
+
+    it('should use wildcard when request origin is empty but config is wildcard', () => {
+      const headers = getCorsHeaders(null, {
+        origin: '*'
+      }) as Record<string, string>
+      
+      // When origin is null/empty with wildcard config, should use *
+      expect(headers['Access-Control-Allow-Origin']).toBe('*')
+    })
+
+    it('should handle origin denied with string comparison', () => {
+      // Test the isOriginAllowed return false path (line 78)
+      const headers = getCorsHeaders('https://notallowed.com', {
+        origin: 'https://allowed.com' // String comparison fails
+      }) as Record<string, string>
+      
+      expect(headers['Access-Control-Allow-Origin']).toBeUndefined()
+    })
   })
 })
