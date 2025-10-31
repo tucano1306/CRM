@@ -77,12 +77,12 @@ describe('Predefined Tags System', () => {
     it('should return empty array for unknown category', () => {
       // La función lanza error si la categoría no existe
       // Actualizado para reflejar comportamiento real
-      expect(() => getTagsByCategory('UnknownCategory')).toThrow()
+      expect(() => getTagsByCategory('UnknownCategory' as any)).toThrow()
     })
 
     it('should handle empty string category', () => {
       // La función lanza error si la categoría está vacía
-      expect(() => getTagsByCategory('')).toThrow()
+      expect(() => getTagsByCategory('' as any)).toThrow()
     })
   })
 
