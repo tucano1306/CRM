@@ -4,6 +4,9 @@ import { ClerkProvider } from '@clerk/nextjs'
 import { initializeEventHandlers } from '@/lib/events/handlers'
 import RoleSwitcher from '@/components/RoleSwitcher'
 import PendingRedirectHandler from '@/components/PendingRedirectHandler'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
+import { QueryProvider } from '@/components/providers/QueryProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -47,9 +50,13 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="es" suppressHydrationWarning>
         <body className={inter.className}>
-          <PendingRedirectHandler />
-          {children}
-          <RoleSwitcher />
+          <QueryProvider>
+            <PendingRedirectHandler />
+            {children}
+            <RoleSwitcher />
+          </QueryProvider>
+          <Analytics />
+          <SpeedInsights />
         </body>
       </html>
     </ClerkProvider>
