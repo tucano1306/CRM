@@ -1,11 +1,11 @@
 # ==============================================================================
 # Multi-stage Dockerfile for Next.js 15 Food Orders CRM
 # Optimized for production with security best practices
-# Using Alpine 3.19 for OpenSSL 1.1 compatibility with Prisma
+# Using latest Alpine for improved security (auto-includes compatible OpenSSL)
 # ==============================================================================
 
 # Stage 1: Dependencies
-FROM node:22-alpine3.19 AS deps
+FROM node:22-alpine AS deps
 
 # Install security updates and required tools
 RUN apk add --no-cache libc6-compat openssl
@@ -21,7 +21,7 @@ RUN npm ci --only=production --ignore-scripts && \
 
 # ==============================================================================
 # Stage 2: Builder
-FROM node:22-alpine3.19 AS builder
+FROM node:22-alpine AS builder
 
 WORKDIR /app
 
@@ -54,7 +54,7 @@ RUN npm run build
 
 # ==============================================================================
 # Stage 3: Runner (Production)
-FROM node:22-alpine3.19 AS runner
+FROM node:22-alpine AS runner
 
 WORKDIR /app
 
