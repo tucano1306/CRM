@@ -4,8 +4,40 @@ import {
   getTimeString,
   timeToMinutes,
   isTimeInRange,
-  DayOfWeek
+  DayOfWeek,
+  validateOrderTime,
+  validateChatTime,
 } from '@/lib/scheduleValidation'
+import { prisma } from '@/lib/prisma'
+
+// Mock prisma client with nested structure for orderSchedule and chatSchedule
+jest.mock('@/lib/prisma', () => ({
+  prisma: {
+    orderSchedule: {
+      findFirst: jest.fn()
+    },
+    chatSchedule: {
+      findFirst: jest.fn()
+    }
+  }
+}))
+
+// Mock logger to avoid console output
+jest.mock('@/lib/logger', () => {
+  const mockLogger = {
+    debug: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
+  }
+  return {
+    __esModule: true,
+    default: mockLogger,
+    logger: mockLogger,
+    LogCategory: {
+      VALIDATION: 'VALIDATION',
+    },
+  }
+})
 
 describe('scheduleValidation - Time Helpers', () => {
   describe('getDayOfWeek', () => {
@@ -235,6 +267,255 @@ describe('scheduleValidation - Time Helpers', () => {
     it('should handle very late night times', () => {
       expect(isTimeInRange('23:58', '23:00', '23:59')).toBe(true)
       expect(isTimeInRange('23:59', '23:00', '23:59')).toBe(true)
+    })
+  })
+})
+
+describe('scheduleValidation - Async Functions', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  describe('validateOrderTime', () => {
+    it('should allow orders when no schedule is configured', async () => {
+      (prisma.orderSchedule.findFirst as jest.Mock).mockResolvedValueOnce(null)
+
+      const result = await validateOrderTime('seller-123')
+
+      expect(result.isValid).toBe(true)
+      expect(result.message).toContain('restricciones')
+      expect(prisma.orderSchedule.findFirst).toHaveBeenCalledWith({
+        where: {
+          sellerId: 'seller-123',
+          dayOfWeek: expect.any(String),
+          isActive: true,
+        },
+      })
+    })
+
+    it('should allow orders within schedule time range', async () => {
+      const mockSchedule = {
+        id: 'schedule-1',
+        sellerId: 'seller-123',
+        dayOfWeek: 'MONDAY',
+        startTime: '08:00',
+        endTime: '18:00',
+        isActive: true,
+      }
+
+      ;(prisma.orderSchedule.findFirst as jest.Mock).mockResolvedValueOnce(mockSchedule)
+
+      // Monday at 10:00 AM
+      const testDate = new Date('2024-01-08T10:00:00')
+      const result = await validateOrderTime('seller-123', testDate)
+
+      expect(result.isValid).toBe(true)
+      expect(result.schedule).toEqual({
+        dayOfWeek: 'MONDAY',
+        startTime: '08:00',
+        endTime: '18:00',
+      })
+    })
+
+    it('should reject orders outside schedule time range', async () => {
+      const mockSchedule = {
+        id: 'schedule-1',
+        sellerId: 'seller-123',
+        dayOfWeek: 'MONDAY',
+        startTime: '08:00',
+        endTime: '18:00',
+        isActive: true,
+      }
+
+      ;(prisma.orderSchedule.findFirst as jest.Mock).mockResolvedValueOnce(mockSchedule)
+
+      // Monday at 7:00 AM (before opening)
+      const testDate = new Date('2024-01-08T07:00:00')
+      const result = await validateOrderTime('seller-123', testDate)
+
+      expect(result.isValid).toBe(false)
+      expect(result.message).toContain('08:00')
+      expect(result.message).toContain('18:00')
+    })
+
+    it('should reject orders after closing time', async () => {
+      const mockSchedule = {
+        id: 'schedule-1',
+        sellerId: 'seller-123',
+        dayOfWeek: 'TUESDAY',
+        startTime: '09:00',
+        endTime: '17:00',
+        isActive: true,
+      }
+
+      ;(prisma.orderSchedule.findFirst as jest.Mock).mockResolvedValueOnce(mockSchedule)
+
+      // Tuesday at 8:00 PM
+      const testDate = new Date('2024-01-09T20:00:00')
+      const result = await validateOrderTime('seller-123', testDate)
+
+      expect(result.isValid).toBe(false)
+      expect(result.schedule?.startTime).toBe('09:00')
+      expect(result.schedule?.endTime).toBe('17:00')
+    })
+
+    it('should handle database errors gracefully', async () => {
+      const dbError = new Error('Database connection failed')
+      ;(prisma.orderSchedule.findFirst as jest.Mock).mockRejectedValueOnce(dbError)
+
+      const result = await validateOrderTime('seller-123')
+
+      // On error, function allows orders by default (failsafe behavior)
+      expect(result.isValid).toBe(true)
+      expect(result.message).toContain('Error')
+    })
+
+    it('should use current time when no date provided', async () => {
+      (prisma.orderSchedule.findFirst as jest.Mock).mockResolvedValueOnce(null)
+
+      const result = await validateOrderTime('seller-456')
+
+      expect(result.isValid).toBe(true)
+      expect(prisma.orderSchedule.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            sellerId: 'seller-456',
+          }),
+        })
+      )
+    })
+  })
+
+  describe('validateChatTime', () => {
+    it('should allow chat when no schedule is configured', async () => {
+      (prisma.chatSchedule.findFirst as jest.Mock).mockResolvedValueOnce(null)
+
+      const result = await validateChatTime('seller-123')
+
+      expect(result.isValid).toBe(true)
+      expect(result.message).toContain('restricciones')
+      expect(prisma.chatSchedule.findFirst).toHaveBeenCalledWith({
+        where: {
+          sellerId: 'seller-123',
+          dayOfWeek: expect.any(String),
+          isActive: true,
+        },
+      })
+    })
+
+    it('should allow chat within schedule time range', async () => {
+      const mockSchedule = {
+        id: 'chat-schedule-1',
+        sellerId: 'seller-123',
+        dayOfWeek: 'WEDNESDAY',
+        startTime: '09:00',
+        endTime: '21:00',
+        isActive: true,
+      }
+
+      ;(prisma.chatSchedule.findFirst as jest.Mock).mockResolvedValueOnce(mockSchedule)
+
+      // Wednesday at 3:00 PM
+      const testDate = new Date('2024-01-10T15:00:00')
+      const result = await validateChatTime('seller-123', testDate)
+
+      expect(result.isValid).toBe(true)
+      expect(result.schedule).toEqual({
+        dayOfWeek: 'WEDNESDAY',
+        startTime: '09:00',
+        endTime: '21:00',
+      })
+    })
+
+    it('should reject chat outside schedule time range', async () => {
+      const mockSchedule = {
+        id: 'chat-schedule-1',
+        sellerId: 'seller-123',
+        dayOfWeek: 'THURSDAY',
+        startTime: '10:00',
+        endTime: '20:00',
+        isActive: true,
+      }
+
+      ;(prisma.chatSchedule.findFirst as jest.Mock).mockResolvedValueOnce(mockSchedule)
+
+      // Thursday at 9:00 AM (before opening)
+      const testDate = new Date('2024-01-11T09:00:00')
+      const result = await validateChatTime('seller-123', testDate)
+
+      expect(result.isValid).toBe(false)
+      expect(result.message).toContain('10:00')
+      expect(result.message).toContain('20:00')
+    })
+
+    it('should reject chat after closing time', async () => {
+      const mockSchedule = {
+        id: 'chat-schedule-1',
+        sellerId: 'seller-123',
+        dayOfWeek: 'FRIDAY',
+        startTime: '08:00',
+        endTime: '18:00',
+        isActive: true,
+      }
+
+      ;(prisma.chatSchedule.findFirst as jest.Mock).mockResolvedValueOnce(mockSchedule)
+
+      // Friday at 9:00 PM
+      const testDate = new Date('2024-01-12T21:00:00')
+      const result = await validateChatTime('seller-123', testDate)
+
+      expect(result.isValid).toBe(false)
+      expect(result.schedule?.startTime).toBe('08:00')
+      expect(result.schedule?.endTime).toBe('18:00')
+    })
+
+    it('should handle database errors gracefully', async () => {
+      const dbError = new Error('Connection timeout')
+      ;(prisma.chatSchedule.findFirst as jest.Mock).mockRejectedValueOnce(dbError)
+
+      const result = await validateChatTime('seller-123')
+
+      // On error, function allows chat by default (failsafe behavior)
+      expect(result.isValid).toBe(true)
+      expect(result.message).toContain('Error')
+    })
+
+    it('should work with exact boundary times - start time', async () => {
+      const mockSchedule = {
+        id: 'chat-schedule-1',
+        sellerId: 'seller-123',
+        dayOfWeek: 'SATURDAY',
+        startTime: '10:00',
+        endTime: '16:00',
+        isActive: true,
+      }
+
+      ;(prisma.chatSchedule.findFirst as jest.Mock).mockResolvedValueOnce(mockSchedule)
+
+      // Saturday at exactly 10:00 AM
+      const testDate = new Date('2024-01-13T10:00:00')
+      const result = await validateChatTime('seller-123', testDate)
+
+      expect(result.isValid).toBe(true)
+    })
+
+    it('should work with exact boundary times - end time', async () => {
+      const mockSchedule = {
+        id: 'chat-schedule-1',
+        sellerId: 'seller-123',
+        dayOfWeek: 'SUNDAY',
+        startTime: '11:00',
+        endTime: '19:00',
+        isActive: true,
+      }
+
+      ;(prisma.chatSchedule.findFirst as jest.Mock).mockResolvedValueOnce(mockSchedule)
+
+      // Sunday at exactly 7:00 PM
+      const testDate = new Date('2024-01-07T19:00:00')
+      const result = await validateChatTime('seller-123', testDate)
+
+      expect(result.isValid).toBe(true)
     })
   })
 })
