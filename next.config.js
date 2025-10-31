@@ -9,11 +9,6 @@ const nextConfig = {
     unoptimized: process.env.NODE_ENV === 'development',
   },
   
-  // Disable telemetry
-  telemetry: {
-    enabled: false,
-  },
-  
   // Experimental features
   experimental: {
     serverActions: {

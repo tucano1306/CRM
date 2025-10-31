@@ -63,7 +63,9 @@ export default defineConfig({
       // dependencies: ['setup'],
       testIgnore: [
         /auth\.setup\.ts/,
+        /auth-mock\.setup\.ts/,
         /simple-debug\.spec\.ts/, // Test de debug temporal
+        /bypass-auth\.spec\.ts/, // Test experimental
       ],
     },
 

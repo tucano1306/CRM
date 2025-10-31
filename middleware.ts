@@ -47,6 +47,52 @@ const isCronRoute = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, req) => {
   // ============================================================================
+  // E2E TESTING BYPASS - Solo en ambiente de testing
+  // ============================================================================
+  const bypassAuth = req.headers.get('X-Test-Bypass-Auth') === 'true'
+  const testUserRole = req.headers.get('X-Test-User-Role') || 'CLIENT'
+  const testUserId = req.headers.get('X-Test-User-Id') || 'test-user-e2e'
+  
+  // Solo permitir bypass en desarrollo o testing
+  const isTestEnvironment = process.env.NODE_ENV === 'test' || 
+                           process.env.E2E_TESTING === 'true'
+  
+  if (bypassAuth && isTestEnvironment) {
+    logger.warn(LogCategory.AUTH, '⚠️ E2E TEST MODE - Auth bypassed', {
+      userId: testUserId,
+      userRole: testUserRole,
+      endpoint: req.nextUrl.pathname
+    })
+    
+    // Crear una respuesta que simula autenticación
+    const response = NextResponse.next()
+    response.headers.set('X-Test-Auth-Bypassed', 'true')
+    response.headers.set('X-Test-User-Role', testUserRole)
+    
+    // Proteger rutas según el rol de prueba (usar la misma lógica de mapeo)
+    if (isSellerRoute(req) && testUserRole !== 'SELLER' && testUserRole !== 'ADMIN') {
+      // Mapear a ruta de buyer equivalente
+      const path = req.nextUrl.pathname
+      const mapToBuyer = (p: string) => {
+        if (p === '/dashboard') return '/buyer/dashboard'
+        if (p.startsWith('/chat')) return p.replace('/chat', '/buyer/chat')
+        if (p.startsWith('/orders')) return p.replace('/orders', '/buyer/orders')
+        if (p.startsWith('/quotes')) return p.replace('/quotes', '/buyer/quotes')
+        if (p.startsWith('/recurring-orders')) return p.replace('/recurring-orders', '/buyer/recurring-orders')
+        if (p.startsWith('/returns')) return p.replace('/returns', '/buyer/returns')
+        if (p.startsWith('/clients')) return '/buyer/dashboard'
+        if (p.startsWith('/products')) return '/buyer/catalog'
+        if (p.startsWith('/stats')) return '/buyer/dashboard'
+        return '/buyer/dashboard'
+      }
+      const target = mapToBuyer(path)
+      return NextResponse.redirect(new URL(target, req.url))
+    }
+    
+    return response
+  }
+  
+  // ============================================================================
   // CORS - Manejar preflight requests (OPTIONS)
   // ============================================================================
   if (req.method === 'OPTIONS') {

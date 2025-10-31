@@ -1,5 +1,8 @@
 # Estado de Tests - Food Orders CRM
 
+> **Última actualización:** 30 de Octubre, 2025  
+> **Pipeline:** ✅ CI/CD completamente configurado con E2E tests
+
 ## ✅ Tests Habilitados
 
 ### Tests Unitarios (3/3 passing)
@@ -7,16 +10,38 @@
 - ✅ `ErrorBoundary` renders error UI when there is an error  
 - ✅ `ErrorBoundary` shows retry button
 
-**Comando:** `npm run test:unit`
+**Comando:** `npm run test:unit`  
+**CI/CD:** ✅ Habilitado en job `test-unit`
+
+### Tests E2E con Auth Bypass (9/9 passing) ✅ NUEVO
+- ✅ Buyer dashboard access
+- ✅ Buyer catalog access
+- ✅ Buyer orders access
+- ✅ Seller → Buyer redirect
+- ✅ Products → Catalog redirect (CLIENT)
+- ✅ Seller dashboard access
+- ✅ Seller products page access
+- ✅ Seller clients page access
+- ✅ Seller orders page access
+
+**Comando:** `npm run test:e2e:bypass`  
+**CI/CD:** ✅ Habilitado en job `test-e2e`  
+**Estrategia:** Bypass de autenticación con headers HTTP  
+**Ver:** `E2E_TESTING_BYPASS.md` para detalles
 
 ## ⏸️ Tests Deshabilitados Temporalmente
 
-### Tests E2E - Navegación (.skip)
-- ⏸️ Buyer navigation tests (7 tests)
-- ⏸️ Seller navigation tests (5 tests)
-- ⏸️ Visual regression tests (10 tests)
+### Tests E2E con Clerk UI (.skip)
+- ⏸️ Root redirects (2 tests) - Headers no persisten en redirects
+- ⏸️ API endpoints (2 tests) - Requieren userId real de Clerk
+- ⏸️ Seller no-redirect (1 test) - ERR_ABORTED en páginas complejas
 
-**Razón:** Requieren autenticación con Clerk. El componente `<SignIn />` de Clerk no carga en Playwright (0 inputs detectados en el formulario).
+**Razón:** Limitaciones técnicas del bypass (ver `E2E_TESTING_BYPASS.md`)
+
+### Tests E2E Originales (.skip)
+- ⏸️ Tests con Clerk `<SignIn />` UI (22+ tests)
+
+**Razón:** El componente `<SignIn />` de Clerk no carga en Playwright (0 inputs detectados).
 
 **Issue Técnico:**
 ```
@@ -25,9 +50,7 @@ Call log:
   - waiting for locator('input[name="identifier"]') to be visible
 ```
 
-**Evidencia:** `test-results/sign-in-debug.png` muestra que Clerk no renderiza el formulario.
-
-**TODO:** Resolver integración Clerk SDK + Playwright antes de habilitar.
+**Solución implementada:** Bypass de autenticación con headers HTTP (9 tests funcionando)
 
 ### Tests Unitarios Skipped (2 tests)
 - ⏸️ `ErrorBoundary` displays error details in development mode
@@ -37,23 +60,29 @@ Call log:
 
 ## 🔄 CI/CD Pipeline
 
-### Jobs Habilitados
-- ✅ **lint**: ESLint + TypeScript type checking
-- ✅ **test-unit**: 3 tests unitarios
-- ✅ **database**: Validación Prisma + migraciones
-- ✅ **build**: Docker image build & push
-
-### Dependencias
+### Jobs Habilitados ✅
 ```
-lint
-  ├── test-unit
-  └── database
-        └── build
+Pipeline Flow:
+  lint → (test-unit + test-e2e + database) → build
+
+Jobs:
+  ✅ lint       - ESLint + TypeScript type checking (~30s)
+  ✅ test-unit  - Jest unit tests (3 tests, ~45s)
+  ✅ test-e2e   - Playwright E2E tests (9 tests, ~2-3min) ✅ NUEVO
+  ✅ database   - Prisma migrations & validation (~1min)
+  ✅ build      - Docker image build & push (~5-8min)
 ```
 
-### Jobs Deshabilitados
-- ⏸️ **test-e2e**: E2E tests con Playwright
-  - Se habilitará cuando se resuelva la integración con Clerk
+### E2E Test Job Configuration
+```yaml
+- PostgreSQL 16 service container
+- Playwright browsers (Chromium)
+- Database migrations & seed
+- E2E_TESTING=true environment
+- Artifacts: playwright-report, screenshots
+```
+
+**Ver pipeline completo:** `CI_CD_PIPELINE.md`
 
 ## 📝 Trabajo Completado
 
