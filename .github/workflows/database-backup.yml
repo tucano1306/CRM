@@ -1,0 +1,78 @@
+name: Database Backup
+
+on:
+  schedule:
+    # Ejecutar todos los días a las 2 AM UTC (9 PM hora de Panamá)
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Permite ejecutar manualmente desde GitHub
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PostgreSQL Client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Create Backup Directory
+        run: mkdir -p backups
+
+      - name: Generate Backup
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          # Generar nombre con fecha y hora
+          BACKUP_FILE="backups/backup-$(date +%Y%m%d-%H%M%S).sql"
+          
+          echo "🚀 Creando backup de base de datos..."
+          
+          # Hacer backup completo
+          pg_dump $DATABASE_URL > $BACKUP_FILE
+          
+          # Verificar que se creó correctamente
+          if [ -f "$BACKUP_FILE" ]; then
+            SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
+            echo "✅ Backup creado exitosamente: $BACKUP_FILE ($SIZE)"
+          else
+            echo "❌ Error: No se pudo crear el backup"
+            exit 1
+          fi
+          
+          # Comprimir el backup
+          echo "📦 Comprimiendo backup..."
+          gzip $BACKUP_FILE
+          
+          COMPRESSED_SIZE=$(du -h "${BACKUP_FILE}.gz" | cut -f1)
+          echo "✅ Backup comprimido: ${BACKUP_FILE}.gz ($COMPRESSED_SIZE)"
+
+      - name: Upload Backup to GitHub Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-backup-${{ github.run_number }}
+          path: backups/*.gz
+          retention-days: 30
+          compression-level: 0 # Ya está comprimido con gzip
+
+      - name: Cleanup old local backups
+        run: |
+          echo "🧹 Limpiando backups antiguos..."
+          find backups/ -name "*.gz" -mtime +7 -delete
+          echo "✅ Limpieza completada"
+
+      - name: Send notification (opcional)
+        if: success()
+        run: |
+          echo "✅ Backup completado exitosamente en $(date)"
+          echo "📊 Detalles del backup:"
+          ls -lh backups/*.gz
+
+      - name: Send failure notification (opcional)
+        if: failure()
+        run: |
+          echo "❌ El backup falló en $(date)"
+          echo "⚠️ Revisa los logs para más información"
