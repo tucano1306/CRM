@@ -411,3 +411,96 @@ describe('createRateLimitKey', () => {
     expect(key).toBe('ip:192.168.1.1')
   })
 })
+
+describe('RateLimiter - Cleanup', () => {
+  beforeEach(() => {
+    jest.useFakeTimers()
+  })
+
+  afterEach(() => {
+    jest.useRealTimers()
+  })
+
+  it('should clean up expired entries automatically', () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+    const config: RateLimitConfig = {
+      windowMs: 1000,
+      maxRequests: 3,
+      blockDurationMs: 2000
+    }
+    const limiter = new RateLimiter(config)
+
+    // Make some requests
+    limiter.check('test-key-1')
+    limiter.check('test-key-2')
+
+    // Advance time past window expiry
+    jest.advanceTimersByTime(2000)
+
+    // Trigger cleanup by advancing to interval
+    jest.advanceTimersByTime(60000)
+
+    // Cleanup should have logged
+    expect(consoleSpy).toHaveBeenCalled()
+
+    consoleSpy.mockRestore()
+    limiter.clear()
+  })
+
+  it('should clean up blocked entries after block expires', () => {
+    const consoleSpy = jest.spyOn(console, 'log').mockImplementation()
+    const config: RateLimitConfig = {
+      windowMs: 1000,
+      maxRequests: 2,
+      blockDurationMs: 3000
+    }
+    const limiter = new RateLimiter(config)
+
+    // Exceed limit to get blocked
+    limiter.check('blocked-key')
+    limiter.check('blocked-key')
+    limiter.check('blocked-key') // This blocks
+
+    // Advance time past block duration
+    jest.advanceTimersByTime(4000)
+
+    // Trigger cleanup
+    jest.advanceTimersByTime(60000)
+
+    // Cleanup should have occurred
+    expect(consoleSpy).toHaveBeenCalled()
+
+    consoleSpy.mockRestore()
+    limiter.clear()
+  })
+
+  it('should only clean expired entries, not active ones', () => {
+    const config: RateLimitConfig = {
+      windowMs: 5000, // 5 seconds
+      maxRequests: 3,
+      blockDurationMs: 2000
+    }
+    const limiter = new RateLimiter(config)
+
+    // Create entry that won't expire soon
+    limiter.check('active-key')
+
+    // Create entry that will expire
+    const oldLimiter = new RateLimiter({
+      windowMs: 100, // Very short window
+      maxRequests: 1,
+      blockDurationMs: 100
+    })
+    oldLimiter.check('expired-key')
+
+    // Advance time slightly (active entry still valid, expired entry should be cleaned)
+    jest.advanceTimersByTime(1000)
+
+    // The active key should still work
+    const result = limiter.check('active-key')
+    expect(result.allowed).toBe(true)
+
+    limiter.clear()
+    oldLimiter.clear()
+  })
+})

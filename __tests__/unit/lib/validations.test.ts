@@ -17,6 +17,10 @@ import {
   createRecurringOrderSchema,
   createCreditNoteSchema,
   useCreditNoteSchema,
+  createChatScheduleSchema,
+  createOrderScheduleSchema,
+  searchQuerySchema,
+  createNotificationSchema,
 } from '@/lib/validations'
 
 describe('Validation Schemas', () => {
@@ -1015,6 +1019,120 @@ describe('Validation Schemas', () => {
       }
 
       const result = useCreditNoteSchema.safeParse(invalidData)
+      expect(result.success).toBe(false)
+    })
+  })
+
+  describe('createChatScheduleSchema', () => {
+    it('should validate correct chat schedule', () => {
+      const validData = {
+        sellerId: '550e8400-e29b-41d4-a716-446655440000',
+        dayOfWeek: 'MONDAY',
+        startTime: '09:00',
+        endTime: '18:00',
+        isActive: true
+      }
+
+      const result = createChatScheduleSchema.safeParse(validData)
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject when startTime >= endTime', () => {
+      const invalidData = {
+        sellerId: '550e8400-e29b-41d4-a716-446655440000',
+        dayOfWeek: 'TUESDAY',
+        startTime: '18:00',
+        endTime: '09:00' // End before start!
+      }
+
+      const result = createChatScheduleSchema.safeParse(invalidData)
+      expect(result.success).toBe(false)
+    })
+  })
+
+  describe('createOrderScheduleSchema', () => {
+    it('should validate correct order schedule', () => {
+      const validData = {
+        sellerId: '550e8400-e29b-41d4-a716-446655440000',
+        dayOfWeek: 'WEDNESDAY',
+        startTime: '10:00',
+        endTime: '20:00',
+        isActive: true
+      }
+
+      const result = createOrderScheduleSchema.safeParse(validData)
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject when startTime >= endTime', () => {
+      const invalidData = {
+        sellerId: '550e8400-e29b-41d4-a716-446655440000',
+        dayOfWeek: 'FRIDAY',
+        startTime: '20:00',
+        endTime: '10:00' // End before start!
+      }
+
+      const result = createOrderScheduleSchema.safeParse(invalidData)
+      expect(result.success).toBe(false)
+    })
+  })
+
+  describe('searchQuerySchema', () => {
+    it('should validate correct search query', () => {
+      const validData = {
+        q: 'bananas',
+        category: 'fruits',
+        minPrice: 10,
+        maxPrice: 50
+      }
+
+      const result = searchQuerySchema.safeParse(validData)
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject when minPrice > maxPrice', () => {
+      const invalidData = {
+        q: 'test',
+        minPrice: 100,
+        maxPrice: 50 // Min greater than max!
+      }
+
+      const result = searchQuerySchema.safeParse(invalidData)
+      expect(result.success).toBe(false)
+    })
+  })
+
+  describe('createNotificationSchema', () => {
+    it('should validate with clientId only', () => {
+      const validData = {
+        type: 'ORDER_PLACED',
+        message: 'Your order has been placed',
+        clientId: '550e8400-e29b-41d4-a716-446655440000'
+      }
+
+      const result = createNotificationSchema.safeParse(validData)
+      expect(result.success).toBe(true)
+    })
+
+    it('should validate with sellerId only', () => {
+      const validData = {
+        type: 'CHAT_MESSAGE',
+        message: 'You have a new customer',
+        sellerId: '550e8400-e29b-41d4-a716-446655440000'
+      }
+
+      const result = createNotificationSchema.safeParse(validData)
+      expect(result.success).toBe(true)
+    })
+
+    it('should reject when neither clientId nor sellerId provided', () => {
+      const invalidData = {
+        type: 'OTHER',
+        message: 'Test message'
+        // Missing both clientId and sellerId!
+      }
+
+      const result = createNotificationSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
     })
   })
