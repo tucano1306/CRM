@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { PrismaClient } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
+import { getSeller, UnauthorizedError, handleAuthError } from '@/lib/auth-helpers';
 
 const prisma = new PrismaClient();
 
@@ -13,7 +14,10 @@ export async function GET() {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    // Obtener estadísticas generales
+    // 🔒 SEGURIDAD: Validar que es vendedor y obtener su ID
+    const seller = await getSeller(userId);
+
+    // 🔒 SEGURIDAD: Obtener estadísticas SOLO del vendedor autenticado
     const [
       totalOrders,
       pendingOrders,
@@ -24,50 +28,79 @@ export async function GET() {
       totalProducts,
       lowStockProducts,
     ] = await Promise.all([
-      // Total de órdenes
-      prisma.order.count(),
-      
-      // Órdenes pendientes
+      // Total de órdenes DEL VENDEDOR
       prisma.order.count({
-        where: { status: 'PENDING' },
+        where: { sellerId: seller.id }
       }),
       
-      // Órdenes en proceso
+      // Órdenes pendientes DEL VENDEDOR
       prisma.order.count({
-        where: { status: 'CONFIRMED' },
+        where: { 
+          status: 'PENDING',
+          sellerId: seller.id
+        },
       }),
       
-      // Órdenes completadas
+      // Órdenes en proceso DEL VENDEDOR
       prisma.order.count({
-        where: { status: 'COMPLETED' },
+        where: { 
+          status: 'CONFIRMED',
+          sellerId: seller.id
+        },
       }),
       
-      // Órdenes canceladas
+      // Órdenes completadas DEL VENDEDOR
       prisma.order.count({
-        where: { status: 'CANCELED' },
+        where: { 
+          status: 'COMPLETED',
+          sellerId: seller.id
+        },
       }),
       
-      // Ingresos totales (solo órdenes completadas)
+      // Órdenes canceladas DEL VENDEDOR
+      prisma.order.count({
+        where: { 
+          status: 'CANCELED',
+          sellerId: seller.id
+        },
+      }),
+      
+      // Ingresos totales DEL VENDEDOR (solo órdenes completadas)
       prisma.order.aggregate({
-        where: { status: 'COMPLETED' },
+        where: { 
+          status: 'COMPLETED',
+          sellerId: seller.id
+        },
         _sum: { totalAmount: true },
       }),
       
-      // Total de productos
+      // Total de productos DEL VENDEDOR
       prisma.product.count({
-        where: { isActive: true },
+        where: { 
+          isActive: true,
+          sellers: {
+            some: {
+              sellerId: seller.id
+            }
+          }
+        },
       }),
       
-      // Productos con stock bajo (menos de 10)
+      // Productos con stock bajo DEL VENDEDOR (menos de 10)
       prisma.product.count({
         where: {
           stock: { lt: 10 },
           isActive: true,
+          sellers: {
+            some: {
+              sellerId: seller.id
+            }
+          }
         },
       }),
     ]);
 
-    // Obtener estadísticas diarias de los últimos 7 días
+    // 🔒 SEGURIDAD: Obtener estadísticas diarias de los últimos 7 días DEL VENDEDOR
     const last7DaysDate = new Date();
     last7DaysDate.setDate(last7DaysDate.getDate() - 7);
 
@@ -75,6 +108,7 @@ export async function GET() {
       by: ['createdAt'],
       where: {
         status: 'COMPLETED',
+        sellerId: seller.id,  // ← FILTRO OBLIGATORIO
         createdAt: {
           gte: last7DaysDate
         }
@@ -96,8 +130,11 @@ export async function GET() {
       revenue: Number(day._sum.totalAmount || 0)
     }));
 
-    // Órdenes recientes (últimas 5)
+    // 🔒 SEGURIDAD: Órdenes recientes DEL VENDEDOR (últimas 5)
     const recentOrders = await prisma.order.findMany({
+      where: {
+        sellerId: seller.id  // ← FILTRO OBLIGATORIO
+      },
       take: 5,
       orderBy: { createdAt: 'desc' },
       include: {
@@ -119,9 +156,14 @@ export async function GET() {
       },
     });
 
-    // Productos más vendidos
+    // 🔒 SEGURIDAD: Productos más vendidos DEL VENDEDOR
     const topProducts = await prisma.orderItem.groupBy({
       by: ['productId', 'productName'],
+      where: {
+        order: {
+          sellerId: seller.id  // ← FILTRO OBLIGATORIO
+        }
+      },
       _sum: {
         quantity: true,
         subtotal: true,
@@ -190,8 +232,18 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error obteniendo analytics del dashboard:', error);
+    
+    // 🔒 SEGURIDAD: Manejar errores de autorización
+    if (error instanceof UnauthorizedError) {
+      const authError = await handleAuthError(error);
+      return NextResponse.json(
+        { error: authError.error },
+        { status: authError.statusCode }
+      );
+    }
+    
     return NextResponse.json(
-      { error: 'Error obteniendo estadísticas' },
+      { error: 'Error obteniendo analytics del dashboard' },
       { status: 500 }
     );
   } finally {

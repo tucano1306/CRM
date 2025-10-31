@@ -5,19 +5,47 @@ import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeo
 import { createProductSchema, validateSchema } from '@/lib/validations'
 import DOMPurify from 'isomorphic-dompurify'
 
-// GET /api/products - Obtener todos los productos
+// GET /api/products - Obtener productos del vendedor autenticado
 // ✅ CON TIMEOUT DE 5 SEGUNDOS
+// ✅ CON FILTRO DE SEGURIDAD POR SELLER
 // Soporta: ?search=nombre&lowStock=true
 export async function GET(request: Request) {
   try {
+    const { userId } = await auth()
+
+    if (!userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
+    // 🔒 SEGURIDAD: Obtener vendedor del usuario autenticado
+    const seller = await prisma.seller.findFirst({
+      where: {
+        authenticated_users: {
+          some: { authId: userId }
+        }
+      }
+    })
+
+    if (!seller) {
+      return NextResponse.json({ 
+        error: 'No tienes permisos para ver productos. Debes ser un vendedor registrado.' 
+      }, { status: 403 })
+    }
+
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search')
     const lowStockParam = searchParams.get('lowStock')
     
     const lowStock = lowStockParam === 'true'
 
-    // Construir filtro
-    const whereClause: any = {}
+    // 🔒 SEGURIDAD: Construir filtro con relación sellers (ProductSeller)
+    const whereClause: any = {
+      sellers: {
+        some: {
+          sellerId: seller.id  // ← FILTRO OBLIGATORIO: Solo productos de este vendedor
+        }
+      }
+    }
     
     if (search) {
       whereClause.OR = [

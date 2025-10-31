@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { PrismaClient } from '@prisma/client'
+import { getSeller, UnauthorizedError, handleAuthError } from '@/lib/auth-helpers'
 
 const prisma = new PrismaClient()
 
@@ -12,8 +13,14 @@ export async function GET() {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // Obtener todas las órdenes
+    // 🔒 SEGURIDAD: Validar que es vendedor y obtener su ID
+    const seller = await getSeller(userId)
+
+    // 🔒 SEGURIDAD: Obtener SOLO las órdenes del vendedor autenticado
     const orders = await prisma.order.findMany({
+      where: {
+        sellerId: seller.id  // ← FILTRO OBLIGATORIO
+      },
       include: {
         orderItems: true
       }
@@ -30,18 +37,26 @@ export async function GET() {
     // Calcular promedio
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
-    // Contar productos con stock bajo (menos de 10)
+    // 🔒 SEGURIDAD: Contar productos con stock bajo SOLO del vendedor
     const lowStockProducts = await prisma.product.count({
       where: {
         stock: {
           lt: 10
+        },
+        sellers: {
+          some: {
+            sellerId: seller.id  // ← FILTRO OBLIGATORIO
+          }
         }
       }
     })
 
-    // Órdenes por estado
+    // 🔒 SEGURIDAD: Órdenes por estado SOLO del vendedor
     const ordersByStatus = await prisma.order.groupBy({
       by: ['status'],
+      where: {
+        sellerId: seller.id  // ← FILTRO OBLIGATORIO
+      },
       _count: {
         status: true
       }
@@ -60,6 +75,16 @@ export async function GET() {
 
   } catch (error) {
     console.error('Error obteniendo estadísticas:', error)
+    
+    // 🔒 SEGURIDAD: Manejar errores de autorización
+    if (error instanceof UnauthorizedError) {
+      const authError = await handleAuthError(error)
+      return NextResponse.json(
+        { error: authError.error },
+        { status: authError.statusCode }
+      )
+    }
+    
     return NextResponse.json(
       { error: 'Error obteniendo estadísticas' },
       { status: 500 }

@@ -11,6 +11,7 @@ const prisma = new PrismaClient()
  * GET /api/chat-messages?otherUserId=xxx&orderId=xxx
  * Obtener mensajes de chat entre usuario y otro usuario
  * ✅ CON TIMEOUT DE 5 SEGUNDOS
+ * ✅ CON VALIDACIÓN DE RELACIÓN SELLER-CLIENT
  */
 export async function GET(request: NextRequest) {
   try {
@@ -25,6 +26,82 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const otherUserId = searchParams.get('otherUserId')
     const orderId = searchParams.get('orderId')
+
+    if (!otherUserId) {
+      return NextResponse.json(
+        { success: false, error: 'otherUserId es requerido' },
+        { status: 400 }
+      )
+    }
+
+    // 🔒 SEGURIDAD: Validar que el usuario tiene relación con el otro usuario
+    const authUser = await prisma.authenticated_users.findFirst({
+      where: { authId: userId },
+      include: {
+        sellers: true,
+        clients: true
+      }
+    })
+
+    if (!authUser) {
+      return NextResponse.json(
+        { success: false, error: 'Usuario no encontrado' },
+        { status: 404 }
+      )
+    }
+
+    // Determinar si es vendedor o cliente
+    const isSeller = authUser.sellers.length > 0
+    const isClient = authUser.clients.length > 0
+
+    // Validar relación seller-client
+    let hasPermission = false
+
+    if (isSeller) {
+      // Si es vendedor, verificar que el otro usuario es uno de sus clientes
+      const seller = authUser.sellers[0]
+      const otherUserClient = await prisma.client.findFirst({
+        where: {
+          sellerId: seller.id,
+          authenticated_users: {
+            some: { authId: otherUserId }
+          }
+        }
+      })
+      hasPermission = !!otherUserClient
+    } else if (isClient) {
+      // Si es cliente, verificar que el otro usuario es su vendedor
+      const client = authUser.clients[0]
+      const clientWithSeller = await prisma.client.findUnique({
+        where: { id: client.id },
+        include: {
+          seller: {
+            include: {
+              authenticated_users: true
+            }
+          }
+        }
+      })
+      
+      if (clientWithSeller?.seller) {
+        hasPermission = clientWithSeller.seller.authenticated_users.some(
+          auth => auth.authId === otherUserId
+        )
+      }
+    }
+
+    if (!hasPermission) {
+      console.warn('🚨 SECURITY: Unauthorized chat access attempt', {
+        userId,
+        otherUserId,
+        isSeller,
+        isClient
+      })
+      return NextResponse.json(
+        { success: false, error: 'No tienes permiso para ver estos mensajes' },
+        { status: 403 }
+      )
+    }
 
     // Obtener mensajes
     const where: any = {

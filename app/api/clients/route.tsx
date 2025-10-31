@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { eventEmitter } from '@/lib/events/eventEmitter'
 import { EventType } from '@/lib/events/types/event.types'
@@ -20,6 +21,29 @@ export async function GET(request: NextRequest) {
   requestLogger.start('/api/clients', 'GET')
 
   try {
+    const { userId } = await auth()
+
+    if (!userId) {
+      requestLogger.end('/api/clients', 'GET', 401)
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
+    // 🔒 SEGURIDAD: Obtener vendedor del usuario autenticado
+    const seller = await prisma.seller.findFirst({
+      where: {
+        authenticated_users: {
+          some: { authId: userId }
+        }
+      }
+    })
+
+    if (!seller) {
+      requestLogger.end('/api/clients', 'GET', 403)
+      return NextResponse.json({ 
+        error: 'No tienes permisos para ver clientes. Debes ser un vendedor registrado.' 
+      }, { status: 403 })
+    }
+
     const { searchParams } = new URL(request.url)
     
     // Validar parámetros de paginación
@@ -45,13 +69,18 @@ export async function GET(request: NextRequest) {
     const { page, limit, search } = validation.data
     const skip = (page - 1) * limit
     
-    const where = search ? {
-      OR: [
+    // 🔒 SEGURIDAD: Filtrar SIEMPRE por sellerId
+    const where: any = {
+      sellerId: seller.id  // ← FILTRO OBLIGATORIO: Solo clientes de este vendedor
+    }
+
+    if (search) {
+      where.OR = [
         { name: { contains: search, mode: 'insensitive' as const } },
         { email: { contains: search, mode: 'insensitive' as const } },
         { phone: { contains: search } }
       ]
-    } : {}
+    }
 
     const [clientsRaw, total] = await Promise.all([
       withPrismaTimeout(

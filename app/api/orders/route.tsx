@@ -14,6 +14,21 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
+    // 🔒 SEGURIDAD: Obtener vendedor del usuario autenticado
+    const seller = await prisma.seller.findFirst({
+      where: {
+        authenticated_users: {
+          some: { authId: userId }
+        }
+      }
+    })
+
+    if (!seller) {
+      return NextResponse.json({ 
+        error: 'No tienes permisos para ver órdenes. Debes ser un vendedor registrado.' 
+      }, { status: 403 })
+    }
+
     // Obtener parámetros de búsqueda
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
@@ -23,8 +38,10 @@ export async function GET(request: Request) {
     const limit = limitParam ? parseInt(limitParam, 10) : undefined
     const isRecent = recentParam === 'true'
 
-    // Construir filtro
-    const whereClause: any = {}
+    // 🔒 SEGURIDAD: Construir filtro SIEMPRE con sellerId
+    const whereClause: any = {
+      sellerId: seller.id  // ← FILTRO OBLIGATORIO: Solo órdenes de este vendedor
+    }
     
     if (status && status !== 'all') {
       // Soportar múltiples estados separados por coma (ej: "DELIVERED,COMPLETED")
