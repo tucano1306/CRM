@@ -699,13 +699,13 @@ export default function ClientsViewWithOrders({
                 {/* Indicador de búsqueda activa - RESPONSIVO */}
                 {orderSearchTerm && (
                   <div className="mt-2 sm:mt-3 flex items-center gap-2 text-xs sm:text-sm flex-wrap">
-                    <div className="px-2 sm:px-3 py-1 bg-purple-100 text-purple-700 rounded-full flex items-center gap-1.5 sm:gap-2">
-                      <Search className="h-3 w-3" />
-                      <span className="font-medium">Búsqueda:</span>
-                      <span className="font-bold truncate max-w-[120px] sm:max-w-none">"{orderSearchTerm}"</span>
-                      <button
-                        onClick={() => setOrderSearchTerm('')}
-                        className="ml-0.5 sm:ml-1 hover:bg-purple-200 rounded-full p-0.5 transition-colors"
+                  <div className="px-2 sm:px-3 py-1 bg-purple-100 text-purple-700 rounded-full flex items-center gap-1.5 sm:gap-2">
+                    <Search className="h-3 w-3" />
+                    <span className="font-medium">Búsqueda:</span>
+                    <span className="font-bold truncate max-w-[120px] sm:max-w-none">&quot;{orderSearchTerm}&quot;</span>
+                    <button
+                      onClick={() => setOrderSearchTerm('')}
+                      className="ml-0.5 sm:ml-1 hover:bg-purple-200 rounded-full p-0.5 transition-colors"
                       >
                         <X className="h-3 w-3" />
                       </button>

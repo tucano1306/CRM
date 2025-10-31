@@ -1638,7 +1638,7 @@ function CartPageContent() {
               </div>
             </div>
             <p className="text-gray-600 mb-6">
-              ¿Estás seguro de eliminar <strong className="text-gray-800">"{itemToDelete.name}"</strong> del carrito?
+              ¿Estás seguro de eliminar <strong className="text-gray-800">&quot;{itemToDelete.name}&quot;</strong> del carrito?
             </p>
             <div className="flex gap-3">
               <button 

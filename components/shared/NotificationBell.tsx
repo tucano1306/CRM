@@ -450,12 +450,12 @@ export default function NotificationBell() {
 
                 {/* Razón de rechazo */}
                 {selectedNotification.metadata?.reason && (
-                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Motivo:</p>
-                    <p className="text-gray-700 dark:text-gray-300 italic">
-                      "{selectedNotification.metadata.reason}"
-                    </p>
-                  </div>
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Motivo:</p>
+                  <p className="text-gray-700 dark:text-gray-300 italic">
+                    &quot;{selectedNotification.metadata.reason}&quot;
+                  </p>
+                </div>
                 )}
               </div>
 

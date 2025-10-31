@@ -37,12 +37,12 @@ export default function LoginPage() {
         />
 
         <div className="mt-6 p-4 bg-white rounded-lg shadow-md">
-          <h3 className="font-semibold text-sm text-gray-700 mb-2">ℹ️ Información:</h3>
-          <div className="text-xs text-gray-600 space-y-1">
-            <p>• Si no tienes cuenta, haz clic en "Sign up" en el formulario</p>
-            <p>• El sistema usa autenticación con Clerk</p>
-            <p>• Tu rol se asignará automáticamente al registrarte</p>
-          </div>
+        <h3 className="font-semibold text-sm text-gray-700 mb-2">ℹ️ Información:</h3>
+        <div className="text-xs text-gray-600 space-y-1">
+          <p>• Si no tienes cuenta, haz clic en &quot;Sign up&quot; en el formulario</p>
+          <p>• El sistema usa autenticación con Clerk</p>
+          <p>• Tu rol se asignará automáticamente al registrarte</p>
+        </div>
         </div>
 
         <div className="mt-4 text-center">
