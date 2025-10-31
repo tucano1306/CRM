@@ -109,8 +109,8 @@ describe('EventEmitter', () => {
         await new Promise(resolve => setTimeout(resolve, 10))
       })
       
-      emitter.on(EventType.PRODUCT_CREATED, handler)
-      await emitter.emit({ type: EventType.PRODUCT_CREATED, timestamp: new Date(), data: {} })
+      emitter.on(EventType.NOTIFICATION_CREATED, handler)
+      await emitter.emit({ type: EventType.NOTIFICATION_CREATED, timestamp: new Date(), data: {} })
       
       expect(handler).toHaveBeenCalled()
     })
