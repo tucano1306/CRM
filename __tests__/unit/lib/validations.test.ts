@@ -435,4 +435,133 @@ describe('Validation Schemas', () => {
       }
     })
   })
+
+  describe('Helper Functions', () => {
+    const { validateSchema, validateQueryParams } = require('@/lib/validations')
+
+    describe('validateSchema', () => {
+      it('should return success for valid data', () => {
+        const validData = {
+          email: 'test@example.com',
+          password: 'password123'
+        }
+
+        const result = validateSchema(signInSchema, validData)
+        
+        expect(result.success).toBe(true)
+        if (result.success) {
+          expect(result.data).toEqual(validData)
+        }
+      })
+
+      it('should return errors for invalid data', () => {
+        const invalidData = {
+          email: 'invalid-email',
+          password: 'short'
+        }
+
+        const result = validateSchema(signInSchema, invalidData)
+        
+        expect(result.success).toBe(false)
+        if (!result.success) {
+          expect(result.errors).toBeInstanceOf(Array)
+          expect(result.errors.length).toBeGreaterThan(0)
+        }
+      })
+
+      it('should format error messages with path', () => {
+        const invalidData = {
+          email: 'invalid-email',
+          password: 'password123'
+        }
+
+        const result = validateSchema(signInSchema, invalidData)
+        
+        expect(result.success).toBe(false)
+        if (!result.success) {
+          expect(result.errors[0]).toContain('email:')
+        }
+      })
+
+      it('should handle nested object validation errors', () => {
+        const invalidData = {
+          name: 'J',  // Too short
+          address: '123 Main Street',
+          phone: '+1234567890',
+          email: 'client@example.com'
+        }
+
+        const result = validateSchema(createClientSchema, invalidData)
+        
+        expect(result.success).toBe(false)
+        if (!result.success) {
+          expect(result.errors.length).toBeGreaterThan(0)
+        }
+      })
+    })
+
+    describe('validateQueryParams', () => {
+      it('should validate URLSearchParams successfully', () => {
+        const searchParams = new URLSearchParams({
+          page: '1',
+          limit: '10',
+          sortOrder: 'desc'
+        })
+
+        const { paginationSchema } = require('@/lib/validations')
+        const result = validateQueryParams(paginationSchema, searchParams)
+        
+        expect(result.success).toBe(true)
+        if (result.success) {
+          expect(result.data.page).toBe(1)
+          expect(result.data.limit).toBe(10)
+        }
+      })
+
+      it('should convert string numbers to numbers', () => {
+        const searchParams = new URLSearchParams({
+          page: '2',
+          limit: '20'
+        })
+
+        const { paginationSchema } = require('@/lib/validations')
+        const result = validateQueryParams(paginationSchema, searchParams)
+        
+        expect(result.success).toBe(true)
+        if (result.success) {
+          expect(typeof result.data.page).toBe('number')
+          expect(typeof result.data.limit).toBe('number')
+        }
+      })
+
+      it('should return errors for invalid query params', () => {
+        const searchParams = new URLSearchParams({
+          page: 'invalid',
+          limit: '-5'
+        })
+
+        const { paginationSchema } = require('@/lib/validations')
+        const result = validateQueryParams(paginationSchema, searchParams)
+        
+        expect(result.success).toBe(false)
+        if (!result.success) {
+          expect(result.errors.length).toBeGreaterThan(0)
+        }
+      })
+
+      it('should handle empty URLSearchParams', () => {
+        const searchParams = new URLSearchParams()
+
+        const { paginationSchema } = require('@/lib/validations')
+        const result = validateQueryParams(paginationSchema, searchParams)
+        
+        // Should use default values
+        expect(result.success).toBe(true)
+        if (result.success) {
+          expect(result.data.page).toBe(1)
+          expect(result.data.limit).toBe(10)
+        }
+      })
+    })
+  })
 })
