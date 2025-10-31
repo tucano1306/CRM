@@ -7,6 +7,9 @@ import {
   DayOfWeek,
   validateOrderTime,
   validateChatTime,
+  getNextAvailableOrderTime,
+  getSellerSchedules,
+  isSellerAvailableNow,
 } from '@/lib/scheduleValidation'
 import { prisma } from '@/lib/prisma'
 
@@ -516,6 +519,163 @@ describe('scheduleValidation - Async Functions', () => {
       const result = await validateChatTime('seller-123', testDate)
 
       expect(result.isValid).toBe(true)
+    })
+  })
+
+  describe('getNextAvailableOrderTime', () => {
+    it('should find next available day with schedule', async () => {
+      // Mock: No schedule today (Monday), but schedule exists on Wednesday
+      ;(prisma.orderSchedule.findFirst as jest.Mock)
+        .mockResolvedValueOnce(null) // Tuesday
+        .mockResolvedValueOnce({ // Wednesday
+          sellerId: 'seller-123',
+          dayOfWeek: 'WEDNESDAY',
+          startTime: '09:00',
+          endTime: '18:00',
+          isActive: true
+        })
+
+      const result = await getNextAvailableOrderTime('seller-123')
+
+      expect(result).toEqual({
+        dayOfWeek: 'WEDNESDAY',
+        startTime: '09:00'
+      })
+    })
+
+    it('should return null when no schedules found in next 7 days', async () => {
+      // Mock: No schedules for any day
+      ;(prisma.orderSchedule.findFirst as jest.Mock).mockResolvedValue(null)
+
+      const result = await getNextAvailableOrderTime('seller-123')
+
+      expect(result).toBeNull()
+    })
+
+    it('should handle database errors gracefully', async () => {
+      const dbError = new Error('Database error')
+      ;(prisma.orderSchedule.findFirst as jest.Mock).mockRejectedValue(dbError)
+
+      const result = await getNextAvailableOrderTime('seller-123')
+
+      expect(result).toBeNull()
+    })
+
+    it('should find schedule on next day', async () => {
+      // Mock: Schedule exists on the very next day checked
+      ;(prisma.orderSchedule.findFirst as jest.Mock).mockResolvedValueOnce({
+        sellerId: 'seller-123',
+        dayOfWeek: 'TUESDAY',
+        startTime: '10:00',
+        endTime: '17:00',
+        isActive: true
+      })
+
+      const result = await getNextAvailableOrderTime('seller-123')
+
+      expect(result).toEqual({
+        dayOfWeek: 'TUESDAY',
+        startTime: '10:00'
+      })
+    })
+  })
+
+  describe('getSellerSchedules', () => {
+    it('should return both order and chat schedules', async () => {
+      const mockOrderSchedules = [
+        { sellerId: 'seller-123', dayOfWeek: 'MONDAY', startTime: '09:00', endTime: '18:00', isActive: true },
+        { sellerId: 'seller-123', dayOfWeek: 'TUESDAY', startTime: '09:00', endTime: '18:00', isActive: true }
+      ]
+      
+      const mockChatSchedules = [
+        { sellerId: 'seller-123', dayOfWeek: 'MONDAY', startTime: '10:00', endTime: '20:00', isActive: true },
+        { sellerId: 'seller-123', dayOfWeek: 'TUESDAY', startTime: '10:00', endTime: '20:00', isActive: true }
+      ]
+
+      ;(prisma.orderSchedule.findMany as jest.Mock) = jest.fn().mockResolvedValue(mockOrderSchedules)
+      ;(prisma.chatSchedule.findMany as jest.Mock) = jest.fn().mockResolvedValue(mockChatSchedules)
+
+      const result = await getSellerSchedules('seller-123')
+
+      expect(result.orderSchedules).toEqual(mockOrderSchedules)
+      expect(result.chatSchedules).toEqual(mockChatSchedules)
+    })
+
+    it('should return empty arrays when no schedules exist', async () => {
+      ;(prisma.orderSchedule.findMany as jest.Mock) = jest.fn().mockResolvedValue([])
+      ;(prisma.chatSchedule.findMany as jest.Mock) = jest.fn().mockResolvedValue([])
+
+      const result = await getSellerSchedules('seller-123')
+
+      expect(result.orderSchedules).toEqual([])
+      expect(result.chatSchedules).toEqual([])
+    })
+
+    it('should handle database errors gracefully', async () => {
+      const dbError = new Error('Connection failed')
+      ;(prisma.orderSchedule.findMany as jest.Mock) = jest.fn().mockRejectedValue(dbError)
+
+      const result = await getSellerSchedules('seller-123')
+
+      expect(result.orderSchedules).toEqual([])
+      expect(result.chatSchedules).toEqual([])
+    })
+  })
+
+  describe('isSellerAvailableNow', () => {
+    it('should return availability for both orders and chat', async () => {
+      // Mock: Both order and chat are available
+      ;(prisma.orderSchedule.findFirst as jest.Mock).mockResolvedValue({
+        sellerId: 'seller-123',
+        dayOfWeek: 'MONDAY',
+        startTime: '09:00',
+        endTime: '18:00',
+        isActive: true
+      })
+      
+      ;(prisma.chatSchedule.findFirst as jest.Mock).mockResolvedValue({
+        sellerId: 'seller-123',
+        dayOfWeek: 'MONDAY',
+        startTime: '10:00',
+        endTime: '20:00',
+        isActive: true
+      })
+
+      const result = await isSellerAvailableNow('seller-123')
+
+      expect(result).toHaveProperty('ordersAvailable')
+      expect(result).toHaveProperty('chatAvailable')
+      expect(result).toHaveProperty('orderMessage')
+      expect(result).toHaveProperty('chatMessage')
+      expect(result).toHaveProperty('orderSchedule')
+      expect(result).toHaveProperty('chatSchedule')
+    })
+
+    it('should indicate when orders unavailable but chat available', async () => {
+      // Mock: No order schedule, but chat schedule exists
+      ;(prisma.orderSchedule.findFirst as jest.Mock).mockResolvedValue(null)
+      ;(prisma.chatSchedule.findFirst as jest.Mock).mockResolvedValue({
+        sellerId: 'seller-123',
+        dayOfWeek: 'MONDAY',
+        startTime: '10:00',
+        endTime: '20:00',
+        isActive: true
+      })
+
+      const result = await isSellerAvailableNow('seller-123')
+
+      expect(result.ordersAvailable).toBe(true) // No schedule = allowed
+      expect(result.chatAvailable).toBe(true)
+    })
+
+    it('should work when both schedules unavailable', async () => {
+      ;(prisma.orderSchedule.findFirst as jest.Mock).mockResolvedValue(null)
+      ;(prisma.chatSchedule.findFirst as jest.Mock).mockResolvedValue(null)
+
+      const result = await isSellerAvailableNow('seller-123')
+
+      expect(result.ordersAvailable).toBe(true) // No schedule = allowed
+      expect(result.chatAvailable).toBe(true)
     })
   })
 })
