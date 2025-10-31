@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { useUser } from '@clerk/nextjs'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -490,12 +491,14 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
                       >
                         {/* Archivo adjunto - Imagen */}
                         {msg.attachmentUrl && msg.attachmentType === 'image' && (
-                          <div className="mb-2">
-                            <img 
+                          <div className="mb-2 relative w-full" style={{ maxWidth: '300px', aspectRatio: '16/9' }}>
+                            <Image 
                               src={msg.attachmentUrl} 
                               alt={msg.attachmentName || 'Imagen'}
-                              className="rounded-lg max-w-full h-auto max-h-64 cursor-pointer hover:opacity-90 transition"
+                              fill
+                              className="rounded-lg object-cover cursor-pointer hover:opacity-90 transition"
                               onClick={() => window.open(msg.attachmentUrl, '_blank')}
+                              sizes="(max-width: 768px) 85vw, 300px"
                             />
                           </div>
                         )}

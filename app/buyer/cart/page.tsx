@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Image from 'next/image'
 import { v4 as uuidv4 } from 'uuid'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
 import { formatPrice, formatNumber } from '@/lib/utils'
@@ -989,17 +990,19 @@ function CartPageContent() {
                 >
                   <div className="flex flex-col sm:flex-row gap-4 p-4 sm:p-6">
                     {/* IMAGEN DEL PRODUCTO */}
-                    <div className="flex-shrink-0 mx-auto sm:mx-0">
-                      <img 
+                    <div className="flex-shrink-0 mx-auto sm:mx-0 relative w-24 h-24">
+                      <Image 
                         src={item.product.imageUrl || '/placeholder-food.jpg'}
                         alt={item.product.name}
-                        className="w-24 h-24 object-cover rounded-lg shadow-md"
+                        fill
+                        className="object-cover rounded-lg shadow-md"
+                        sizes="96px"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement
                           target.style.display = 'none'
                           const parent = target.parentElement
                           if (parent) {
-                            parent.classList.add('flex', 'items-center', 'justify-center', 'bg-gradient-to-br', 'from-purple-100', 'to-indigo-100', 'w-24', 'h-24', 'rounded-lg')
+                            parent.classList.add('flex', 'items-center', 'justify-center', 'bg-gradient-to-br', 'from-purple-100', 'to-indigo-100')
                             const packageIcon = document.createElement('div')
                             packageIcon.innerHTML = '<svg class="w-12 h-12 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>'
                             parent.appendChild(packageIcon.firstChild!)

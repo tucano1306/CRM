@@ -7,7 +7,20 @@ const nextConfig = {
   
   // Image optimization
   images: {
-    domains: ['img.clerk.com', 'images.clerk.dev'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.clerk.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.clerk.dev',
+      },
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
     unoptimized: process.env.NODE_ENV === 'development',
   },
   

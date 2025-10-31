@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
 import { formatPrice, formatNumber } from '@/lib/utils'
 import {
@@ -832,22 +833,26 @@ export default function CatalogPage() {
                   </label>
                 </div>
 
-                <img 
-                  src={product.imageUrl || '/placeholder-food.jpg'} 
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement
-                    target.style.display = 'none'
-                    const parent = target.parentElement
-                    if (parent) {
-                      parent.classList.add('flex', 'items-center', 'justify-center', 'bg-gradient-to-br', 'from-blue-100', 'to-slate-100')
-                      const packageIcon = document.createElement('div')
-                      packageIcon.innerHTML = '<svg class="w-16 sm:w-20 h-16 sm:h-20 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>'
-                      parent.appendChild(packageIcon.firstChild!)
-                    }
-                  }}
-                />
+                <div className="relative w-full h-full">
+                  <Image 
+                    src={product.imageUrl || '/placeholder-food.jpg'} 
+                    alt={product.name}
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.style.display = 'none'
+                      const parent = target.parentElement
+                      if (parent) {
+                        parent.classList.add('flex', 'items-center', 'justify-center', 'bg-gradient-to-br', 'from-blue-100', 'to-slate-100')
+                        const packageIcon = document.createElement('div')
+                        packageIcon.innerHTML = '<svg class="w-16 sm:w-20 h-16 sm:h-20 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>'
+                        parent.appendChild(packageIcon.firstChild!)
+                      }
+                    }}
+                  />
+                </div>
                 
                 {/* Tags - MEJORADOS */}
                 <div className="absolute top-2 left-12 flex flex-col gap-1.5 z-10">
@@ -1113,15 +1118,19 @@ export default function CatalogPage() {
                   <div className="space-y-4 mb-6">
                     {getCartItems().map((item) => (
                       <div key={item.id} className="flex gap-4 border-b border-gray-200 pb-4">
-                        <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-slate-100 rounded flex items-center justify-center flex-shrink-0">
+                        <div className="relative w-16 h-16 bg-gradient-to-br from-blue-100 to-slate-100 rounded flex-shrink-0">
                           {item.imageUrl ? (
-                            <img 
+                            <Image 
                               src={item.imageUrl} 
                               alt={item.name}
-                              className="w-full h-full object-cover rounded"
+                              fill
+                              className="object-cover rounded"
+                              sizes="64px"
                             />
                           ) : (
-                            <Package className="w-8 h-8 text-slate-400" />
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Package className="w-8 h-8 text-slate-400" />
+                            </div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
