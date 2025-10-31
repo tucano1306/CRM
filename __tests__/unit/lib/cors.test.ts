@@ -138,7 +138,7 @@ describe('cors', () => {
         headers: { 'origin': 'http://localhost:3000' }
       })
 
-      const response = handleCorsPreflightRequest(request, {
+      const response = handleCorsPreflightRequest(request as any, {
         origin: 'http://localhost:3000',
         methods: ['GET', 'POST']
       })
@@ -153,7 +153,7 @@ describe('cors', () => {
         method: 'OPTIONS'
       })
 
-      const response = handleCorsPreflightRequest(request, {
+      const response = handleCorsPreflightRequest(request as any, {
         origin: '*'
       })
 
@@ -167,7 +167,7 @@ describe('cors', () => {
         headers: { 'origin': 'http://localhost:3000' }
       })
 
-      const response = handleCorsPreflightRequest(request)
+      const response = handleCorsPreflightRequest(request as any)
 
       expect(response.status).toBe(204)
       expect(response.headers.get('Access-Control-Allow-Origin')).toBeDefined()
@@ -185,7 +185,7 @@ describe('cors', () => {
         headers: { 'origin': 'http://localhost:3000' }
       })
 
-      const newResponse = addCorsHeaders(originalResponse, request, {
+      const newResponse = addCorsHeaders(originalResponse as any, request as any, {
         origin: 'http://localhost:3000',
         credentials: true
       })
@@ -205,7 +205,7 @@ describe('cors', () => {
         headers: { 'origin': 'http://localhost:3000' }
       })
 
-      const newResponse = addCorsHeaders(originalResponse, request, {
+      const newResponse = addCorsHeaders(originalResponse as any, request as any, {
         origin: 'http://localhost:3000'
       })
 
@@ -223,7 +223,7 @@ describe('cors', () => {
         headers: { 'origin': 'http://localhost:3000' }
       })
 
-      const newResponse = addCorsHeaders(originalResponse, request, {
+      const newResponse = addCorsHeaders(originalResponse as any, request as any, {
         origin: 'http://localhost:3000'
       })
 
