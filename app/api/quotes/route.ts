@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { notifyQuoteCreated } from '@/lib/notifications'
 import logger, { LogCategory } from '@/lib/logger'
 import { createQuoteSchema, validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 // GET - Obtener cotizaciones
 export async function GET() {
@@ -147,19 +147,19 @@ export async function POST(request: Request) {
     // ✅ SANITIZACIÓN DE DATOS
     const sanitizedData = {
       ...validation.data,
-      title: DOMPurify.sanitize(validation.data.title.trim()),
+      title: sanitizeText(validation.data.title),
       description: validation.data.description ? 
-        DOMPurify.sanitize(validation.data.description.trim()) : undefined,
+        sanitizeText(validation.data.description) : undefined,
       notes: validation.data.notes ? 
-        DOMPurify.sanitize(validation.data.notes.trim()) : undefined,
+        sanitizeText(validation.data.notes) : undefined,
       termsAndConditions: validation.data.termsAndConditions ? 
-        DOMPurify.sanitize(validation.data.termsAndConditions.trim()) : 
+        sanitizeText(validation.data.termsAndConditions) : 
         'Términos y condiciones estándar',
       items: validation.data.items.map((item: any) => ({
         ...item,
-        productName: DOMPurify.sanitize(item.productName.trim()),
-        description: item.description ? DOMPurify.sanitize(item.description.trim()) : undefined,
-        notes: item.notes ? DOMPurify.sanitize(item.notes.trim()) : undefined
+        productName: sanitizeText(item.productName),
+        description: item.description ? sanitizeText(item.description) : undefined,
+        notes: item.notes ? sanitizeText(item.notes) : undefined
       })),
       // validUntil: usar valor original validado o generar fecha +30 días
       validUntil: validation.data.validUntil || 

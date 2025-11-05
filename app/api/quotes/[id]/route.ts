@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { notifyQuoteUpdated } from '@/lib/notifications'
 import logger, { LogCategory } from '@/lib/logger'
 import { updateQuoteSchema, acceptQuoteSchema, rejectQuoteSchema, validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 // GET - Obtener cotización específica
 export async function GET(
@@ -107,19 +107,19 @@ export async function PATCH(
     // Solo para updates normales (no accept/reject)
     if (!isStatusChange) {
       if ('title' in validatedData && validatedData.title !== undefined) {
-        updateData.title = DOMPurify.sanitize(validatedData.title.trim())
+        updateData.title = sanitizeText(validatedData.title)
       }
       if ('description' in validatedData && validatedData.description !== undefined) {
-        updateData.description = DOMPurify.sanitize(validatedData.description.trim())
+        updateData.description = sanitizeText(validatedData.description)
       }
       if ('validUntil' in validatedData && validatedData.validUntil !== undefined) {
         updateData.validUntil = new Date(validatedData.validUntil)
       }
       if ('notes' in validatedData && validatedData.notes !== undefined) {
-        updateData.notes = DOMPurify.sanitize(validatedData.notes.trim())
+        updateData.notes = sanitizeText(validatedData.notes)
       }
       if ('termsAndConditions' in validatedData && validatedData.termsAndConditions !== undefined) {
-        updateData.termsAndConditions = DOMPurify.sanitize(validatedData.termsAndConditions.trim())
+        updateData.termsAndConditions = sanitizeText(validatedData.termsAndConditions)
       }
       if ('discount' in validatedData && validatedData.discount !== undefined) {
         updateData.discount = validatedData.discount
@@ -134,7 +134,7 @@ export async function PATCH(
       
       // ✅ SANITIZAR REASON SI EXISTE (para reject)
       if (isReject && 'reason' in validatedData && validatedData.reason) {
-        updateData.rejectionReason = DOMPurify.sanitize(validatedData.reason.trim())
+        updateData.rejectionReason = sanitizeText(validatedData.reason)
       }
       
       // Crear notificación para el vendedor
@@ -166,9 +166,9 @@ export async function PATCH(
       // ✅ SANITIZAR ITEMS
       const sanitizedItems = validatedData.items.map((item: any) => ({
         ...item,
-        productName: DOMPurify.sanitize(item.productName.trim()),
-        description: item.description ? DOMPurify.sanitize(item.description.trim()) : undefined,
-        notes: item.notes ? DOMPurify.sanitize(item.notes.trim()) : undefined
+        productName: sanitizeText(item.productName),
+        description: item.description ? sanitizeText(item.description) : undefined,
+        notes: item.notes ? sanitizeText(item.notes) : undefined
       }))
 
       // Calcular nuevos totales

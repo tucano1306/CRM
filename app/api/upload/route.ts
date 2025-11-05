@@ -4,7 +4,7 @@ import { writeFile } from 'fs/promises'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { fileTypeFromBuffer } from 'file-type'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 /**
  * POST /api/upload
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ✅ VALIDACIÓN 3: Nombre de archivo
-    const sanitizedFileName = DOMPurify.sanitize(file.name.trim())
+    const sanitizedFileName = sanitizeText(file.name)
     if (!sanitizedFileName || sanitizedFileName.length > 255) {
       return NextResponse.json(
         { error: 'Nombre de archivo inválido' },

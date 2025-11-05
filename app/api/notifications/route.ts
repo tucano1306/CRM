@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import crypto from 'crypto'
 import { z } from 'zod'
 import { validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 /**
  * GET /api/notifications
@@ -190,8 +190,8 @@ export async function POST(request: NextRequest) {
     const { sellerId, clientId, type, title, message, orderId, relatedId, metadata } = validation.data
 
     // ✅ Sanitizar campos de texto
-    const sanitizedTitle = DOMPurify.sanitize(title.trim())
-    const sanitizedMessage = DOMPurify.sanitize(message.trim())
+    const sanitizedTitle = sanitizeText(title)
+    const sanitizedMessage = sanitizeText(message)
 
     const notification = await prisma.notification.create({
       data: {

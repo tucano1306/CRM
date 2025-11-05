@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { formatPrice } from '@/lib/utils'
 import { createRecurringOrderSchema, validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 // GET - Obtener órdenes recurrentes
 export async function GET(request: Request) {
@@ -132,10 +132,10 @@ export async function POST(request: Request) {
     // ✅ SANITIZACIÓN
     const sanitizedData = {
       ...validatedData,
-      name: DOMPurify.sanitize(validatedData.name.trim()),
-      notes: validatedData.notes ? DOMPurify.sanitize(validatedData.notes.trim()) : undefined,
+      name: sanitizeText(validatedData.name),
+      notes: validatedData.notes ? sanitizeText(validatedData.notes) : undefined,
       deliveryInstructions: validatedData.deliveryInstructions ? 
-        DOMPurify.sanitize(validatedData.deliveryInstructions.trim()) : undefined,
+        sanitizeText(validatedData.deliveryInstructions) : undefined,
       customDays: validatedData.customDays || null,
       dayOfWeek: validatedData.dayOfWeek || null,
       dayOfMonth: validatedData.dayOfMonth || null

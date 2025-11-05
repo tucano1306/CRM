@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { updateClientSchema, validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 export async function GET(
   request: Request,
@@ -96,13 +96,13 @@ export async function PUT(
     const sanitizedData: any = {}
     
     if (validation.data.name) {
-      sanitizedData.name = DOMPurify.sanitize(validation.data.name.trim())
+      sanitizedData.name = sanitizeText(validation.data.name)
     }
     if (validation.data.businessName) {
-      sanitizedData.businessName = DOMPurify.sanitize(validation.data.businessName.trim())
+      sanitizedData.businessName = sanitizeText(validation.data.businessName)
     }
     if (validation.data.address) {
-      sanitizedData.address = DOMPurify.sanitize(validation.data.address.trim())
+      sanitizedData.address = sanitizeText(validation.data.address)
     }
     if (validation.data.zipCode) {
       sanitizedData.zipCode = validation.data.zipCode.trim()

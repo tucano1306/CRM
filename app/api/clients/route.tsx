@@ -9,7 +9,7 @@ import {
   createClientSchema, 
   paginationSchema 
 } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 import logger, { LogCategory, createRequestLogger } from '@/lib/logger'
 import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
 
@@ -221,10 +221,10 @@ export async function POST(request: NextRequest) {
     // ✅ SANITIZACIÓN DE DATOS
     const sanitizedData = {
       ...validatedData,
-      name: DOMPurify.sanitize(validatedData.name.trim()),
+      name: sanitizeText(validatedData.name),
       businessName: validatedData.businessName ? 
-        DOMPurify.sanitize(validatedData.businessName.trim()) : undefined,
-      address: DOMPurify.sanitize(validatedData.address.trim()),
+        sanitizeText(validatedData.businessName) : undefined,
+      address: sanitizeText(validatedData.address),
       email: validatedData.email.toLowerCase().trim()
     }
 

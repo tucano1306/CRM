@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { createReturnSchema, validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 const prisma = new PrismaClient()
 
@@ -141,13 +141,13 @@ export async function POST(request: Request) {
     const sanitizedData = {
       orderId,
       reason,
-      reasonDescription: reasonDescription ? DOMPurify.sanitize(reasonDescription.trim()) : undefined,
+      reasonDescription: reasonDescription ? sanitizeText(reasonDescription) : undefined,
       refundType,
       items: items.map((item: any) => ({
         ...item,
-        notes: item.notes ? DOMPurify.sanitize(item.notes.trim()) : undefined
+        notes: item.notes ? sanitizeText(item.notes) : undefined
       })),
-      notes: notes ? DOMPurify.sanitize(notes.trim()) : undefined
+      notes: notes ? sanitizeText(notes) : undefined
     }
 
     // Buscar usuario autenticado (cliente)

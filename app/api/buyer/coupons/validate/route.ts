@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 // POST - Validar cupón
 export async function POST(request: NextRequest) {
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     const { code, cartTotal } = validation.data
 
     // ✅ Sanitizar código
-    const sanitizedCode = DOMPurify.sanitize(code.trim()).toUpperCase()
+    const sanitizedCode = sanitizeText(code).toUpperCase()
 
     // Buscar cupón
     const coupon = await prisma.coupon.findUnique({

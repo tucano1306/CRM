@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
 import { createProductSchema, validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 // GET /api/products - Obtener productos del vendedor autenticado
 // ✅ CON TIMEOUT DE 5 SEGUNDOS
@@ -127,9 +127,9 @@ export async function POST(request: Request) {
     // ✅ SANITIZACIÓN DE INPUTS
     const sanitizedData = {
       ...validation.data,
-      name: DOMPurify.sanitize(validation.data.name.trim()),
-      description: validation.data.description ? DOMPurify.sanitize(validation.data.description.trim()) : undefined,
-      sku: validation.data.sku ? DOMPurify.sanitize(validation.data.sku.trim()) : undefined
+      name: sanitizeText(validation.data.name),
+      description: validation.data.description ? sanitizeText(validation.data.description) : undefined,
+      sku: validation.data.sku ? sanitizeText(validation.data.sku) : undefined
     }
 
     console.log('✅ [CREATE PRODUCT] Validaciones pasadas, creando producto...')

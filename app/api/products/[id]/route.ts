@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { updateProductSchema, validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 // GET - Obtener producto por ID con estadísticas
 export async function GET(
@@ -118,11 +118,11 @@ export async function PUT(
     const sanitizedData: any = {}
     
     if (validation.data.name) {
-      sanitizedData.name = DOMPurify.sanitize(validation.data.name.trim())
+      sanitizedData.name = sanitizeText(validation.data.name)
     }
     if (validation.data.description !== undefined) {
       sanitizedData.description = validation.data.description ? 
-        DOMPurify.sanitize(validation.data.description.trim()) : ''
+        sanitizeText(validation.data.description) : ''
     }
     if (validation.data.unit) {
       sanitizedData.unit = validation.data.unit
@@ -135,7 +135,7 @@ export async function PUT(
     }
     if (validation.data.sku !== undefined) {
       sanitizedData.sku = validation.data.sku ? 
-        DOMPurify.sanitize(validation.data.sku.trim()) : null
+        sanitizeText(validation.data.sku) : null
     }
     if (validation.data.imageUrl !== undefined) {
       sanitizedData.imageUrl = validation.data.imageUrl || null

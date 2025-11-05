@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 /**
  * PATCH /api/buyer/cart/items/[itemId]/note
@@ -53,7 +53,7 @@ export async function PATCH(
     const { note } = validation.data
 
     // ✅ Sanitizar nota
-    const sanitizedNote = note ? DOMPurify.sanitize(note.trim()) : null
+    const sanitizedNote = note ? sanitizeText(note) : null
 
     // 4. Verificar que el item existe y obtener el cart
     const cartItem = await prisma.cartItem.findUnique({

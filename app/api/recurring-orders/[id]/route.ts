@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { updateRecurringOrderSchema, validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -112,7 +112,7 @@ export async function PATCH(
     const updateData: any = {}
 
     if ('name' in validatedData && validatedData.name) {
-      updateData.name = DOMPurify.sanitize(validatedData.name.trim())
+      updateData.name = sanitizeText(validatedData.name)
     }
     if ('frequency' in validatedData && validatedData.frequency !== undefined) {
       updateData.frequency = validatedData.frequency
@@ -127,11 +127,11 @@ export async function PATCH(
       updateData.dayOfMonth = validatedData.dayOfMonth
     }
     if ('notes' in validatedData) {
-      updateData.notes = validatedData.notes ? DOMPurify.sanitize(validatedData.notes.trim()) : null
+      updateData.notes = validatedData.notes ? sanitizeText(validatedData.notes) : null
     }
     if ('deliveryInstructions' in validatedData) {
       updateData.deliveryInstructions = validatedData.deliveryInstructions ? 
-        DOMPurify.sanitize(validatedData.deliveryInstructions.trim()) : null
+        sanitizeText(validatedData.deliveryInstructions) : null
     }
     if ('endDate' in validatedData && validatedData.endDate !== undefined) {
       updateData.endDate = validatedData.endDate ? new Date(validatedData.endDate) : null

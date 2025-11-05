@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client'
 import { notifyReturnRejected } from '@/lib/notifications'
 import logger, { LogCategory } from '@/lib/logger'
 import { rejectReturnSchema, validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 const prisma = new PrismaClient()
 
@@ -34,8 +34,8 @@ export async function POST(
     const { reason, notes } = validation.data
 
     // ✅ SANITIZACIÓN
-    const sanitizedReason = reason ? DOMPurify.sanitize(reason.trim()) : undefined
-    const sanitizedNotes = notes ? DOMPurify.sanitize(notes.trim()) : undefined
+    const sanitizedReason = reason ? sanitizeText(reason) : undefined
+    const sanitizedNotes = notes ? sanitizeText(notes) : undefined
 
     // Verificar que existe
     const returnRecord = await prisma.return.findUnique({

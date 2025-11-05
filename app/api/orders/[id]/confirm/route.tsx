@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 import { z } from 'zod'
 
 const prisma = new PrismaClient()
@@ -52,7 +52,7 @@ export async function PUT(
     const { idempotencyKey, notes } = validation.data
     
     // ✅ SANITIZACIÓN
-    const sanitizedNotes = notes ? DOMPurify.sanitize(notes.trim()) : undefined
+    const sanitizedNotes = notes ? sanitizeText(notes) : undefined
 
     // 2. Validar idempotencyKey (opcional)
     if (idempotencyKey) {

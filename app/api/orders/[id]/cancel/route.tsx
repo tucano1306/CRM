@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
 import { cancelOrderSchema, validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 const prisma = new PrismaClient()
 
@@ -48,7 +48,7 @@ export async function PUT(
     const idempotencyKey = body.idempotencyKey // opcional
     
     // ✅ SANITIZACIÓN
-    const sanitizedReason = DOMPurify.sanitize(reason.trim())
+    const sanitizedReason = sanitizeText(reason)
 
     // 2. Validar idempotencyKey (opcional)
     if (idempotencyKey) {

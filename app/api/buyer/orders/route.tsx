@@ -7,7 +7,7 @@ import { EventType } from '@/lib/events/types/event.types'
 import { validateOrderTime, getNextAvailableOrderTime } from '@/lib/scheduleValidation'
 import logger, { LogCategory } from '@/lib/logger'
 import { notifyNewOrder, notifyBuyerOrderCreated } from '@/lib/notifications'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 const prisma = new PrismaClient()
 
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     // ✅ SANITIZACIÓN
-    const notes = body.notes ? DOMPurify.sanitize(body.notes.trim()) : null
+    const notes = body.notes ? sanitizeText(body.notes) : null
     const creditNotes = body.creditNotes || [] // Array de { creditNoteId, amountToUse }
     // Idempotency: accept an optional idempotencyKey from client. If provided,
     // return previously created order with the same key.

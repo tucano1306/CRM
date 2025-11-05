@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 // GET - Listar sellers con filtros
 export async function GET(request: NextRequest) {
@@ -100,8 +100,8 @@ export async function POST(request: NextRequest) {
     const { name, email, phone, territory, commission } = validation.data
 
     // ✅ Sanitizar campos de texto
-    const sanitizedName = DOMPurify.sanitize(name.trim())
-    const sanitizedTerritory = territory ? DOMPurify.sanitize(territory.trim()) : null
+    const sanitizedName = sanitizeText(name)
+    const sanitizedTerritory = territory ? sanitizeText(territory) : null
 
     // Verificar email duplicado
     const existingSeller = await prisma.seller.findUnique({

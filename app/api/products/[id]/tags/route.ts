@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 interface RouteParams {
   params: Promise<{
@@ -91,7 +91,7 @@ export async function POST(
     const { label, color } = validation.data
 
     // ✅ Sanitizar label
-    const sanitizedLabel = DOMPurify.sanitize(label.trim())
+    const sanitizedLabel = sanitizeText(label)
 
     // Verificar que el producto existe
     const product = await prisma.product.findUnique({

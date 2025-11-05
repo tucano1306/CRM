@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { PrismaClient } from '@prisma/client'
 import { updateOrderSchema, validateSchema } from '@/lib/validations'
-import DOMPurify from 'isomorphic-dompurify'
+import { sanitizeText } from '@/lib/sanitize'
 
 const prisma = new PrismaClient()
 
@@ -103,15 +103,15 @@ export async function PATCH(
     }
     
     if (notes !== undefined) {
-      updateData.notes = notes ? DOMPurify.sanitize(notes.trim()) : null
+      updateData.notes = notes ? sanitizeText(notes) : null
     }
     
     if (deliveryAddress !== undefined) {
-      updateData.deliveryAddress = DOMPurify.sanitize(deliveryAddress.trim())
+      updateData.deliveryAddress = sanitizeText(deliveryAddress)
     }
     
     if (deliveryInstructions !== undefined) {
-      updateData.deliveryInstructions = DOMPurify.sanitize(deliveryInstructions.trim())
+      updateData.deliveryInstructions = sanitizeText(deliveryInstructions)
     }
 
     const updatedOrder = await prisma.order.update({
