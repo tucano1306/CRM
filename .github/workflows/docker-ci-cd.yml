@@ -292,12 +292,71 @@ jobs:
           sarif_file: 'trivy-results.sarif'
 
   # ==============================================================================
+  # Deploy to Vercel
+  # ==============================================================================
+  deploy-vercel:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: [build, security]
+    if: success() && github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://food-order-ij0lim8d0-tucano0109-5495s-projects.vercel.app
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel Environment Information
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build Project Artifacts
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Deploy to Vercel Production
+        id: deploy
+        run: |
+          DEPLOYMENT_URL=$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+          echo "✅ Deployed to: $DEPLOYMENT_URL"
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Comment PR with Deployment URL
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 Deployed to Vercel: ${{ steps.deploy.outputs.url }}'
+            })
+
+  # ==============================================================================
   # Deployment Notification
   # ==============================================================================
   notify:
     name: Notify Success
     runs-on: ubuntu-latest
-    needs: [build, security]
+    needs: [build, security, deploy-vercel]
     if: success() && github.ref == 'refs/heads/main'
 
     steps:
@@ -306,4 +365,5 @@ jobs:
           echo "✅ CI/CD Pipeline completed successfully!"
           echo "🐳 Docker image pushed to: ghcr.io/${{ github.repository }}"
           echo "🔒 Security scan completed"
-          echo "📦 Ready for deployment"
+          echo "� Deployed to Vercel production"
+          echo "📦 Pipeline finished"

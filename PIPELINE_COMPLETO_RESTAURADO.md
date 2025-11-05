@@ -47,9 +47,16 @@
 - ✅ Severidades: CRITICAL, HIGH
 - ⏱️ ~2-3 minutos
 
-### 7️⃣ **Notify Success**
+### 7️⃣ **Deploy to Vercel** 🚀 **NUEVO**
+- ✅ Deploy automático a producción
+- ✅ Solo en push a `main`
+- ✅ URL del deployment en logs
+- ⏱️ ~2-4 minutos
+
+### 8️⃣ **Notify Success**
 - ✅ Mensaje de confirmación
 - ✅ URLs de imagen Docker
+- ✅ Confirmación de deployment
 - ⏱️ ~10 segundos
 
 ---
@@ -57,9 +64,9 @@
 ## 🔀 Dependencias entre Jobs
 
 ```
-lint ──┬─→ test-unit ──┬─→ build ──→ security ──→ notify
-       │                │
-       └─→ database ────┘
+lint ──┬─→ test-unit ──┬─→ build ──┬─→ security ──┬─→ deploy-vercel ──→ notify
+       │                │           │              │
+       └─→ database ────┘           └──────────────┘
                 │
                 └─→ test-e2e
 ```
@@ -70,7 +77,8 @@ lint ──┬─→ test-unit ──┬─→ build ──→ security ──�
 3. `test-e2e` espera a `lint` y `database`
 4. `build` espera a `lint`, `test-unit`, `test-e2e`, `database`
 5. `security` espera a `build`
-6. `notify` espera a `build` y `security`
+6. `deploy-vercel` espera a `build` y `security` 🆕
+7. `notify` espera a `build`, `security` y `deploy-vercel` 🆕
 
 ---
 
@@ -128,9 +136,24 @@ Verifica que tienes estos secrets configurados en GitHub:
 **Secrets necesarios:**
 - `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`
 - `CLERK_SECRET_KEY`
+- `VERCEL_TOKEN` 🆕
+- `VERCEL_ORG_ID` 🆕
+- `VERCEL_PROJECT_ID` 🆕
 
 **Secrets opcionales (generados automáticamente):**
 - `GITHUB_TOKEN` - GitHub lo proporciona automáticamente para push a GHCR
+
+### 🔧 Configurar Secrets de Vercel
+
+**Ejecuta este script para obtener los IDs:**
+```powershell
+.\get-vercel-secrets.ps1
+```
+
+**O lee la guía completa:**
+```
+CONFIGURAR_VERCEL_GITHUB_SECRETS.md
+```
 
 ---
 
@@ -152,10 +175,11 @@ https://github.com/tucano1306/CRM/actions
 ⚠️ E2E Tests (Bypass Auth)  ← Puede fallar, no bloquea
 ✅ Build & Push Docker Image
 ✅ Security Scan (Trivy)
+✅ Deploy to Vercel  🆕
 ✅ Notify Success
 ```
 
-### 4. Tiempo total estimado: ~15-20 minutos
+### 4. Tiempo total estimado: ~18-25 minutos
 
 ---
 
@@ -247,11 +271,11 @@ npx prisma migrate dev
 
 ## 📊 Matriz de Ejecución
 
-| Push a | Lint | Tests | DB | E2E | Docker | Security | Notify |
-|--------|------|-------|----|----|--------|----------|--------|
-| `main` | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ | ✅ |
-| `develop` | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ | ✅ |
-| PR → `main` | ✅ | ✅ | ✅ | ⚠️ | ❌ | ❌ | ❌ |
+| Push a | Lint | Tests | DB | E2E | Docker | Security | Vercel | Notify |
+|--------|------|-------|----|----|--------|----------|--------|--------|
+| `main` | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ | ✅ | ✅ |
+| `develop` | ✅ | ✅ | ✅ | ⚠️ | ✅ | ✅ | ✅ | ✅ |
+| PR → `main` | ✅ | ✅ | ✅ | ⚠️ | ❌ | ❌ | ❌ | ❌ |
 
 **Leyenda:**
 - ✅ Se ejecuta siempre
@@ -264,10 +288,13 @@ npx prisma migrate dev
 
 - [x] Workflow `test.yml` eliminado
 - [x] Push a GitHub completado
+- [x] Job de Deploy to Vercel agregado 🆕
+- [ ] Secrets de Vercel configurados en GitHub 🆕
 - [ ] Workflow "CI/CD Pipeline" ejecutándose en Actions
 - [ ] Todos los jobs en verde (excepto E2E que puede fallar)
 - [ ] Imagen Docker pusheada a ghcr.io
 - [ ] Security scan completado
+- [ ] Deploy a Vercel completado 🆕
 - [ ] Notificación de éxito
 
 ---
