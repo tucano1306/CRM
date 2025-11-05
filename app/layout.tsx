@@ -2,7 +2,6 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { ClerkProvider } from '@clerk/nextjs'
 import { initializeEventHandlers } from '@/lib/events/handlers'
-import RoleSwitcher from '@/components/RoleSwitcher'
 import PendingRedirectHandler from '@/components/PendingRedirectHandler'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
@@ -53,7 +52,6 @@ export default function RootLayout({
           <QueryProvider>
             <PendingRedirectHandler />
             {children}
-            <RoleSwitcher />
           </QueryProvider>
           <Analytics />
           <SpeedInsights />

@@ -1,0 +1,57 @@
+# 🔐 VARIABLES DE ENTORNO PARA VERCEL
+# Copia estas variables en: https://vercel.com/tucano0109-5495s-projects/food-order-crm/settings/environment-variables
+
+# ============================================
+# IMPORTANTE: Selecciona "Production" para cada variable
+# ============================================
+
+# 🔐 Clerk Authentication
+# IMPORTANTE: Copia estos valores desde tu archivo .env.local
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=<copia-desde-.env.local>
+CLERK_SECRET_KEY=<copia-desde-.env.local>
+
+# URLs de Clerk (copiar tal cual)
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/login
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/login
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
+
+# 📊 Database
+# OPCIÓN RECOMENDADA: Crear Vercel Postgres desde el dashboard
+# 1. Ve a Storage > Create Database > Postgres
+# 2. Copia el POSTGRES_PRISMA_URL que te dan
+# 3. Úsalo como DATABASE_URL aquí
+DATABASE_URL=<crear-vercel-postgres-primero>
+
+# 🔒 Cron Job Security
+# Este secret ya está generado para ti:
+CRON_SECRET=cf5f0be677797e06783ca4c68f93b98003b89cbdc9b45e9c27740a0e40709675
+
+# 🌐 Next.js API URL
+# Actualizar con tu dominio de producción final
+NEXT_PUBLIC_API_URL=https://food-order-1182qrpe3-tucano0109-5495s-projects.vercel.app
+
+# 🚫 Sentry Warning Suppression
+SENTRY_SUPPRESS_INSTRUMENTATION_FILE_WARNING=1
+SENTRY_SUPPRESS_GLOBAL_ERROR_HANDLER_FILE_WARNING=1
+
+# ============================================
+# OPCIONAL: Sentry DSN (para error tracking en producción)
+# ============================================
+# Si quieres configurar Sentry:
+# 1. Ve a https://sentry.io y crea cuenta
+# 2. Crea un proyecto Next.js
+# 3. Copia el DSN y agrégalo aquí
+# SENTRY_DSN=<tu-sentry-dsn>
+
+# ============================================
+# 📝 CHECKLIST DE CONFIGURACIÓN
+# ============================================
+# [ ] 1. Copiar NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY desde .env.local
+# [ ] 2. Copiar CLERK_SECRET_KEY desde .env.local
+# [ ] 3. Crear Vercel Postgres y copiar DATABASE_URL
+# [ ] 4. Copiar CRON_SECRET (ya generado arriba)
+# [ ] 5. Verificar que NEXT_PUBLIC_API_URL sea correcta
+# [ ] 6. Hacer redeploy: vercel --prod
+# [ ] 7. Ejecutar migraciones: npx prisma migrate deploy
+# [ ] 8. (Opcional) Seed data: npx prisma db seed
