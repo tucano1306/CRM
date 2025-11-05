@@ -2,7 +2,7 @@
 
 ## 🌐 URL Base de Producción
 ```
-https://food-order-mo3yped1e-tucano0109-5495s-projects.vercel.app
+https://food-order-ij0lim8d0-tucano0109-5495s-projects.vercel.app
 ```
 
 ---
@@ -11,7 +11,7 @@ https://food-order-mo3yped1e-tucano0109-5495s-projects.vercel.app
 
 ### 👤 Para Vendedores:
 ```
-https://food-order-mo3yped1e-tucano0109-5495s-projects.vercel.app/?mode=seller
+https://food-order-ij0lim8d0-tucano0109-5495s-projects.vercel.app/?mode=seller
 ```
 
 **Características:**
@@ -25,7 +25,7 @@ https://food-order-mo3yped1e-tucano0109-5495s-projects.vercel.app/?mode=seller
 
 ### 🛒 Para Compradores:
 ```
-https://food-order-mo3yped1e-tucano0109-5495s-projects.vercel.app/?mode=buyer
+https://food-order-ij0lim8d0-tucano0109-5495s-projects.vercel.app/?mode=buyer
 ```
 
 **Características:**
@@ -39,7 +39,7 @@ https://food-order-mo3yped1e-tucano0109-5495s-projects.vercel.app/?mode=buyer
 
 ### 🏠 Página de Selección:
 ```
-https://food-order-mo3yped1e-tucano0109-5495s-projects.vercel.app/select-mode
+https://food-order-ij0lim8d0-tucano0109-5495s-projects.vercel.app/select-mode
 ```
 
 Página de aterrizaje donde puedes elegir tu tipo de acceso.
@@ -50,12 +50,12 @@ Página de aterrizaje donde puedes elegir tu tipo de acceso.
 
 1. **Usuario visita URL con `?mode=seller`:**
    - Middleware verifica que el usuario tenga rol SELLER/ADMIN
-   - Si no tiene permisos → Redirige a login con mensaje de error
+   - Si no tiene permisos → Redirige a `/select-mode?error=not_seller`
    - Si tiene permisos → Accede al dashboard de vendedor
 
 2. **Usuario visita URL con `?mode=buyer`:**
    - Middleware verifica que el usuario tenga rol CLIENT
-   - Si no tiene permisos → Redirige a login con mensaje de error
+   - Si no tiene permisos → Redirige a `/select-mode?error=not_buyer`
    - Si tiene permisos → Accede al dashboard de comprador
 
 3. **Usuario visita URL sin parámetro:**
