@@ -2,10 +2,15 @@
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Store, ShoppingCart, ArrowRight } from 'lucide-react'
+import { Store, ShoppingCart, ArrowRight, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
-export default function SelectModePage() {
+function SelectModeContent() {
+  const searchParams = useSearchParams()
+  const error = searchParams.get('error')
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="w-full max-w-4xl">
@@ -21,6 +26,27 @@ export default function SelectModePage() {
             Selecciona tu tipo de acceso
           </p>
         </div>
+
+        {/* Mensaje de Error */}
+        {error && (
+          <div className="mb-8 mx-auto max-w-2xl">
+            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3">
+              <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-red-900 mb-1">
+                  {error === 'not_seller' && 'No tienes permisos de vendedor'}
+                  {error === 'not_buyer' && 'No tienes permisos de comprador'}
+                  {!error.startsWith('not_') && 'Acceso no autorizado'}
+                </h3>
+                <p className="text-sm text-red-700">
+                  {error === 'not_seller' && 'Tu cuenta está registrada como comprador. Selecciona la opción de comprador para continuar.'}
+                  {error === 'not_buyer' && 'Tu cuenta está registrada como vendedor. Selecciona la opción de vendedor para continuar.'}
+                  {!error.startsWith('not_') && 'Por favor, selecciona el tipo de acceso que corresponde a tu cuenta.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Tarjetas de Selección */}
         <div className="grid md:grid-cols-2 gap-8">
@@ -126,5 +152,20 @@ export default function SelectModePage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SelectModePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    }>
+      <SelectModeContent />
+    </Suspense>
   )
 }
