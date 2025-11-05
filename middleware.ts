@@ -16,6 +16,7 @@ const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/api/webhooks(.*)',
+  '/select-mode',
 ])
 
 // Rutas de vendedor
@@ -189,6 +190,12 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(signInUrl)
   }
 
+  // ============================================================================
+  // MODE PARAMETER - Detectar parámetro ?mode=seller o ?mode=buyer
+  // ============================================================================
+  const searchParams = req.nextUrl.searchParams
+  const modeParam = searchParams.get('mode')
+  
   // Intentar obtener el rol de diferentes formas
   let userRole = 'CLIENT'
   
@@ -217,8 +224,68 @@ export default clerkMiddleware(async (auth, req) => {
     method: req.method
   }, {
     hasSessionClaims: !!sessionClaims,
-    hasPublicMetadata: !!(sessionClaims?.public_metadata)
+    hasPublicMetadata: !!(sessionClaims?.public_metadata),
+    modeParam: modeParam || 'none'
   })
+
+  // ============================================================================
+  // VALIDACIÓN DE MODE PARAMETER
+  // ============================================================================
+  // Si el usuario accede con ?mode=seller, verificar que tenga rol SELLER/ADMIN
+  if (modeParam === 'seller') {
+    if (userRole !== 'SELLER' && userRole !== 'ADMIN') {
+      logger.warn(LogCategory.AUTH, '⚠️ Unauthorized mode=seller access attempt', {
+        userId: userId || undefined,
+        userRole,
+        endpoint: req.nextUrl.pathname
+      })
+      
+      // Redirigir a login con mensaje
+      const loginUrl = new URL('/login', req.url)
+      loginUrl.searchParams.set('error', 'unauthorized_seller_access')
+      loginUrl.searchParams.set('message', 'No tienes permisos de vendedor')
+      return NextResponse.redirect(loginUrl)
+    }
+    
+    // Si es SELLER/ADMIN y está en la raíz, redirigir al dashboard de vendedor
+    if (req.nextUrl.pathname === '/' || req.nextUrl.pathname === '/login') {
+      logger.info(LogCategory.AUTH, '🔄 Redirecting to seller dashboard (mode=seller)', {
+        userId: userId || undefined,
+        userRole
+      })
+      return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+  }
+
+  // Si el usuario accede con ?mode=buyer, verificar que tenga rol CLIENT
+  if (modeParam === 'buyer') {
+    if (userRole !== 'CLIENT') {
+      logger.warn(LogCategory.AUTH, '⚠️ Unauthorized mode=buyer access attempt', {
+        userId: userId || undefined,
+        userRole,
+        endpoint: req.nextUrl.pathname
+      })
+      
+      // Redirigir a login con mensaje
+      const loginUrl = new URL('/login', req.url)
+      loginUrl.searchParams.set('error', 'unauthorized_buyer_access')
+      loginUrl.searchParams.set('message', 'No tienes permisos de comprador')
+      return NextResponse.redirect(loginUrl)
+    }
+    
+    // Si es CLIENT y está en la raíz, redirigir al dashboard de comprador
+    if (req.nextUrl.pathname === '/' || req.nextUrl.pathname === '/login') {
+      logger.info(LogCategory.AUTH, '🔄 Redirecting to buyer dashboard (mode=buyer)', {
+        userId: userId || undefined,
+        userRole
+      })
+      return NextResponse.redirect(new URL('/buyer/dashboard', req.url))
+    }
+  }
+
+  // ============================================================================
+  // PROTECCIÓN DE RUTAS POR ROL
+  // ============================================================================
 
   // Proteger rutas de vendedor y redirigir a la versión de buyer cuando aplique
   if (isSellerRoute(req)) {
@@ -273,7 +340,17 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Redirección desde raíz
   if (req.nextUrl.pathname === '/') {
-    if (userRole === 'CLIENT') {
+    // Si no hay parámetro mode, redirigir a página de selección
+    if (!modeParam) {
+      logger.info(LogCategory.AUTH, '🔄 Redirecting to mode selection page', {
+        userId: userId || undefined,
+        userRole
+      })
+      return NextResponse.redirect(new URL('/select-mode', req.url))
+    }
+    
+    // Si hay mode=buyer
+    if (modeParam === 'buyer' && userRole === 'CLIENT') {
       logger.info(LogCategory.AUTH, '🔄 Redirecting CLIENT to /buyer/dashboard', {
         userId: userId || undefined,
         userRole
@@ -283,8 +360,10 @@ export default clerkMiddleware(async (auth, req) => {
       r.headers.set('x-debug-from', '/')
       r.headers.set('x-debug-to', '/buyer/dashboard')
       return r
-    } else {
-      // Vendedor/Admin → Redirigir a dashboard
+    }
+    
+    // Si hay mode=seller
+    if (modeParam === 'seller' && (userRole === 'SELLER' || userRole === 'ADMIN')) {
       logger.info(LogCategory.AUTH, '🔄 Redirecting SELLER/ADMIN to /dashboard', {
         userId: userId || undefined,
         userRole
