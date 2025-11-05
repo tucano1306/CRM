@@ -2,7 +2,7 @@
 
 ## 🌐 URL Base de Producción
 ```
-https://food-order-bucyrnxjs-tucano0109-5495s-projects.vercel.app
+https://food-order-mo3yped1e-tucano0109-5495s-projects.vercel.app
 ```
 
 ---
@@ -11,7 +11,7 @@ https://food-order-bucyrnxjs-tucano0109-5495s-projects.vercel.app
 
 ### 👤 Para Vendedores:
 ```
-https://food-order-bucyrnxjs-tucano0109-5495s-projects.vercel.app/?mode=seller
+https://food-order-mo3yped1e-tucano0109-5495s-projects.vercel.app/?mode=seller
 ```
 
 **Características:**
@@ -25,7 +25,7 @@ https://food-order-bucyrnxjs-tucano0109-5495s-projects.vercel.app/?mode=seller
 
 ### 🛒 Para Compradores:
 ```
-https://food-order-bucyrnxjs-tucano0109-5495s-projects.vercel.app/?mode=buyer
+https://food-order-mo3yped1e-tucano0109-5495s-projects.vercel.app/?mode=buyer
 ```
 
 **Características:**
@@ -39,7 +39,7 @@ https://food-order-bucyrnxjs-tucano0109-5495s-projects.vercel.app/?mode=buyer
 
 ### 🏠 Página de Selección:
 ```
-https://food-order-bucyrnxjs-tucano0109-5495s-projects.vercel.app/select-mode
+https://food-order-mo3yped1e-tucano0109-5495s-projects.vercel.app/select-mode
 ```
 
 Página de aterrizaje donde puedes elegir tu tipo de acceso.
