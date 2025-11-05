@@ -39,6 +39,24 @@ export async function getSeller(userId: string) {
     throw new UnauthorizedError('No autorizado. Debes iniciar sesión.', 401)
   }
 
+  // Primero verificar si existe el authenticated_users
+  const authUser = await prisma.authenticated_users.findFirst({
+    where: { authId: userId },
+    include: {
+      sellers: true
+    }
+  })
+
+  console.log('🔍 [AUTH] Checking seller access:', {
+    userId,
+    authUserExists: !!authUser,
+    authUserId: authUser?.id,
+    authUserEmail: authUser?.email,
+    authUserRole: authUser?.role,
+    sellersCount: authUser?.sellers?.length || 0,
+    sellers: authUser?.sellers?.map(s => ({ id: s.id, name: s.name, email: s.email }))
+  })
+
   const seller = await prisma.seller.findFirst({
     where: {
       authenticated_users: {
@@ -53,6 +71,8 @@ export async function getSeller(userId: string) {
   if (!seller) {
     console.warn('🚨 SECURITY: Non-seller user attempted to access seller resource', {
       userId,
+      authUserExists: !!authUser,
+      authUserRole: authUser?.role,
       endpoint: 'getSeller()'
     })
     throw new UnauthorizedError(
