@@ -99,3 +99,4 @@ logs/
 
 # Build artifacts de Docker
 .dockerignore.bak
+.vercel
