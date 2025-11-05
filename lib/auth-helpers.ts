@@ -39,24 +39,24 @@ export async function getSeller(userId: string) {
     throw new UnauthorizedError('No autorizado. Debes iniciar sesión.', 401)
   }
 
-  // Primero verificar si existe el authenticated_users
-  const authUser = await prisma.authenticated_users.findFirst({
-    where: { authId: userId },
-    include: {
-      sellers: true
-    }
-  })
+  // CRITICAL: Force bypass any Prisma cache by using raw query first
+  // This ensures we always get fresh data from database
+  const rawResult = await prisma.$queryRaw<Array<{id: string, authId: string, email: string, role: string}>>`
+    SELECT id, "authId", email, role::text
+    FROM authenticated_users
+    WHERE "authId" = ${userId}
+    LIMIT 1
+  `
 
-  console.log('🔍 [AUTH] Checking seller access:', {
+  console.log('🔍 [AUTH] Raw database query result:', {
     userId,
-    authUserExists: !!authUser,
-    authUserId: authUser?.id,
-    authUserEmail: authUser?.email,
-    authUserRole: authUser?.role,
-    sellersCount: authUser?.sellers?.length || 0,
-    sellers: authUser?.sellers?.map(s => ({ id: s.id, name: s.name, email: s.email }))
+    found: rawResult.length > 0,
+    id: rawResult[0]?.id,
+    email: rawResult[0]?.email,
+    role: rawResult[0]?.role
   })
 
+  // Now use the ID from raw query for subsequent lookups
   const seller = await prisma.seller.findFirst({
     where: {
       authenticated_users: {
@@ -68,11 +68,19 @@ export async function getSeller(userId: string) {
     }
   })
 
+  console.log('🔍 [AUTH] Seller lookup:', {
+    userId,
+    found: !!seller,
+    sellerId: seller?.id,
+    sellerName: seller?.name,
+    usersLinked: seller?.authenticated_users?.length || 0
+  })
+
   if (!seller) {
     console.warn('🚨 SECURITY: Non-seller user attempted to access seller resource', {
       userId,
-      authUserExists: !!authUser,
-      authUserRole: authUser?.role,
+      authUserExists: rawResult.length > 0,
+      authUserRole: rawResult[0]?.role,
       endpoint: 'getSeller()'
     })
     throw new UnauthorizedError(

@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 // Mock Prisma
 jest.mock('@/lib/prisma', () => ({
   prisma: {
+    $queryRaw: jest.fn(),
     seller: {
       findFirst: jest.fn(),
     },
@@ -55,11 +56,20 @@ describe('auth-helpers', () => {
         businessName: 'Test Business',
       }
 
+      // Mock raw query to return user data
+      ;(prisma.$queryRaw as jest.Mock).mockResolvedValue([{
+        id: 'auth-user-123',
+        authId: 'user-123',
+        email: 'test@example.com',
+        role: 'SELLER'
+      }])
+
       ;(prisma.seller.findFirst as jest.Mock).mockResolvedValue(mockSeller)
 
       const result = await getSeller('user-123')
 
       expect(result).toEqual(mockSeller)
+      expect(prisma.$queryRaw).toHaveBeenCalled()
       expect(prisma.seller.findFirst).toHaveBeenCalledWith({
         where: {
           authenticated_users: {
@@ -73,6 +83,14 @@ describe('auth-helpers', () => {
     })
 
     it('should throw UnauthorizedError when seller not found', async () => {
+      // Mock raw query to return user data
+      ;(prisma.$queryRaw as jest.Mock).mockResolvedValue([{
+        id: 'auth-user-123',
+        authId: 'user-123',
+        email: 'test@example.com',
+        role: 'CLIENT'
+      }])
+
       ;(prisma.seller.findFirst as jest.Mock).mockResolvedValue(null)
 
       await expect(getSeller('user-123')).rejects.toThrow(UnauthorizedError)
@@ -80,6 +98,14 @@ describe('auth-helpers', () => {
     })
 
     it('should throw UnauthorizedError with 403 status code', async () => {
+      // Mock raw query to return user data
+      ;(prisma.$queryRaw as jest.Mock).mockResolvedValue([{
+        id: 'auth-user-123',
+        authId: 'user-123',
+        email: 'test@example.com',
+        role: 'CLIENT'
+      }])
+
       ;(prisma.seller.findFirst as jest.Mock).mockResolvedValue(null)
 
       try {
@@ -247,8 +273,6 @@ describe('auth-helpers', () => {
 
   describe('Edge cases', () => {
     it('should handle empty userId in getSeller', async () => {
-      ;(prisma.seller.findFirst as jest.Mock).mockResolvedValue(null)
-
       await expect(getSeller('')).rejects.toThrow(UnauthorizedError)
     })
 
@@ -260,7 +284,7 @@ describe('auth-helpers', () => {
     })
 
     it('should handle database errors gracefully', async () => {
-      ;(prisma.seller.findFirst as jest.Mock).mockRejectedValue(new Error('Database error'))
+      ;(prisma.$queryRaw as jest.Mock).mockRejectedValue(new Error('Database error'))
 
       await expect(getSeller('user-123')).rejects.toThrow('Database error')
     })
