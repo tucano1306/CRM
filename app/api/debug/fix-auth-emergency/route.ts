@@ -1,6 +1,6 @@
 /**
  * EMERGENCY FIX: Delete wrong authenticated_users and create correct one
- * POST /api/debug/fix-auth-emergency
+ * GET or POST /api/debug/fix-auth-emergency
  */
 
 import { auth } from '@clerk/nextjs/server'
@@ -9,7 +9,7 @@ import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
-export async function POST() {
+async function fixAuthIssue() {
   try {
     const { userId } = await auth()
 
@@ -149,4 +149,12 @@ export async function POST() {
   } finally {
     await prisma.$disconnect()
   }
+}
+
+export async function POST() {
+  return fixAuthIssue()
+}
+
+export async function GET() {
+  return fixAuthIssue()
 }
