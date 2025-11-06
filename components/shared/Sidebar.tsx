@@ -83,6 +83,14 @@ export default function Sidebar() {
   const { unreadCount } = useUnreadMessages()
   const { signOut } = useClerk()
 
+  const handleSignOut = async () => {
+    try {
+      await signOut({ redirectUrl: '/sign-in' })
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 1024) {
@@ -214,7 +222,7 @@ export default function Sidebar() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => signOut()}
+                  onClick={handleSignOut}
                   className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
                   title="Cerrar sesión"
                 >
@@ -252,7 +260,7 @@ export default function Sidebar() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => signOut()}
+              onClick={handleSignOut}
               className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
               title="Cerrar sesión"
             >
