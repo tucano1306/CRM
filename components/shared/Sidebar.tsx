@@ -26,7 +26,8 @@ import ThemeToggle from './ThemeToggle'
 import NotificationBellSeller from '../notifications/NotificationBellSeller'
 import { NotificationProvider } from '../providers/NotificationProvider'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
-import { useClerk } from '@clerk/nextjs'
+import { UserButton } from '@clerk/nextjs'
+
 
 const menuItems = [
   {
@@ -81,15 +82,6 @@ export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const { unreadCount } = useUnreadMessages()
-  const { signOut } = useClerk()
-
-  const handleSignOut = async () => {
-    try {
-      await signOut({ redirectUrl: '/sign-in' })
-    } catch (error) {
-      console.error('Error signing out:', error)
-    }
-  }
 
   useEffect(() => {
     const handleResize = () => {
@@ -210,33 +202,34 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Desktop Footer - Sign Out */}
+        {/* Desktop Footer - User Profile */}
         {!isCollapsed && (
           <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSignOut}
-              className="w-full justify-center text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 hover:border-red-400 dark:border-red-800 dark:hover:bg-red-950"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Cerrar Sesión
-            </Button>
+            <div className="flex items-center justify-center">
+              <UserButton 
+                afterSignOutUrl="/sign-in"
+                appearance={{
+                  elements: {
+                    avatarBox: "w-10 h-10",
+                    userButtonPopoverCard: "shadow-lg"
+                  }
+                }}
+              />
+            </div>
           </div>
         )}
         
-        {/* Collapsed Footer - Sign Out Icon Only */}
+        {/* Collapsed Footer - User Profile Icon Only */}
         {isCollapsed && (
           <div className="p-2 border-t border-gray-200 dark:border-gray-700 flex justify-center">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSignOut}
-              className="h-10 w-10 p-0 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 dark:border-red-800 dark:hover:bg-red-950"
-              title="Cerrar sesión"
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
+            <UserButton 
+              afterSignOutUrl="/sign-in"
+              appearance={{
+                elements: {
+                  avatarBox: "w-8 h-8"
+                }
+              }}
+            />
           </div>
         )}
       </div>
@@ -263,15 +256,14 @@ export default function Sidebar() {
           <div className="flex items-center gap-2">
             <NotificationBellSeller />
             <ThemeToggle />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSignOut}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-              title="Cerrar sesión"
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
+            <UserButton 
+              afterSignOutUrl="/sign-in"
+              appearance={{
+                elements: {
+                  avatarBox: "w-8 h-8"
+                }
+              }}
+            />
             <Button
               variant="ghost"
               size="sm"
