@@ -134,7 +134,24 @@ export async function POST(request: Request) {
 
     console.log('✅ [CREATE PRODUCT] Validaciones pasadas, creando producto...')
 
-    // ✅ Crear producto CON TIMEOUT
+    // 🔒 SEGURIDAD: Obtener vendedor del usuario autenticado
+    const seller = await prisma.seller.findFirst({
+      where: {
+        authenticated_users: {
+          some: { authId: userId }
+        }
+      }
+    })
+
+    if (!seller) {
+      return NextResponse.json({ 
+        error: 'No tienes permisos para crear productos. Debes ser un vendedor registrado.' 
+      }, { status: 403 })
+    }
+
+    console.log('✅ [CREATE PRODUCT] Seller encontrado:', seller.id)
+
+    // ✅ Crear producto CON TIMEOUT y relación con seller
     const product = await withPrismaTimeout(
       () => prisma.product.create({
         data: {
@@ -146,6 +163,11 @@ export async function POST(request: Request) {
           sku: sanitizedData.sku,
           imageUrl: sanitizedData.imageUrl || null,
           isActive: sanitizedData.isActive ?? true,
+          sellers: {
+            create: {
+              sellerId: seller.id
+            }
+          }
         },
       })
     )
