@@ -152,8 +152,20 @@ export default function ProductsPage() {
       clearTimeout(timeoutId)
 
       if (result.success) {
-        const productsData = result.data?.data || result.data || []
-        const productsArray = Array.isArray(productsData) ? productsData : []
+        // Manejar diferentes estructuras de respuesta
+        let productsArray = []
+        if (Array.isArray(result.data)) {
+          // Caso 1: result.data es directamente un array
+          productsArray = result.data
+        } else if (result.data?.data && Array.isArray(result.data.data)) {
+          // Caso 2: result.data tiene una propiedad data que es array
+          productsArray = result.data.data
+        } else if (result.data && typeof result.data === 'object') {
+          // Caso 3: result.data es un objeto, intentar extraer array
+          console.warn('⚠️ Estructura de respuesta inesperada:', result.data)
+          productsArray = []
+        }
+        
         console.log('✅ Productos a guardar:', productsArray)
         console.log('✅ Cantidad de productos:', productsArray.length)
         
@@ -191,27 +203,17 @@ export default function ProductsPage() {
     }
   }, [])
 
+  // fetchProductStats - Temporalmente deshabilitada (endpoint no existe)
   const fetchProductStats = useCallback(async () => {
-    try {
-      console.log('📊 Llamando a /api/products/stats...')
-      const result = await apiCall('/api/products/stats', {
-        timeout: 10000,
-      })
-
-      if (result.success) {
-        const statsArray = Array.isArray(result.data) ? result.data : []
-        console.log('✅ Estadísticas cargadas:', statsArray.length)
-        setProductStats(statsArray)
-      }
-    } catch (error) {
-      console.error('❌ Error al cargar estadísticas:', error)
-    }
+    // TODO: Implementar endpoint /api/products/stats o eliminar esta funcionalidad
+    console.log('📊 fetchProductStats: endpoint no disponible, skipping...')
+    setProductStats([])
   }, [])
 
   useEffect(() => {
     fetchProducts()
-    fetchProductStats()
-  }, [fetchProducts, fetchProductStats])
+    // fetchProductStats() // Deshabilitado hasta que se cree el endpoint
+  }, [fetchProducts])
 
   // Extraer tags únicos de los productos
   useEffect(() => {

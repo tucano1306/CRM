@@ -76,10 +76,20 @@ export default function ClientsPage() {
       clearTimeout(timeoutId)
 
       if (result.success) {
-        // El endpoint devuelve { success, data: { success, data: [...], pagination }, pagination }
-        // Los clientes están en result.data.data
-        const clientsData = result.data?.data || result.data || []
-        const clientsArray = Array.isArray(clientsData) ? clientsData : []
+        // Manejar diferentes estructuras de respuesta
+        let clientsArray = []
+        if (Array.isArray(result.data)) {
+          // Caso 1: result.data es directamente un array
+          clientsArray = result.data
+        } else if (result.data?.data && Array.isArray(result.data.data)) {
+          // Caso 2: result.data tiene una propiedad data que es array (con paginación)
+          clientsArray = result.data.data
+        } else if (result.data && typeof result.data === 'object') {
+          // Caso 3: result.data es un objeto, intentar extraer array
+          console.warn('⚠️ Estructura de respuesta inesperada:', result.data)
+          clientsArray = []
+        }
+        
         console.log('✅ Clientes a guardar:', clientsArray)
         console.log('✅ Cantidad de clientes:', clientsArray.length)
         setClients(clientsArray)
