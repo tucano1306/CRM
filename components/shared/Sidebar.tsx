@@ -217,7 +217,7 @@ export default function Sidebar() {
               variant="outline"
               size="sm"
               onClick={handleSignOut}
-              className="w-full text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 hover:border-red-400 dark:border-red-800 dark:hover:bg-red-950"
+              className="w-full justify-center text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 hover:border-red-400 dark:border-red-800 dark:hover:bg-red-950"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Cerrar Sesión
