@@ -154,16 +154,34 @@ export default function ProductsPage() {
       if (result.success) {
         // Manejar diferentes estructuras de respuesta
         let productsArray = []
+        
+        console.log('🔍 Analizando estructura de result.data:')
+        console.log('  - Tipo:', typeof result.data)
+        console.log('  - Es array:', Array.isArray(result.data))
+        console.log('  - Keys:', Object.keys(result.data || {}))
+        console.log('  - Estructura completa:', JSON.stringify(result.data, null, 2))
+        
         if (Array.isArray(result.data)) {
           // Caso 1: result.data es directamente un array
+          console.log('✅ Caso 1: result.data es array directo')
           productsArray = result.data
         } else if (result.data?.data && Array.isArray(result.data.data)) {
           // Caso 2: result.data tiene una propiedad data que es array
+          console.log('✅ Caso 2: result.data.data es array')
           productsArray = result.data.data
         } else if (result.data && typeof result.data === 'object') {
           // Caso 3: result.data es un objeto, intentar extraer array
-          console.warn('⚠️ Estructura de respuesta inesperada:', result.data)
-          productsArray = []
+          console.warn('⚠️ Caso 3: Estructura inesperada, buscando arrays...')
+          console.warn('   result.data:', result.data)
+          
+          // Buscar cualquier propiedad que sea un array
+          for (const key of Object.keys(result.data)) {
+            if (Array.isArray(result.data[key])) {
+              console.log(`   Encontrado array en result.data.${key}`)
+              productsArray = result.data[key]
+              break
+            }
+          }
         }
         
         console.log('✅ Productos a guardar:', productsArray)
