@@ -143,6 +143,9 @@ export async function PUT(
     if (validation.data.isActive !== undefined) {
       sanitizedData.isActive = validation.data.isActive
     }
+    if (validation.data.category !== undefined) {
+      sanitizedData.category = validation.data.category
+    }
 
     const updatedProduct = await prisma.product.update({
       where: { id: productId },

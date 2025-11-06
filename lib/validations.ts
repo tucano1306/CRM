@@ -55,6 +55,19 @@ export const createProductSchema = z.object({
   unit: z.enum(['case', 'unit', 'kg', 'lb', 'box', 'pk'], {
     message: 'Unidad debe ser: case, unit, kg, lb, box, o pk'
   }).default('case'),
+  category: z.enum([
+    'CARNES',
+    'EMBUTIDOS',
+    'SALSAS',
+    'LACTEOS',
+    'GRANOS',
+    'VEGETALES',
+    'CONDIMENTOS',
+    'BEBIDAS',
+    'OTROS'
+  ], {
+    message: 'Categoría inválida'
+  }).default('OTROS'),
   price: z.number()
     .positive('Precio debe ser mayor a 0')
     .max(999999, 'Precio máximo: 999,999'),
