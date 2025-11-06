@@ -128,20 +128,6 @@ export default function ProductsPage() {
     { id: 'OTROS', label: 'Otros', icon: '📋' }
   ]
 
-  useEffect(() => {
-    fetchProducts()
-    fetchProductStats()
-  }, [fetchProducts, fetchProductStats])
-
-  // Extraer tags únicos de los productos
-  useEffect(() => {
-    const tags = new Set<string>()
-    products.forEach(p => {
-      p.productTags?.forEach(t => tags.add(t.label))
-    })
-    setAvailableTags(Array.from(tags))
-  }, [products])
-
   const fetchProducts = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -221,6 +207,20 @@ export default function ProductsPage() {
       console.error('❌ Error al cargar estadísticas:', error)
     }
   }, [])
+
+  useEffect(() => {
+    fetchProducts()
+    fetchProductStats()
+  }, [fetchProducts, fetchProductStats])
+
+  // Extraer tags únicos de los productos
+  useEffect(() => {
+    const tags = new Set<string>()
+    products.forEach(p => {
+      p.productTags?.forEach(t => tags.add(t.label))
+    })
+    setAvailableTags(Array.from(tags))
+  }, [products])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

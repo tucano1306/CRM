@@ -99,6 +99,40 @@ function CartPageContent() {
     }, 3000)
   }
 
+  // Funciones auxiliares para productos
+  const getSuggestedProducts = async () => {
+    try {
+      const response = await fetch('/api/products?limit=4')
+      const result = await response.json()
+      return result.success ? (result.data?.data || result.data || []) : []
+    } catch (error) {
+      console.error('Error loading suggested products:', error)
+      return []
+    }
+  }
+
+  const getPopularProducts = async () => {
+    try {
+      const response = await fetch('/api/products?popular=true&limit=4')
+      const result = await response.json()
+      return result.success ? (result.data?.data || result.data || []) : []
+    } catch (error) {
+      console.error('Error loading popular products:', error)
+      return []
+    }
+  }
+
+  const getEstimatedDeliveryDate = () => {
+    const today = new Date()
+    if (deliveryMethod === 'pickup') {
+      return 'Hoy'
+    }
+    // Delivery: 2-3 days
+    const deliveryDate = new Date(today)
+    deliveryDate.setDate(today.getDate() + 2)
+    return deliveryDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
+  }
+
   const loadSuggestedProducts = useCallback(async () => {
     const products = await getSuggestedProducts()
     setSuggestedProducts(products)
@@ -168,6 +202,31 @@ function CartPageContent() {
       setAvailableCredits([])
     } finally {
       setLoadingCredits(false)
+    }
+  }, [])
+
+  // ✅ fetchCart CON TIMEOUT
+  const fetchCart = useCallback(async () => {
+    try {
+      setLoading(true)
+      setTimedOut(false)
+      setError(null)
+
+      const result = await apiCall('/api/buyer/cart', {
+        timeout: 5000,
+        onTimeout: () => setTimedOut(true)
+      })
+
+      setLoading(false)
+
+      if (result.success) {
+        setCart(result.data.cart)
+      } else {
+        setError(result.error || 'Error cargando carrito')
+      }
+    } catch (err) {
+      setLoading(false)
+      setError(getErrorMessage(err))
     }
   }, [])
 
@@ -266,31 +325,6 @@ function CartPageContent() {
       [creditId]: smartLimit
     }))
   }
-
-  // ✅ fetchCart CON TIMEOUT
-  const fetchCart = useCallback(async () => {
-    try {
-      setLoading(true)
-      setTimedOut(false)
-      setError(null)
-
-      const result = await apiCall('/api/buyer/cart', {
-        timeout: 5000,
-        onTimeout: () => setTimedOut(true)
-      })
-
-      setLoading(false)
-
-      if (result.success) {
-        setCart(result.data.cart)
-      } else {
-        setError(result.error || 'Error cargando carrito')
-      }
-    } catch (err) {
-      setLoading(false)
-      setError(getErrorMessage(err))
-    }
-  }, [])
 
   // ✅ updateQuantity CON TIMEOUT
   const updateQuantity = async (itemId: string, newQuantity: number) => {
@@ -435,13 +469,50 @@ function CartPageContent() {
     return Math.max(0, total)
   }
 
-      
+  // Abrir modal para guardar carrito
+  const saveCartForLater = () => {
+    setShowSaveCartModal(true)
+  }
+
+  // Confirmar y guardar carrito en localStorage
+  const confirmSaveCart = async () => {
+    if (!cart || cart.items.length === 0) {
+      showToast('No hay productos para guardar', 'error')
+      return
+    }
+
+    try {
+      setSavingCart(true)
+
+      const savedCart = {
+        id: cart.id || uuidv4(),
+        savedAt: new Date().toISOString(),
+        items: cart.items.map((item) => ({
+          product: item.product,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+        notes: orderNotes || '',
+        deliveryMethod,
+        appliedCoupon,
+        selectedCredits,
+        creditAmounts,
+        totals: {
+          subtotal: calculateSubtotal(),
+          discount: calculateDiscount(),
+          tax: calculateTax(),
+          delivery: calculateDeliveryFee(),
+          creditsApplied: calculateCreditsApplied(),
+          total: calculateTotal(),
+        },
+      }
+
       localStorage.setItem('saved-cart', JSON.stringify(savedCart))
-      
+
       setSavingCart(false)
       setShowSaveCartModal(false)
       showToast('✅ Carrito guardado exitosamente', 'success')
-      
+
       // Redirigir al catálogo después de 1 segundo
       setTimeout(() => {
         router.push('/buyer/catalog')
