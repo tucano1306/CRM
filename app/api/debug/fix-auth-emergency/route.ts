@@ -45,17 +45,28 @@ export async function POST() {
       const crypto = require('crypto')
       const newId = crypto.randomUUID()
 
-      authUser = await prisma.authenticated_users.create({
+      const created = await prisma.authenticated_users.create({
         data: {
           id: newId,
           authId: TARGET_AUTH_ID,
           email: 'tucano0109@gmail.com',
           name: 'Leo Leo',
           role: 'SELLER'
-        },
+        }
+      })
+      
+      // Fetch with include
+      const fetched = await prisma.authenticated_users.findUnique({
+        where: { id: created.id },
         include: { sellers: true }
       })
-      console.log('Created auth user:', authUser.id)
+      
+      if (!fetched) {
+        throw new Error('Failed to create authenticated_users')
+      }
+      
+      authUser = fetched
+      console.log('Created auth user:', created.id)
     }
 
     // Step 4: Check if seller exists
