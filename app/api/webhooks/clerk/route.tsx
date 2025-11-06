@@ -88,6 +88,35 @@ export async function POST(req: Request) {
           } as any,
         })
         console.log(`✅ Usuario creado: ${userEmail} (${role})`)
+
+        // 🔗 VINCULACIÓN AUTOMÁTICA: Buscar cliente existente con mismo email
+        const existingClient = await prisma.client.findFirst({
+          where: { email: userEmail },
+          include: { seller: true }
+        })
+
+        if (existingClient) {
+          console.log(`🔍 Cliente encontrado con email ${userEmail}:`)
+          console.log(`   • Client ID: ${existingClient.id}`)
+          console.log(`   • Nombre: ${existingClient.name}`)
+          console.log(`   • Seller: ${existingClient.seller?.name || 'Sin seller'}`)
+          
+          // Vincular el authenticated_user con el client existente
+          await prisma.client.update({
+            where: { id: existingClient.id },
+            data: {
+              authenticated_users: {
+                connect: { id: newUser.id }
+              }
+            }
+          })
+          
+          console.log(`✅ Usuario vinculado automáticamente con cliente existente`)
+          console.log(`   → El usuario ahora puede autenticarse y ver el catálogo del seller`)
+        } else {
+          console.log(`ℹ️ No se encontró cliente con email ${userEmail}`)
+          console.log(`   → Usuario creado sin vincular a cliente (puede registrarse después)`)
+        }
       }
     }
 
@@ -126,6 +155,33 @@ export async function POST(req: Request) {
           } as any,
         })
         console.log(`✅ Usuario creado: ${userEmail} (${role})`)
+
+        // 🔗 VINCULACIÓN AUTOMÁTICA: Buscar cliente existente con mismo email
+        const existingClient = await prisma.client.findFirst({
+          where: { email: userEmail },
+          include: { seller: true }
+        })
+
+        if (existingClient) {
+          console.log(`🔍 Cliente encontrado con email ${userEmail}:`)
+          console.log(`   • Client ID: ${existingClient.id}`)
+          console.log(`   • Nombre: ${existingClient.name}`)
+          console.log(`   • Seller: ${existingClient.seller?.name || 'Sin seller'}`)
+          
+          // Vincular el authenticated_user con el client existente
+          await prisma.client.update({
+            where: { id: existingClient.id },
+            data: {
+              authenticated_users: {
+                connect: { id: newUser.id }
+              }
+            }
+          })
+          
+          console.log(`✅ Usuario vinculado automáticamente con cliente existente`)
+        } else {
+          console.log(`ℹ️ No se encontró cliente con email ${userEmail}`)
+        }
       }
     }
 
