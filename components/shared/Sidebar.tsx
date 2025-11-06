@@ -233,6 +233,21 @@ export default function Sidebar() {
             </div>
           </div>
         )}
+        
+        {/* Collapsed Footer - Sign Out Button */}
+        {isCollapsed && (
+          <div className="p-2 flex justify-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="h-10 w-10 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+              title="Cerrar sesión"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Mobile Sidebar */}
