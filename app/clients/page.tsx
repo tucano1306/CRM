@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
 import { apiCall } from '@/lib/api-client'
@@ -50,17 +50,13 @@ export default function ClientsPage() {
     zipCode: '',
   })
 
-  useEffect(() => {
-    fetchClients()
-  }, [])
-
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     setLoading(true)
     setError(null)
     setTimedOut(false)
 
     const timeoutId = setTimeout(() => {
-      if (loading) setTimedOut(true)
+      setTimedOut(true)
     }, 5000)
 
     try {
@@ -99,7 +95,11 @@ export default function ClientsPage() {
       setLoading(false)
       setTimedOut(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchClients()
+  }, [fetchClients])
 
   const startEdit = (client: ClientWithStats) => {
     setEditingId(client.id)

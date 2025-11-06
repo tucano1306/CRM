@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { 
   Clock, 
   CheckCircle, 
@@ -66,11 +66,7 @@ export default function OrderStatusHistory({ orderId, refreshTrigger }: OrderSta
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchHistory()
-  }, [orderId, refreshTrigger]) // Refresca cuando cambia refreshTrigger
-
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -88,7 +84,13 @@ export default function OrderStatusHistory({ orderId, refreshTrigger }: OrderSta
     } finally {
       setLoading(false)
     }
-  }
+  }, [orderId])
+
+  useEffect(() => {
+    fetchHistory()
+  }, [orderId, refreshTrigger, fetchHistory]) // Refresca cuando cambia refreshTrigger
+
+  
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)

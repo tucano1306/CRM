@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Search, Package, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
@@ -68,26 +68,7 @@ export default function ReturnsManager({ role = 'seller' }: ReturnsManagerProps)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedReturn, setSelectedReturn] = useState<Return | null>(null)
 
-  useEffect(() => {
-    fetchReturns()
-  }, [role])
-
-  useEffect(() => {
-    filterReturns()
-  }, [returns, searchTerm, statusFilter])
-
-  // Abrir modal automáticamente si hay un ID en la URL
-  useEffect(() => {
-    if (returnIdFromUrl && returns.length > 0) {
-      const returnToShow = returns.find(r => r.id === returnIdFromUrl)
-      if (returnToShow) {
-        console.log('📋 [RETURNS] Abriendo devolución desde notificación:', returnIdFromUrl)
-        setSelectedReturn(returnToShow)
-      }
-    }
-  }, [returnIdFromUrl, returns])
-
-  const fetchReturns = async () => {
+  const fetchReturns = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/returns?role=${role}`)
@@ -100,7 +81,48 @@ export default function ReturnsManager({ role = 'seller' }: ReturnsManagerProps)
     } finally {
       setLoading(false)
     }
-  }
+  }, [role])
+
+  useEffect(() => {
+    fetchReturns()
+  }, [role, fetchReturns])
+
+  const filterReturns = useCallback(() => {
+    let filtered = [...returns]
+
+    // Filtro de búsqueda
+    if (searchTerm) {
+      filtered = filtered.filter(ret => 
+        ret.returnNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ret.order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (ret.client?.name && ret.client.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    }
+
+    // Filtro de estado
+    if (statusFilter !== 'ALL') {
+      filtered = filtered.filter(ret => ret.status === statusFilter)
+    }
+
+    setFilteredReturns(filtered)
+  }, [returns, searchTerm, statusFilter])
+
+  useEffect(() => {
+    filterReturns()
+  }, [returns, searchTerm, statusFilter, filterReturns])
+
+  // Abrir modal automáticamente si hay un ID en la URL
+  useEffect(() => {
+    if (returnIdFromUrl && returns.length > 0) {
+      const returnToShow = returns.find(r => r.id === returnIdFromUrl)
+      if (returnToShow) {
+        console.log('📋 [RETURNS] Abriendo devolución desde notificación:', returnIdFromUrl)
+        setSelectedReturn(returnToShow)
+      }
+    }
+  }, [returnIdFromUrl, returns])
+
+  
 
   const handleChangeRefundType = async (returnId: string, newRefundType: 'CREDIT' | 'REFUND') => {
     console.log('🔄 [FRONTEND] Attempting to change refund type:', { returnId, newRefundType })
@@ -139,25 +161,7 @@ export default function ReturnsManager({ role = 'seller' }: ReturnsManagerProps)
     }
   }
 
-  const filterReturns = () => {
-    let filtered = [...returns]
-
-    // Filtro de búsqueda
-    if (searchTerm) {
-      filtered = filtered.filter(ret => 
-        ret.returnNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ret.order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (ret.client?.name && ret.client.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
-    }
-
-    // Filtro de estado
-    if (statusFilter !== 'ALL') {
-      filtered = filtered.filter(ret => ret.status === statusFilter)
-    }
-
-    setFilteredReturns(filtered)
-  }
+  
 
   const getStatusBadge = (status: string) => {
     const badges = {

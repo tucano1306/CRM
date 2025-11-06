@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
@@ -77,7 +77,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
     }
   }
 
-  const fetchMessages = async () => {
+  const fetchMessages = useCallback(async () => {
     if (!user?.id || !receiverId) {
       return
     }
@@ -145,7 +145,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
       isFetchingRef.current = false
       setLoading(false)
     }
-  }
+  }, [user?.id, receiverId, orderId])
 
   useEffect(() => {
     if (!user?.id || !receiverId) {
@@ -173,7 +173,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
         fetchIntervalRef.current = null
       }
     }
-  }, [user?.id, receiverId, orderId])
+  }, [user?.id, receiverId, orderId, fetchMessages])
 
   useEffect(() => {
     scrollToBottom()

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { BarChart3, TrendingUp, Users, Package, ShoppingCart, DollarSign, Calendar } from 'lucide-react'
@@ -57,11 +57,7 @@ export default function StatsPage() {
   const [salesData, setSalesData] = useState<SalesData | null>(null)
   const [productStats, setProductStats] = useState<ProductStats | null>(null)
 
-  useEffect(() => {
-    fetchData()
-  }, [period])
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true)
     try {
       const [salesResponse, productsResponse] = await Promise.all([
@@ -83,7 +79,11 @@ export default function StatsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [period])
+
+  useEffect(() => {
+    fetchData()
+  }, [period, fetchData])
 
   if (loading) {
     return (

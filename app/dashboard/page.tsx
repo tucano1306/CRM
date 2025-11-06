@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
 import { formatPrice, formatNumber } from '@/lib/utils'
 import {
@@ -77,12 +77,7 @@ export default function DashboardPage() {
   const [revenueData, setRevenueData] = useState<RevenueData[]>([])
   const [revenuePeriod, setRevenuePeriod] = useState<'7d' | '30d'>('7d')
 
-  useEffect(() => {
-    fetchDashboard()
-  }, [])
-
-  // ✅ fetchDashboard CON TIMEOUT
-  const fetchDashboard = async () => {
+  const fetchDashboard = useCallback(async () => {
     try {
       setLoading(true)
       setTimedOut(false)
@@ -114,10 +109,13 @@ export default function DashboardPage() {
       setLoading(false)
       setError(getErrorMessage(err))
     }
-  }
+  }, [])
+
+  // ✅ fetchDashboard CON TIMEOUT
+  
 
   // Fetch de órdenes recientes
-  const fetchRecentOrders = async () => {
+  const fetchRecentOrders = useCallback(async () => {
     try {
       const result = await apiCall('/api/orders?recent=true&limit=5', { timeout: 5000 })
       if (result.success && result.data) {
@@ -126,10 +124,10 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('Error fetching recent orders:', err)
     }
-  }
+  }, [])
 
   // Fetch de productos con bajo stock
-  const fetchLowStockProducts = async () => {
+  const fetchLowStockProducts = useCallback(async () => {
     try {
       const result = await apiCall('/api/products?lowStock=true', { timeout: 5000 })
       if (result.success && result.data) {
@@ -138,10 +136,10 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('Error fetching low stock products:', err)
     }
-  }
+  }, [])
 
   // Fetch de órdenes pendientes
-  const fetchPendingOrders = async () => {
+  const fetchPendingOrders = useCallback(async () => {
     try {
       const result = await apiCall('/api/orders?status=PENDING&limit=10', { timeout: 5000 })
       if (result.success && result.data) {
@@ -150,10 +148,10 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('Error fetching pending orders:', err)
     }
-  }
+  }, [])
 
   // Generar datos de ingresos (temporal - reemplazar con API real)
-  const generateRevenueData = (period: '7d' | '30d') => {
+  const generateRevenueData = useCallback((period: '7d' | '30d') => {
     const days = period === '7d' ? 7 : 30
     const data: RevenueData[] = []
     const today = new Date()
@@ -175,13 +173,13 @@ export default function DashboardPage() {
     }
 
     return data
-  }
+  }, [stats])
 
   // useEffect para cargar datos iniciales
   useEffect(() => {
     fetchDashboard()
     fetchRecentOrders()
-  }, [])
+  }, [fetchDashboard, fetchRecentOrders])
 
   // useEffect para generar datos de gráfico cuando cambien stats o período
   useEffect(() => {
@@ -189,7 +187,7 @@ export default function DashboardPage() {
       const data = generateRevenueData(revenuePeriod)
       setRevenueData(data)
     }
-  }, [stats, revenuePeriod])
+  }, [stats, revenuePeriod, generateRevenueData])
 
   // Abrir modal de stock bajo y cargar productos
   const openLowStockModal = async () => {

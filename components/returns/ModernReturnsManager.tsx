@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { formatPrice } from '@/lib/utils'
 import { useSearchParams } from 'next/navigation'
 import { 
@@ -142,24 +142,7 @@ export default function ModernReturnsManager({ role = 'client' }: ModernReturnsM
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [selectedReturn, setSelectedReturn] = useState<Return | null>(null)
 
-  useEffect(() => {
-    fetchReturns()
-  }, [role])
-
-  useEffect(() => {
-    filterReturns()
-  }, [returns, searchTerm, statusFilter])
-
-  useEffect(() => {
-    if (returnIdFromUrl && returns.length > 0) {
-      const returnToShow = returns.find(r => r.id === returnIdFromUrl)
-      if (returnToShow) {
-        setSelectedReturn(returnToShow)
-      }
-    }
-  }, [returnIdFromUrl, returns])
-
-  const fetchReturns = async () => {
+  const fetchReturns = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`/api/returns?role=${role}`)
@@ -172,7 +155,44 @@ export default function ModernReturnsManager({ role = 'client' }: ModernReturnsM
     } finally {
       setLoading(false)
     }
-  }
+  }, [role])
+
+  useEffect(() => {
+    fetchReturns()
+  }, [role, fetchReturns])
+
+  const filterReturns = useCallback(() => {
+    let filtered = [...returns]
+
+    if (searchTerm) {
+      filtered = filtered.filter(ret => 
+        ret.returnNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ret.order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (ret.client?.name && ret.client.name.toLowerCase().includes(searchTerm.toLowerCase()))
+      )
+    }
+
+    if (statusFilter !== 'ALL') {
+      filtered = filtered.filter(ret => ret.status === statusFilter)
+    }
+
+    setFilteredReturns(filtered)
+  }, [returns, searchTerm, statusFilter])
+
+  useEffect(() => {
+    filterReturns()
+  }, [returns, searchTerm, statusFilter, filterReturns])
+
+  useEffect(() => {
+    if (returnIdFromUrl && returns.length > 0) {
+      const returnToShow = returns.find(r => r.id === returnIdFromUrl)
+      if (returnToShow) {
+        setSelectedReturn(returnToShow)
+      }
+    }
+  }, [returnIdFromUrl, returns])
+
+  
 
   const handleChangeRefundType = async (returnId: string, newRefundType: 'CREDIT' | 'REFUND') => {
     const confirmMessage = newRefundType === 'CREDIT'
@@ -201,23 +221,7 @@ export default function ModernReturnsManager({ role = 'client' }: ModernReturnsM
     }
   }
 
-  const filterReturns = () => {
-    let filtered = [...returns]
-
-    if (searchTerm) {
-      filtered = filtered.filter(ret => 
-        ret.returnNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ret.order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (ret.client?.name && ret.client.name.toLowerCase().includes(searchTerm.toLowerCase()))
-      )
-    }
-
-    if (statusFilter !== 'ALL') {
-      filtered = filtered.filter(ret => ret.status === statusFilter)
-    }
-
-    setFilteredReturns(filtered)
-  }
+  
 
   // Estadísticas
   const stats = {

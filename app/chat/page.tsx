@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
@@ -22,11 +22,7 @@ export default function SellerChatPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchClients()
-  }, [])
-
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     try {
       const response = await fetch('/api/seller/clients')
       const data = await response.json()
@@ -44,7 +40,11 @@ export default function SellerChatPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedClient])
+
+  useEffect(() => {
+    fetchClients()
+  }, [fetchClients])
 
   if (loading) {
     return (

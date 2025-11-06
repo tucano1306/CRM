@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { formatPrice } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -131,7 +131,7 @@ export default function ProductsPage() {
   useEffect(() => {
     fetchProducts()
     fetchProductStats()
-  }, [])
+  }, [fetchProducts, fetchProductStats])
 
   // Extraer tags únicos de los productos
   useEffect(() => {
@@ -142,13 +142,13 @@ export default function ProductsPage() {
     setAvailableTags(Array.from(tags))
   }, [products])
 
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true)
     setError(null)
     setTimedOut(false)
 
     const timeoutId = setTimeout(() => {
-      if (loading) setTimedOut(true)
+      setTimedOut(true)
     }, 5000)
 
     try {
@@ -203,9 +203,9 @@ export default function ProductsPage() {
       setLoading(false)
       setTimedOut(false)
     }
-  }
+  }, [])
 
-  const fetchProductStats = async () => {
+  const fetchProductStats = useCallback(async () => {
     try {
       console.log('📊 Llamando a /api/products/stats...')
       const result = await apiCall('/api/products/stats', {
@@ -220,7 +220,7 @@ export default function ProductsPage() {
     } catch (error) {
       console.error('❌ Error al cargar estadísticas:', error)
     }
-  }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

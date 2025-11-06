@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { v4 as uuidv4 } from 'uuid'
@@ -99,54 +99,17 @@ function CartPageContent() {
     }, 3000)
   }
 
-  useEffect(() => {
-    fetchCart()
-    loadSuggestedProducts()
-    loadPopularProducts()
-    loadAvailableCredits()
-  }, [])
-
-  // Detectar crédito en URL y aplicarlo automáticamente
-  useEffect(() => {
-    const creditIdFromUrl = searchParams?.get('useCredit')
-    
-    if (creditIdFromUrl && availableCredits.length > 0) {
-      console.log('💳 [AUTO-APPLY] Crédito detectado en URL:', creditIdFromUrl)
-      
-      // Buscar el crédito en los disponibles
-      const credit = availableCredits.find(c => c.id === creditIdFromUrl)
-      
-      if (credit && !selectedCredits.includes(creditIdFromUrl)) {
-        console.log('💳 [AUTO-APPLY] Aplicando crédito automáticamente')
-        const maxBalance = Number(credit.balance)
-        
-        setSelectedCredits([creditIdFromUrl])
-        setCreditAmounts({ [creditIdFromUrl]: maxBalance }) // Usar el balance completo por defecto
-        setShowCreditsSection(true) // Expandir sección para que vea el crédito aplicado
-        
-        showToast(`✓ Crédito de ${formatPrice(maxBalance)} aplicado automáticamente`, 'success')
-        
-        // Limpiar URL (opcional - remueve el parámetro después de aplicarlo)
-        const newUrl = window.location.pathname
-        window.history.replaceState({}, '', newUrl)
-      }
-    }
-  }, [searchParams, availableCredits])
-
-  // Cargar productos sugeridos
-  const loadSuggestedProducts = async () => {
+  const loadSuggestedProducts = useCallback(async () => {
     const products = await getSuggestedProducts()
     setSuggestedProducts(products)
-  }
+  }, [])
 
-  // Cargar productos populares
-  const loadPopularProducts = async () => {
+  const loadPopularProducts = useCallback(async () => {
     const products = await getPopularProducts()
     setPopularProducts(products)
-  }
+  }, [])
 
-  // Cargar créditos disponibles del comprador
-  const loadAvailableCredits = async () => {
+  const loadAvailableCredits = useCallback(async () => {
     try {
       setLoadingCredits(true)
       console.log('💳 [CREDITS] Iniciando carga de créditos...')
@@ -164,9 +127,7 @@ function CartPageContent() {
       if (result.success && result.data) {
         console.log('💳 [CREDITS] Tipo de result.data:', typeof result.data, 'Es array:', Array.isArray(result.data))
         
-        // El problema: apiCall puede devolver { data: { data: [...] } }
-        // Intentar primero result.data.data, luego result.data
-        let creditsArray = []
+        let creditsArray = [] as any[]
         
         if (Array.isArray(result.data.data)) {
           console.log('💳 [CREDITS] Usando result.data.data (array anidado)')
@@ -181,7 +142,6 @@ function CartPageContent() {
         
         console.log('💳 [CREDITS] Credits array length:', creditsArray.length)
         
-        // Filtrar solo créditos activos con balance (aunque el endpoint ya lo hace)
         const activeCredits = creditsArray.filter((credit: any) => {
           const isActive = credit.isActive && credit.balance > 0
           const notExpired = !credit.expiresAt || new Date(credit.expiresAt) > new Date()
@@ -209,7 +169,43 @@ function CartPageContent() {
     } finally {
       setLoadingCredits(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchCart()
+    loadSuggestedProducts()
+    loadPopularProducts()
+    loadAvailableCredits()
+  }, [fetchCart, loadSuggestedProducts, loadPopularProducts, loadAvailableCredits])
+
+  // Detectar crédito en URL y aplicarlo automáticamente
+  useEffect(() => {
+    const creditIdFromUrl = searchParams?.get('useCredit')
+    
+    if (creditIdFromUrl && availableCredits.length > 0) {
+      console.log('💳 [AUTO-APPLY] Crédito detectado en URL:', creditIdFromUrl)
+      
+      // Buscar el crédito en los disponibles
+      const credit = availableCredits.find(c => c.id === creditIdFromUrl)
+      
+      if (credit && !selectedCredits.includes(creditIdFromUrl)) {
+        console.log('💳 [AUTO-APPLY] Aplicando crédito automáticamente')
+        const maxBalance = Number(credit.balance)
+        
+        setSelectedCredits([creditIdFromUrl])
+        setCreditAmounts({ [creditIdFromUrl]: maxBalance }) // Usar el balance completo por defecto
+        setShowCreditsSection(true) // Expandir sección para que vea el crédito aplicado
+        
+        showToast(`✓ Crédito de ${formatPrice(maxBalance)} aplicado automáticamente`, 'success')
+        
+        // Limpiar URL (opcional - remueve el parámetro después de aplicarlo)
+        const newUrl = window.location.pathname
+        window.history.replaceState({}, '', newUrl)
+      }
+    }
+  }, [searchParams, availableCredits, selectedCredits])
+
+  
 
   // Calcular total de créditos seleccionados
   const calculateCreditsApplied = () => {
@@ -272,7 +268,7 @@ function CartPageContent() {
   }
 
   // ✅ fetchCart CON TIMEOUT
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     try {
       setLoading(true)
       setTimedOut(false)
@@ -294,7 +290,7 @@ function CartPageContent() {
       setLoading(false)
       setError(getErrorMessage(err))
     }
-  }
+  }, [])
 
   // ✅ updateQuantity CON TIMEOUT
   const updateQuantity = async (itemId: string, newQuantity: number) => {
@@ -439,81 +435,6 @@ function CartPageContent() {
     return Math.max(0, total)
   }
 
-  const getEstimatedDeliveryDate = () => {
-    const today = new Date()
-    if (deliveryMethod === 'pickup') {
-      return 'Hoy'
-    } else {
-      const startDate = new Date(today)
-      startDate.setDate(today.getDate() + 2)
-      const endDate = new Date(today)
-      endDate.setDate(today.getDate() + 3)
-      return `${startDate.getDate()}-${endDate.getDate()} ${startDate.toLocaleDateString('es', { month: 'short' })}`
-    }
-  }
-
-  const getSuggestedProducts = async () => {
-    try {
-      const result = await apiCall('/api/products/suggested', {
-        method: 'GET',
-      })
-      
-      console.log('Suggested products result:', result)
-      
-      if (result.success && result.data && Array.isArray(result.data)) {
-        console.log('Suggested products count:', result.data.length)
-        return result.data.slice(0, 3) // Limitar a 3
-      }
-    } catch (error) {
-      console.error('Error loading suggested products:', error)
-    }
-    
-    return []
-  }
-
-  const getPopularProducts = async () => {
-    try {
-      const result = await apiCall('/api/products/popular', {
-        method: 'GET',
-      })
-      
-      console.log('Popular products result:', result)
-      
-      if (result.success && result.data && Array.isArray(result.data)) {
-        console.log('Popular products count:', result.data.length)
-        return result.data.slice(0, 4) // Limitar a 4
-      }
-    } catch (error) {
-      console.error('Error loading popular products:', error)
-    }
-    
-    return []
-  }
-
-  const saveCartForLater = async () => {
-    if (!cart || cart.items.length === 0) {
-      showToast('El carrito está vacío', 'error')
-      return
-    }
-
-    setShowSaveCartModal(true)
-  }
-
-  // Confirmar guardar carrito y redirigir al catálogo
-  const confirmSaveCart = async () => {
-    setSavingCart(true)
-    
-    try {
-      // Guardar en localStorage
-      const savedCart = {
-        items: cart?.items || [],
-        savedAt: new Date().toISOString(),
-        notes: orderNotes,
-        deliveryMethod: deliveryMethod,
-        appliedCoupon: appliedCoupon,
-        selectedCredits: selectedCredits,
-        creditAmounts: creditAmounts
-      }
       
       localStorage.setItem('saved-cart', JSON.stringify(savedCart))
       
