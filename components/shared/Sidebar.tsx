@@ -210,38 +210,29 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Desktop Footer */}
+        {/* Desktop Footer - Sign Out */}
         {!isCollapsed && (
-          <div className="p-4">
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <Settings className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Sistema</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleSignOut}
-                  className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-                  title="Cerrar sesión"
-                >
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">v1.0.0 - Food Orders CRM</p>
-            </div>
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSignOut}
+              className="w-full text-red-600 border-red-300 hover:bg-red-50 hover:text-red-700 hover:border-red-400 dark:border-red-800 dark:hover:bg-red-950"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Cerrar Sesión
+            </Button>
           </div>
         )}
         
-        {/* Collapsed Footer - Sign Out Button */}
+        {/* Collapsed Footer - Sign Out Icon Only */}
         {isCollapsed && (
-          <div className="p-2 flex justify-center">
+          <div className="p-2 border-t border-gray-200 dark:border-gray-700 flex justify-center">
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={handleSignOut}
-              className="h-10 w-10 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+              className="h-10 w-10 p-0 text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 dark:border-red-800 dark:hover:bg-red-950"
               title="Cerrar sesión"
             >
               <LogOut className="h-5 w-5" />
