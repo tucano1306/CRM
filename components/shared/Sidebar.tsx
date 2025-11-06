@@ -18,13 +18,15 @@ import {
   RefreshCw,
   FileText,
   RotateCcw,
-  DollarSign
+  DollarSign,
+  LogOut
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import ThemeToggle from './ThemeToggle'
 import NotificationBellSeller from '../notifications/NotificationBellSeller'
 import { NotificationProvider } from '../providers/NotificationProvider'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
+import { useClerk } from '@clerk/nextjs'
 
 const menuItems = [
   {
@@ -79,6 +81,7 @@ export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const { unreadCount } = useUnreadMessages()
+  const { signOut } = useClerk()
 
   useEffect(() => {
     const handleResize = () => {
@@ -203,9 +206,20 @@ export default function Sidebar() {
         {!isCollapsed && (
           <div className="p-4">
             <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-              <div className="flex items-center space-x-2 mb-2">
-                <Settings className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Sistema</span>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-2">
+                  <Settings className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Sistema</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => signOut()}
+                  className="h-8 px-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                  title="Cerrar sesión"
+                >
+                  <LogOut className="h-4 w-4" />
+                </Button>
               </div>
               <p className="text-xs text-gray-500 dark:text-gray-400">v1.0.0 - Food Orders CRM</p>
             </div>
@@ -235,6 +249,15 @@ export default function Sidebar() {
           <div className="flex items-center gap-2">
             <NotificationBellSeller />
             <ThemeToggle />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => signOut()}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+              title="Cerrar sesión"
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
             <Button
               variant="ghost"
               size="sm"
