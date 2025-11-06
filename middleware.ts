@@ -15,6 +15,8 @@ import logger, { LogCategory } from '@/lib/logger'
 const isPublicRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
+  '/buyer/sign-in(.*)',
+  '/buyer/sign-up(.*)',
   '/api/webhooks(.*)',
   '/select-mode',
 ])
@@ -37,6 +39,8 @@ const isBuyerRoute = createRouteMatcher([
 const isAuthRoute = createRouteMatcher([
   '/sign-in(.*)',
   '/sign-up(.*)',
+  '/buyer/sign-in(.*)',
+  '/buyer/sign-up(.*)',
   '/api/auth(.*)',
 ])
 
