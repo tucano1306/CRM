@@ -200,6 +200,31 @@ export async function POST(request: NextRequest) {
   requestLogger.start('/api/clients', 'POST')
 
   try {
+    // 🔒 SEGURIDAD: Verificar autenticación
+    const { userId } = await auth()
+    if (!userId) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
+    // 🔒 SEGURIDAD: Obtener vendedor del usuario autenticado
+    const seller = await withPrismaTimeout(
+      () => prisma.seller.findFirst({
+        where: {
+          authenticated_users: {
+            some: { authId: userId }
+          }
+        }
+      }),
+      5000
+    )
+
+    if (!seller) {
+      return NextResponse.json(
+        { error: 'No tienes permisos para crear clientes. Debes ser un vendedor registrado.' },
+        { status: 403 }
+      )
+    }
+
     const body = await request.json()
     
     // Validar con Zod schema
@@ -246,6 +271,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // ✅ CREAR CLIENTE CON EL SELLER DEL USUARIO AUTENTICADO
     const newClient = await withPrismaTimeout(
       () => prisma.client.create({
         data: {
@@ -257,7 +283,7 @@ export async function POST(request: NextRequest) {
           orderConfirmationEnabled: sanitizedData.orderConfirmationEnabled,
           orderConfirmationMethod: sanitizedData.orderConfirmationMethod,
           notificationsEnabled: sanitizedData.notificationsEnabled,
-          ...(sanitizedData.sellerId && { sellerId: sanitizedData.sellerId })
+          sellerId: seller.id  // ✅ SIEMPRE usa el seller autenticado
         },
         include: {
           seller: true
