@@ -13,7 +13,7 @@ const prisma = new PrismaClient()
 async function fixAuthIssue() {
   try {
     const { userId } = await auth()
-    const hdrs = headers()
+  const hdrs = await headers()
     const providedSecret = hdrs.get('x-admin-secret')
     const allowedUser = 'user_33qmrSWlEDyZhiWqGuF7T27b1OM'
     const secretOk = !!process.env.ADMIN_MAINTENANCE_SECRET && providedSecret === process.env.ADMIN_MAINTENANCE_SECRET

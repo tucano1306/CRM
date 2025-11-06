@@ -12,7 +12,7 @@ import { prisma } from '@/lib/prisma'
 export async function GET() {
   try {
     const { userId } = await auth()
-    const hdrs = headers()
+  const hdrs = await headers()
     const providedSecret = hdrs.get('x-admin-secret')
     const secretOk = !!process.env.ADMIN_MAINTENANCE_SECRET && providedSecret === process.env.ADMIN_MAINTENANCE_SECRET
 
