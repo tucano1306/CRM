@@ -4,9 +4,18 @@ import { prisma } from '@/lib/prisma';
 
 /**
  * ENDPOINT TEMPORAL PARA ELIMINAR CLIENTE FANTASMA
- * DELETE /api/force-delete-client?email=l3oyucon1978@gmail.com
+ * GET /api/force-delete-client?email=l3oyucon1978@gmail.com
+ * También acepta DELETE para compatibilidad
  */
+export async function GET(request: Request) {
+  return handleDelete(request);
+}
+
 export async function DELETE(request: Request) {
+  return handleDelete(request);
+}
+
+async function handleDelete(request: Request) {
   try {
     const { userId } = await auth();
     
