@@ -5,6 +5,7 @@
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+import { headers } from 'next/headers'
 import { PrismaClient } from '@prisma/client'
 
 // Create a COMPLETELY fresh Prisma instance
@@ -15,12 +16,15 @@ const freshPrisma = new PrismaClient({
 export async function GET() {
   try {
     const { userId } = await auth()
+    const hdrs = headers()
+    const providedSecret = hdrs.get('x-admin-secret')
+    const secretOk = !!process.env.ADMIN_MAINTENANCE_SECRET && providedSecret === process.env.ADMIN_MAINTENANCE_SECRET
 
-    if (!userId) {
+    if (!userId || !secretOk) {
       return NextResponse.json({
-        status: 'no_auth',
-        message: 'No user ID from Clerk'
-      }, { status: 401 })
+        status: 'forbidden',
+        message: 'Unauthorized diagnostics'
+      }, { status: 403 })
     }
 
     // Use ONLY raw SQL - bypass ALL Prisma abstractions

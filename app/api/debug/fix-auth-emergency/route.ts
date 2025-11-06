@@ -1,19 +1,25 @@
 /**
  * EMERGENCY FIX: Delete wrong authenticated_users and create correct one
- * GET or POST /api/debug/fix-auth-emergency
+ * POST /api/debug/fix-auth-emergency
  */
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { headers } from 'next/headers'
 
 const prisma = new PrismaClient()
 
 async function fixAuthIssue() {
   try {
     const { userId } = await auth()
+    const hdrs = headers()
+    const providedSecret = hdrs.get('x-admin-secret')
+    const allowedUser = 'user_33qmrSWlEDyZhiWqGuF7T27b1OM'
+    const secretOk = !!process.env.ADMIN_MAINTENANCE_SECRET && providedSecret === process.env.ADMIN_MAINTENANCE_SECRET
+    const userOk = userId === allowedUser
 
-    if (!userId || userId !== 'user_33qmrSWlEDyZhiWqGuF7T27b1OM') {
+    if (!userId || !(secretOk || userOk)) {
       return NextResponse.json({
         error: 'Unauthorized - This endpoint is restricted'
       }, { status: 403 })
@@ -152,9 +158,5 @@ async function fixAuthIssue() {
 }
 
 export async function POST() {
-  return fixAuthIssue()
-}
-
-export async function GET() {
   return fixAuthIssue()
 }

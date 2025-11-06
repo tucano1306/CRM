@@ -77,6 +77,51 @@ export async function getSeller(userId: string) {
   })
 
   if (!seller) {
+    // Self-heal: if user record exists with SELLER role but no seller linkage, create/link it idempotently
+    const shouldRepair = rawResult.length > 0 && rawResult[0]?.role === 'SELLER'
+    if (shouldRepair) {
+      const au = await prisma.authenticated_users.findFirst({ where: { authId: userId } })
+      if (au) {
+        const repaired = await prisma.$transaction(async (tx) => {
+          let s = await tx.seller.findFirst({ where: { email: au.email } })
+          if (!s) {
+            s = await tx.seller.create({
+              data: {
+                name: au.name || au.email.split('@')[0] || 'Vendedor',
+                email: au.email,
+                isActive: true,
+                authenticated_users: { connect: { id: au.id } }
+              }
+            })
+          } else {
+            // Ensure linkage exists
+            const alreadyLinked = await tx.seller.findFirst({
+              where: {
+                id: s.id,
+                authenticated_users: { some: { id: au.id } }
+              }
+            })
+            if (!alreadyLinked) {
+              await tx.seller.update({
+                where: { id: s.id },
+                data: { authenticated_users: { connect: { id: au.id } } }
+              })
+            }
+          }
+          return s
+        })
+
+        console.log('🛠️ [AUTH] Self-healed seller linkage for SELLER user', {
+          userId,
+          authUserId: au.id,
+          repairedSellerId: repaired.id,
+          email: au.email
+        })
+
+        return repaired
+      }
+    }
+
     console.warn('🚨 SECURITY: Non-seller user attempted to access seller resource', {
       userId,
       authUserExists: rawResult.length > 0,
