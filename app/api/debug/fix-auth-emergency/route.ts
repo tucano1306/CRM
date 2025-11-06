@@ -51,7 +51,9 @@ export async function POST() {
           authId: TARGET_AUTH_ID,
           email: 'tucano0109@gmail.com',
           name: 'Leo Leo',
-          role: 'SELLER'
+          role: 'SELLER',
+          createdAt: new Date(),
+          updatedAt: new Date()
         }
       })
       
