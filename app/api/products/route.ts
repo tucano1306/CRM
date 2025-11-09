@@ -8,7 +8,7 @@ import { sanitizeText } from '@/lib/sanitize'
 // GET /api/products - Obtener productos del vendedor autenticado
 // ✅ CON TIMEOUT DE 5 SEGUNDOS
 // ✅ CON FILTRO DE SEGURIDAD POR SELLER
-// Soporta: ?search=nombre&lowStock=true
+// Soporta: ?search=nombre&lowStock=true&page=1&pageSize=20
 export async function GET(request: Request) {
   try {
     const { userId } = await auth()
@@ -32,11 +32,16 @@ export async function GET(request: Request) {
       }, { status: 403 })
     }
 
-    const { searchParams } = new URL(request.url)
-    const search = searchParams.get('search')
-    const lowStockParam = searchParams.get('lowStock')
-    
-    const lowStock = lowStockParam === 'true'
+  const { searchParams } = new URL(request.url)
+  const search = searchParams.get('search')
+  const lowStockParam = searchParams.get('lowStock')
+  const pageParam = searchParams.get('page')
+  const pageSizeParam = searchParams.get('pageSize')
+
+  const lowStock = lowStockParam === 'true'
+  let page = Math.max(parseInt(pageParam || '1', 10) || 1, 1)
+  let pageSize = parseInt(pageSizeParam || '20', 10) || 20
+  pageSize = Math.min(Math.max(pageSize, 1), 100) // 1..100
 
     // 🔒 SEGURIDAD: Construir filtro con relación sellers (ProductSeller)
     const whereClause: any = {
@@ -60,19 +65,33 @@ export async function GET(request: Request) {
       whereClause.stock = { lt: 10 }
     }
 
-    // ✅ Obtener productos CON TIMEOUT
+    // ✅ Conteo total y productos paginados (ambos con timeout)
+    const total = await withPrismaTimeout(() =>
+      prisma.product.count({ where: whereClause })
+    )
+
+    // Si la página solicitada excede las páginas totales, ajusta a la última página
+    const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+    if (page > totalPages) page = totalPages
+
     const products = await withPrismaTimeout(
       () => prisma.product.findMany({
         where: whereClause,
-        orderBy: {
-          name: 'asc',
-        },
+        orderBy: { name: 'asc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
       })
     )
 
     return NextResponse.json({
       success: true,
       data: products,
+      meta: {
+        page,
+        pageSize,
+        total,
+        totalPages,
+      },
     })
   } catch (error) {
     console.error('Error obteniendo productos:', error)
@@ -193,7 +212,7 @@ export async function POST(request: Request) {
     }
 
     // Manejo de errores de Prisma
-    if (error.code === 'P2002') {
+    if ((error as any).code === 'P2002') {
       return NextResponse.json(
         {
           success: false,
