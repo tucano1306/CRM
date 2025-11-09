@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "prisma generate && next build",
-    "postinstall": "prisma generate",
+    "build": "prisma generate --accelerate && next build",
+    "postinstall": "prisma generate --accelerate",
     "start": "next start -p 3000",
     "lint": "next lint",
     "prepare": "husky",
