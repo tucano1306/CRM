@@ -49,6 +49,12 @@ export default function ClientsPage() {
   const [invitationLink, setInvitationLink] = useState<string | null>(null)
   const [generatingLink, setGeneratingLink] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
+  const [sendingInvitation, setSendingInvitation] = useState(false)
+  const [invitationData, setInvitationData] = useState({
+    email: '',
+    whatsapp: '',
+    sms: ''
+  })
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -210,6 +216,50 @@ export default function ClientsPage() {
     setShowInvitationModal(false)
     setInvitationLink(null)
     setLinkCopied(false)
+    setInvitationData({ email: '', whatsapp: '', sms: '' })
+  }
+
+  const sendInvitation = async () => {
+    if (!invitationLink) return
+    
+    const { email, whatsapp, sms } = invitationData
+    
+    if (!email && !whatsapp && !sms) {
+      alert('Por favor ingresa al menos un método de contacto (Email, WhatsApp o SMS)')
+      return
+    }
+
+    try {
+      setSendingInvitation(true)
+      
+      const result = await apiCall('/api/seller/send-invitation', {
+        method: 'POST',
+        body: JSON.stringify({
+          invitationLink,
+          email: email || null,
+          whatsapp: whatsapp || null,
+          sms: sms || null
+        }),
+        timeout: 15000
+      })
+
+      if (result.success) {
+        const sent = []
+        if (email && result.data.emailSent) sent.push('Email')
+        if (whatsapp && result.data.whatsappSent) sent.push('WhatsApp')
+        if (sms && result.data.smsSent) sent.push('SMS')
+        
+        alert(`✅ Invitación enviada por: ${sent.join(', ')}`)
+        closeInvitationModal()
+      } else {
+        alert(result.error || 'Error al enviar la invitación')
+      }
+    } catch (err) {
+      console.error('Error enviando invitación:', err)
+      alert('Error al enviar la invitación')
+    } finally {
+      setSendingInvitation(false)
+    }
   }
 
   // Filtrar clientes por búsqueda
@@ -642,11 +692,73 @@ export default function ClientsPage() {
 
             <div className="space-y-4">
               <p className="text-gray-600">
-                Comparte este link con tus compradores para que puedan conectarse contigo. El link es válido por 7 días.
+                Envía la invitación directamente al comprador o copia el link para compartirlo manualmente.
               </p>
 
+              {/* Formulario de envío */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border-2 border-blue-200">
+                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  📤 Enviar invitación automáticamente
+                </h4>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      📧 Email
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="ejemplo@correo.com"
+                      value={invitationData.email}
+                      onChange={(e) => setInvitationData({ ...invitationData, email: e.target.value })}
+                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      💬 WhatsApp
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="7862585427"
+                      value={invitationData.whatsapp}
+                      onChange={(e) => setInvitationData({ ...invitationData, whatsapp: e.target.value })}
+                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      📱 SMS
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="786 2585427"
+                      value={invitationData.sms}
+                      onChange={(e) => setInvitationData({ ...invitationData, sms: e.target.value })}
+                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
+                    />
+                  </div>
+                  <button
+                    onClick={sendInvitation}
+                    disabled={sendingInvitation || (!invitationData.email && !invitationData.whatsapp && !invitationData.sms)}
+                    className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-green-700 font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {sendingInvitation ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        ✉️ Enviar Invitación
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Link manual */}
               <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
-                <p className="text-sm text-gray-500 mb-2 font-medium">Link de invitación:</p>
+                <p className="text-sm text-gray-500 mb-2 font-medium">O copia el link manualmente:</p>
                 <div className="flex items-center gap-3">
                   <input
                     type="text"
@@ -685,11 +797,11 @@ export default function ClientsPage() {
                 <ul className="space-y-2 text-sm text-blue-800">
                   <li className="flex items-start gap-2">
                     <span className="font-bold mt-0.5">1.</span>
-                    <span>El comprador hace clic en el link o lo pega en su navegador</span>
+                    <span>El comprador recibe el link por email, WhatsApp o SMS</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="font-bold mt-0.5">2.</span>
-                    <span>Si no tiene cuenta, puede registrarse directamente</span>
+                    <span>Si no tiene cuenta, se registra con Clerk</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="font-bold mt-0.5">3.</span>
@@ -704,13 +816,6 @@ export default function ClientsPage() {
                   className="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-300 font-semibold transition-all"
                 >
                   Cerrar
-                </button>
-                <button
-                  onClick={copyInvitationLink}
-                  className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-blue-700 font-semibold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
-                >
-                  <Copy size={20} />
-                  Copiar Link
                 </button>
               </div>
             </div>
