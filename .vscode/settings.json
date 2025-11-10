@@ -4,5 +4,7 @@
   "scss.validate": false,
   "files.associations": {
     "*.css": "tailwindcss"
-  }
+  },
+  "json.schemaDownload.enable": false,
+  "json.validate.enable": true
 }

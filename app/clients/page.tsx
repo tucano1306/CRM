@@ -15,7 +15,10 @@ import {
   Users,
   TrendingUp,
   DollarSign,
-  ShoppingBag
+  ShoppingBag,
+  Link2,
+  Copy,
+  CheckCircle
 } from 'lucide-react'
 
 interface ClientWithStats {
@@ -42,6 +45,10 @@ export default function ClientsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null)
+  const [showInvitationModal, setShowInvitationModal] = useState(false)
+  const [invitationLink, setInvitationLink] = useState<string | null>(null)
+  const [generatingLink, setGeneratingLink] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -165,6 +172,44 @@ export default function ClientsPage() {
     } catch (err) {
       alert('Error al eliminar cliente')
     }
+  }
+
+  const generateInvitationLink = async () => {
+    try {
+      setGeneratingLink(true)
+      setError(null)
+
+      const result = await apiCall('/api/seller/invitation-link', {
+        method: 'POST',
+        timeout: 10000
+      })
+
+      if (result.success) {
+        setInvitationLink(result.data.link)
+        setShowInvitationModal(true)
+      } else {
+        alert(result.error || 'Error al generar link de invitación')
+      }
+    } catch (err) {
+      console.error('Error generando link:', err)
+      alert('Error al generar link de invitación')
+    } finally {
+      setGeneratingLink(false)
+    }
+  }
+
+  const copyInvitationLink = () => {
+    if (invitationLink) {
+      navigator.clipboard.writeText(invitationLink)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    }
+  }
+
+  const closeInvitationModal = () => {
+    setShowInvitationModal(false)
+    setInvitationLink(null)
+    setLinkCopied(false)
   }
 
   // Filtrar clientes por búsqueda
@@ -304,13 +349,32 @@ export default function ClientsPage() {
         title="Clientes"
         description={`${clients.length} clientes registrados`}
         action={
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 flex items-center gap-2 shadow-lg hover:shadow-xl transition-all"
-          >
-            <Plus size={20} />
-            Nuevo Cliente
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={generateInvitationLink}
+              disabled={generatingLink}
+              className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 flex items-center gap-2 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {generatingLink ? (
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                  Generando...
+                </>
+              ) : (
+                <>
+                  <Link2 size={20} />
+                  Invitar Comprador
+                </>
+              )}
+            </button>
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 flex items-center gap-2 shadow-lg hover:shadow-xl transition-all"
+            >
+              <Plus size={20} />
+              Nuevo Cliente
+            </button>
+          </div>
         }
       />
 
@@ -556,6 +620,103 @@ export default function ClientsPage() {
           ))
         )}
       </div>
+
+      {/* Modal de link de invitación */}
+      {showInvitationModal && invitationLink && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8 animate-fadeIn">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-100 p-3 rounded-xl">
+                  <Link2 className="h-6 w-6 text-blue-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">Link de Invitación</h3>
+              </div>
+              <button
+                onClick={closeInvitationModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                Comparte este link con tus compradores para que puedan conectarse contigo. El link es válido por 7 días.
+              </p>
+
+              <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <p className="text-sm text-gray-500 mb-2 font-medium">Link de invitación:</p>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    value={invitationLink}
+                    readOnly
+                    className="flex-1 bg-white border border-gray-300 rounded-lg px-4 py-3 text-sm font-mono text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <button
+                    onClick={copyInvitationLink}
+                    className={`${
+                      linkCopied 
+                        ? 'bg-green-600 hover:bg-green-700' 
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    } text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all shadow-md hover:shadow-lg`}
+                  >
+                    {linkCopied ? (
+                      <>
+                        <CheckCircle size={20} />
+                        ¡Copiado!
+                      </>
+                    ) : (
+                      <>
+                        <Copy size={20} />
+                        Copiar
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                  <AlertCircle size={18} />
+                  ¿Cómo funciona?
+                </h4>
+                <ul className="space-y-2 text-sm text-blue-800">
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold mt-0.5">1.</span>
+                    <span>El comprador hace clic en el link o lo pega en su navegador</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold mt-0.5">2.</span>
+                    <span>Si no tiene cuenta, puede registrarse directamente</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold mt-0.5">3.</span>
+                    <span>Al aceptar, quedará conectado contigo y podrá hacer pedidos</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={closeInvitationModal}
+                  className="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-300 font-semibold transition-all"
+                >
+                  Cerrar
+                </button>
+                <button
+                  onClick={copyInvitationLink}
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-xl hover:from-blue-600 hover:to-blue-700 font-semibold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2"
+                >
+                  <Copy size={20} />
+                  Copiar Link
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   )
 }
