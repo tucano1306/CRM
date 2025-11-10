@@ -1,11 +1,9 @@
 // app/api/orders/[id]/cancel/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
 import { cancelOrderSchema, validateSchema } from '@/lib/validations'
 import { sanitizeText } from '@/lib/sanitize'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 /**
  * PUT /api/orders/[id]/cancel
@@ -173,6 +171,6 @@ export async function PUT(
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }

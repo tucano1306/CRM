@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { updateOrderSchema, validateSchema } from '@/lib/validations'
 import { sanitizeText } from '@/lib/sanitize'
 
-const prisma = new PrismaClient()
+// Usar singleton de Prisma para evitar múltiples conexiones en serverless
 
 // GET /api/orders/[id] - Obtener orden específica
 export async function GET(
@@ -52,7 +52,7 @@ export async function GET(
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // No desconectar el singleton en cada request
   }
 }
 

@@ -1,11 +1,11 @@
 // app/api/orders/[id]/confirm/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { auth } from '@clerk/nextjs/server'
 import { sanitizeText } from '@/lib/sanitize'
 import { z } from 'zod'
 
-const prisma = new PrismaClient()
+// Usar singleton de Prisma
 
 // ✅ SCHEMA DE VALIDACIÓN
 const confirmOrderSchema = z.object({

@@ -6,12 +6,7 @@
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { headers } from 'next/headers'
-import { PrismaClient } from '@prisma/client'
-
-// Create a COMPLETELY fresh Prisma instance
-const freshPrisma = new PrismaClient({
-  log: ['error', 'warn'],
-})
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
@@ -28,7 +23,7 @@ export async function GET() {
     }
 
     // Use ONLY raw SQL - bypass ALL Prisma abstractions
-    const rawUsers = await freshPrisma.$queryRaw<Array<{
+  const rawUsers = await prisma.$queryRaw<Array<{
       id: string
       authId: string
       email: string
@@ -41,7 +36,7 @@ export async function GET() {
       ORDER BY "createdAt" DESC
     `
 
-    const rawSellers = await freshPrisma.$queryRaw<Array<{
+  const rawSellers = await prisma.$queryRaw<Array<{
       seller_id: string
       seller_name: string
       seller_email: string
@@ -81,7 +76,7 @@ export async function GET() {
 
     console.log('🔍 [FRESH AUTH CHECK]', JSON.stringify(result, null, 2))
 
-    await freshPrisma.$disconnect()
+  // prisma singleton
 
     return NextResponse.json(result, { 
       status: rawSellers.length > 0 ? 200 : 403,
@@ -96,7 +91,7 @@ export async function GET() {
   } catch (error) {
     console.error('❌ [FRESH AUTH CHECK] Error:', error)
     
-    await freshPrisma.$disconnect()
+  // prisma singleton
     
     return NextResponse.json({
       status: 'error',

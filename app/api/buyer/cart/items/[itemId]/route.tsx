@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { validateSchema } from '@/lib/validations'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 type RouteContext = {
   params: Promise<{
@@ -79,7 +77,7 @@ export async function PUT(request: Request, context: RouteContext) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }
 
@@ -127,6 +125,6 @@ export async function DELETE(request: Request, context: RouteContext) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }

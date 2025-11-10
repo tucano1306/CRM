@@ -1,12 +1,10 @@
 // app/api/returns/[id]/complete/route.ts
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { notifyCreditNoteIssued } from '@/lib/notifications'
 import logger, { LogCategory } from '@/lib/logger'
 import { z } from 'zod'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 // ✅ SCHEMA SIMPLE INLINE
 const completeReturnSchema = z.object({
@@ -155,6 +153,6 @@ export async function POST(
     console.error('Error completing return:', error)
     return NextResponse.json({ error: 'Error al completar devolución' }, { status: 500 })
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }

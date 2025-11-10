@@ -19,6 +19,10 @@ const isPublicRoute = createRouteMatcher([
   '/buyer/sign-up(.*)',
   '/api/webhooks(.*)',
   '/select-mode',
+  // Asegurar que activos estáticos críticos no requieran auth
+  '/favicon.ico',
+  '/site.webmanifest',
+  '/robots.txt',
 ])
 
 // Rutas de vendedor

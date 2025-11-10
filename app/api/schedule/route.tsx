@@ -1,9 +1,8 @@
 // app/api/schedule/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient, DayOfWeek } from '@prisma/client'
+import { DayOfWeek } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 /**
  * PUT /api/schedule
@@ -96,7 +95,7 @@ export async function PUT(request: NextRequest) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }
 
@@ -142,6 +141,6 @@ export async function GET() {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }

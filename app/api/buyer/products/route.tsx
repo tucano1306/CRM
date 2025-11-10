@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { PrismaClient } from '@prisma/client'
 import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
+import { withDbRetry } from '@/lib/db-retry'
 
 // GET /api/buyer/products - VERSIÓN SIMPLIFICADA Y REPARADA
 export async function GET(request: Request) {
@@ -34,8 +33,8 @@ export async function GET(request: Request) {
       ]
     }
 
-    // Obtener productos - SIN timeout, solo campos necesarios
-    const products = await prisma.product.findMany({
+    // Obtener productos con retry (transient) y timeout combinados
+    const products = await withDbRetry(() => withPrismaTimeout(() => prisma.product.findMany({
       where: whereConditions,
       orderBy: { name: 'asc' },
       select: {
@@ -50,7 +49,7 @@ export async function GET(request: Request) {
         sku: true,
         isActive: true,
       },
-    })
+    })))
 
     console.log(`✅ [BUYER PRODUCTS] Encontrados ${products.length} productos`)
     
@@ -64,14 +63,14 @@ export async function GET(request: Request) {
       console.log('   ⚠️ No se encontraron productos con stock > 0')
       
       // Debug adicional: verificar TODOS los productos
-      const allProducts = await prisma.product.findMany({
+      const allProducts = await withDbRetry(() => prisma.product.findMany({
         select: {
           id: true,
           name: true,
           stock: true,
           isActive: true,
         }
-      })
+      }))
       console.log(`   ℹ️ Total de productos en DB: ${allProducts.length}`)
       if (allProducts.length > 0) {
         console.log('   Todos los productos:')
@@ -109,6 +108,6 @@ export async function GET(request: Request) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }

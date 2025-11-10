@@ -1,11 +1,10 @@
 // app/api/chat-messages/route.tsx - CON TIMEOUT
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
 import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
 import { notifyChatMessage } from '@/lib/notifications'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
+import { withDbRetry } from '@/lib/db-retry'
 
 /**
  * GET /api/chat-messages?otherUserId=xxx&orderId=xxx
@@ -116,7 +115,7 @@ export async function GET(request: NextRequest) {
     }
 
     // ✅ APLICAR TIMEOUT A OPERACIÓN DE PRISMA
-    const messages = await withPrismaTimeout(
+    const messages = await withDbRetry(() => withPrismaTimeout(
       () => prisma.chatMessage.findMany({
         where,
         orderBy: { createdAt: 'asc' },
@@ -130,7 +129,7 @@ export async function GET(request: NextRequest) {
           }
         }
       })
-    )
+    ))
 
     return NextResponse.json({
       success: true,
@@ -154,7 +153,7 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }
 
@@ -367,7 +366,7 @@ Día: ${dayOfWeek}, Hora actual: ${currentTime}`
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }
 
@@ -431,6 +430,6 @@ export async function PATCH(request: NextRequest) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }

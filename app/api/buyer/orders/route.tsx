@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { auth, currentUser } from '@clerk/nextjs/server'
-import { PrismaClient } from '@prisma/client'
 import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
 import { eventEmitter } from '@/lib/events/eventEmitter'
 import { EventType } from '@/lib/events/types/event.types'
@@ -8,8 +7,7 @@ import { validateOrderTime, getNextAvailableOrderTime } from '@/lib/scheduleVali
 import logger, { LogCategory } from '@/lib/logger'
 import { notifyNewOrder, notifyBuyerOrderCreated } from '@/lib/notifications'
 import { sanitizeText } from '@/lib/sanitize'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 // POST /api/buyer/orders - Crear orden desde el carrito
 // ✅ CON TIMEOUT DE 5 SEGUNDOS
@@ -483,7 +481,7 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }
 
@@ -593,6 +591,6 @@ export async function GET() {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }

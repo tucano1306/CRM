@@ -1,13 +1,11 @@
 // app/api/returns/[id]/approve/route.ts
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { notifyReturnApproved } from '@/lib/notifications'
 import logger, { LogCategory } from '@/lib/logger'
 import { approveReturnSchema, validateSchema } from '@/lib/validations'
 import { sanitizeText } from '@/lib/sanitize'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 export async function POST(
   request: Request,
@@ -146,6 +144,6 @@ export async function POST(
     console.error('Error approving return:', error)
     return NextResponse.json({ error: 'Error al aprobar devolución' }, { status: 500 })
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }

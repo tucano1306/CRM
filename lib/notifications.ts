@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
 import { formatPrice } from './utils'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 // Tipo definido manualmente para coincidir con el schema de Prisma
 export type NotificationType = 

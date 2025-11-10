@@ -1,9 +1,7 @@
 // app/api/orders/[id]/placed/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 /**
  * PUT /api/orders/[id]/placed
@@ -146,6 +144,6 @@ export async function PUT(
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }

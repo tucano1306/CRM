@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
+import { withResilientDb } from '@/lib/db-retry'
 
 // GET /api/orders - Obtener todas las órdenes (para vendedor)
 // ✅ CON TIMEOUT DE 5 SEGUNDOS
@@ -53,8 +54,8 @@ export async function GET(request: Request) {
       }
     }
 
-    // ✅ Obtener órdenes CON TIMEOUT (incluye campos para factura)
-    const orders = await withPrismaTimeout(
+    // ✅ Obtener órdenes CON TIMEOUT + RETRY (incluye campos para factura)
+    const orders = await withResilientDb(
       () => prisma.order.findMany({
         where: whereClause,
         include: {
@@ -112,7 +113,8 @@ export async function GET(request: Request) {
           createdAt: 'desc',
         },
         ...(limit ? { take: limit } : {}),
-      })
+      }),
+      { timeoutMs: 5000, retries: 2, initialDelayMs: 150 }
     )
 
     // Si se solicita formato "recent" simplificado

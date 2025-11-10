@@ -5,10 +5,10 @@
 
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import { headers } from 'next/headers'
 
-const prisma = new PrismaClient()
+// Use shared prisma singleton
 
 async function fixAuthIssue() {
   try {
@@ -153,7 +153,7 @@ async function fixAuthIssue() {
       stack: error instanceof Error ? error.stack : undefined
     }, { status: 500 })
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }
 

@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { PrismaClient } from '@prisma/client'
 import { addToCartSchema, validateSchema } from '@/lib/validations'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 // GET /api/buyer/cart - Obtener carrito del usuario
 export async function GET() {
@@ -50,7 +48,7 @@ export async function GET() {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }
 
@@ -169,7 +167,7 @@ export async function POST(request: Request) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }
 
@@ -203,6 +201,6 @@ export async function DELETE() {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }

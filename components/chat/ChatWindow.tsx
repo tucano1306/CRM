@@ -145,7 +145,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
       isFetchingRef.current = false
       setLoading(false)
     }
-  }, [user?.id, receiverId, orderId])
+  }, [user?.id, receiverId, orderId, messages])
 
   useEffect(() => {
     if (!user?.id || !receiverId) {

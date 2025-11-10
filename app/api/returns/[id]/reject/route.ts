@@ -1,13 +1,11 @@
 // app/api/returns/[id]/reject/route.ts
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { notifyReturnRejected } from '@/lib/notifications'
 import logger, { LogCategory } from '@/lib/logger'
 import { rejectReturnSchema, validateSchema } from '@/lib/validations'
 import { sanitizeText } from '@/lib/sanitize'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 export async function POST(
   request: Request,
@@ -112,6 +110,6 @@ export async function POST(
     console.error('Error rejecting return:', error)
     return NextResponse.json({ error: 'Error al rechazar devolución' }, { status: 500 })
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }

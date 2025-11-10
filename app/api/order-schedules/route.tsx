@@ -1,11 +1,10 @@
 // app/api/order-schedules/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { PrismaClient, DayOfWeek } from '@prisma/client'
+import { DayOfWeek } from '@prisma/client'
 import { auth } from '@clerk/nextjs/server'
 import { z } from 'zod'
 import { validateSchema } from '@/lib/validations'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 /**
  * GET /api/order-schedules?sellerId=xxx
@@ -40,7 +39,7 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }
 
@@ -135,7 +134,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }
 
@@ -187,6 +186,6 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }

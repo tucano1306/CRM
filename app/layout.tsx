@@ -17,12 +17,6 @@ if (typeof window === 'undefined') {
 export const metadata = {
   title: 'Bargain - Food Orders CRM',
   description: 'Sistema de gestión de pedidos de comida',
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    maximumScale: 5,
-    userScalable: true,
-  },
   icons: {
     icon: [
       { url: '/favicon.png', sizes: 'any' },
@@ -32,12 +26,20 @@ export const metadata = {
     shortcut: '/favicon.png',
   },
   manifest: '/site.webmanifest',
-  themeColor: '#7c3aed',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'Bargain',
   },
+}
+
+// Next.js 15+: move viewport-related settings to the `viewport` export
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: '#7c3aed',
 }
 
 export default function RootLayout({

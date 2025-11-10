@@ -1,10 +1,8 @@
 // app/api/stats/route.tsx
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { PrismaClient } from '@prisma/client'
 import { getSeller, UnauthorizedError, handleAuthError } from '@/lib/auth-helpers'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
@@ -90,6 +88,6 @@ export async function GET() {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    // No $disconnect(): usamos singleton compartido
   }
 }

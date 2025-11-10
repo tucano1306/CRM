@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { PrismaClient } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+import { prisma } from '@/lib/prisma';
 import { getSeller, UnauthorizedError, handleAuthError } from '@/lib/auth-helpers';
-
-const prisma = new PrismaClient();
 
 export async function GET() {
   try {
@@ -247,6 +244,6 @@ export async function GET() {
       { status: 500 }
     );
   } finally {
-    await prisma.$disconnect();
+    // Usamos el singleton de prisma; no desconectamos manualmente en cada request.
   }
 }

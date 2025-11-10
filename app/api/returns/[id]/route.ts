@@ -1,9 +1,7 @@
 // app/api/returns/[id]/route.ts
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 // GET - Obtener devolución específica
 export async function GET(
@@ -55,7 +53,7 @@ export async function GET(
     console.error('Error fetching return:', error)
     return NextResponse.json({ error: 'Error al obtener devolución' }, { status: 500 })
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }
 
@@ -114,7 +112,7 @@ export async function PATCH(
     console.error('Error updating return:', error)
     return NextResponse.json({ error: 'Error al actualizar devolución' }, { status: 500 })
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }
 
@@ -172,6 +170,6 @@ export async function DELETE(
     console.error('Error deleting return:', error)
     return NextResponse.json({ error: 'Error al eliminar devolución' }, { status: 500 })
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }

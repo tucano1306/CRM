@@ -1,11 +1,11 @@
 // app/api/returns/route.ts
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { createReturnSchema, validateSchema } from '@/lib/validations'
 import { sanitizeText } from '@/lib/sanitize'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
+import { withResilientDb } from '@/lib/db-retry'
+import { withPrismaTimeout } from '@/lib/timeout'
 
 // GET - Obtener devoluciones
 export async function GET(request: Request) {
@@ -19,13 +19,13 @@ export async function GET(request: Request) {
     const role = searchParams.get('role') // 'seller' o 'client'
 
     // Obtener usuario
-    const authUser = await prisma.authenticated_users.findUnique({
+    const authUser = await withResilientDb(() => prisma.authenticated_users.findUnique({
       where: { authId: userId },
       include: { 
         sellers: true,
         clients: true
       }
-    })
+    }))
 
     if (!authUser) {
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
     if (role === 'client' && authUser.clients.length > 0) {
       // Cliente: ver sus propias devoluciones
       const clientId = authUser.clients[0].id
-      returns = await prisma.return.findMany({
+      returns = await withResilientDb(() => prisma.return.findMany({
         where: { clientId },
         include: {
           order: {
@@ -64,11 +64,11 @@ export async function GET(request: Request) {
           creditNote: true
         },
         orderBy: { createdAt: 'desc' }
-      })
+      }))
     } else if (authUser.sellers.length > 0) {
       // Si es vendedor, ver todas las devoluciones de sus clientes
       const sellerId = authUser.sellers[0].id
-      returns = await prisma.return.findMany({
+      returns = await withResilientDb(() => prisma.return.findMany({
         where: { sellerId },
         include: {
           order: {
@@ -97,7 +97,7 @@ export async function GET(request: Request) {
           creditNote: true
         },
         orderBy: { createdAt: 'desc' }
-      })
+      }))
     } else {
       return NextResponse.json({ error: 'Usuario sin permisos' }, { status: 403 })
     }
@@ -151,10 +151,12 @@ export async function POST(request: Request) {
     }
 
     // Buscar usuario autenticado (cliente)
-    const authUser = await prisma.authenticated_users.findUnique({
-      where: { authId: userId },
-      include: { clients: true }
-    })
+    const authUser = await withPrismaTimeout(
+      () => prisma.authenticated_users.findUnique({
+        where: { authId: userId },
+        include: { clients: true }
+      })
+    )
 
     if (!authUser || authUser.clients.length === 0) {
       return NextResponse.json({ error: 'Cliente no encontrado' }, { status: 404 })
@@ -163,21 +165,23 @@ export async function POST(request: Request) {
     const clientId = authUser.clients[0].id
 
     // Verificar que la orden pertenece al cliente
-    const order = await prisma.order.findUnique({
-      where: { id: sanitizedData.orderId },
-      include: {
-        orderItems: true,
-        seller: true
-      }
-    })
+    const order = await withPrismaTimeout(
+      () => prisma.order.findUnique({
+        where: { id: sanitizedData.orderId },
+        include: {
+          orderItems: true,
+          seller: true
+        }
+      })
+    )
 
     if (!order || order.clientId !== clientId) {
       return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 })
     }
 
     // Calcular totales
-    let totalReturnAmount = 0
-    const returnItems = []
+  let totalReturnAmount = 0
+  const returnItems: any[] = []
 
     for (const item of sanitizedData.items) {
       const orderItem = order.orderItems.find(oi => oi.id === item.orderItemId)
@@ -217,7 +221,7 @@ export async function POST(request: Request) {
     const returnNumber = `RET-${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`
 
     // Crear devolución con items
-    const newReturn = await prisma.return.create({
+    const newReturn = await withPrismaTimeout(() => prisma.return.create({
       data: {
         returnNumber,
         orderId,
@@ -252,13 +256,13 @@ export async function POST(request: Request) {
           }
         }
       }
-    })
+    }))
 
     // Crear notificación para el vendedor
     if (order.sellerId) {
       console.log('🔔 [RETURN CREATED] Creando notificación para vendedor:', order.sellerId)
       
-      await prisma.notification.create({
+      await withPrismaTimeout(() => prisma.notification.create({
         data: {
           type: 'RETURN_REQUEST',
           title: '🔄 Nueva Solicitud de Devolución',
@@ -268,7 +272,7 @@ export async function POST(request: Request) {
           orderId: orderId,
           isRead: false
         }
-      })
+      }))
       
       console.log('✅ [RETURN CREATED] Notificación creada exitosamente')
     }

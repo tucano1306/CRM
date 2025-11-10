@@ -1,9 +1,7 @@
 import { Webhook } from 'svix'
 import { headers } from 'next/headers'
 import { WebhookEvent } from '@clerk/nextjs/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET
@@ -209,6 +207,6 @@ export async function POST(req: Request) {
     console.error('❌ Error procesando webhook:', error)
     return new Response('Error procesando webhook', { status: 500 })
   } finally {
-    await prisma.$disconnect()
+    // Usamos prisma singleton, no desconectar
   }
 }

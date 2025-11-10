@@ -1,10 +1,10 @@
 // app/api/credit-notes/[id]/use/route.ts
 import { auth } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
 import { useCreditNoteSchema, validateSchema } from '@/lib/validations'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
+import { withResilientDb } from '@/lib/db-retry'
+import { withPrismaTimeout } from '@/lib/timeout'
 
 export async function POST(
   request: Request,
@@ -31,9 +31,9 @@ export async function POST(
     const { orderId, amountUsed: amountToUse } = validation.data
 
     // Verificar que la nota de crédito existe y está activa
-    const creditNote = await prisma.creditNote.findUnique({
+    const creditNote = await withResilientDb(() => prisma.creditNote.findUnique({
       where: { id }
-    })
+    }))
 
     if (!creditNote) {
       return NextResponse.json({ error: 'Nota de crédito no encontrada' }, { status: 404 })
@@ -53,9 +53,9 @@ export async function POST(
     }
 
     // Verificar que la orden existe
-    const order = await prisma.order.findUnique({
+    const order = await withResilientDb(() => prisma.order.findUnique({
       where: { id: orderId }
-    })
+    }))
 
     if (!order) {
       return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 })
@@ -67,17 +67,17 @@ export async function POST(
     }
 
     // Crear registro de uso
-    const usage = await prisma.creditNoteUsage.create({
+    const usage = await withPrismaTimeout(() => prisma.creditNoteUsage.create({
       data: {
         creditNoteId: id,
         orderId: body.orderId,
         amountUsed: body.amountToUse,
         notes: body.notes
       }
-    })
+    }))
 
     // Actualizar balance de la nota de crédito
-    const updatedCreditNote = await prisma.creditNote.update({
+    const updatedCreditNote = await withPrismaTimeout(() => prisma.creditNote.update({
       where: { id },
       data: {
         balance: {
@@ -89,10 +89,10 @@ export async function POST(
         // Si el balance llega a 0, desactivar
         isActive: creditNote.balance - body.amountToUse > 0
       }
-    })
+    }))
 
     // Actualizar el total de la orden (descontar el crédito usado)
-    const updatedOrder = await prisma.order.update({
+    const updatedOrder = await withPrismaTimeout(() => prisma.order.update({
       where: { id: body.orderId },
       data: {
         totalAmount: {
@@ -102,7 +102,7 @@ export async function POST(
           ? `${order.notes}\n\nCrédito aplicado: $${body.amountToUse} (${creditNote.creditNoteNumber})`
           : `Crédito aplicado: $${body.amountToUse} (${creditNote.creditNoteNumber})`
       }
-    })
+    }))
 
     return NextResponse.json({
       success: true,
@@ -117,6 +117,6 @@ export async function POST(
     console.error('Error using credit note:', error)
     return NextResponse.json({ error: 'Error al usar nota de crédito' }, { status: 500 })
   } finally {
-    await prisma.$disconnect()
+    // prisma singleton
   }
 }
