@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { Resend } from 'resend'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +16,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { invitationLink, email, whatsapp, sms } = body
+    const { invitationLink, email, whatsapp, sms, sellerName } = body
 
     if (!invitationLink) {
       return NextResponse.json(
@@ -25,62 +28,108 @@ export async function POST(req: NextRequest) {
     const results = {
       emailSent: false,
       whatsappSent: false,
-      smsSent: false
+      smsSent: false,
+      errors: [] as string[]
     }
 
-    // Enviar por Email (simulado - aquí integrarías Resend, SendGrid, etc.)
+    // Enviar por Email con Resend
     if (email) {
       try {
         console.log(`📧 Enviando email a: ${email}`)
         console.log(`Link: ${invitationLink}`)
         
-        // TODO: Integrar con servicio de email real
-        // await resend.emails.send({
-        //   from: 'noreply@tu-dominio.com',
-        //   to: email,
-        //   subject: 'Invitación para conectar como comprador',
-        //   html: `<p>Has sido invitado a conectarte. <a href="${invitationLink}">Haz clic aquí</a></p>`
-        // })
-        
-        results.emailSent = true
-      } catch (err) {
-        console.error('Error enviando email:', err)
+        const { data, error } = await resend.emails.send({
+          from: 'Food Orders CRM <onboarding@resend.dev>', // Usa tu dominio verificado en producción
+          to: [email],
+          subject: `${sellerName || 'Un vendedor'} te invita a conectarte`,
+          html: `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <style>
+                  body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                  .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                  .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                  .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+                  .button { display: inline-block; background: #10b981; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
+                  .footer { text-align: center; color: #6b7280; font-size: 14px; margin-top: 20px; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <div class="header">
+                    <h1>🎉 ¡Tienes una invitación!</h1>
+                  </div>
+                  <div class="content">
+                    <p>Hola,</p>
+                    <p><strong>${sellerName || 'Un vendedor'}</strong> te ha invitado a conectarte en Food Orders CRM.</p>
+                    <p>Con esta conexión podrás:</p>
+                    <ul>
+                      <li>✅ Ver el catálogo de productos</li>
+                      <li>✅ Hacer pedidos fácilmente</li>
+                      <li>✅ Ver el historial de tus órdenes</li>
+                      <li>✅ Recibir cotizaciones personalizadas</li>
+                    </ul>
+                    <center>
+                      <a href="${invitationLink}" class="button">
+                        🔗 Aceptar Invitación
+                      </a>
+                    </center>
+                    <p style="color: #6b7280; font-size: 14px;">
+                      O copia este link en tu navegador:<br>
+                      <code style="background: #e5e7eb; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-top: 10px;">
+                        ${invitationLink}
+                      </code>
+                    </p>
+                    <p style="color: #ef4444; font-size: 14px;">
+                      ⚠️ Este link es válido por 7 días.
+                    </p>
+                  </div>
+                  <div class="footer">
+                    <p>Food Orders CRM - Sistema de gestión de pedidos</p>
+                    <p>Si no esperabas este email, puedes ignorarlo.</p>
+                  </div>
+                </div>
+              </body>
+            </html>
+          `,
+        })
+
+        if (error) {
+          console.error('❌ Error de Resend:', error)
+          results.errors.push(`Email: ${error.message}`)
+        } else {
+          console.log('✅ Email enviado exitosamente:', data)
+          results.emailSent = true
+        }
+      } catch (err: any) {
+        console.error('❌ Error enviando email:', err)
+        results.errors.push(`Email: ${err.message}`)
       }
     }
 
-    // Enviar por WhatsApp (simulado - aquí integrarías Twilio, WhatsApp Business API, etc.)
+    // Enviar por WhatsApp (simulado - requiere Twilio)
     if (whatsapp) {
       try {
-        console.log(`💬 Enviando WhatsApp a: ${whatsapp}`)
+        console.log(`� WhatsApp simulado a: ${whatsapp}`)
         console.log(`Link: ${invitationLink}`)
         
         // TODO: Integrar con Twilio WhatsApp API
-        // await twilioClient.messages.create({
-        //   from: 'whatsapp:+14155238886',
-        //   to: `whatsapp:+1${whatsapp}`,
-        //   body: `Has sido invitado a conectarte: ${invitationLink}`
-        // })
-        
-        results.whatsappSent = true
+        results.whatsappSent = true // Simulado por ahora
       } catch (err) {
         console.error('Error enviando WhatsApp:', err)
       }
     }
 
-    // Enviar por SMS (simulado - aquí integrarías Twilio SMS, etc.)
+    // Enviar por SMS (simulado - requiere Twilio)
     if (sms) {
       try {
-        console.log(`📱 Enviando SMS a: ${sms}`)
+        console.log(`📱 SMS simulado a: ${sms}`)
         console.log(`Link: ${invitationLink}`)
         
         // TODO: Integrar con Twilio SMS
-        // await twilioClient.messages.create({
-        //   from: '+1234567890',
-        //   to: `+1${sms}`,
-        //   body: `Has sido invitado a conectarte: ${invitationLink}`
-        // })
-        
-        results.smsSent = true
+        results.smsSent = true // Simulado por ahora
       } catch (err) {
         console.error('Error enviando SMS:', err)
       }

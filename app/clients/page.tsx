@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { useUser } from '@clerk/nextjs'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
 import { apiCall } from '@/lib/api-client'
@@ -37,6 +38,9 @@ interface ClientWithStats {
 }
 
 export default function ClientsPage() {
+  const { user } = useUser()
+  const sellerName = user?.fullName || user?.firstName || 'El vendedor'
+
   const [clients, setClients] = useState<ClientWithStats[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -238,7 +242,8 @@ export default function ClientsPage() {
           invitationLink,
           email: email || null,
           whatsapp: whatsapp || null,
-          sms: sms || null
+          sms: sms || null,
+          sellerName: sellerName
         }),
         timeout: 15000
       })
