@@ -696,12 +696,13 @@ export default function ClientsPage() {
             </div>
 
             <div className="space-y-4">
-              <p className="text-gray-600">
-                Envía la invitación directamente al comprador o copia el link para compartirlo manualmente.
+              <p className="text-gray-600 text-lg font-medium">
+                ⚡ NUEVO: Envía la invitación directamente al comprador o copia el link para compartirlo manualmente.
               </p>
 
               {/* Formulario de envío */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border-2 border-blue-200">
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border-2 border-blue-200"
+                   style={{ minHeight: '300px' }}>
                 <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
                   📤 Enviar invitación automáticamente
                 </h4>
