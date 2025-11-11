@@ -54,11 +54,8 @@ export default function ClientsPage() {
   const [generatingLink, setGeneratingLink] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
   const [sendingInvitation, setSendingInvitation] = useState(false)
-  const [invitationData, setInvitationData] = useState({
-    email: '',
-    whatsapp: '',
-    sms: ''
-  })
+  const [invitationMethod, setInvitationMethod] = useState<'email' | 'whatsapp' | 'sms'>('email')
+  const [invitationValue, setInvitationValue] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -220,41 +217,47 @@ export default function ClientsPage() {
     setShowInvitationModal(false)
     setInvitationLink(null)
     setLinkCopied(false)
-    setInvitationData({ email: '', whatsapp: '', sms: '' })
+    setInvitationMethod('email')
+    setInvitationValue('')
   }
 
   const sendInvitation = async () => {
     if (!invitationLink) return
     
-    const { email, whatsapp, sms } = invitationData
-    
-    if (!email && !whatsapp && !sms) {
-      alert('Por favor ingresa al menos un método de contacto (Email, WhatsApp o SMS)')
+    if (!invitationValue.trim()) {
+      alert('Por favor ingresa un valor para el método seleccionado')
       return
     }
 
     try {
       setSendingInvitation(true)
       
+      const payload: any = {
+        invitationLink,
+        sellerName,
+        email: null,
+        whatsapp: null,
+        sms: null
+      }
+      
+      // Asignar el valor al método seleccionado
+      if (invitationMethod === 'email') payload.email = invitationValue
+      if (invitationMethod === 'whatsapp') payload.whatsapp = invitationValue
+      if (invitationMethod === 'sms') payload.sms = invitationValue
+      
       const result = await apiCall('/api/seller/send-invitation', {
         method: 'POST',
-        body: JSON.stringify({
-          invitationLink,
-          email: email || null,
-          whatsapp: whatsapp || null,
-          sms: sms || null,
-          sellerName: sellerName
-        }),
+        body: JSON.stringify(payload),
         timeout: 15000
       })
 
       if (result.success) {
-        const sent = []
-        if (email && result.data.emailSent) sent.push('Email')
-        if (whatsapp && result.data.whatsappSent) sent.push('WhatsApp')
-        if (sms && result.data.smsSent) sent.push('SMS')
-        
-        alert(`✅ Invitación enviada por: ${sent.join(', ')}`)
+        const methodNames = {
+          email: 'Email',
+          whatsapp: 'WhatsApp',
+          sms: 'SMS'
+        }
+        alert(`✅ Invitación enviada por ${methodNames[invitationMethod]}`)
         closeInvitationModal()
       } else {
         alert(result.error || 'Error al enviar la invitación')
@@ -697,55 +700,58 @@ export default function ClientsPage() {
 
             <div className="space-y-4">
               <p className="text-gray-600 text-lg font-medium">
-                ⚡ NUEVO: Envía la invitación directamente al comprador o copia el link para compartirlo manualmente.
+                Envía la invitación directamente al comprador seleccionando el método preferido.
               </p>
 
-              {/* Formulario de envío */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border-2 border-blue-200"
-                   style={{ minHeight: '300px' }}>
-                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  📤 Enviar invitación automáticamente
+              {/* Formulario de envío con dropdown */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-200">
+                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-lg">
+                  📤 Enviar invitación
                 </h4>
-                <div className="space-y-3">
+                <div className="space-y-4">
+                  {/* Dropdown para seleccionar método */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      📧 Email
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Selecciona el método de envío
+                    </label>
+                    <select
+                      value={invitationMethod}
+                      onChange={(e) => {
+                        setInvitationMethod(e.target.value as 'email' | 'whatsapp' | 'sms')
+                        setInvitationValue('') // Limpiar el valor al cambiar método
+                      }}
+                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base bg-white"
+                    >
+                      <option value="email">📧 Email</option>
+                      <option value="whatsapp">💬 WhatsApp</option>
+                      <option value="sms">📱 SMS</option>
+                    </select>
+                  </div>
+
+                  {/* Campo de entrada dinámico según el método */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {invitationMethod === 'email' && 'Correo electrónico'}
+                      {invitationMethod === 'whatsapp' && 'Número de WhatsApp'}
+                      {invitationMethod === 'sms' && 'Número de teléfono'}
                     </label>
                     <input
-                      type="email"
-                      placeholder="ejemplo@correo.com"
-                      value={invitationData.email}
-                      onChange={(e) => setInvitationData({ ...invitationData, email: e.target.value })}
-                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      type={invitationMethod === 'email' ? 'email' : 'tel'}
+                      placeholder={
+                        invitationMethod === 'email' ? 'ejemplo@correo.com' :
+                        invitationMethod === 'whatsapp' ? '7862585427' :
+                        '786 2585427'
+                      }
+                      value={invitationValue}
+                      onChange={(e) => setInvitationValue(e.target.value)}
+                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      💬 WhatsApp
-                    </label>
-                    <input
-                      type="tel"
-                      placeholder="7862585427"
-                      value={invitationData.whatsapp}
-                      onChange={(e) => setInvitationData({ ...invitationData, whatsapp: e.target.value })}
-                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      📱 SMS
-                    </label>
-                    <input
-                      type="tel"
-                      placeholder="786 2585427"
-                      value={invitationData.sms}
-                      onChange={(e) => setInvitationData({ ...invitationData, sms: e.target.value })}
-                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all"
-                    />
-                  </div>
+
+                  {/* Botón de envío */}
                   <button
                     onClick={sendInvitation}
-                    disabled={sendingInvitation || (!invitationData.email && !invitationData.whatsapp && !invitationData.sms)}
+                    disabled={sendingInvitation || !invitationValue.trim()}
                     className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-green-700 font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {sendingInvitation ? (
@@ -755,7 +761,7 @@ export default function ClientsPage() {
                       </>
                     ) : (
                       <>
-                        ✉️ Enviar Invitación
+                        ✉️ Enviar Invitación por {invitationMethod === 'email' ? 'Email' : invitationMethod === 'whatsapp' ? 'WhatsApp' : 'SMS'}
                       </>
                     )}
                   </button>
