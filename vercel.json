@@ -4,5 +4,7 @@
       "path": "/api/cron/execute-recurring-orders",
       "schedule": "0 6 * * *"
     }
-  ]
+  ],
+  "buildCommand": "npm run build",
+  "framework": "nextjs"
 }
