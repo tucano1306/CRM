@@ -185,6 +185,7 @@ export default function ClientsPage() {
     try {
       setGeneratingLink(true)
       setError(null)
+      console.log('🔗 Generando link de invitación...')
 
       const result = await apiCall('/api/seller/invitation-link', {
         method: 'POST',
@@ -192,8 +193,10 @@ export default function ClientsPage() {
       })
 
       if (result.success) {
+        console.log('✅ Link generado:', result.data.link)
         setInvitationLink(result.data.link)
         setShowInvitationModal(true)
+        console.log('📤 Modal abierto con link:', result.data.link)
       } else {
         alert(result.error || 'Error al generar link de invitación')
       }
