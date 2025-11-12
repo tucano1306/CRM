@@ -56,6 +56,12 @@ export default function ClientsPage() {
   const [sendingInvitation, setSendingInvitation] = useState(false)
   const [invitationMethod, setInvitationMethod] = useState<'email' | 'whatsapp' | 'sms'>('email')
   const [invitationValue, setInvitationValue] = useState('')
+  
+  // 🐛 DEBUG: Monitorear estado del modal
+  useEffect(() => {
+    console.log('🔍 Estado modal:', { showInvitationModal, invitationLink, shouldShow: showInvitationModal && invitationLink })
+  }, [showInvitationModal, invitationLink])
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -683,25 +689,32 @@ export default function ClientsPage() {
       </div>
 
       {/* 🚀 MODAL ACTIVO - Formulario de envío con dropdown selector */}
-      {showInvitationModal && invitationLink && (
+      {showInvitationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8 animate-fadeIn">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-blue-100 p-3 rounded-xl">
-                  <Link2 className="h-6 w-6 text-blue-600" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-900">🎯 Enviar Invitación</h3>
+            {!invitationLink ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4" />
+                <p className="text-gray-600 text-lg">Generando link de invitación...</p>
               </div>
-              <button
-                onClick={closeInvitationModal}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <X size={24} />
-              </button>
-            </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-100 p-3 rounded-xl">
+                      <Link2 className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900">🎯 Enviar Invitación</h3>
+                  </div>
+                  <button
+                    onClick={closeInvitationModal}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
 
-            <div className="space-y-4">
+                <div className="space-y-4">
               <p className="text-gray-600 text-lg font-medium">
                 Selecciona el método de envío y completa la información del comprador.
               </p>
@@ -825,15 +838,17 @@ export default function ClientsPage() {
                 </ul>
               </div>
 
-              <div className="flex gap-3">
-                <button
-                  onClick={closeInvitationModal}
-                  className="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-300 font-semibold transition-all"
-                >
-                  Cerrar
-                </button>
-              </div>
-            </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={closeInvitationModal}
+                      className="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-xl hover:bg-gray-300 font-semibold transition-all"
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
