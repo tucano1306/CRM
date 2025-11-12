@@ -99,9 +99,15 @@ export async function POST(request: NextRequest) {
       const fullName = `${firstName} ${lastName}`.trim() || email.split('@')[0]
       const phone = clerkUser.phone_numbers?.[0]?.phone_number || ''
 
-      // Crear o actualizar authenticated_user
-      const authUserData = authUser ? authUser : await prisma.authenticated_users.create({
-        data: {
+      // Crear o actualizar authenticated_user usando upsert
+      const authUserData = await prisma.authenticated_users.upsert({
+        where: { authId: userId },
+        update: {
+          email,
+          name: fullName,
+          updatedAt: new Date()
+        },
+        create: {
           id: userId,
           authId: userId,
           email,
