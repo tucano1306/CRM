@@ -35,8 +35,13 @@ export async function POST(req: NextRequest) {
     // Enviar por Email con Resend
     if (email) {
       try {
-        console.log(`📧 Enviando email a: ${email}`)
-        console.log(`Link: ${invitationLink}`)
+        console.log(`📧 =================================`)
+        console.log(`📧 ENVIANDO EMAIL`)
+        console.log(`📧 Destinatario: ${email}`)
+        console.log(`📧 Link: ${invitationLink}`)
+        console.log(`📧 API Key presente: ${process.env.RESEND_API_KEY ? 'SÍ' : 'NO'}`)
+        console.log(`📧 API Key (primeros 10 chars): ${process.env.RESEND_API_KEY?.substring(0, 10)}...`)
+        console.log(`📧 =================================`)
         
         const { data, error } = await resend.emails.send({
           from: 'Food Orders CRM <onboarding@resend.dev>', // Usa tu dominio verificado en producción
