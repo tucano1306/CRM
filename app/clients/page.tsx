@@ -188,9 +188,14 @@ export default function ClientsPage() {
   }
 
   const generateInvitationLink = async () => {
+    console.log('🚀 Botón clickeado - abriendo modal inmediatamente')
+    
+    // Abrir modal INMEDIATAMENTE
+    setShowInvitationModal(true)
+    setGeneratingLink(true)
+    setError(null)
+    
     try {
-      setGeneratingLink(true)
-      setError(null)
       console.log('🔗 Generando link de invitación...')
 
       const result = await apiCall('/api/seller/invitation-link', {
@@ -201,14 +206,15 @@ export default function ClientsPage() {
       if (result.success) {
         console.log('✅ Link generado:', result.data.link)
         setInvitationLink(result.data.link)
-        setShowInvitationModal(true)
-        console.log('📤 Modal abierto con link:', result.data.link)
+        console.log('📤 Modal actualizado con link:', result.data.link)
       } else {
         alert(result.error || 'Error al generar link de invitación')
+        setShowInvitationModal(false) // Cerrar si falla
       }
     } catch (err) {
-      console.error('Error generando link:', err)
+      console.error('❌ Error generando link:', err)
       alert('Error al generar link de invitación')
+      setShowInvitationModal(false) // Cerrar si falla
     } finally {
       setGeneratingLink(false)
     }
