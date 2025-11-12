@@ -2,7 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy initialization para evitar errores durante el build
+let resendInstance: Resend | null = null
+function getResend() {
+  if (!resendInstance) {
+    const apiKey = process.env.RESEND_API_KEY
+    if (!apiKey) {
+      throw new Error('RESEND_API_KEY no está configurada')
+    }
+    resendInstance = new Resend(apiKey)
+  }
+  return resendInstance
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -52,6 +63,7 @@ export async function POST(req: NextRequest) {
           console.log(`⚠️ MODO TEST: Enviando a ${recipientEmail} en lugar de ${email}`)
         }
 
+        const resend = getResend()
         const { data, error } = await resend.emails.send({
           from: 'Food Orders CRM <onboarding@resend.dev>', // Usa tu dominio verificado en producción
           to: [recipientEmail],
