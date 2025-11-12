@@ -52,6 +52,7 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
                 alt="Bargain Logo" 
                 width={120} 
                 height={40}
+                style={{ height: 'auto' }}
                 className="object-contain"
                 priority
               />

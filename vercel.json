@@ -6,5 +6,26 @@
     }
   ],
   "buildCommand": "npm run build",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "git": {
+    "deploymentEnabled": true
+  },
+  "github": {
+    "autoAlias": true,
+    "silent": false
+  },
+  "env": {
+    "NEXT_PUBLIC_APP_URL": "https://crm-food-order.vercel.app"
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, must-revalidate"
+        }
+      ]
+    }
+  ]
 }

@@ -29,6 +29,21 @@ function ConnectPageContent() {
   useEffect(() => {
     if (!isLoaded) return
 
+    // Verificar si hay una invitación pendiente después del login
+    if (userId && typeof window !== 'undefined') {
+      const pending = sessionStorage.getItem('pendingInvitation')
+      if (pending) {
+        const { token: pendingToken, sellerId: pendingSellerId } = JSON.parse(pending)
+        sessionStorage.removeItem('pendingInvitation')
+        
+        // Si no hay token en la URL pero sí en sessionStorage, redirigir con el token
+        if (!token && pendingToken) {
+          router.push(`/buyer/connect?token=${pendingToken}&seller=${pendingSellerId}`)
+          return
+        }
+      }
+    }
+
     // Si no hay token o sellerId, mostrar error
     if (!token || !sellerId) {
       setError('Link de invitación inválido')
@@ -38,12 +53,14 @@ function ConnectPageContent() {
 
     // Validar el token y obtener info del vendedor
     validateInvitation()
-  }, [isLoaded, token, sellerId])
+  }, [isLoaded, token, sellerId, userId])
 
   const validateInvitation = async () => {
     try {
       setLoading(true)
       setError(null)
+
+      console.log('🔍 Validando invitación:', { token, sellerId })
 
       // Validar formato del token
       if (!token?.startsWith('inv_')) {
@@ -51,7 +68,13 @@ function ConnectPageContent() {
       }
 
       // Obtener información del vendedor
+      console.log('📞 Llamando a:', `/api/sellers/${sellerId}`)
       const response = await apiCall(`/api/sellers/${sellerId}`)
+      
+      console.log('📡 Respuesta de validación:', response)
+      console.log('📡 response.success:', response.success)
+      console.log('📡 response.data:', response.data)
+      console.log('📡 response.error:', response.error)
       
       if (!response.success) {
         throw new Error('Vendedor no encontrado')
@@ -69,14 +92,20 @@ function ConnectPageContent() {
 
   const handleConnect = async () => {
     if (!userId) {
-      // Redirigir a sign-in con redirect de vuelta
-      router.push(`/sign-in?redirect_url=/buyer/connect?token=${token}&seller=${sellerId}`)
+      // Guardar el token en sessionStorage para recuperarlo después del login
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('pendingInvitation', JSON.stringify({ token, sellerId }))
+      }
+      // Redirigir a sign-in
+      router.push('/sign-in')
       return
     }
 
     try {
       setConnecting(true)
       setError(null)
+
+      console.log('🔗 Conectando con vendedor:', { token, sellerId, userId })
 
       // Conectar el comprador con el vendedor
       const response = await apiCall('/api/buyer/connect-seller', {
@@ -87,16 +116,16 @@ function ConnectPageContent() {
         })
       })
 
+      console.log('📡 Respuesta del servidor:', response)
+
       if (!response.success) {
         throw new Error(response.error || 'Error al conectar con el vendedor')
       }
 
       setSuccess(true)
 
-      // Redirigir al dashboard del comprador después de 2 segundos
-      setTimeout(() => {
-        router.push('/buyer/dashboard')
-      }, 2000)
+      // Redirigir inmediatamente al dashboard del comprador
+      router.push('/dashboard?mode=buyer')
 
     } catch (err: any) {
       console.error('Error conectando con vendedor:', err)

@@ -17,6 +17,8 @@ const isPublicRoute = createRouteMatcher([
   '/sign-up(.*)',
   '/buyer/sign-in(.*)',
   '/buyer/sign-up(.*)',
+  '/buyer/connect(.*)', // Permitir acceso sin auth para procesar invitaciones
+  '/api/sellers(.*)', // Permitir consultar vendedores sin auth
   '/api/webhooks(.*)',
   '/select-mode',
   // Asegurar que activos estáticos críticos no requieran auth

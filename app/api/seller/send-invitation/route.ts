@@ -43,9 +43,18 @@ export async function POST(req: NextRequest) {
         console.log(`📧 API Key (primeros 10 chars): ${process.env.RESEND_API_KEY?.substring(0, 10)}...`)
         console.log(`📧 =================================`)
         
+        // NOTA: En desarrollo, Resend solo permite enviar a tucano0109@gmail.com
+        // Para producción, verifica un dominio en resend.com/domains
+        const testMode = process.env.NODE_ENV === 'development'
+        const recipientEmail = testMode ? 'tucano0109@gmail.com' : email
+
+        if (testMode && email !== 'tucano0109@gmail.com') {
+          console.log(`⚠️ MODO TEST: Enviando a ${recipientEmail} en lugar de ${email}`)
+        }
+
         const { data, error } = await resend.emails.send({
           from: 'Food Orders CRM <onboarding@resend.dev>', // Usa tu dominio verificado en producción
-          to: [email],
+          to: [recipientEmail],
           subject: `${sellerName || 'Un vendedor'} te invita a conectarte`,
           html: `
             <!DOCTYPE html>

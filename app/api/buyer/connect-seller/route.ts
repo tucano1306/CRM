@@ -35,9 +35,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar que el vendedor existe
+    // Verificar que el vendedor existe y obtener su authenticated_user
     const seller = await prisma.seller.findUnique({
-      where: { id: sellerId }
+      where: { id: sellerId },
+      include: {
+        authenticated_users: true
+      }
     })
 
     if (!seller) {
@@ -46,6 +49,9 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       )
     }
+
+    // Obtener el authId del vendedor para las notificaciones
+    const sellerAuthId = seller.authenticated_users?.[0]?.authId
 
     // Buscar si el usuario ya tiene un authenticated_user
     const authUser = await prisma.authenticated_users.findFirst({
@@ -115,6 +121,40 @@ export async function POST(request: NextRequest) {
           sellerId,
           authenticated_users: {
             connect: { id: authUserData.id }
+          }
+        }
+      })
+
+      // Crear notificación para el vendedor
+      await prisma.notification.create({
+        data: {
+          sellerId: seller.id,
+          type: 'NEW_ORDER', // Reutilizamos este tipo para notificaciones de clientes
+          title: '🎉 Nuevo cliente conectado',
+          message: `${fullName} aceptó tu invitación y se conectó como cliente`,
+          metadata: {
+            clientId: client.id,
+            clientName: fullName,
+            clientEmail: email,
+            action: 'CLIENT_CONNECTED'
+          }
+        }
+      })
+    }
+
+    // Si actualizó la conexión (cambió de vendedor), también notificar
+    if (authUser && authUser.clients.length > 0 && authUser.clients[0].sellerId !== sellerId) {
+      await prisma.notification.create({
+        data: {
+          sellerId: seller.id,
+          type: 'NEW_ORDER',
+          title: '🎉 Nuevo cliente conectado',
+          message: `${client.name} aceptó tu invitación y se conectó como cliente`,
+          metadata: {
+            clientId: client.id,
+            clientName: client.name,
+            clientEmail: client.email,
+            action: 'CLIENT_CONNECTED'
           }
         }
       })

@@ -11,6 +11,8 @@ export async function GET(
   try {
     const { id } = await params
     
+    console.log('🔍 GET /api/sellers/[id] - Buscando seller:', id)
+    
     const seller = await prisma.seller.findUnique({
       where: { id },
       include: {
@@ -47,7 +49,10 @@ export async function GET(
       }
     })
     
+    console.log('📊 Seller encontrado:', seller ? 'SÍ' : 'NO', seller?.id)
+    
     if (!seller) {
+      console.log('❌ Seller no encontrado con id:', id)
       return NextResponse.json(
         { 
           success: false,
