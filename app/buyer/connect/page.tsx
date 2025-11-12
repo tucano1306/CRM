@@ -96,8 +96,9 @@ function ConnectPageContent() {
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('pendingInvitation', JSON.stringify({ token, sellerId }))
       }
-      // Redirigir a sign-in
-      router.push('/sign-in')
+      // Redirigir a sign-in con redirect_url para volver aquí
+      const currentUrl = window.location.href
+      router.push(`/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`)
       return
     }
 
@@ -124,8 +125,10 @@ function ConnectPageContent() {
 
       setSuccess(true)
 
-      // Redirigir inmediatamente al dashboard del comprador
-      router.push('/dashboard?mode=buyer')
+      // Redirigir al dashboard del comprador después de 1.5 segundos
+      setTimeout(() => {
+        router.push('/buyer/dashboard')
+      }, 1500)
 
     } catch (err: any) {
       console.error('Error conectando con vendedor:', err)
