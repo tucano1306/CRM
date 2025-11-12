@@ -130,41 +130,23 @@ export async function POST(request: NextRequest) {
           }
         }
       })
-
-      // Crear notificación para el vendedor
-      await prisma.notification.create({
-        data: {
-          sellerId: seller.id,
-          type: 'NEW_ORDER', // Reutilizamos este tipo para notificaciones de clientes
-          title: '🎉 Nuevo cliente conectado',
-          message: `${fullName} aceptó tu invitación y se conectó como cliente`,
-          metadata: {
-            clientId: client.id,
-            clientName: fullName,
-            clientEmail: email,
-            action: 'CLIENT_CONNECTED'
-          }
-        }
-      })
     }
 
-    // Si actualizó la conexión (cambió de vendedor), también notificar
-    if (authUser && authUser.clients.length > 0 && authUser.clients[0].sellerId !== sellerId) {
-      await prisma.notification.create({
-        data: {
-          sellerId: seller.id,
-          type: 'NEW_ORDER',
-          title: '🎉 Nuevo cliente conectado',
-          message: `${client.name} aceptó tu invitación y se conectó como cliente`,
-          metadata: {
-            clientId: client.id,
-            clientName: client.name,
-            clientEmail: client.email,
-            action: 'CLIENT_CONNECTED'
-          }
+    // Crear notificación para el vendedor (siempre, sin importar si era nuevo o actualización)
+    await prisma.notification.create({
+      data: {
+        sellerId: seller.id,
+        type: 'NEW_ORDER',
+        title: '🎉 Nuevo cliente conectado',
+        message: `${client.name} aceptó tu invitación y se conectó como cliente`,
+        metadata: {
+          clientId: client.id,
+          clientName: client.name,
+          clientEmail: client.email,
+          action: 'CLIENT_CONNECTED'
         }
-      })
-    }
+      }
+    })
 
     return NextResponse.json({
       success: true,
