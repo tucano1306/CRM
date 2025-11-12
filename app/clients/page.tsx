@@ -682,7 +682,7 @@ export default function ClientsPage() {
         )}
       </div>
 
-      {/* Modal de link de invitación */}
+      {/* 🚀 MODAL ACTIVO - Formulario de envío con dropdown selector */}
       {showInvitationModal && invitationLink && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8 animate-fadeIn">
@@ -691,7 +691,7 @@ export default function ClientsPage() {
                 <div className="bg-blue-100 p-3 rounded-xl">
                   <Link2 className="h-6 w-6 text-blue-600" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">Link de Invitación</h3>
+                <h3 className="text-2xl font-bold text-gray-900">🎯 Enviar Invitación</h3>
               </div>
               <button
                 onClick={closeInvitationModal}
@@ -703,13 +703,13 @@ export default function ClientsPage() {
 
             <div className="space-y-4">
               <p className="text-gray-600 text-lg font-medium">
-                Envía la invitación directamente al comprador seleccionando el método preferido.
+                Selecciona el método de envío y completa la información del comprador.
               </p>
 
-              {/* Formulario de envío con dropdown */}
+              {/* 📧 Formulario de envío con dropdown selector */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-200">
                 <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-lg">
-                  📤 Enviar invitación
+                  📤 Método de envío
                 </h4>
                 <div className="space-y-4">
                   {/* Dropdown para seleccionar método */}
