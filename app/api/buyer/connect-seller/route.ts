@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
 
     // Buscar si el usuario ya tiene un authenticated_user
     const authUser = await prisma.authenticated_users.findFirst({
-      where: { id: userId },
+      where: { authId: userId }, // Buscar por authId (el ID de Clerk), no por id
       include: {
         clients: true
       }
