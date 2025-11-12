@@ -204,9 +204,17 @@ export default function ClientsPage() {
       })
 
       if (result.success) {
-        console.log('✅ Link generado:', result.data.link)
-        setInvitationLink(result.data.link)
-        console.log('📤 Modal actualizado con link:', result.data.link)
+        console.log('✅ Link generado:', result.data)
+        console.log('✅ Link completo:', result.data.data?.link)
+        
+        // El API devuelve {success: true, data: {link: ...}}
+        // pero apiCall lo envuelve en {success: true, data: {...}}
+        const linkData = result.data.data || result.data
+        const link = linkData.link
+        
+        console.log('✅ Link extraído:', link)
+        setInvitationLink(link)
+        console.log('📤 Modal actualizado con link:', link)
       } else {
         alert(result.error || 'Error al generar link de invitación')
         setShowInvitationModal(false) // Cerrar si falla
