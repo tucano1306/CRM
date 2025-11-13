@@ -212,7 +212,7 @@ export async function PATCH(
       }
     } catch (realtimeError) {
       // No bloquear si falla el tiempo real
-      logger.warn(LogCategory.API, 'Realtime broadcast failed', realtimeError)
+      logger.warn(LogCategory.API, 'Realtime broadcast failed', { error: realtimeError })
     }
 
     // �🔔 ENVIAR NOTIFICACIÓN AL COMPRADOR sobre el cambio de estado

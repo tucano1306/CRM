@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { v4 as uuidv4 } from 'uuid'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
+import { useRealtimeSubscription, RealtimeEvents } from '@/lib/supabase-realtime'
 import { formatPrice, formatNumber } from '@/lib/utils'
 import { downloadInvoice, openInvoiceInNewTab, type InvoiceData } from '@/lib/invoiceGenerator'
 import {
@@ -215,6 +216,35 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [timedOut, setTimedOut] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // 🔥 TIEMPO REAL: Escuchar actualizaciones de órdenes
+  useRealtimeSubscription(
+    'buyer-orders',
+    RealtimeEvents.ORDER_UPDATED,
+    (payload) => {
+      console.log('🔥 [BUYER] Actualización de orden recibida:', payload)
+      
+      // Actualizar la orden en el estado local
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === payload.orderId 
+            ? { ...order, ...payload.order }
+            : order
+        )
+      )
+      
+      // También actualizar si está seleccionada en el modal
+      setSelectedOrder(prev => 
+        prev?.id === payload.orderId 
+          ? { ...prev, ...payload.order }
+          : prev
+      )
+      
+      // Refrescar para asegurar consistencia
+      fetchOrders()
+    }
+  )
+
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState<'ALL' | OrderStatus>('ALL')
