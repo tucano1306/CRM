@@ -206,6 +206,22 @@ model OrderItem {
   @@map("order_items")
 }
 
+// Modelo para rastrear cambios de estado con idempotencia
+model OrderStatusChange {
+  id              String      @id @default(uuid())
+  orderId         String
+  oldStatus       OrderStatus
+  newStatus       OrderStatus
+  changedBy       String      // Clerk userId
+  reason          String?
+  idempotencyKey  String      @unique
+  createdAt       DateTime    @default(now())
+
+  @@index([orderId])
+  @@index([idempotencyKey])
+  @@map("order_status_changes")
+}
+
 
 model OrderSchedule {
   id        String    @id @default(uuid())

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { updateProductSchema, validateSchema } from '@/lib/validations'
 import { sanitizeText } from '@/lib/sanitize'
@@ -91,14 +92,49 @@ export async function GET(
 }
 
 // PUT - Actualizar producto
-// ✅ CON VALIDACIÓN ZOD
+// ✅ CON VALIDACIÓN ZOD Y SEGURIDAD DE ROL
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: productId } = await params
   try {
+    const { userId } = await auth()
+
+    if (!userId) {
+      return NextResponse.json({ 
+        error: 'No autorizado' 
+      }, { status: 401 })
+    }
+
+    // 🔒 SEGURIDAD: Verificar que es un vendedor
+    const seller = await prisma.seller.findFirst({
+      where: {
+        authenticated_users: {
+          some: { authId: userId }
+        }
+      }
+    })
+
+    if (!seller) {
+      return NextResponse.json({ 
+        success: false,
+        error: 'Solo vendedores pueden actualizar productos' 
+      }, { status: 403 })
+    }
+
     const body = await request.json()
+
+    // 🔒 CRÍTICO: Solo SELLER puede modificar el precio
+    if (body.price !== undefined) {
+      if (!seller) {
+        return NextResponse.json({ 
+          success: false,
+          error: 'No autorizado para modificar precios. Solo vendedores pueden cambiar precios.' 
+        }, { status: 403 })
+      }
+      console.log(`💰 [PRICE UPDATE] Seller ${seller.id} updating price for product ${productId}`)
+    }
 
     // ✅ VALIDACIÓN CON ZOD
     const validation = validateSchema(updateProductSchema, body)
