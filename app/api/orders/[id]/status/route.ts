@@ -12,6 +12,7 @@ import {
   sendAutomaticCancellationMessage
 } from '@/lib/notifications'
 import logger, { LogCategory } from '@/lib/logger'
+import { sendRealtimeEvent, getSellerChannel, getBuyerChannel } from '@/lib/supabase-server'
 
 const VALID_STATUSES = [
   'PENDING',
@@ -168,7 +169,53 @@ export async function PATCH(
       }
     })
 
-    // 🔔 ENVIAR NOTIFICACIÓN AL COMPRADOR sobre el cambio de estado
+    // � TIEMPO REAL: Notificar cambio de estado
+    try {
+      // Obtener authId del vendedor para el canal
+      const sellerAuth = await prisma.authenticated_users.findFirst({
+        where: { sellers: { some: { id: order.sellerId } } },
+        select: { authId: true }
+      })
+
+      if (sellerAuth) {
+        await sendRealtimeEvent(
+          getSellerChannel(sellerAuth.authId),
+          'order:status-changed',
+          {
+            orderId: orderId,
+            orderNumber: updatedOrder?.orderNumber,
+            oldStatus: order.status,
+            newStatus: status,
+            timestamp: new Date().toISOString()
+          }
+        )
+      }
+
+      // También notificar al comprador
+      const buyerAuth = await prisma.authenticated_users.findFirst({
+        where: { clients: { some: { id: order.clientId } } },
+        select: { authId: true }
+      })
+
+      if (buyerAuth) {
+        await sendRealtimeEvent(
+          getBuyerChannel(buyerAuth.authId),
+          'order:status-changed',
+          {
+            orderId: orderId,
+            orderNumber: updatedOrder?.orderNumber,
+            oldStatus: order.status,
+            newStatus: status,
+            timestamp: new Date().toISOString()
+          }
+        )
+      }
+    } catch (realtimeError) {
+      // No bloquear si falla el tiempo real
+      logger.warn(LogCategory.API, 'Realtime broadcast failed', realtimeError)
+    }
+
+    // �🔔 ENVIAR NOTIFICACIÓN AL COMPRADOR sobre el cambio de estado
     try {
       // Notificación genérica de cambio de estado
       await notifyOrderStatusChanged(

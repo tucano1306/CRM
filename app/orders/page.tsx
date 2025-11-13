@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Loader2, AlertCircle } from 'lucide-react'
+import { useUser } from '@clerk/nextjs'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
 import { Card, CardContent } from '@/components/ui/card'
@@ -9,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { apiCall } from '@/lib/api-client'
 import { downloadInvoice, openInvoiceInNewTab, type InvoiceData } from '@/lib/invoiceGenerator'
 import ClientsViewWithOrders from '@/components/orders/ClientsViewWithOrders'
+import { useRealtimeSubscription, RealtimeEvents } from '@/lib/supabase-realtime'
 
 type OrderStatus = 
   | 'PENDING' 
@@ -71,11 +73,24 @@ interface OrderWithItems {
   }>
 }
 
-export default function OrdersManagementPage() {
+export default function OrdersPage() {
+  const { user } = useUser()
   const [orders, setOrders] = useState<OrderWithItems[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null)
+
+  // Tiempo real: escuchar cambios en órdenes
+  useRealtimeSubscription(
+    `seller-${user?.id || 'unknown'}`,
+    RealtimeEvents.ORDER_STATUS_CHANGED,
+    (payload) => {
+      console.log('🔄 Order updated in realtime:', payload)
+      // Refrescar órdenes cuando hay cambios
+      fetchOrders()
+    },
+    !!user?.id // Solo activar si hay userId
+  )
 
   useEffect(() => {
     fetchOrders()
