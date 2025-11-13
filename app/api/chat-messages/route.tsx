@@ -5,6 +5,8 @@ import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeo
 import { notifyChatMessage } from '@/lib/notifications'
 import { prisma } from '@/lib/prisma'
 import { withDbRetry } from '@/lib/db-retry'
+import { eventEmitter } from '@/lib/events/eventEmitter'
+import { EventType } from '@/lib/events/types/event.types'
 
 /**
  * GET /api/chat-messages?otherUserId=xxx&orderId=xxx
@@ -343,6 +345,27 @@ Día: ${dayOfWeek}, Hora actual: ${currentTime}`
       console.error('Error creando notificación de chat:', notificationError)
     }
 
+    // 9. 🎉 Emitir evento CHAT_MESSAGE_SENT para el sistema event-driven
+    try {
+      await eventEmitter.emit({
+        type: EventType.CHAT_MESSAGE_SENT,
+        timestamp: new Date(),
+        userId: userId,
+        data: {
+          messageId: chatMessage.id,
+          senderId: userId,
+          receiverId: receiverId,
+          content: message,
+          orderId: orderId || undefined,
+          hasAttachment: !!body.attachmentUrl,
+          attachmentType: body.attachmentType || undefined
+        }
+      })
+    } catch (eventError) {
+      // No bloquear la respuesta si falla el evento
+      console.error('Error emitting CHAT_MESSAGE_SENT event:', eventError)
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Mensaje enviado exitosamente',
@@ -407,6 +430,23 @@ export async function PATCH(request: NextRequest) {
         }
       })
     )
+
+    // 🎉 Emitir evento CHAT_MESSAGE_READ para el sistema event-driven
+    try {
+      await eventEmitter.emit({
+        type: EventType.CHAT_MESSAGE_READ,
+        timestamp: new Date(),
+        userId: userId,
+        data: {
+          messageIds: messageIds,
+          readBy: userId,
+          readAt: new Date()
+        }
+      })
+    } catch (eventError) {
+      // No bloquear la respuesta si falla el evento
+      console.error('Error emitting CHAT_MESSAGE_READ event:', eventError)
+    }
 
     return NextResponse.json({
       success: true,

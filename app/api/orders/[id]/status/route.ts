@@ -13,6 +13,8 @@ import {
 } from '@/lib/notifications'
 import logger, { LogCategory } from '@/lib/logger'
 import { sendRealtimeEvent, getSellerChannel, getBuyerChannel } from '@/lib/supabase-server'
+import { eventEmitter } from '@/lib/events/eventEmitter'
+import { EventType } from '@/lib/events/types/event.types'
 
 const VALID_STATUSES = [
   'PENDING',
@@ -284,6 +286,33 @@ export async function PATCH(
         LogCategory.API,
         'Error sending status change notification to client',
         notifError
+      )
+    }
+
+    // 🎉 Emitir evento ORDER_UPDATED para el sistema event-driven
+    try {
+      await eventEmitter.emit({
+        type: EventType.ORDER_UPDATED,
+        timestamp: new Date(),
+        userId: userId,
+        data: {
+          orderId: orderId,
+          clientId: updatedOrder?.clientId || order.clientId,
+          sellerId: updatedOrder?.sellerId || order.sellerId,
+          amount: updatedOrder ? Number(updatedOrder.totalAmount) : 0,
+          status: status,
+          oldStatus: order.status,
+          changedBy: user.name,
+          changedByRole: user.role,
+          items: updatedOrder?.orderItems || []
+        }
+      })
+    } catch (eventError) {
+      // No bloquear la respuesta si falla el evento
+      logger.error(
+        LogCategory.API,
+        'Error emitting ORDER_UPDATED event',
+        eventError
       )
     }
 

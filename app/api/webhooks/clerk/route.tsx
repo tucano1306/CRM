@@ -2,6 +2,8 @@ import { Webhook } from 'svix'
 import { headers } from 'next/headers'
 import { WebhookEvent } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import { eventEmitter } from '@/lib/events/eventEmitter'
+import { EventType } from '@/lib/events/types/event.types'
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET
@@ -86,6 +88,25 @@ export async function POST(req: Request) {
           } as any,
         })
         console.log(`✅ Usuario creado: ${userEmail} (${role})`)
+
+        // 🎉 Emitir evento USER_LOGGED_IN (registro es el primer login)
+        try {
+          await eventEmitter.emit({
+            type: EventType.USER_LOGGED_IN,
+            timestamp: new Date(),
+            userId: id,
+            data: {
+              userId: id,
+              email: userEmail,
+              role: role,
+              name: name,
+              isNewUser: true
+            }
+          })
+        } catch (eventError) {
+          // No bloquear el webhook si falla el evento
+          console.error('Error emitting USER_LOGGED_IN event:', eventError)
+        }
 
         // 🔗 VINCULACIÓN AUTOMÁTICA: Buscar cliente existente con mismo email
         const existingClient = await prisma.client.findFirst({
