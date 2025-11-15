@@ -3,6 +3,8 @@ const nextJest = require('next/jest')
 const createJestConfig = nextJest({
   // Provide the path to your Next.js app to load next.config.js and .env files in your test environment
   dir: './',
+  // Skip SWC for Windows compatibility
+  skipSWC: true,
 })
 
 // Add any custom config to be passed to Jest
@@ -12,6 +14,15 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
+  // Fix for SWC issues on Windows
+  transform: {
+    '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['next/babel'] }],
+  },
+  transformIgnorePatterns: [
+    '/node_modules/(?!(.*\\.mjs$))',
+  ],
+  // Force single worker to avoid SWC conflicts
+  maxWorkers: 1,
   collectCoverageFrom: [
     'app/**/*.{js,jsx,ts,tsx}',
     'components/**/*.{js,jsx,ts,tsx}',
