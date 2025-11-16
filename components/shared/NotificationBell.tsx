@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Bell, X, Check, CheckCheck, ExternalLink, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -47,8 +47,8 @@ export default function NotificationBell() {
     setMounted(true)
   }, [])
 
-  // Cargar notificaciones
-  const fetchNotifications = async () => {
+  // ⚡ Optimización: Memoizar función de fetch
+  const fetchNotifications = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch('/api/notifications?limit=10')
@@ -63,24 +63,30 @@ export default function NotificationBell() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   // Cargar al montar
   useEffect(() => {
     fetchNotifications()
-  }, [])
+  }, [fetchNotifications])
 
-  // Polling cada 30 segundos para nuevas notificaciones
+  // ⚡ Optimización: Polling más eficiente - solo si está visible
   useEffect(() => {
+    // Solo hacer polling si el componente está visible y montado
+    if (!mounted) return
+
     const interval = setInterval(() => {
-      fetchNotifications()
-    }, 30000) // 30 segundos
+      // Solo fetch si no hay un modal abierto
+      if (!selectedNotification) {
+        fetchNotifications()
+      }
+    }, 60000) // ⚡ Aumentado a 60 segundos (reducir carga)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [mounted, selectedNotification, fetchNotifications])
 
-  // Marcar como leída
-  const markAsRead = async (id: string) => {
+  // ⚡ Optimización: Memoizar marcar como leída
+  const markAsRead = useCallback(async (id: string) => {
     try {
       const response = await fetch(`/api/notifications/${id}`, {
         method: 'PATCH',
@@ -88,18 +94,18 @@ export default function NotificationBell() {
       const result = await response.json()
 
       if (result.success) {
-        setNotifications(notifications.map(n => 
+        setNotifications(prev => prev.map(n => 
           n.id === id ? { ...n, isRead: true } : n
         ))
-        setUnreadCount(Math.max(0, unreadCount - 1))
+        setUnreadCount(prev => Math.max(0, prev - 1))
       }
     } catch (error) {
       console.error('Error marking as read:', error)
     }
-  }
+  }, [])
 
-  // Marcar todas como leídas
-  const markAllAsRead = async () => {
+  // ⚡ Optimización: Memoizar marcar todas como leídas
+  const markAllAsRead = useCallback(async () => {
     try {
       const response = await fetch('/api/notifications/mark-all-read', {
         method: 'POST',
@@ -107,16 +113,16 @@ export default function NotificationBell() {
       const result = await response.json()
 
       if (result.success) {
-        setNotifications(notifications.map(n => ({ ...n, isRead: true })))
+        setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))
         setUnreadCount(0)
       }
     } catch (error) {
       console.error('Error marking all as read:', error)
     }
-  }
+  }, [])
 
-  // Eliminar notificación
-  const deleteNotification = async (id: string) => {
+  // ⚡ Optimización: Memoizar eliminar notificación
+  const deleteNotification = useCallback(async (id: string) => {
     try {
       const response = await fetch(`/api/notifications/${id}`, {
         method: 'DELETE',
@@ -124,19 +130,21 @@ export default function NotificationBell() {
       const result = await response.json()
 
       if (result.success) {
-        setNotifications(notifications.filter(n => n.id !== id))
-        const wasUnread = notifications.find(n => n.id === id)?.isRead === false
-        if (wasUnread) {
-          setUnreadCount(Math.max(0, unreadCount - 1))
-        }
+        setNotifications(prev => {
+          const wasUnread = prev.find(n => n.id === id)?.isRead === false
+          if (wasUnread) {
+            setUnreadCount(count => Math.max(0, count - 1))
+          }
+          return prev.filter(n => n.id !== id)
+        })
       }
     } catch (error) {
       console.error('Error deleting notification:', error)
     }
-  }
+  }, [])
 
-  // Manejar clic en notificación
-  const handleNotificationClick = async (notification: Notification) => {
+  // ⚡ Optimización: Memoizar handler de click
+  const handleNotificationClick = useCallback(async (notification: Notification) => {
     // Marcar como leída si no lo está
     if (!notification.isRead) {
       await markAsRead(notification.id)
@@ -144,10 +152,10 @@ export default function NotificationBell() {
     
     // Mostrar modal con detalles
     setSelectedNotification(notification)
-  }
+  }, [markAsRead])
 
-  // Navegar a la página correspondiente
-  const navigateFromNotification = (notification: Notification) => {
+  // ⚡ Optimización: Memoizar navegación
+  const navigateFromNotification = useCallback((notification: Notification) => {
     setSelectedNotification(null)
     setIsOpen(false)
 
@@ -162,7 +170,7 @@ export default function NotificationBell() {
     } else if (notification.type === 'CREDIT_NOTE_ISSUED') {
       router.push('/credit-notes')
     }
-  }
+  }, [router])
 
   // Obtener el emoji del estado (para cambios de estado)
   const getStatusEmoji = (status: string) => {

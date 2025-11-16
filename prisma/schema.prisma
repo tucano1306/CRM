@@ -97,6 +97,10 @@ model Product {
   @@index([unit])
   @@index([category])
   @@index([isActive])
+  // ⚡ Performance optimization indexes
+  @@index([category, isActive])
+  @@index([isActive, stock])
+  @@index([category, stock])
   @@map("products")
 }
 
@@ -175,6 +179,12 @@ model Order {
   @@index([sellerId])
   @@index([status])
   @@index([createdAt])
+  // ⚡ Performance optimization indexes
+  @@index([sellerId, status])
+  @@index([sellerId, createdAt])
+  @@index([clientId, status])
+  @@index([clientId, createdAt])
+  @@index([status, createdAt])
   @@map("orders")
 }
 
@@ -262,6 +272,11 @@ model Notification {
   @@index([clientId])
   @@index([isRead])
   @@index([createdAt])
+  // ⚡ Performance optimization indexes
+  @@index([sellerId, isRead, createdAt])
+  @@index([clientId, isRead, createdAt])
+  @@index([sellerId, createdAt])
+  @@index([clientId, createdAt])
   @@map("notifications")
 }
 
@@ -332,6 +347,10 @@ model ChatMessage {
   @@index([createdAt])
   @@index([sellerId])
   @@index([userId])
+  // ⚡ Performance optimization indexes
+  @@index([sellerId, createdAt])
+  @@index([senderId, receiverId, createdAt])
+  @@index([isRead, createdAt])
   @@map("chat_messages")
 }
 

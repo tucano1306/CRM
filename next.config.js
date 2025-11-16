@@ -29,6 +29,26 @@ const nextConfig = {
     serverActions: {
       allowedOrigins: ['localhost:3000'],
     },
+    // ⚡ Performance optimization: Optimize package imports
+    optimizePackageImports: [
+      '@clerk/nextjs',
+      'lucide-react',
+      'recharts',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-select',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-toast',
+      '@radix-ui/react-tooltip',
+    ],
+  },
+
+  // ⚡ Compiler optimizations
+  compiler: {
+    // Remove console.* calls in production
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
   },
   
   // Webpack configuration
@@ -39,6 +59,41 @@ const nextConfig = {
         fs: false,
         net: false,
         tls: false,
+      };
+
+      // ⚡ Performance optimization: Better code splitting
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            default: false,
+            vendors: false,
+            // Vendor chunk for node_modules
+            vendor: {
+              name: 'vendor',
+              chunks: 'all',
+              test: /node_modules/,
+              priority: 20,
+            },
+            // Common chunk for code used across multiple pages
+            common: {
+              name: 'common',
+              minChunks: 2,
+              chunks: 'all',
+              priority: 10,
+              reuseExistingChunk: true,
+              enforce: true,
+            },
+            // Separate chunk for large UI libraries
+            lib: {
+              test: /[\\/]node_modules[\\/](@radix-ui|lucide-react|recharts)[\\/]/,
+              name: 'lib',
+              chunks: 'all',
+              priority: 30,
+            },
+          },
+        },
       };
     }
 

@@ -1,7 +1,7 @@
 // components/orders/OrdersListImproved.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { 
   Package, 
   Clock, 
@@ -101,7 +101,22 @@ export default function OrdersListImproved({
 }: OrdersListImprovedProps) {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null)
 
-  const isSelected = (orderId: string) => selectedOrders.includes(orderId)
+  // ⚡ Optimización: Memoizar función de selección
+  const isSelected = useCallback((orderId: string) => {
+    return selectedOrders.includes(orderId)
+  }, [selectedOrders])
+
+  // ⚡ Optimización: Memoizar toggle de expansión
+  const toggleExpand = useCallback((orderId: string) => {
+    setExpandedOrder(prev => prev === orderId ? null : orderId)
+  }, [])
+
+  // ⚡ Optimización: Memoizar órdenes ordenadas
+  const sortedOrders = useMemo(() => {
+    return [...orders].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+  }, [orders])
 
   if (orders.length === 0) {
     return (
@@ -119,7 +134,7 @@ export default function OrdersListImproved({
 
   return (
     <div className="space-y-3">
-      {orders.map((order) => {
+      {sortedOrders.map((order) => {
         const config = statusConfig[order.status] || statusConfig.PENDING
         const StatusIcon = config.icon
         const isExpanded = expandedOrder === order.id
