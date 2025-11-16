@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { withCache, CACHE_CONFIGS } from '@/lib/apiCache'
 
 
 
@@ -55,7 +56,7 @@ export async function GET(
       _sum: { totalAmount: true }
     })
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: orders,
       count: orders.length,
@@ -65,6 +66,9 @@ export async function GET(
         totalAmount: s._sum.totalAmount || 0
       }))
     })
+
+    // 🚀 CACHE: Orders API con cache user-specific (órdenes cambian frecuentemente)
+    return withCache(response, CACHE_CONFIGS.USER_SPECIFIC)
   } catch (error) {
     console.error('Error:', error)
     return NextResponse.json(

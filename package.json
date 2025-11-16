@@ -32,7 +32,13 @@
     "db:reset": "prisma migrate reset --skip-seed",
     "db:reset-seed": "prisma migrate reset && prisma db seed",
     "db:setup": "prisma migrate dev && prisma db seed && prisma generate",
-    "watch:lint": "chokidar \"**/*.{ts,tsx,js,jsx}\" -c \"npm run lint\""
+    "watch:lint": "chokidar \"**/*.{ts,tsx,js,jsx}\" -c \"npm run lint\"",
+    "monitor": "tsx scripts/monitor-performance-cli.ts stats",
+    "monitor:watch": "tsx scripts/monitor-performance-cli.ts monitor",
+    "monitor:report": "tsx scripts/monitor-performance-cli.ts report",
+    "monitor:demo": "tsx scripts/performance-demo.ts",
+    "performance:profile": "tsx scripts/monitor-performance-cli.ts monitor --duration 60 --output performance-report.txt",
+    "performance:analyze": "tsx scripts/monitor-performance-cli.ts report --json --output performance-data.json"
   },
   "dependencies": {
     "@auth/core": "^0.18.6",
@@ -89,6 +95,7 @@
     "@types/react-dom": "^18",
     "@types/uuid": "^9.0.8",
     "autoprefixer": "^10.4.21",
+    "babel-jest": "^30.2.0",
     "chokidar-cli": "^3.0.0",
     "cross-env": "^10.1.0",
     "eslint": "^8",

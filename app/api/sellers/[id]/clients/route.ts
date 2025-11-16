@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { withCache, CACHE_CONFIGS } from '@/lib/apiCache'
 
 
 
@@ -39,11 +40,14 @@ export async function GET(
       })
     )
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: clientsWithStats,
       count: clientsWithStats.length
     })
+
+    // 🚀 CACHE: Clients API con cache dinámico (clientes cambian pero no tanto como órdenes)
+    return withCache(response, CACHE_CONFIGS.DYNAMIC)
   } catch (error) {
     console.error('Error:', error)
     return NextResponse.json(

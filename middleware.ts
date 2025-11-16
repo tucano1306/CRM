@@ -10,6 +10,7 @@ import {
 } from '@/lib/rateLimit'
 import { handleCorsPreflightRequest, addCorsHeaders } from '@/lib/cors'
 import logger, { LogCategory } from '@/lib/logger'
+import { shouldCacheRequest } from '@/lib/apiCache'
 
 // Rutas públicas
 const isPublicRoute = createRouteMatcher([
@@ -408,9 +409,33 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // ============================================================================
-  // CORS - Agregar headers a todas las responses
+  // EDGE CACHING - Añadir headers de cache para APIs cachables
   // ============================================================================
   const response = NextResponse.next()
+  
+  // 🚀 CACHE: Añadir headers para optimización edge sin romper funcionalidad
+  if (shouldCacheRequest(req)) {
+    // Headers para optimización de CDN/Edge
+    response.headers.set('X-Edge-Cache', 'enabled')
+    response.headers.set('Vary', 'Authorization, Accept')
+    
+    // Headers específicos por tipo de ruta
+    const pathname = req.nextUrl.pathname
+    
+    if (pathname.includes('/products') && req.method === 'GET') {
+      response.headers.set('X-Cache-Hint', 'products-static')
+    } else if (pathname.includes('/orders') && req.method === 'GET') {
+      response.headers.set('X-Cache-Hint', 'orders-dynamic')
+    } else if (pathname.includes('/clients') && req.method === 'GET') {
+      response.headers.set('X-Cache-Hint', 'clients-dynamic')
+    } else if (pathname.startsWith('/api/public/')) {
+      response.headers.set('X-Cache-Hint', 'public-static')
+    }
+  }
+
+  // ============================================================================
+  // CORS - Agregar headers a todas las responses
+  // ============================================================================
   response.headers.set('x-debug-role', userRole)
   response.headers.set('x-debug-path', req.nextUrl.pathname)
   return addCorsHeaders(response, req)

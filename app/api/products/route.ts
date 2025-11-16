@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma'
 import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
 import { createProductSchema, validateSchema } from '@/lib/validations'
 import { sanitizeText } from '@/lib/sanitize'
+import { withCache, CACHE_CONFIGS, getAdaptiveCache } from '@/lib/apiCache'
+import { invalidateProductsCache } from '@/lib/cache-invalidation'
 
 // GET /api/products - Obtener productos del vendedor autenticado
 // ✅ CON TIMEOUT DE 5 SEGUNDOS
@@ -83,7 +85,7 @@ export async function GET(request: Request) {
       })
     )
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: products,
       meta: {
@@ -93,6 +95,9 @@ export async function GET(request: Request) {
         totalPages,
       },
     })
+
+    // 🚀 CACHE: Products API con cache adaptativo
+    return withCache(response, getAdaptiveCache(request))
   } catch (error) {
     console.error('Error obteniendo productos:', error)
     
@@ -192,6 +197,9 @@ export async function POST(request: Request) {
     )
 
     console.log('✅ [CREATE PRODUCT] Producto creado exitosamente:', product.id)
+
+    // 🔄 INVALIDATE CACHE: Products cache after creation
+    await invalidateProductsCache(product.id)
 
     return NextResponse.json({
       success: true,

@@ -2,6 +2,18 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs'
 import Link from 'next/link'
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Food Orders CRM - Sistema de Gestión de Pedidos',
+  description: 'Sistema integral de gestión de pedidos de comida. Gestiona clientes, productos y pedidos de manera eficiente.',
+  keywords: ['CRM', 'pedidos', 'comida', 'gestión', 'restaurante', 'delivery'],
+  openGraph: {
+    title: 'Food Orders CRM',
+    description: 'Sistema de gestión de pedidos de comida',
+    type: 'website',
+  },
+}
 
 export default function HomePage() {
   return (
