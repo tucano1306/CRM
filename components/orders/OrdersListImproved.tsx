@@ -132,6 +132,8 @@ export default function OrdersListImproved({
         return (
           <Card 
             key={order.id} 
+            data-order-status={order.status}
+            data-order-id={order.id}
             className="overflow-hidden hover:shadow-md transition-shadow relative"
             style={needsAttention ? {
               animation: 'orderPulse 3s ease-in-out infinite',

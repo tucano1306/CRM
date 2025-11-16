@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Loader2, AlertCircle } from 'lucide-react'
+import { useEffect, useState, useMemo } from 'react'
+import { Loader2, AlertCircle, AlertTriangle, Clock, Bell } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
@@ -79,6 +79,21 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null)
+
+  // Calcular órdenes pendientes
+  const pendingOrdersStats = useMemo(() => {
+    const pending = orders.filter(order => order.status === 'PENDING')
+    const oldestPending = pending.length > 0 
+      ? Math.max(...pending.map(o => Date.now() - new Date(o.createdAt).getTime()))
+      : 0
+    
+    return {
+      count: pending.length,
+      orders: pending,
+      hasOldOrders: oldestPending > 24 * 60 * 60 * 1000, // Más de 24 horas
+      oldestAgeHours: Math.floor(oldestPending / (60 * 60 * 1000))
+    }
+  }, [orders])
 
   // Tiempo real: escuchar cambios en órdenes
   useRealtimeSubscription(
@@ -279,6 +294,113 @@ export default function OrdersPage() {
           title="Gestión de Órdenes por Cliente" 
           description="Visualiza y administra órdenes organizadas por cliente"
         />
+
+        {/* Alerta de Órdenes Pendientes */}
+        {pendingOrdersStats.count > 0 && (
+          <div className={`
+            ${pendingOrdersStats.hasOldOrders 
+              ? 'bg-red-50 border-red-200 text-red-900' 
+              : 'bg-yellow-50 border-yellow-200 text-yellow-900'
+            } 
+            border-2 rounded-lg p-4 shadow-lg animate-pulse
+          `}>
+            <div className="flex items-start gap-4">
+              <div className={`
+                flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center
+                ${pendingOrdersStats.hasOldOrders ? 'bg-red-100' : 'bg-yellow-100'}
+              `}>
+                {pendingOrdersStats.hasOldOrders ? (
+                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                ) : (
+                  <Bell className="w-6 h-6 text-yellow-600 animate-bounce" />
+                )}
+              </div>
+
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-bold">
+                    {pendingOrdersStats.hasOldOrders 
+                      ? '⚠️ ATENCIÓN: Órdenes Pendientes Urgentes' 
+                      : '📋 Tienes órdenes pendientes de revisión'}
+                  </h3>
+                </div>
+                
+                <p className="text-sm mb-3">
+                  Tienes <strong className="font-bold text-xl">{pendingOrdersStats.count}</strong> {pendingOrdersStats.count === 1 ? 'orden pendiente' : 'órdenes pendientes'} 
+                  {pendingOrdersStats.hasOldOrders && (
+                    <span className="ml-2 text-red-700 font-semibold">
+                      (La más antigua tiene {pendingOrdersStats.oldestAgeHours} horas sin revisar)
+                    </span>
+                  )}
+                </p>
+
+                <div className="bg-white rounded-lg p-3 shadow-sm">
+                  <p className="text-sm font-medium mb-2">Órdenes que requieren tu atención:</p>
+                  <div className="space-y-1">
+                    {pendingOrdersStats.orders.slice(0, 5).map(order => {
+                      const ageHours = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / (60 * 60 * 1000))
+                      const isOld = ageHours > 24
+                      
+                      return (
+                        <div 
+                          key={order.id} 
+                          className={`
+                            flex items-center justify-between p-2 rounded text-xs
+                            ${isOld ? 'bg-red-50' : 'bg-gray-50'}
+                          `}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Clock className={`w-3 h-3 ${isOld ? 'text-red-600' : 'text-gray-500'}`} />
+                            <span className="font-semibold">{order.orderNumber}</span>
+                            <span className="text-gray-600">-</span>
+                            <span>{order.client.name}</span>
+                          </div>
+                          <span className={`font-medium ${isOld ? 'text-red-700' : 'text-gray-600'}`}>
+                            {ageHours < 1 
+                              ? 'Hace menos de 1 hora' 
+                              : `Hace ${ageHours} ${ageHours === 1 ? 'hora' : 'horas'}`
+                            }
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {pendingOrdersStats.count > 5 && (
+                    <p className="text-xs text-gray-600 mt-2 text-center">
+                      ... y {pendingOrdersStats.count - 5} órdenes más
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    size="sm"
+                    className={`
+                      ${pendingOrdersStats.hasOldOrders 
+                        ? 'bg-red-600 hover:bg-red-700' 
+                        : 'bg-yellow-600 hover:bg-yellow-700'
+                      } 
+                      text-white
+                    `}
+                    onClick={() => {
+                      // Scroll a la primera orden pendiente
+                      const firstPendingElement = document.querySelector('[data-order-status="PENDING"]')
+                      if (firstPendingElement) {
+                        firstPendingElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                      }
+                    }}
+                  >
+                    Revisar Órdenes Pendientes
+                  </Button>
+                  
+                  <div className="text-xs text-gray-600 flex items-center">
+                    💡 Las órdenes pendientes necesitan ser confirmadas para procesar
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Componente principal de vista por clientes */}
         <ClientsViewWithOrders 
