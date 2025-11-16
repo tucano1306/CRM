@@ -187,16 +187,25 @@ export async function POST(request: Request) {
           sku: sanitizedData.sku,
           imageUrl: sanitizedData.imageUrl || null,
           isActive: sanitizedData.isActive ?? true,
+          category: sanitizedData.category,
           sellers: {
             create: {
               sellerId: seller.id
             }
           }
         },
+        include: {
+          sellers: true // Incluir la relación creada para confirmar
+        }
       })
     )
 
-    console.log('✅ [CREATE PRODUCT] Producto creado exitosamente:', product.id)
+    console.log('✅ [CREATE PRODUCT] Producto creado exitosamente:', {
+      id: product.id,
+      name: product.name,
+      sellerId: seller.id,
+      productSellers: product.sellers
+    })
 
     // 🔄 INVALIDATE CACHE: Products cache after creation
     await invalidateProductsCache(product.id)
