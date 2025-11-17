@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { updateClientSchema, validateSchema } from '@/lib/validations'
 import { sanitizeText } from '@/lib/sanitize'
+import { OrderStatus } from '@prisma/client'
 
 export async function GET(
   request: Request,
@@ -35,7 +36,7 @@ export async function GET(
 
     // Calcular estadísticas
     // Calcular estadísticas de órdenes completadas/entregadas
-    const completedStatuses = ['COMPLETED', 'DELIVERED', 'PARTIALLY_DELIVERED', 'PAID']
+    const completedStatuses: OrderStatus[] = ['COMPLETED', 'DELIVERED', 'PARTIALLY_DELIVERED', 'PAID']
     const stats = await prisma.order.aggregate({
       where: { 
         clientId: clientId,
@@ -56,7 +57,7 @@ export async function GET(
         stats: {
           totalOrders,
           completedOrders: stats._count,
-          totalSpent: stats._sum.totalAmount || 0
+          totalSpent: stats._sum?.totalAmount || 0
         }
       }
     })
