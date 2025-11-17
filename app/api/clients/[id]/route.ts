@@ -34,10 +34,12 @@ export async function GET(
     }
 
     // Calcular estadísticas
+    // Calcular estadísticas de órdenes completadas/entregadas
+    const completedStatuses = ['COMPLETED', 'DELIVERED', 'PARTIALLY_DELIVERED', 'PAID']
     const stats = await prisma.order.aggregate({
       where: { 
         clientId: clientId,
-        status: 'COMPLETED'
+        status: { in: completedStatuses }
       },
       _sum: { totalAmount: true },
       _count: true

@@ -120,8 +120,9 @@ export async function GET(request: NextRequest) {
     const clients = clientsRaw.map(client => {
       const totalOrders = client.orders.length
       const totalSpent = client.orders.reduce((sum, order) => {
-        // Solo contar órdenes completadas
-        if (order.status === 'COMPLETED' || order.status === 'DELIVERED') {
+        // Solo contar órdenes completadas, entregadas o parcialmente entregadas
+        const completedStatuses = ['COMPLETED', 'DELIVERED', 'PARTIALLY_DELIVERED', 'PAID']
+        if (completedStatuses.includes(order.status)) {
           return sum + Number(order.totalAmount)
         }
         return sum
