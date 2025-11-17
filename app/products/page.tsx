@@ -140,8 +140,11 @@ export default function ProductsPage() {
     try {
       console.log('🔍 Llamando a /api/products...')
       
-      const result = await apiCall('/api/products?page=1&limit=100', {
+      // ⚡ Agregar timestamp para evitar cache
+      const timestamp = new Date().getTime()
+      const result = await apiCall(`/api/products?page=1&limit=100&_t=${timestamp}`, {
         timeout: 10000,
+        cache: 'no-store' // Forzar no-cache
       })
 
       console.log('📦 Respuesta completa del API:', result)
@@ -272,6 +275,7 @@ export default function ProductsPage() {
       if (result.success) {
         const action = editingId ? 'actualizado' : 'creado'
         console.log(`✅ [PRODUCTO] Producto ${action} exitosamente:`, result.data)
+        console.log(`✅ [PRODUCTO] Categoría guardada:`, result.data.category)
         
         // Mostrar mensaje de éxito
         alert(`✅ Producto ${action} exitosamente!\n\nNombre: ${productData.name}\nCategoría: ${productData.category}\nPrecio: $${productData.price}\nStock: ${productData.stock}`)
@@ -280,9 +284,24 @@ export default function ProductsPage() {
         setEditingId(null)
         setFormData({ name: '', description: '', unit: 'pk', category: 'OTROS', price: '', stock: '', sku: '' })
         
-        // Recargar productos
+        // ⚡ IMPORTANTE: Forzar recarga sin cache
+        console.log('🔄 [PRODUCTO] Recargando lista de productos...')
         await fetchProducts()
         await fetchProductStats()
+        
+        // Verificar que el producto se agregó correctamente
+        setTimeout(() => {
+          console.log('📊 [PRODUCTO] Total de productos después de guardar:', products.length)
+          const savedProduct = products.find(p => p.id === result.data.id)
+          if (savedProduct) {
+            console.log('✅ [PRODUCTO] Producto encontrado en la lista:', {
+              name: savedProduct.name,
+              category: savedProduct.category
+            })
+          } else {
+            console.warn('⚠️ [PRODUCTO] Producto NO encontrado en la lista después de guardar')
+          }
+        }, 500)
       } else {
         console.error('❌ [PRODUCTO] Error del servidor:', result.error)
         alert(`❌ Error: ${result.error || 'Error al guardar producto'}`)
@@ -477,6 +496,19 @@ export default function ProductsPage() {
         // Filtro de categoría (case-insensitive)
         const categoryMatch = activeCategory === 'TODOS' || 
           (product.category && product.category.toUpperCase() === activeCategory.toUpperCase())
+
+        // 🐛 DEBUG: Log cuando hay mismatch de categoría
+        if (activeCategory !== 'TODOS' && !categoryMatch) {
+          console.log('🔍 [FILTRO] Producto no coincide con categoría:', {
+            productName: product.name,
+            productCategory: product.category,
+            productCategoryType: typeof product.category,
+            activeCategory,
+            activeCategoryType: typeof activeCategory,
+            comparison: `'${product.category?.toUpperCase()}' === '${activeCategory.toUpperCase()}'`,
+            match: categoryMatch
+          })
+        }
 
         // Filtro de stock
         const stockMatch = (() => {
