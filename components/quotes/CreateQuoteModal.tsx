@@ -23,6 +23,7 @@ interface Product {
   price: number
   unit: string
   stock: number
+  category: string
 }
 
 interface QuoteItem {
@@ -52,6 +53,21 @@ export default function CreateQuoteModal({ isOpen, onClose }: CreateQuoteModalPr
 
   // Step 2: Productos
   const [selectedItems, setSelectedItems] = useState<QuoteItem[]>([])
+  const [selectedCategory, setSelectedCategory] = useState<string>('ALL')
+
+  // Categorías disponibles
+  const categories = [
+    { value: 'ALL', label: 'Todas las categorías' },
+    { value: 'CARNES', label: '🥩 Carnes' },
+    { value: 'EMBUTIDOS', label: '🌭 Embutidos' },
+    { value: 'SALSAS', label: '🍅 Salsas' },
+    { value: 'LACTEOS', label: '🥛 Lácteos' },
+    { value: 'GRANOS', label: '🌾 Granos' },
+    { value: 'VEGETALES', label: '🥬 Vegetales' },
+    { value: 'CONDIMENTOS', label: '🧂 Condimentos' },
+    { value: 'BEBIDAS', label: '🥤 Bebidas' },
+    { value: 'OTROS', label: '📦 Otros' }
+  ]
 
   useEffect(() => {
     if (isOpen) {
@@ -169,7 +185,13 @@ export default function CreateQuoteModal({ isOpen, onClose }: CreateQuoteModalPr
     setDiscount(0)
     setNotes('')
     setSelectedItems([])
+    setSelectedCategory('ALL')
   }
+
+  // Filtrar productos por categoría
+  const filteredProducts = selectedCategory === 'ALL' 
+    ? products 
+    : products.filter(p => p.category === selectedCategory)
 
   if (!isOpen) return null
 
@@ -334,8 +356,30 @@ export default function CreateQuoteModal({ isOpen, onClose }: CreateQuoteModalPr
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">
                     Seleccionar Productos
                   </h3>
+                  
+                  {/* Filtro por categoría */}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Filtrar por categoría
+                    </label>
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-white"
+                    >
+                      {categories.map(cat => (
+                        <option key={cat.value} value={cat.value}>
+                          {cat.label}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Mostrando {filteredProducts.length} producto{filteredProducts.length !== 1 ? 's' : ''}
+                    </p>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 max-h-60 overflow-y-auto">
-                    {products.map(product => (
+                    {filteredProducts.map(product => (
                       <div
                         key={product.id}
                         onClick={() => addProduct(product)}
@@ -347,6 +391,13 @@ export default function CreateQuoteModal({ isOpen, onClose }: CreateQuoteModalPr
                       </div>
                     ))}
                   </div>
+                  
+                  {filteredProducts.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <Package className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                      <p>No hay productos en esta categoría</p>
+                    </div>
+                  )}
                 </div>
 
                 {selectedItems.length > 0 && (

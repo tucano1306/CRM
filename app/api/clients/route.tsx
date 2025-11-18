@@ -82,28 +82,34 @@ export async function GET(request: NextRequest) {
       ]
     }
 
+    // ⚡ OPTIMIZACIÓN: Consulta básica sin includes pesados
     const [clientsRaw, total] = await Promise.all([
       withPrismaTimeout(
         () => prisma.client.findMany({
           where,
           skip,
           take: limit,
-          include: {
-            seller: true,
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            address: true,
+            zipCode: true,
+            businessName: true,
+            createdAt: true,
+            seller: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            },
             authenticated_users: {
               select: {
                 authId: true
-              }
-            },
-            orders: {
-              select: {
-                id: true,
-                totalAmount: true,
-                status: true
-              }
-            },
-            _count: {
-              select: { orders: true }
+              },
+              take: 1
             }
           },
           orderBy: { createdAt: 'desc' }
@@ -116,18 +122,46 @@ export async function GET(request: NextRequest) {
       )
     ])
 
-    // Calcular estadísticas para cada cliente
-    const clients = clientsRaw.map(client => {
-      const totalOrders = client.orders.length
-      const totalSpent = client.orders.reduce((sum, order) => {
-        // Solo contar órdenes completadas, entregadas o parcialmente entregadas
-        const completedStatuses = ['COMPLETED', 'DELIVERED', 'PARTIALLY_DELIVERED', 'PAID']
-        if (completedStatuses.includes(order.status)) {
-          return sum + Number(order.totalAmount)
-        }
-        return sum
-      }, 0)
+    // ⚡ OPTIMIZACIÓN: Calcular estadísticas con agregación SQL directa
+    const clientIds = clientsRaw.map(c => c.id)
+    
+    const orderStats = await withPrismaTimeout(
+      () => prisma.$queryRaw<Array<{
+        client_id: string
+        total_orders: bigint
+        total_spent: any
+      }>>`
+        SELECT 
+          "clientId" as client_id,
+          COUNT(*)::bigint as total_orders,
+          COALESCE(SUM(
+            CASE 
+              WHEN status IN ('COMPLETED', 'DELIVERED', 'PARTIALLY_DELIVERED', 'PAID')
+              THEN "totalAmount"
+              ELSE 0
+            END
+          ), 0) as total_spent
+        FROM orders
+        WHERE "clientId" = ANY(${clientIds}::text[])
+        GROUP BY "clientId"
+      `,
+      5000
+    )
 
+    // Crear mapa de estadísticas para búsqueda rápida
+    const statsMap = new Map(
+      orderStats.map(stat => [
+        stat.client_id,
+        {
+          totalOrders: Number(stat.total_orders),
+          totalSpent: Number(stat.total_spent)
+        }
+      ])
+    )
+
+    // Mapear clientes con estadísticas
+    const clients = clientsRaw.map(client => {
+      const stats = statsMap.get(client.id) || { totalOrders: 0, totalSpent: 0 }
       const clerkUserId = client.authenticated_users?.[0]?.authId || null
 
       return {
@@ -141,10 +175,7 @@ export async function GET(request: NextRequest) {
         createdAt: client.createdAt,
         clerkUserId,
         seller: client.seller,
-        stats: {
-          totalOrders,
-          totalSpent
-        }
+        stats
       }
     })
 

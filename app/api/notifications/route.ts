@@ -24,12 +24,20 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Buscar el usuario autenticado
+    // Buscar el usuario autenticado con una sola query optimizada
     let authUser = await prisma.authenticated_users.findUnique({
       where: { authId: userId },
-      include: { 
-        sellers: true,
-        clients: true 
+      select: { 
+        id: true,
+        role: true,
+        sellers: {
+          select: { id: true },
+          take: 1
+        },
+        clients: {
+          select: { id: true },
+          take: 1
+        }
       }
     })
 
@@ -73,9 +81,17 @@ export async function GET(request: NextRequest) {
           role: role as any,
           updatedAt: new Date()
         },
-        include: {
-          sellers: true,
-          clients: true
+        select: {
+          id: true,
+          role: true,
+          sellers: {
+            select: { id: true },
+            take: 1
+          },
+          clients: {
+            select: { id: true },
+            take: 1
+          }
         }
       })
 
@@ -119,31 +135,17 @@ export async function GET(request: NextRequest) {
       where.isRead = false
     }
 
-    const notifications = await prisma.notification.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      take: limit,
-    })
-
-    // ⚠️ LOGS COMENTADOS PARA REDUCIR RUIDO EN DESARROLLO
-    // console.log(`🔔 [NOTIFICATIONS] Found ${notifications.length} notifications for user`)
-    // if (notifications.length > 0) {
-    //   console.log('🔔 [NOTIFICATIONS] Latest notification:', {
-    //     id: notifications[0].id,
-    //     type: notifications[0].type,
-    //     title: notifications[0].title,
-    //     isRead: notifications[0].isRead,
-    //     createdAt: notifications[0].createdAt
-    //   })
-    // }
-
-    // Contar no leídas
-    const unreadWhere = { ...where, isRead: false }
-    const unreadCount = await prisma.notification.count({
-      where: unreadWhere,
-    })
-
-    // console.log(`🔔 [NOTIFICATIONS] Unread count: ${unreadCount}`)
+    // ⚡ OPTIMIZACIÓN: Obtener notificaciones y contador en paralelo
+    const [notifications, unreadCount] = await Promise.all([
+      prisma.notification.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      }),
+      prisma.notification.count({
+        where: { ...where, isRead: false }
+      })
+    ])
 
     return NextResponse.json({
       success: true,

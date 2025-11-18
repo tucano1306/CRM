@@ -27,13 +27,13 @@ interface Quote {
 }
 
 const statusConfig = {
-  DRAFT: { label: 'Borrador', color: 'gray', icon: FileText },
-  SENT: { label: 'Enviada', color: 'blue', icon: Send },
-  VIEWED: { label: 'Vista', color: 'purple', icon: Eye },
-  ACCEPTED: { label: 'Aceptada', color: 'green', icon: Check },
-  REJECTED: { label: 'Rechazada', color: 'red', icon: X },
-  EXPIRED: { label: 'Expirada', color: 'orange', icon: Clock },
-  CONVERTED: { label: 'Convertida', color: 'emerald', icon: RefreshCw }
+  DRAFT: { label: 'Borrador', color: 'gray', icon: FileText, bgClass: 'bg-gray-100', textClass: 'text-gray-800', iconClass: 'text-gray-600' },
+  SENT: { label: 'Enviada', color: 'blue', icon: Send, bgClass: 'bg-blue-100', textClass: 'text-blue-800', iconClass: 'text-blue-600' },
+  VIEWED: { label: 'Vista', color: 'purple', icon: Eye, bgClass: 'bg-purple-100', textClass: 'text-purple-800', iconClass: 'text-purple-600' },
+  ACCEPTED: { label: 'Aceptada', color: 'green', icon: Check, bgClass: 'bg-green-100', textClass: 'text-green-800', iconClass: 'text-green-600' },
+  REJECTED: { label: 'Rechazada', color: 'red', icon: X, bgClass: 'bg-red-100', textClass: 'text-red-800', iconClass: 'text-red-600' },
+  EXPIRED: { label: 'Expirada', color: 'orange', icon: Clock, bgClass: 'bg-orange-100', textClass: 'text-orange-800', iconClass: 'text-orange-600' },
+  CONVERTED: { label: 'Convertida', color: 'emerald', icon: RefreshCw, bgClass: 'bg-emerald-100', textClass: 'text-emerald-800', iconClass: 'text-emerald-600' }
 }
 
 export default function QuotesManager() {
@@ -227,8 +227,8 @@ export default function QuotesManager() {
                   {/* Layout responsivo: vertical en móvil, horizontal en desktop */}
                   <div className="flex flex-col md:flex-row md:items-center gap-4">
                     {/* Ícono de estado */}
-                    <div className={`bg-${config.color}-100 p-3 rounded-lg self-start`}>
-                      <StatusIcon className={`h-6 w-6 text-${config.color}-600`} />
+                    <div className={`${config.bgClass} p-3 rounded-lg self-start`}>
+                      <StatusIcon className={`h-6 w-6 ${config.iconClass}`} />
                     </div>
 
                     {/* Contenido principal */}
@@ -236,7 +236,7 @@ export default function QuotesManager() {
                       {/* Título y badges */}
                       <div className="flex flex-wrap items-center gap-2 mb-2">
                         <h3 className="font-semibold text-gray-900 truncate">{quote.title}</h3>
-                        <span className={`text-xs px-2 py-1 rounded-full bg-${config.color}-100 text-${config.color}-800 whitespace-nowrap`}>
+                        <span className={`text-xs px-2 py-1 rounded-full ${config.bgClass} ${config.textClass} whitespace-nowrap`}>
                           {config.label}
                         </span>
                         {isExpired && quote.status !== 'CONVERTED' && (

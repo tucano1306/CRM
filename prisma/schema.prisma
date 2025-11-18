@@ -185,6 +185,7 @@ model Order {
   @@index([clientId, status])
   @@index([clientId, createdAt])
   @@index([status, createdAt])
+  @@index([clientId, status, totalAmount]) // Para stats de clientes
   @@map("orders")
 }
 
