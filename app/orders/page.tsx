@@ -107,7 +107,7 @@ export default function OrdersPage() {
     !!user?.id // Solo activar si hay userId
   )
 
-  // ⚡ FALLBACK: Polling automático cada 30 segundos para detectar cambios
+  // ⚡ FALLBACK: Polling automático cada 15 segundos para detectar cambios
   useEffect(() => {
     fetchOrders()
     
@@ -115,7 +115,7 @@ export default function OrdersPage() {
     const interval = setInterval(() => {
       console.log('🔄 Auto-refresh: Checking for order updates...')
       fetchOrders()
-    }, 30000) // 30 segundos
+    }, 15000) // 15 segundos
 
     return () => clearInterval(interval)
   }, [])
