@@ -212,7 +212,10 @@ export default function CreateRecurringOrderModal({
         }
         
         // Mostrar error detallado
-        let errorMessage = `❌ Error ${response.status}: ${result.error || result.message || 'No se pudo crear la orden'}\n`
+        let errorMessage = `❌ Error ${response.status}: ${result.error || 'No se pudo crear la orden'}\n`
+        if (result.message && result.message !== result.error) {
+          errorMessage += `\n💬 Mensaje: ${result.message}\n`
+        }
         
         if (result.details) {
           errorMessage += '\n📋 Detalles de validación:\n'

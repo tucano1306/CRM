@@ -255,9 +255,17 @@ export async function POST(request: Request) {
       message: 'Orden recurrente creada exitosamente'
     })
   } catch (error) {
-    console.error('Error creating recurring order:', error)
+    console.error('❌ [RECURRING ORDER] Error creating recurring order:', error)
+    console.error('❌ [RECURRING ORDER] Error type:', typeof error)
+    console.error('❌ [RECURRING ORDER] Error stack:', error instanceof Error ? error.stack : 'No stack')
+    console.error('❌ [RECURRING ORDER] Error message:', error instanceof Error ? error.message : JSON.stringify(error))
+    
     return NextResponse.json(
-      { success: false, error: 'Error al crear orden recurrente' },
+      { 
+        success: false, 
+        error: 'Error al crear orden recurrente',
+        message: error instanceof Error ? error.message : 'Error desconocido'
+      },
       { status: 500 }
     )
   }
