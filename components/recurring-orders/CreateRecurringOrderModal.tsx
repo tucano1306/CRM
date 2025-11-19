@@ -165,7 +165,18 @@ export default function CreateRecurringOrderModal({
         }))
       }
       
-      console.log('📤 Enviando orden recurrente:', payload)
+      console.log('📤 Enviando orden recurrente:', {
+        ...payload,
+        itemsCount: payload.items.length,
+        firstItem: payload.items[0]
+      })
+      console.log('📋 Validando campos:', {
+        nameLength: name.length,
+        frequency,
+        itemsCount: selectedItems.length,
+        startDateValid: !isNaN(new Date(startDate).getTime()),
+        hasProducts: selectedItems.length > 0
+      })
       
       const response = await fetch('/api/recurring-orders', {
         method: 'POST',
@@ -187,10 +198,27 @@ export default function CreateRecurringOrderModal({
         resetForm()
         window.location.reload() // Recargar para ver la nueva orden
       } else {
-        console.error('❌ Error del servidor:', result)
-        const errorMessage = `Error (${response.status}): ${result.error || 'No se pudo crear la orden'}`
-        const errorDetails = result.details ? '\n\nDetalles:\n' + JSON.stringify(result.details, null, 2) : ''
-        alert(errorMessage + errorDetails)
+        console.error('❌ Error del servidor completo:', {
+          status: response.status,
+          statusText: response.statusText,
+          result
+        })
+        
+        // Mostrar error detallado
+        let errorMessage = `❌ Error ${response.status}: ${result.error || 'No se pudo crear la orden'}\n`
+        
+        if (result.details) {
+          errorMessage += '\n📋 Detalles de validación:\n'
+          if (Array.isArray(result.details)) {
+            result.details.forEach((detail: any) => {
+              errorMessage += `  • ${detail.path?.join('.') || 'Campo'}: ${detail.message}\n`
+            })
+          } else {
+            errorMessage += JSON.stringify(result.details, null, 2)
+          }
+        }
+        
+        alert(errorMessage)
       }
     } catch (error) {
       console.error('❌ Error creando orden recurrente:', error)

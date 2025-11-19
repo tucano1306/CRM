@@ -431,8 +431,8 @@ export const createRecurringOrderSchema = z.object({
       .positive('Precio debe ser mayor a 0')
       .max(999999, 'Precio máximo: 999,999')
   })).min(1, 'Debe haber al menos un item'),
-  frequency: z.enum(['DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY'], {
-    message: 'Frecuencia debe ser: DAILY, WEEKLY, BIWEEKLY, o MONTHLY'
+  frequency: z.enum(['DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'CUSTOM'], {
+    message: 'Frecuencia debe ser: DAILY, WEEKLY, BIWEEKLY, MONTHLY, o CUSTOM'
   }),
   customDays: z.number()
     .int('Días personalizados debe ser un entero')
