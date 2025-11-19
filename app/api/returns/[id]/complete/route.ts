@@ -57,7 +57,9 @@ export async function POST(
 
     // Si se debe restaurar inventario
     if (restockInventory) {
+      console.log('📦 [RETURNS] Restaurando inventario para', returnRecord.items.length, 'items')
       for (const item of returnRecord.items) {
+        console.log(`  Incrementando stock de producto ${item.productId} en ${item.quantityReturned}`)
         await prisma.product.update({
           where: { id: item.productId },
           data: {
@@ -75,16 +77,26 @@ export async function POST(
           }
         })
       }
+      console.log('✅ [RETURNS] Inventario restaurado')
     }
 
     // Si el tipo es CREDIT, crear nota de crédito
     let creditNote = null
     if (returnRecord.refundType === 'CREDIT') {
+      console.log('💳 [RETURNS] Creando nota de crédito para return:', id)
       const creditNoteNumber = `CN-${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`
       
       // Expira en 1 año
       const expiresAt = new Date()
       expiresAt.setFullYear(expiresAt.getFullYear() + 1)
+
+      console.log('💳 [RETURNS] Datos de nota de crédito:', {
+        creditNoteNumber,
+        returnId: returnRecord.id,
+        clientId: returnRecord.clientId,
+        sellerId: returnRecord.sellerId,
+        amount: returnRecord.finalRefundAmount
+      })
 
       creditNote = await prisma.creditNote.create({
         data: {
@@ -128,6 +140,7 @@ export async function POST(
     }
 
     // Actualizar estado
+    console.log('✅ [RETURNS] Actualizando estado a COMPLETED para return:', id)
     const updatedReturn = await prisma.return.update({
       where: { id },
       data: {
@@ -135,10 +148,18 @@ export async function POST(
         completedAt: new Date()
       },
       include: {
-        items: true,
-        creditNote: true
+        items: {
+          include: {
+            product: true
+          }
+        },
+        creditNote: true,
+        order: true,
+        client: true
       }
     })
+    
+    console.log('✅ [RETURNS] Devolución completada exitosamente:', updatedReturn.id)
 
     return NextResponse.json({
       success: true,
