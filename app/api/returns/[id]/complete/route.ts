@@ -155,7 +155,7 @@ export async function POST(
         await notifyCreditNoteIssued(
           returnRecord.clientId,
           creditNote.id,
-          creditNoteNumber,
+          creditNote.creditNoteNumber,
           Number(returnRecord.finalRefundAmount)
         )
         
@@ -165,7 +165,7 @@ export async function POST(
           {
             clientId: returnRecord.clientId,
             creditNoteId: creditNote.id,
-            creditNoteNumber
+            creditNoteNumber: creditNote.creditNoteNumber
           }
         )
       } catch (notifError) {
