@@ -1447,6 +1447,21 @@ export default function OrdersPage() {
                         </button>
                       )}
                       
+                      {/* Botón para confirmar recepción (EN_DELIVERY) */}
+                      {order.status === 'IN_DELIVERY' && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            markAsReceived(order.id)
+                          }}
+                          className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-medium text-sm flex items-center gap-2"
+                          title="Confirmar recepción"
+                        >
+                          <PackageCheck className="w-4 h-4" />
+                          Confirmar Recepción
+                        </button>
+                      )}
+
                       {(order.status === 'CONFIRMED' || order.status === 'PREPARING' || order.status === 'IN_DELIVERY') && (
                         <button 
                           onClick={(e) => handleQuickTrack(order, e)}
