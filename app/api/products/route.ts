@@ -7,9 +7,10 @@ import { sanitizeText } from '@/lib/sanitize'
 import { withCache, CACHE_CONFIGS, getAdaptiveCache } from '@/lib/apiCache'
 import { invalidateProductsCache } from '@/lib/cache-invalidation'
 
-// GET /api/products - Obtener productos del vendedor autenticado
+// GET /api/products - Obtener productos
 // ✅ CON TIMEOUT DE 5 SEGUNDOS
-// ✅ CON FILTRO DE SEGURIDAD POR SELLER
+// ✅ VENDEDORES: Solo sus productos
+// ✅ COMPRADORES: Todos los productos activos
 // Soporta: ?search=nombre&lowStock=true&page=1&pageSize=20
 export async function GET(request: Request) {
   try {
@@ -17,21 +18,6 @@ export async function GET(request: Request) {
 
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
-
-    // 🔒 SEGURIDAD: Obtener vendedor del usuario autenticado
-    const seller = await prisma.seller.findFirst({
-      where: {
-        authenticated_users: {
-          some: { authId: userId }
-        }
-      }
-    })
-
-    if (!seller) {
-      return NextResponse.json({ 
-        error: 'No tienes permisos para ver productos. Debes ser un vendedor registrado.' 
-      }, { status: 403 })
     }
 
   const { searchParams } = new URL(request.url)
@@ -45,13 +31,42 @@ export async function GET(request: Request) {
   let pageSize = parseInt(pageSizeParam || '20', 10) || 20
   pageSize = Math.min(Math.max(pageSize, 1), 100) // 1..100
 
-    // 🔒 SEGURIDAD: Construir filtro con relación sellers (ProductSeller)
-    const whereClause: any = {
-      sellers: {
-        some: {
-          sellerId: seller.id  // ← FILTRO OBLIGATORIO: Solo productos de este vendedor
+    // 🔒 SEGURIDAD: Determinar si el usuario es vendedor o comprador
+    const seller = await prisma.seller.findFirst({
+      where: {
+        authenticated_users: {
+          some: { authId: userId }
         }
       }
+    })
+
+    const client = await prisma.client.findFirst({
+      where: {
+        authenticated_users: {
+          some: { authId: userId }
+        }
+      }
+    })
+
+    // 🔒 SEGURIDAD: Construir filtro según el rol
+    const whereClause: any = {}
+    
+    if (seller) {
+      // VENDEDOR: Solo sus productos
+      whereClause.sellers = {
+        some: {
+          sellerId: seller.id
+        }
+      }
+    } else if (client) {
+      // COMPRADOR: Solo productos activos con stock
+      whereClause.isActive = true
+      whereClause.stock = { gt: 0 }
+    } else {
+      // Usuario sin rol asignado
+      return NextResponse.json({ 
+        error: 'No tienes permisos para ver productos. Debes ser vendedor o comprador registrado.' 
+      }, { status: 403 })
     }
     
     if (search) {
@@ -62,8 +77,8 @@ export async function GET(request: Request) {
       ]
     }
 
-    // Filtrar por stock bajo (menos de 10 unidades por defecto)
-    if (lowStock) {
+    // Filtrar por stock bajo (menos de 10 unidades, solo para vendedores)
+    if (lowStock && seller) {
       whereClause.stock = { lt: 10 }
     }
 

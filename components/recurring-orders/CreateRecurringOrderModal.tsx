@@ -84,13 +84,24 @@ export default function CreateRecurringOrderModal({
     try {
       const response = await fetch('/api/products')
       const result = await response.json()
+      
+      console.log('🔍 Products API Response:', {
+        status: response.status,
+        success: result.success,
+        dataLength: result.data?.length,
+        firstProduct: result.data?.[0],
+        error: result.error
+      })
+      
       if (result.success && Array.isArray(result.data)) {
         setProducts(result.data)
+        console.log('✅ Productos cargados:', result.data.length)
       } else {
+        console.warn('⚠️ No se recibieron productos:', result)
         setProducts([])
       }
     } catch (error) {
-      console.error('Error fetching products:', error)
+      console.error('❌ Error fetching products:', error)
       setProducts([])
     }
   }
