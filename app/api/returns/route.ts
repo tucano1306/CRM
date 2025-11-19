@@ -170,13 +170,49 @@ export async function POST(request: Request) {
         where: { id: sanitizedData.orderId },
         include: {
           orderItems: true,
-          seller: true
+          seller: true,
+          returns: {
+            where: {
+              status: {
+                in: ['PENDING', 'APPROVED', 'COMPLETED']
+              }
+            },
+            include: {
+              items: true
+            }
+          }
         }
       })
     )
 
     if (!order || order.clientId !== clientId) {
       return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 })
+    }
+
+    // 🔒 VALIDACIÓN CRÍTICA: Calcular monto ya devuelto
+    const totalAlreadyReturned = order.returns.reduce((sum, ret) => {
+      return sum + Number(ret.finalRefundAmount)
+    }, 0)
+
+    const orderTotal = Number(order.totalAmount)
+    const availableForReturn = orderTotal - totalAlreadyReturned
+
+    console.log('💰 [RETURNS] Validación de monto disponible:', {
+      orderTotal,
+      totalAlreadyReturned,
+      availableForReturn,
+      orderNumber: order.orderNumber
+    })
+
+    if (availableForReturn <= 0) {
+      return NextResponse.json({ 
+        error: 'Esta orden ya ha sido completamente devuelta',
+        details: {
+          orderTotal,
+          totalAlreadyReturned,
+          availableForReturn: 0
+        }
+      }, { status: 400 })
     }
 
     // Calcular totales
@@ -216,6 +252,22 @@ export async function POST(request: Request) {
     // Calcular fee de restock (5% del total)
     const restockFee = totalReturnAmount * 0.05
     const finalRefundAmount = totalReturnAmount - restockFee
+
+    // 🔒 VALIDACIÓN CRÍTICA: Verificar que no exceda el monto disponible
+    if (finalRefundAmount > availableForReturn) {
+      return NextResponse.json({ 
+        error: 'El monto de devolución excede el monto disponible de la orden',
+        details: {
+          requestedAmount: finalRefundAmount,
+          availableAmount: availableForReturn,
+          orderTotal,
+          alreadyReturned: totalAlreadyReturned,
+          message: `Solo quedan $${availableForReturn.toFixed(2)} disponibles para devolver de los $${orderTotal.toFixed(2)} originales (ya se devolvieron $${totalAlreadyReturned.toFixed(2)})`
+        }
+      }, { status: 400 })
+    }
+
+    console.log('✅ [RETURNS] Validación exitosa. Creando devolución por:', finalRefundAmount)
 
     // Generar número de devolución
     const returnNumber = `RET-${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`
