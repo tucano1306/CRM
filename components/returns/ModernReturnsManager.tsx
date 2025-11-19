@@ -503,12 +503,36 @@ export default function ModernReturnsManager({ role = 'client' }: ModernReturnsM
                       )}
                     </div>
 
-                    {/* Items Count */}
-                    <div className="mb-4 flex items-center justify-between bg-gray-50 rounded-lg p-3">
-                      <p className="text-sm text-gray-700 flex items-center gap-2">
+                    {/* Products List */}
+                    <div className="mb-4 bg-gray-50 rounded-lg p-3">
+                      <div className="flex items-center gap-2 mb-3">
                         <Package className="h-4 w-4 text-orange-600" />
-                        <span className="font-medium">{returnItem.items.length} productos</span>
-                      </p>
+                        <span className="font-semibold text-sm text-gray-700">
+                          Productos ({returnItem.items.length})
+                        </span>
+                      </div>
+                      <div className="space-y-2 max-h-32 overflow-y-auto">
+                        {returnItem.items.map((item) => (
+                          <div 
+                            key={item.id} 
+                            className="flex items-center justify-between p-2 bg-white rounded border border-gray-200"
+                          >
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {item.productName}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Cantidad: {item.quantityReturned}
+                              </p>
+                            </div>
+                            <div className="text-right ml-2">
+                              <p className="text-sm font-bold text-orange-600">
+                                {formatPrice(item.refundAmount)}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Reason */}
