@@ -19,6 +19,8 @@ export async function GET(request: Request) {
     const role = searchParams.get('role') // 'seller' o 'client'
     const orderId = searchParams.get('orderId') // Filtrar por orden específica
 
+    console.log('📋 [RETURNS GET] Params:', { role, orderId, userId })
+
     // Obtener usuario
     const authUser = await withResilientDb(() => prisma.authenticated_users.findUnique({
       where: { authId: userId },
@@ -34,12 +36,24 @@ export async function GET(request: Request) {
 
     let returns
 
-    if (role === 'client' && authUser.clients.length > 0) {
+    // Determinar el rol del usuario si no se especifica
+    const isClient = authUser.clients.length > 0
+    const isSeller = authUser.sellers.length > 0
+    const effectiveRole = role || (isClient ? 'client' : isSeller ? 'seller' : null)
+
+    console.log('🎭 [RETURNS GET] Effective role:', effectiveRole, { isClient, isSeller })
+
+    if (effectiveRole === 'client' && isClient) {
       // Cliente: ver sus propias devoluciones
       const clientId = authUser.clients[0].id
       const whereClause: any = { clientId }
-      if (orderId) whereClause.orderId = orderId
+      if (orderId) {
+        console.log('🔍 [RETURNS GET CLIENT] Filtering by orderId:', orderId)
+        whereClause.orderId = orderId
+      }
+      console.log('🔎 [RETURNS GET CLIENT] Where clause:', JSON.stringify(whereClause, null, 2))
       
+      console.log('💾 [RETURNS GET CLIENT] Executing Prisma query...')
       returns = await withResilientDb(() => prisma.return.findMany({
         where: whereClause,
         include: {
@@ -69,12 +83,17 @@ export async function GET(request: Request) {
         },
         orderBy: { createdAt: 'desc' }
       }))
-    } else if (authUser.sellers.length > 0) {
+    } else if (isSeller) {
       // Si es vendedor, ver todas las devoluciones de sus clientes
       const sellerId = authUser.sellers[0].id
       const whereClause: any = { sellerId }
-      if (orderId) whereClause.orderId = orderId
+      if (orderId) {
+        console.log('🔍 [RETURNS GET SELLER] Filtering by orderId:', orderId)
+        whereClause.orderId = orderId
+      }
+      console.log('🔎 [RETURNS GET SELLER] Where clause:', JSON.stringify(whereClause, null, 2))
       
+      console.log('💾 [RETURNS GET SELLER] Executing Prisma query...')
       returns = await withResilientDb(() => prisma.return.findMany({
         where: whereClause,
         include: {
@@ -109,15 +128,27 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Usuario sin permisos' }, { status: 403 })
     }
 
+    console.log('✅ [RETURNS GET] Found returns:', returns.length)
+    console.log('📦 [RETURNS GET] Returns sample:', returns.length > 0 ? { 
+      id: returns[0].id, 
+      hasItems: Array.isArray(returns[0].items),
+      itemsCount: returns[0].items?.length || 0 
+    } : 'no returns')
+    
     return NextResponse.json({
       success: true,
       data: returns
     })
 
   } catch (error) {
-    console.error('Error fetching returns:', error)
+    console.error('❌ [RETURNS GET] Error fetching returns:', error)
+    console.error('❌ [RETURNS GET] Error type:', typeof error)
+    console.error('❌ [RETURNS GET] Error message:', error instanceof Error ? error.message : JSON.stringify(error))
     return NextResponse.json(
-      { error: 'Error al obtener devoluciones' },
+      { 
+        error: 'Error al obtener devoluciones',
+        message: error instanceof Error ? error.message : 'Error desconocido'
+      },
       { status: 500 }
     )
   }

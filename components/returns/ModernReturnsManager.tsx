@@ -148,6 +148,16 @@ export default function ModernReturnsManager({ role = 'client' }: ModernReturnsM
       const response = await fetch(`/api/returns?role=${role}`)
       const result = await response.json()
       if (result.success) {
+        console.log('🎯 [RETURNS UI] Fetched returns:', result.data.length)
+        if (result.data.length > 0) {
+          console.log('🔍 [RETURNS UI] First return items:', {
+            id: result.data[0].id,
+            hasItems: !!result.data[0].items,
+            itemsIsArray: Array.isArray(result.data[0].items),
+            itemsLength: result.data[0].items?.length || 0,
+            firstItem: result.data[0].items?.[0] || null
+          })
+        }
         setReturns(result.data)
       }
     } catch (error) {
@@ -504,15 +514,16 @@ export default function ModernReturnsManager({ role = 'client' }: ModernReturnsM
                     </div>
 
                     {/* Products List */}
-                    <div className="mb-4 bg-gray-50 rounded-lg p-3">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Package className="h-4 w-4 text-orange-600" />
-                        <span className="font-semibold text-sm text-gray-700">
-                          Productos ({returnItem.items.length})
-                        </span>
-                      </div>
-                      <div className="space-y-2 max-h-32 overflow-y-auto">
-                        {returnItem.items.map((item) => (
+                    {returnItem.items && returnItem.items.length > 0 && (
+                      <div className="mb-4 bg-gray-50 rounded-lg p-3">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Package className="h-4 w-4 text-orange-600" />
+                          <span className="font-semibold text-sm text-gray-700">
+                            Productos ({returnItem.items.length})
+                          </span>
+                        </div>
+                        <div className="space-y-2 max-h-32 overflow-y-auto">
+                          {returnItem.items.map((item) => (
                           <div 
                             key={item.id} 
                             className="flex items-center justify-between p-2 bg-white rounded border border-gray-200"
@@ -531,9 +542,10 @@ export default function ModernReturnsManager({ role = 'client' }: ModernReturnsM
                               </p>
                             </div>
                           </div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Reason */}
                     <div className="mb-4 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
