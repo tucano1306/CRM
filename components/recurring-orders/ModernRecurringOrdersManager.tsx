@@ -614,7 +614,6 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
           setCreateModalOpen(false)
           fetchOrders()
         }}
-        clientId={clientId}
       />
 
       {selectedOrder && (

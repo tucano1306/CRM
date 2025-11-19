@@ -94,6 +94,7 @@ export function useRealtimeSubscription(
         setIsConnected(false)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelName, eventName, enabled])
 
   return { isConnected }
@@ -149,6 +150,7 @@ export function useRealtimeChannel(
         setIsConnected(false)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channelName, enabled])
 
   return { isConnected }

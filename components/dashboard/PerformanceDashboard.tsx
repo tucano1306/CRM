@@ -181,6 +181,7 @@ export default function PerformanceDashboard() {
         clearInterval(intervalRef.current)
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const getSeverityColor = (severity: string) => {
