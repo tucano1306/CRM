@@ -246,7 +246,6 @@ export default function RecurringOrdersManager({ userRole, clientId }: Recurring
           setCreateModalOpen(false)
           fetchOrders() // Refresh after creating
         }}
-        clientId={clientId}
       />
 
       {selectedOrder && (
