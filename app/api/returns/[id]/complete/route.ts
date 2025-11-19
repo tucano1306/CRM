@@ -102,40 +102,52 @@ export async function POST(
     // Si el tipo es CREDIT, crear nota de crédito
     let creditNote = null
     if (returnRecord.refundType === 'CREDIT') {
-      console.log('💳 [RETURNS COMPLETE] Creating credit note for return:', id)
-      const creditNoteNumber = `CN-${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+      console.log('💳 [RETURNS COMPLETE] Checking for existing credit note...')
       
-      // Expira en 1 año
-      const expiresAt = new Date()
-      expiresAt.setFullYear(expiresAt.getFullYear() + 1)
-
-      console.log('💳 [RETURNS COMPLETE] Credit note data:', {
-        creditNoteNumber,
-        returnId: returnRecord.id,
-        clientId: returnRecord.clientId,
-        sellerId: returnRecord.sellerId,
-        amount: returnRecord.finalRefundAmount,
-        expiresAt
+      // Verificar si ya existe una nota de crédito
+      const existingCreditNote = await prisma.creditNote.findUnique({
+        where: { returnId: returnRecord.id }
       })
 
-      try {
-        console.log('💾 [RETURNS COMPLETE] Executing creditNote.create...')
-        creditNote = await prisma.creditNote.create({
-          data: {
-            creditNoteNumber,
-            returnId: returnRecord.id,
-            clientId: returnRecord.clientId,
-            sellerId: returnRecord.sellerId,
-            amount: returnRecord.finalRefundAmount,
-            balance: returnRecord.finalRefundAmount,
-            expiresAt,
-            notes: `Crédito generado por devolución ${returnRecord.returnNumber}`
-          }
+      if (existingCreditNote) {
+        console.log('ℹ️ [RETURNS COMPLETE] Credit note already exists:', existingCreditNote.id)
+        creditNote = existingCreditNote
+      } else {
+        console.log('💳 [RETURNS COMPLETE] Creating new credit note for return:', id)
+        const creditNoteNumber = `CN-${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+        
+        // Expira en 1 año
+        const expiresAt = new Date()
+        expiresAt.setFullYear(expiresAt.getFullYear() + 1)
+
+        console.log('💳 [RETURNS COMPLETE] Credit note data:', {
+          creditNoteNumber,
+          returnId: returnRecord.id,
+          clientId: returnRecord.clientId,
+          sellerId: returnRecord.sellerId,
+          amount: returnRecord.finalRefundAmount,
+          expiresAt
         })
-        console.log('✅ [RETURNS COMPLETE] Credit note created:', creditNote.id)
-      } catch (creditError) {
-        console.error('❌ [RETURNS COMPLETE] Error creating credit note:', creditError)
-        throw creditError
+
+        try {
+          console.log('💾 [RETURNS COMPLETE] Executing creditNote.create...')
+          creditNote = await prisma.creditNote.create({
+            data: {
+              creditNoteNumber,
+              returnId: returnRecord.id,
+              clientId: returnRecord.clientId,
+              sellerId: returnRecord.sellerId,
+              amount: returnRecord.finalRefundAmount,
+              balance: returnRecord.finalRefundAmount,
+              expiresAt,
+              notes: `Crédito generado por devolución ${returnRecord.returnNumber}`
+            }
+          })
+          console.log('✅ [RETURNS COMPLETE] Credit note created:', creditNote.id)
+        } catch (creditError) {
+          console.error('❌ [RETURNS COMPLETE] Error creating credit note:', creditError)
+          throw creditError
+        }
       }
 
       // 🔔 ENVIAR NOTIFICACIÓN AL COMPRADOR sobre emisión de nota de crédito

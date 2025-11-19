@@ -436,6 +436,14 @@ export default function ModernReturnsManager({ role = 'client' }: ModernReturnsM
               const needsAttention = returnItem.status === 'PENDING' || returnItem.status === 'APPROVED'
               const isCompleted = returnItem.status === 'COMPLETED'
 
+              // Debug log
+              console.log('🎴 [CARD RENDER]', returnItem.returnNumber, {
+                hasItems: !!returnItem.items,
+                isArray: Array.isArray(returnItem.items),
+                length: returnItem.items?.length || 0,
+                items: returnItem.items
+              })
+
               return (
                 <Card 
                   key={returnItem.id}
