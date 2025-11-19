@@ -191,6 +191,7 @@ export default function CreateRecurringOrderModal({
         ok: response.ok,
         result
       })
+      console.log('📥 Result stringified:', JSON.stringify(result, null, 2))
 
       if (response.ok) {
         console.log('✅ Orden recurrente creada exitosamente')
@@ -204,8 +205,14 @@ export default function CreateRecurringOrderModal({
           result
         })
         
+        // Log cada propiedad del result
+        console.log('🔍 Propiedades del error:')
+        for (const key in result) {
+          console.log(`  ${key}:`, result[key])
+        }
+        
         // Mostrar error detallado
-        let errorMessage = `❌ Error ${response.status}: ${result.error || 'No se pudo crear la orden'}\n`
+        let errorMessage = `❌ Error ${response.status}: ${result.error || result.message || 'No se pudo crear la orden'}\n`
         
         if (result.details) {
           errorMessage += '\n📋 Detalles de validación:\n'
@@ -218,11 +225,25 @@ export default function CreateRecurringOrderModal({
           }
         }
         
+        // Si no hay detalles pero hay otras propiedades
+        if (!result.details && !result.error && !result.message) {
+          errorMessage += '\n📋 Info del error:\n' + JSON.stringify(result, null, 2)
+        }
+        
         alert(errorMessage)
+        console.error('❌ Error del servidor:', errorMessage)
       }
     } catch (error) {
       console.error('❌ Error creando orden recurrente:', error)
-      alert('Error de conexión al crear la orden')
+      console.error('❌ Error type:', typeof error)
+      console.error('❌ Error instanceof:', error instanceof Error)
+      if (error instanceof Error) {
+        console.error('❌ Error message:', error.message)
+        console.error('❌ Error stack:', error.stack)
+        alert(`Error de conexión: ${error.message}`)
+      } else {
+        alert('Error de conexión al crear la orden: ' + JSON.stringify(error))
+      }
     } finally {
       setLoading(false)
     }
