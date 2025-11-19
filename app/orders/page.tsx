@@ -95,7 +95,7 @@ export default function OrdersPage() {
     }
   }, [orders])
 
-  // Tiempo real: escuchar cambios en órdenes
+  // Tiempo real: escuchar cambios en órdenes vía Supabase
   useRealtimeSubscription(
     `seller-${user?.id || 'unknown'}`,
     RealtimeEvents.ORDER_STATUS_CHANGED,
@@ -107,17 +107,8 @@ export default function OrdersPage() {
     !!user?.id // Solo activar si hay userId
   )
 
-  // ⚡ FALLBACK: Polling automático cada 15 segundos para detectar cambios
   useEffect(() => {
     fetchOrders()
-    
-    // Configurar polling automático
-    const interval = setInterval(() => {
-      console.log('🔄 Auto-refresh: Checking for order updates...')
-      fetchOrders()
-    }, 15000) // 15 segundos
-
-    return () => clearInterval(interval)
   }, [])
 
   const fetchOrders = async () => {
