@@ -1630,6 +1630,28 @@ export default function OrdersPage() {
                 </div>
               </div>
               
+              {/* Banner destacado para confirmar recepción (visible en todas las pestañas) */}
+              {selectedOrder.status === 'IN_DELIVERY' && (
+                <div className="bg-gradient-to-r from-green-500 to-emerald-500 p-4 animate-pulse">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3 text-white">
+                      <PackageCheck className="w-6 h-6" />
+                      <div>
+                        <p className="font-bold">¿Ya recibiste tu pedido?</p>
+                        <p className="text-sm text-green-50">Confirma la recepción para notificar al vendedor</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => markAsReceived(selectedOrder.id)}
+                      className="bg-white text-green-600 px-6 py-2 rounded-lg font-bold hover:bg-green-50 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 whitespace-nowrap"
+                    >
+                      <CheckCircle className="w-5 h-5" />
+                      Confirmar Recepción
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Tabs */}
               <div className="flex border-b sticky top-[120px] bg-white z-10">
                 <button 
