@@ -150,8 +150,13 @@ export async function POST(
       message: 'Devolución completada exitosamente'
     })
   } catch (error) {
-    console.error('Error completing return:', error)
-    return NextResponse.json({ error: 'Error al completar devolución' }, { status: 500 })
+    console.error('❌ [RETURNS] Error completing return:', error)
+    logger.error(LogCategory.API, 'Error completing return', error)
+    
+    return NextResponse.json({ 
+      error: 'Error al completar devolución',
+      message: error instanceof Error ? error.message : 'Error desconocido'
+    }, { status: 500 })
   } finally {
     // prisma singleton
   }
