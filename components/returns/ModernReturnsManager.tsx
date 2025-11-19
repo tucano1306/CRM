@@ -527,7 +527,7 @@ export default function ModernReturnsManager({ role = 'client' }: ModernReturnsM
                             </div>
                             <div className="text-right ml-2">
                               <p className="text-sm font-bold text-orange-600">
-                                {formatPrice(item.refundAmount)}
+                                {formatPrice(item.subtotal)}
                               </p>
                             </div>
                           </div>
