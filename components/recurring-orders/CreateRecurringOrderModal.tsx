@@ -152,9 +152,9 @@ export default function CreateRecurringOrderModal({
       const payload = {
         name,
         frequency,
-        dayOfWeek: frequency === 'WEEKLY' ? dayOfWeek : null,
-        dayOfMonth: frequency === 'MONTHLY' ? dayOfMonth : null,
-        customDays: frequency === 'CUSTOM' ? customDays : null,
+        dayOfWeek: frequency === 'WEEKLY' ? dayOfWeek : undefined,
+        dayOfMonth: frequency === 'MONTHLY' ? dayOfMonth : undefined,
+        customDays: frequency === 'CUSTOM' ? customDays : undefined,
         startDate: startDateISO,
         notes: notes || undefined,
         deliveryInstructions: deliveryInstructions || undefined,
