@@ -17,6 +17,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const role = searchParams.get('role') // 'seller' o 'client'
+    const orderId = searchParams.get('orderId') // Filtrar por orden específica
 
     // Obtener usuario
     const authUser = await withResilientDb(() => prisma.authenticated_users.findUnique({
@@ -36,8 +37,11 @@ export async function GET(request: Request) {
     if (role === 'client' && authUser.clients.length > 0) {
       // Cliente: ver sus propias devoluciones
       const clientId = authUser.clients[0].id
+      const whereClause: any = { clientId }
+      if (orderId) whereClause.orderId = orderId
+      
       returns = await withResilientDb(() => prisma.return.findMany({
-        where: { clientId },
+        where: whereClause,
         include: {
           order: {
             select: {
@@ -68,8 +72,11 @@ export async function GET(request: Request) {
     } else if (authUser.sellers.length > 0) {
       // Si es vendedor, ver todas las devoluciones de sus clientes
       const sellerId = authUser.sellers[0].id
+      const whereClause: any = { sellerId }
+      if (orderId) whereClause.orderId = orderId
+      
       returns = await withResilientDb(() => prisma.return.findMany({
-        where: { sellerId },
+        where: whereClause,
         include: {
           order: {
             select: {

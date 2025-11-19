@@ -45,12 +45,44 @@ export default function CreateManualReturnModal({ isOpen, onClose, onSuccess }: 
   const [amount, setAmount] = useState('')
   const [notes, setNotes] = useState('')
   const [error, setError] = useState('')
+  const [previousReturns, setPreviousReturns] = useState<any[]>([])
+  const [loadingReturns, setLoadingReturns] = useState(false)
 
   useEffect(() => {
     if (isOpen) {
       fetchCompletedOrders()
     }
   }, [isOpen])
+
+  useEffect(() => {
+    if (selectedOrderId) {
+      fetchOrderReturns(selectedOrderId)
+    } else {
+      setPreviousReturns([])
+    }
+  }, [selectedOrderId])
+
+  const fetchOrderReturns = async (orderId: string) => {
+    try {
+      setLoadingReturns(true)
+      const response = await fetch(`/api/returns?orderId=${orderId}`)
+      const result = await response.json()
+      
+      if (result.success) {
+        const returns = result.data || []
+        // Filtrar solo las devoluciones activas (no rechazadas)
+        const activeReturns = returns.filter((r: any) => 
+          r.status === 'PENDING' || r.status === 'APPROVED' || r.status === 'COMPLETED'
+        )
+        setPreviousReturns(activeReturns)
+        console.log('📋 [MANUAL RETURN] Devoluciones previas:', activeReturns.length)
+      }
+    } catch (error) {
+      console.error('Error fetching order returns:', error)
+    } finally {
+      setLoadingReturns(false)
+    }
+  }
 
   const fetchCompletedOrders = async () => {
     try {
@@ -97,8 +129,34 @@ export default function CreateManualReturnModal({ isOpen, onClose, onSuccess }: 
     }
 
     const selectedOrder = orders.find(o => o.id === selectedOrderId)
-    if (selectedOrder && returnAmount > parseFloat(selectedOrder.totalAmount)) {
-      setError(`El monto no puede exceder el total de la orden (${formatPrice(parseFloat(selectedOrder.totalAmount))})`)
+    if (!selectedOrder) {
+      setError('Orden no encontrada')
+      return
+    }
+
+    // Calcular monto ya devuelto
+    const totalAlreadyReturned = previousReturns.reduce((sum, ret) => {
+      return sum + parseFloat(ret.totalReturnAmount || '0')
+    }, 0)
+
+    const orderTotal = parseFloat(selectedOrder.totalAmount)
+    const availableForReturn = orderTotal - totalAlreadyReturned
+
+    console.log('💰 [MANUAL RETURN] Validación:', {
+      orderTotal,
+      totalAlreadyReturned,
+      availableForReturn,
+      requestedAmount: returnAmount,
+      previousReturnsCount: previousReturns.length
+    })
+
+    if (availableForReturn <= 0) {
+      setError('Esta orden ya ha sido completamente devuelta')
+      return
+    }
+
+    if (returnAmount > availableForReturn) {
+      setError(`El monto no puede exceder lo disponible (${formatPrice(availableForReturn)}). Ya se devolvieron ${formatPrice(totalAlreadyReturned)} de ${formatPrice(orderTotal)}.`)
       return
     }
 
@@ -205,11 +263,54 @@ export default function CreateManualReturnModal({ isOpen, onClose, onSuccess }: 
               </select>
             )}
             {selectedOrder && (
-              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <strong>Cliente:</strong> {selectedOrder.client.name} | 
-                  <strong> Total:</strong> {formatPrice(parseFloat(selectedOrder.totalAmount))}
-                </p>
+              <div className="mt-2 space-y-2">
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Cliente:</strong> {selectedOrder.client.name}
+                  </p>
+                </div>
+                {loadingReturns ? (
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-600">Verificando devoluciones previas...</p>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-lg">
+                    {previousReturns.length > 0 ? (
+                      <>
+                        <p className="text-sm text-gray-700 mb-2">
+                          <strong>⚠️ Devoluciones previas:</strong> {previousReturns.length}
+                        </p>
+                        <div className="grid grid-cols-3 gap-2 text-sm">
+                          <div>
+                            <p className="text-gray-600">Total original:</p>
+                            <p className="font-bold text-gray-900">{formatPrice(parseFloat(selectedOrder.totalAmount))}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Ya devuelto:</p>
+                            <p className="font-bold text-red-600">
+                              {formatPrice(previousReturns.reduce((sum, r) => sum + parseFloat(r.totalReturnAmount || '0'), 0))}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Disponible:</p>
+                            <p className="font-bold text-green-600">
+                              {formatPrice(parseFloat(selectedOrder.totalAmount) - previousReturns.reduce((sum, r) => sum + parseFloat(r.totalReturnAmount || '0'), 0))}
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm text-gray-700 mb-1">
+                          <strong>✓ Sin devoluciones previas</strong>
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Disponible para devolver: <span className="font-bold text-green-600">{formatPrice(parseFloat(selectedOrder.totalAmount))}</span>
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
