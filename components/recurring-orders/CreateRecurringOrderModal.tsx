@@ -146,16 +146,23 @@ export default function CreateRecurringOrderModal({
   const handleSubmit = async () => {
     setLoading(true)
     try {
+      // Convertir fecha a ISO datetime
+      const startDateISO = new Date(startDate).toISOString()
+      
       const payload = {
         name,
         frequency,
         dayOfWeek: frequency === 'WEEKLY' ? dayOfWeek : null,
         dayOfMonth: frequency === 'MONTHLY' ? dayOfMonth : null,
         customDays: frequency === 'CUSTOM' ? customDays : null,
-        startDate,
-        notes,
-        deliveryInstructions,
-        items: selectedItems
+        startDate: startDateISO,
+        notes: notes || undefined,
+        deliveryInstructions: deliveryInstructions || undefined,
+        items: selectedItems.map(item => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          pricePerUnit: item.pricePerUnit
+        }))
       }
       
       console.log('📤 Enviando orden recurrente:', payload)
@@ -167,7 +174,12 @@ export default function CreateRecurringOrderModal({
       })
 
       const result = await response.json()
-      console.log('📥 Respuesta del servidor:', result)
+      console.log('📥 Respuesta del servidor:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        result
+      })
 
       if (response.ok) {
         console.log('✅ Orden recurrente creada exitosamente')
@@ -176,7 +188,9 @@ export default function CreateRecurringOrderModal({
         window.location.reload() // Recargar para ver la nueva orden
       } else {
         console.error('❌ Error del servidor:', result)
-        alert(`Error: ${result.error || 'No se pudo crear la orden'}${result.details ? '\n' + JSON.stringify(result.details) : ''}`)
+        const errorMessage = `Error (${response.status}): ${result.error || 'No se pudo crear la orden'}`
+        const errorDetails = result.details ? '\n\nDetalles:\n' + JSON.stringify(result.details, null, 2) : ''
+        alert(errorMessage + errorDetails)
       }
     } catch (error) {
       console.error('❌ Error creando orden recurrente:', error)
