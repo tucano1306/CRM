@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button'
 interface CreateRecurringOrderModalProps {
   isOpen: boolean
   onClose: () => void
-  clientId?: string
 }
 
 interface Product {
@@ -52,8 +51,7 @@ const CATEGORIES = [
 
 export default function CreateRecurringOrderModal({
   isOpen,
-  onClose,
-  clientId
+  onClose
 }: CreateRecurringOrderModalProps) {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -148,29 +146,41 @@ export default function CreateRecurringOrderModal({
   const handleSubmit = async () => {
     setLoading(true)
     try {
+      const payload = {
+        name,
+        frequency,
+        dayOfWeek: frequency === 'WEEKLY' ? dayOfWeek : null,
+        dayOfMonth: frequency === 'MONTHLY' ? dayOfMonth : null,
+        customDays: frequency === 'CUSTOM' ? customDays : null,
+        startDate,
+        notes,
+        deliveryInstructions,
+        items: selectedItems
+      }
+      
+      console.log('📤 Enviando orden recurrente:', payload)
+      
       const response = await fetch('/api/recurring-orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clientId,
-          name,
-          frequency,
-          dayOfWeek: frequency === 'WEEKLY' ? dayOfWeek : null,
-          dayOfMonth: frequency === 'MONTHLY' ? dayOfMonth : null,
-          customDays: frequency === 'CUSTOM' ? customDays : null,
-          startDate,
-          notes,
-          deliveryInstructions,
-          items: selectedItems
-        })
+        body: JSON.stringify(payload)
       })
 
+      const result = await response.json()
+      console.log('📥 Respuesta del servidor:', result)
+
       if (response.ok) {
+        console.log('✅ Orden recurrente creada exitosamente')
         onClose()
         resetForm()
+        window.location.reload() // Recargar para ver la nueva orden
+      } else {
+        console.error('❌ Error del servidor:', result)
+        alert(`Error: ${result.error || 'No se pudo crear la orden'}${result.details ? '\n' + JSON.stringify(result.details) : ''}`)
       }
     } catch (error) {
-      console.error('Error creating recurring order:', error)
+      console.error('❌ Error creando orden recurrente:', error)
+      alert('Error de conexión al crear la orden')
     } finally {
       setLoading(false)
     }

@@ -116,10 +116,32 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
+    console.log('📦 [RECURRING ORDER] Datos recibidos:', JSON.stringify(body, null, 2))
+
+    // 🔒 Obtener cliente del usuario autenticado
+    const authUser = await prisma.authenticated_users.findUnique({
+      where: { authId: userId },
+      include: { clients: true }
+    })
+
+    if (!authUser || authUser.clients.length === 0) {
+      console.error('❌ [RECURRING ORDER] Usuario no tiene cliente asociado')
+      return NextResponse.json(
+        { success: false, error: 'Usuario no tiene cliente asociado' },
+        { status: 403 }
+      )
+    }
+
+    const clientId = authUser.clients[0].id
+    console.log('✅ [RECURRING ORDER] Cliente detectado:', clientId)
+
+    // Agregar clientId automáticamente
+    const dataToValidate = { ...body, clientId }
 
     // ✅ VALIDACIÓN CON ZOD
-    const validation = validateSchema(createRecurringOrderSchema, body)
+    const validation = validateSchema(createRecurringOrderSchema, dataToValidate)
     if (!validation.success) {
+      console.error('❌ [RECURRING ORDER] Validación falló:', validation.errors)
       return NextResponse.json({ 
         success: false,
         error: 'Datos inválidos',
@@ -156,9 +178,17 @@ export async function POST(request: Request) {
     )
 
     // Crear orden recurrente
+    console.log('💾 [RECURRING ORDER] Creando orden con:', {
+      clientId,
+      name: sanitizedData.name,
+      frequency: sanitizedData.frequency,
+      totalAmount,
+      itemsCount: sanitizedData.items.length
+    })
+
     const recurringOrder = await prisma.recurringOrder.create({
       data: {
-        clientId: sanitizedData.clientId,
+        clientId,
         name: sanitizedData.name,
         frequency: sanitizedData.frequency,
         customDays: sanitizedData.customDays,
