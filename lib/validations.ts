@@ -423,6 +423,7 @@ export const createRecurringOrderSchema = z.object({
     .max(200, 'Nombre no puede exceder 200 caracteres'),
   items: z.array(z.object({
     productId: z.string().uuid('Product ID debe ser un UUID válido'),
+    productName: z.string().min(1, 'Nombre del producto es requerido'),
     quantity: z.number()
       .int('Cantidad debe ser un número entero')
       .positive('Cantidad debe ser mayor a 0')

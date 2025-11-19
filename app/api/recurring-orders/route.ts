@@ -202,13 +202,13 @@ export async function POST(request: Request) {
         totalAmount,
         isActive: true,
         items: {
-          create: body.items.map((item: any) => ({
+          create: sanitizedData.items.map((item: any) => ({
             productId: item.productId,
             productName: item.productName,
             quantity: item.quantity,
             pricePerUnit: item.pricePerUnit,
             subtotal: item.quantity * item.pricePerUnit,
-            notes: item.notes
+            notes: item.notes || null
           }))
         }
       },

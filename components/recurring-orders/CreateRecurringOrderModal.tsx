@@ -160,6 +160,7 @@ export default function CreateRecurringOrderModal({
         deliveryInstructions: deliveryInstructions || undefined,
         items: selectedItems.map(item => ({
           productId: item.productId,
+          productName: item.productName,
           quantity: item.quantity,
           pricePerUnit: item.pricePerUnit
         }))
