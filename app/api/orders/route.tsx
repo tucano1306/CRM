@@ -4,9 +4,9 @@ import { prisma } from '@/lib/prisma'
 import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
 import { withResilientDb } from '@/lib/db-retry'
 
-// GET /api/orders - Obtener todas las órdenes (para vendedor)
+// GET /api/orders - Obtener todas las órdenes (para vendedor o cliente)
 // ✅ CON TIMEOUT DE 5 SEGUNDOS
-// Soporta: ?status=PENDING&limit=10&recent=true
+// Soporta: ?status=PENDING&limit=10&recent=true&role=seller|client
 export async function GET(request: Request) {
   try {
     const { userId } = await auth()
@@ -15,23 +15,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // 🔒 SEGURIDAD: Obtener vendedor del usuario autenticado
-    const seller = await prisma.seller.findFirst({
-      where: {
-        authenticated_users: {
-          some: { authId: userId }
-        }
-      }
-    })
-
-    if (!seller) {
-      return NextResponse.json({ 
-        error: 'No tienes permisos para ver órdenes. Debes ser un vendedor registrado.' 
-      }, { status: 403 })
-    }
-
     // Obtener parámetros de búsqueda
     const { searchParams } = new URL(request.url)
+    const role = searchParams.get('role') // 'seller' o 'client'
     const status = searchParams.get('status')
     const limitParam = searchParams.get('limit')
     const recentParam = searchParams.get('recent')
@@ -39,9 +25,45 @@ export async function GET(request: Request) {
     const limit = limitParam ? parseInt(limitParam, 10) : undefined
     const isRecent = recentParam === 'true'
 
-    // 🔒 SEGURIDAD: Construir filtro SIEMPRE con sellerId
-    const whereClause: any = {
-      sellerId: seller.id  // ← FILTRO OBLIGATORIO: Solo órdenes de este vendedor
+    console.log('📋 [ORDERS GET] Params:', { role, status, limit, userId })
+
+    // Obtener usuario autenticado
+    const authUser = await prisma.authenticated_users.findUnique({
+      where: { authId: userId },
+      include: {
+        sellers: true,
+        clients: true
+      }
+    })
+
+    if (!authUser) {
+      return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
+    }
+
+    // Determinar el rol del usuario si no se especifica
+    const isClient = authUser.clients.length > 0
+    const isSeller = authUser.sellers.length > 0
+    const effectiveRole = role || (isClient ? 'client' : isSeller ? 'seller' : null)
+
+    console.log('🎭 [ORDERS GET] Effective role:', effectiveRole, { isClient, isSeller })
+
+    // 🔒 SEGURIDAD: Construir filtro según el rol
+    const whereClause: any = {}
+
+    if (effectiveRole === 'client' && isClient) {
+      // Cliente: ver sus propias órdenes
+      const clientId = authUser.clients[0].id
+      whereClause.clientId = clientId
+      console.log('👤 [ORDERS GET] Filtering by clientId:', clientId)
+    } else if (effectiveRole === 'seller' && isSeller) {
+      // Vendedor: ver órdenes de sus clientes
+      const sellerId = authUser.sellers[0].id
+      whereClause.sellerId = sellerId
+      console.log('👔 [ORDERS GET] Filtering by sellerId:', sellerId)
+    } else {
+      return NextResponse.json({ 
+        error: 'No tienes permisos para ver órdenes.' 
+      }, { status: 403 })
     }
     
     if (status && status !== 'all') {
@@ -54,7 +76,10 @@ export async function GET(request: Request) {
       }
     }
 
+    console.log('🔎 [ORDERS GET] Where clause:', JSON.stringify(whereClause, null, 2))
+
     // ✅ Obtener órdenes CON TIMEOUT + RETRY (incluye campos para factura)
+    console.log('💾 [ORDERS GET] Executing Prisma query...')
     const orders = await withResilientDb(
       () => prisma.order.findMany({
         where: whereClause,
@@ -116,6 +141,8 @@ export async function GET(request: Request) {
       }),
       { timeoutMs: 5000, retries: 2, initialDelayMs: 150 }
     )
+    
+    console.log('✅ [ORDERS GET] Found orders:', orders.length)
 
     // Si se solicita formato "recent" simplificado
     if (isRecent) {
