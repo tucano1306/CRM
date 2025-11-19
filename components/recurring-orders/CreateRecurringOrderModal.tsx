@@ -217,8 +217,17 @@ export default function CreateRecurringOrderModal({
         if (result.details) {
           errorMessage += '\n📋 Detalles de validación:\n'
           if (Array.isArray(result.details)) {
-            result.details.forEach((detail: any) => {
-              errorMessage += `  • ${detail.path?.join('.') || 'Campo'}: ${detail.message}\n`
+            // Los detalles son strings del formato "campo: mensaje"
+            result.details.forEach((detail: any, index: number) => {
+              console.log(`🔍 Detail ${index}:`, detail, typeof detail)
+              if (typeof detail === 'string') {
+                errorMessage += `  • ${detail}\n`
+              } else if (detail.path && detail.message) {
+                const path = Array.isArray(detail.path) ? detail.path.join('.') : detail.path
+                errorMessage += `  • ${path}: ${detail.message}\n`
+              } else {
+                errorMessage += `  • ${JSON.stringify(detail)}\n`
+              }
             })
           } else {
             errorMessage += JSON.stringify(result.details, null, 2)
