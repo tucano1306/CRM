@@ -446,53 +446,7 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* Alertas con botones de acción */}
-      <div className="mt-6 space-y-4">
-        {/* Productos agotados */}
-        {stats.outOfStockProducts > 0 && (
-          <div className="bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-400 rounded-xl p-3 sm:p-4 shadow-lg">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
-                <p className="text-red-900 font-semibold text-sm sm:text-base">
-                  🚨 Tienes {stats.outOfStockProducts} producto(s) agotado(s)
-                </p>
-              </div>
-              <button
-                onClick={async () => {
-                  await fetchOutOfStockProducts()
-                  setShowOutOfStockModal(true)
-                }}
-                className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-lg hover:from-red-700 hover:to-rose-700 transition-all shadow-md hover:shadow-xl text-sm font-medium flex items-center justify-center gap-2"
-              >
-                <Eye size={16} />
-                <span>Ver productos</span>
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Stock bajo */}
-        {stats.lowStockProducts > 0 && (
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-400 rounded-xl p-3 sm:p-4 shadow-lg">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <AlertCircle className="text-amber-600 flex-shrink-0" size={20} />
-                <p className="text-amber-900 font-semibold text-sm sm:text-base">
-                  ⚠️ Tienes {stats.lowStockProducts} producto(s) con stock bajo
-                </p>
-              </div>
-              <button
-                onClick={openLowStockModal}
-                className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all shadow-md hover:shadow-xl text-sm font-medium flex items-center justify-center gap-2"
-              >
-                <Eye size={16} />
-                <span>Ver productos</span>
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Alertas removidas - ahora están en la página de productos */}
 
       {stats.pendingOrders > 0 && (
         <div className="mt-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-xl p-3 sm:p-4 shadow-lg">

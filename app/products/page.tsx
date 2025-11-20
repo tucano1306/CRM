@@ -699,6 +699,51 @@ export default function ProductsPage() {
           </div>
         </div>
 
+        {/* Alertas de Stock */}
+        <div className="space-y-3">
+          {/* Alerta de productos agotados */}
+          {stats.outOfStock > 0 && (
+            <div className="bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-400 rounded-xl p-3 sm:p-4 shadow-lg">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
+                  <p className="text-red-900 font-semibold text-sm sm:text-base">
+                    🚨 Tienes {stats.outOfStock} producto(s) agotado(s)
+                  </p>
+                </div>
+                <button
+                  onClick={() => setFilters({ ...filters, stock: 'out' })}
+                  className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-lg hover:from-red-700 hover:to-rose-700 transition-all shadow-md hover:shadow-xl text-sm font-medium flex items-center justify-center gap-2"
+                >
+                  <Box size={16} />
+                  <span>Ver productos agotados</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Alerta de stock bajo */}
+          {stats.lowStock > 0 && (
+            <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-400 rounded-xl p-3 sm:p-4 shadow-lg">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="text-amber-600 flex-shrink-0" size={20} />
+                  <p className="text-amber-900 font-semibold text-sm sm:text-base">
+                    ⚠️ Tienes {stats.lowStock} producto(s) con stock bajo
+                  </p>
+                </div>
+                <button
+                  onClick={() => setFilters({ ...filters, stock: 'low' })}
+                  className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all shadow-md hover:shadow-xl text-sm font-medium flex items-center justify-center gap-2"
+                >
+                  <Box size={16} />
+                  <span>Ver productos con stock bajo</span>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Tabs de Categorías */}
         <div className="bg-white rounded-lg shadow-md p-4">
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300">
