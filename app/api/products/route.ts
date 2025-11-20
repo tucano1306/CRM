@@ -23,10 +23,12 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const search = searchParams.get('search')
   const lowStockParam = searchParams.get('lowStock')
+  const outOfStockParam = searchParams.get('outOfStock')
   const pageParam = searchParams.get('page')
   const pageSizeParam = searchParams.get('pageSize')
 
   const lowStock = lowStockParam === 'true'
+  const outOfStock = outOfStockParam === 'true'
   let page = Math.max(parseInt(pageParam || '1', 10) || 1, 1)
   let pageSize = parseInt(pageSizeParam || '20', 10) || 20
   pageSize = Math.min(Math.max(pageSize, 1), 100) // 1..100
@@ -82,6 +84,13 @@ export async function GET(request: Request) {
       whereClause.stock = { lt: 10 }
       whereClause.isActive = true // Solo productos activos, como en stats
       console.log('🔍 [PRODUCTS API] Low stock filter applied:', whereClause)
+    }
+
+    // Filtrar por productos agotados (stock = 0, solo para vendedores)
+    if (outOfStock && seller) {
+      whereClause.stock = 0
+      whereClause.isActive = true // Solo productos activos, como en stats
+      console.log('🔍 [PRODUCTS API] Out of stock filter applied:', whereClause)
     }
 
     console.log('📋 [PRODUCTS API] Final where clause:', JSON.stringify(whereClause, null, 2))

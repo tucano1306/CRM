@@ -24,6 +24,7 @@ export async function GET() {
       totalRevenue,
       totalProducts,
       lowStockProducts,
+      outOfStockProducts,
     ] = await Promise.all([
       // Total de órdenes DEL VENDEDOR
       prisma.order.count({
@@ -87,6 +88,19 @@ export async function GET() {
       prisma.product.count({
         where: {
           stock: { lt: 10 },
+          isActive: true,
+          sellers: {
+            some: {
+              sellerId: seller.id
+            }
+          }
+        },
+      }),
+      
+      // Productos agotados DEL VENDEDOR (stock = 0)
+      prisma.product.count({
+        where: {
+          stock: 0,
           isActive: true,
           sellers: {
             some: {
@@ -185,6 +199,7 @@ export async function GET() {
           totalRevenue: totalRevenue._sum.totalAmount || 0,
           totalProducts,
           lowStockProducts,
+          outOfStockProducts,
           totalClients: 0, // Agregado según el primer código
           activeClients: 0, // Agregado según el primer código
           totalSellers: 0, // Agregado según el primer código

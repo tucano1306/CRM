@@ -37,6 +37,7 @@ type Stats = {
   totalRevenue: number
   totalProducts: number
   lowStockProducts: number
+  outOfStockProducts: number
   // Trends/comparativas
   ordersGrowth?: number
   revenueGrowth?: number
@@ -69,11 +70,14 @@ export default function DashboardPage() {
   // Estados para funcionalidades nuevas
   const [activeTab, setActiveTab] = useState<'resumen' | 'ventas' | 'inventario' | 'actividad'>('resumen')
   const [showLowStockModal, setShowLowStockModal] = useState(false)
+  const [showOutOfStockModal, setShowOutOfStockModal] = useState(false)
   const [showPendingOrdersModal, setShowPendingOrdersModal] = useState(false)
   const [showQuickActionsModal, setShowQuickActionsModal] = useState(false)
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
   const [lowStockProducts, setLowStockProducts] = useState<any[]>([])
+  const [outOfStockProducts, setOutOfStockProducts] = useState<any[]>([])
   const [loadingLowStock, setLoadingLowStock] = useState(false)
+  const [loadingOutOfStock, setLoadingOutOfStock] = useState(false)
   const [pendingOrdersList, setPendingOrdersList] = useState<any[]>([])
   const [revenueData, setRevenueData] = useState<RevenueData[]>([])
   const [revenuePeriod, setRevenuePeriod] = useState<'7d' | '30d'>('7d')
@@ -150,6 +154,26 @@ export default function DashboardPage() {
     } finally {
       console.log('🏁 [LOW STOCK] Fetch complete')
       setLoadingLowStock(false)
+    }
+  }, [])
+
+  const fetchOutOfStockProducts = useCallback(async () => {
+    console.log('🔍 [DASHBOARD] Fetching out of stock products...')
+    setLoadingOutOfStock(true)
+    try {
+      const response = await apiCall('/api/products?outOfStock=true')
+      console.log('📦 [DASHBOARD] Out of stock response:', response)
+      if (response?.data) {
+        const products = Array.isArray(response.data) ? response.data : []
+        setOutOfStockProducts(products)
+      } else {
+        setOutOfStockProducts([])
+      }
+    } catch (error) {
+      console.error('❌ [DASHBOARD] Error fetching out of stock products:', error)
+      setOutOfStockProducts([])
+    } finally {
+      setLoadingOutOfStock(false)
     }
   }, [])
 
@@ -423,25 +447,52 @@ export default function DashboardPage() {
       </div>
 
       {/* Alertas con botones de acción */}
-      {stats.lowStockProducts > 0 && (
-        <div className="mt-6 bg-gradient-to-r from-rose-50 to-red-50 border-2 border-rose-300 rounded-xl p-3 sm:p-4 shadow-lg">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="text-rose-600 flex-shrink-0" size={20} />
-              <p className="text-rose-900 font-semibold text-sm sm:text-base">
-                ⚠️ Tienes {stats.lowStockProducts} producto(s) con stock bajo
-              </p>
+      <div className="mt-6 space-y-4">
+        {/* Productos agotados */}
+        {stats.outOfStockProducts > 0 && (
+          <div className="bg-gradient-to-r from-red-50 to-rose-50 border-2 border-red-400 rounded-xl p-3 sm:p-4 shadow-lg">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
+                <p className="text-red-900 font-semibold text-sm sm:text-base">
+                  🚨 Tienes {stats.outOfStockProducts} producto(s) agotado(s)
+                </p>
+              </div>
+              <button
+                onClick={async () => {
+                  await fetchOutOfStockProducts()
+                  setShowOutOfStockModal(true)
+                }}
+                className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-red-600 to-rose-600 text-white rounded-lg hover:from-red-700 hover:to-rose-700 transition-all shadow-md hover:shadow-xl text-sm font-medium flex items-center justify-center gap-2"
+              >
+                <Eye size={16} />
+                <span>Ver productos</span>
+              </button>
             </div>
-            <button
-              onClick={openLowStockModal}
-              className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-rose-600 to-red-600 text-white rounded-lg hover:from-rose-700 hover:to-red-700 transition-all shadow-md hover:shadow-xl text-sm font-medium flex items-center justify-center gap-2"
-            >
-              <Eye size={16} />
-              <span>Ver productos</span>
-            </button>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Stock bajo */}
+        {stats.lowStockProducts > 0 && (
+          <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-400 rounded-xl p-3 sm:p-4 shadow-lg">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="text-amber-600 flex-shrink-0" size={20} />
+                <p className="text-amber-900 font-semibold text-sm sm:text-base">
+                  ⚠️ Tienes {stats.lowStockProducts} producto(s) con stock bajo
+                </p>
+              </div>
+              <button
+                onClick={openLowStockModal}
+                className="w-full sm:w-auto px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-lg hover:from-amber-700 hover:to-orange-700 transition-all shadow-md hover:shadow-xl text-sm font-medium flex items-center justify-center gap-2"
+              >
+                <Eye size={16} />
+                <span>Ver productos</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {stats.pendingOrders > 0 && (
         <div className="mt-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-xl p-3 sm:p-4 shadow-lg">
@@ -654,14 +705,68 @@ export default function DashboardPage() {
         <Plus size={28} />
       </button>
 
+      {/* Modal de Productos Agotados */}
+      {showOutOfStockModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <AlertCircle className="text-red-600" size={24} />
+                Productos Agotados (Stock: 0)
+              </h3>
+              <button
+                onClick={() => setShowOutOfStockModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <div className="p-4">
+              {loadingOutOfStock ? (
+                <p className="text-gray-500 text-center py-8">
+                  Cargando productos...
+                </p>
+              ) : outOfStockProducts.length > 0 ? (
+                <div className="space-y-2">
+                  {outOfStockProducts.map((product: any) => (
+                    <div
+                      key={product.id}
+                      className="flex items-center justify-between p-3 border-2 border-red-300 bg-red-50 rounded-lg hover:bg-red-100"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-800">{product.name}</p>
+                        <p className="text-sm text-red-700 font-semibold">
+                          🚨 Stock: 0 - AGOTADO
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => router.push('/products')}
+                        className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm flex items-center gap-2"
+                      >
+                        <RotateCcw size={16} />
+                        Reabastecer
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-8">
+                  No hay productos agotados
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal de Stock Bajo */}
       {showLowStockModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4">
           <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
             <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
               <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                <AlertCircle className="text-red-600" size={24} />
-                Productos con Stock Bajo
+                <AlertCircle className="text-amber-600" size={24} />
+                Productos con Stock Bajo (menos de 10)
               </h3>
               <button
                 onClick={() => setShowLowStockModal(false)}
@@ -680,17 +785,17 @@ export default function DashboardPage() {
                   {lowStockProducts.map((product: any) => (
                     <div
                       key={product.id}
-                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                      className="flex items-center justify-between p-3 border-2 border-amber-300 bg-amber-50 rounded-lg hover:bg-amber-100"
                     >
                       <div>
                         <p className="font-medium text-gray-800">{product.name}</p>
-                        <p className="text-sm text-red-600">
-                          Stock: {product.stock} (Mínimo: {product.minStock || 10})
+                        <p className="text-sm text-amber-700 font-semibold">
+                          ⚠️ Stock: {product.stock} unidades
                         </p>
                       </div>
                       <button
                         onClick={() => router.push('/products')}
-                        className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm flex items-center gap-2"
+                        className="px-3 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-sm flex items-center gap-2"
                       >
                         <RotateCcw size={16} />
                         Reabastecer
