@@ -73,6 +73,7 @@ export default function DashboardPage() {
   const [showQuickActionsModal, setShowQuickActionsModal] = useState(false)
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
   const [lowStockProducts, setLowStockProducts] = useState<any[]>([])
+  const [loadingLowStock, setLoadingLowStock] = useState(false)
   const [pendingOrdersList, setPendingOrdersList] = useState<any[]>([])
   const [revenueData, setRevenueData] = useState<RevenueData[]>([])
   const [revenuePeriod, setRevenuePeriod] = useState<'7d' | '30d'>('7d')
@@ -129,13 +130,26 @@ export default function DashboardPage() {
   // Fetch de productos con bajo stock
   const fetchLowStockProducts = useCallback(async () => {
     try {
+      console.log('🔍 [LOW STOCK] Starting fetch...')
+      setLoadingLowStock(true)
       const result = await apiCall('/api/products?lowStock=true', { timeout: 5000 })
+      console.log('📦 [LOW STOCK] API Response:', result)
+      
       if (result.success && result.data) {
         // result.data ya es el array de productos
-        setLowStockProducts(Array.isArray(result.data) ? result.data : [])
+        const products = Array.isArray(result.data) ? result.data : []
+        console.log('✅ [LOW STOCK] Products found:', products.length)
+        setLowStockProducts(products)
+      } else {
+        console.log('⚠️ [LOW STOCK] No data in response')
+        setLowStockProducts([])
       }
     } catch (err) {
-      console.error('Error fetching low stock products:', err)
+      console.error('❌ [LOW STOCK] Error fetching:', err)
+      setLowStockProducts([])
+    } finally {
+      console.log('🏁 [LOW STOCK] Fetch complete')
+      setLoadingLowStock(false)
     }
   }, [])
 
@@ -657,7 +671,11 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="p-4">
-              {lowStockProducts.length > 0 ? (
+              {loadingLowStock ? (
+                <p className="text-gray-500 text-center py-8">
+                  Cargando productos...
+                </p>
+              ) : lowStockProducts.length > 0 ? (
                 <div className="space-y-2">
                   {lowStockProducts.map((product: any) => (
                     <div
@@ -682,7 +700,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <p className="text-gray-500 text-center py-8">
-                  Cargando productos...
+                  No hay productos con stock bajo
                 </p>
               )}
             </div>
