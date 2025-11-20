@@ -85,30 +85,38 @@ export async function GET() {
       }),
       
       // Productos con stock bajo DEL VENDEDOR (1-9 unidades, no incluye agotados)
-      prisma.product.count({
-        where: {
-          stock: { gt: 0, lt: 10 },
-          isActive: true,
-          sellers: {
-            some: {
-              sellerId: seller.id
+      (async () => {
+        const count = await prisma.product.count({
+          where: {
+            stock: { gt: 0, lt: 10 },
+            isActive: true,
+            sellers: {
+              some: {
+                sellerId: seller.id
+              }
             }
-          }
-        },
-      }),
+          },
+        })
+        console.log('📊 [ANALYTICS] Low stock products count:', count, 'for seller:', seller.id)
+        return count
+      })(),
       
       // Productos agotados DEL VENDEDOR (stock = 0)
-      prisma.product.count({
-        where: {
-          stock: 0,
-          isActive: true,
-          sellers: {
-            some: {
-              sellerId: seller.id
+      (async () => {
+        const count = await prisma.product.count({
+          where: {
+            stock: 0,
+            isActive: true,
+            sellers: {
+              some: {
+                sellerId: seller.id
+              }
             }
-          }
-        },
-      }),
+          },
+        })
+        console.log('📊 [ANALYTICS] Out of stock products count:', count, 'for seller:', seller.id)
+        return count
+      })(),
     ]);
 
     // 🔒 SEGURIDAD: Obtener estadísticas diarias de los últimos 7 días DEL VENDEDOR

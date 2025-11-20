@@ -116,8 +116,11 @@ export async function GET(request: Request) {
     )
 
     console.log('✅ [PRODUCTS API] Products returned:', products.length)
-    if (lowStock && products.length > 0) {
+    if (lowStock) {
       console.log('📦 [PRODUCTS API] Low stock products:', products.map(p => ({ name: p.name, stock: p.stock })))
+    }
+    if (outOfStock) {
+      console.log('📦 [PRODUCTS API] Out of stock products:', products.map(p => ({ name: p.name, stock: p.stock })))
     }
 
     const response = NextResponse.json({
