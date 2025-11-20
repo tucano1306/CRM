@@ -80,12 +80,18 @@ export async function GET(request: Request) {
     // Filtrar por stock bajo (menos de 10 unidades, solo para vendedores)
     if (lowStock && seller) {
       whereClause.stock = { lt: 10 }
+      whereClause.isActive = true // Solo productos activos, como en stats
+      console.log('🔍 [PRODUCTS API] Low stock filter applied:', whereClause)
     }
+
+    console.log('📋 [PRODUCTS API] Final where clause:', JSON.stringify(whereClause, null, 2))
 
     // ✅ Conteo total y productos paginados (ambos con timeout)
     const total = await withPrismaTimeout(() =>
       prisma.product.count({ where: whereClause })
     )
+    
+    console.log('📊 [PRODUCTS API] Total products found:', total)
 
     // Si la página solicitada excede las páginas totales, ajusta a la última página
     const totalPages = Math.max(Math.ceil(total / pageSize), 1)
@@ -99,6 +105,11 @@ export async function GET(request: Request) {
         take: pageSize,
       })
     )
+
+    console.log('✅ [PRODUCTS API] Products returned:', products.length)
+    if (lowStock && products.length > 0) {
+      console.log('📦 [PRODUCTS API] Low stock products:', products.map(p => ({ name: p.name, stock: p.stock })))
+    }
 
     const response = NextResponse.json({
       success: true,
