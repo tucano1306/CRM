@@ -51,23 +51,33 @@ export async function GET(request: Request) {
     })
 
     // 🔒 SEGURIDAD: Construir filtro según el rol
-    const whereClause: any = {
-      AND: []
-    }
+    const whereClause: any = {}
     
     if (seller) {
       // VENDEDOR: Solo sus productos
-      whereClause.AND.push({
-        sellers: {
-          some: {
-            sellerId: seller.id
-          }
+      whereClause.sellers = {
+        some: {
+          sellerId: seller.id
         }
-      })
+      }
+      
+      // Filtros de stock para vendedor
+      if (lowStock) {
+        // Stock bajo: 1-9 unidades, no incluye agotados
+        whereClause.stock = { gt: 0, lt: 10 }
+        whereClause.isActive = true
+        console.log('🔍 [PRODUCTS API] Low stock filter applied for seller:', seller.id)
+      } else if (outOfStock) {
+        // Productos agotados: stock = 0
+        whereClause.stock = 0
+        whereClause.isActive = true
+        console.log('🔍 [PRODUCTS API] Out of stock filter applied for seller:', seller.id)
+      }
+      
     } else if (client) {
       // COMPRADOR: Solo productos activos con stock
-      whereClause.AND.push({ isActive: true })
-      whereClause.AND.push({ stock: { gt: 0 } })
+      whereClause.isActive = true
+      whereClause.stock = { gt: 0 }
     } else {
       // Usuario sin rol asignado
       return NextResponse.json({ 
@@ -76,27 +86,11 @@ export async function GET(request: Request) {
     }
     
     if (search) {
-      whereClause.AND.push({
-        OR: [
-          { name: { contains: search, mode: 'insensitive' } },
-          { description: { contains: search, mode: 'insensitive' } },
-          { sku: { contains: search, mode: 'insensitive' } },
-        ]
-      })
-    }
-
-    // Filtrar por stock bajo (1-9 unidades, no incluye agotados, solo para vendedores)
-    if (lowStock && seller) {
-      whereClause.AND.push({ stock: { gt: 0, lt: 10 } })
-      whereClause.AND.push({ isActive: true })
-      console.log('🔍 [PRODUCTS API] Low stock filter applied')
-    }
-
-    // Filtrar por productos agotados (stock = 0, solo para vendedores)
-    if (outOfStock && seller) {
-      whereClause.AND.push({ stock: 0 })
-      whereClause.AND.push({ isActive: true })
-      console.log('🔍 [PRODUCTS API] Out of stock filter applied')
+      whereClause.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { sku: { contains: search, mode: 'insensitive' } },
+      ]
     }
 
     console.log('📋 [PRODUCTS API] Final where clause:', JSON.stringify(whereClause, null, 2))
