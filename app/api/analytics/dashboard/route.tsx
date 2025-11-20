@@ -84,10 +84,10 @@ export async function GET() {
         },
       }),
       
-      // Productos con stock bajo DEL VENDEDOR (menos de 10)
+      // Productos con stock bajo DEL VENDEDOR (1-9 unidades, no incluye agotados)
       prisma.product.count({
         where: {
-          stock: { lt: 10 },
+          stock: { gt: 0, lt: 10 },
           isActive: true,
           sellers: {
             some: {

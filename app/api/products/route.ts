@@ -79,9 +79,9 @@ export async function GET(request: Request) {
       ]
     }
 
-    // Filtrar por stock bajo (menos de 10 unidades, solo para vendedores)
+    // Filtrar por stock bajo (1-9 unidades, no incluye agotados, solo para vendedores)
     if (lowStock && seller) {
-      whereClause.stock = { lt: 10 }
+      whereClause.stock = { gt: 0, lt: 10 }
       whereClause.isActive = true // Solo productos activos, como en stats
       console.log('🔍 [PRODUCTS API] Low stock filter applied:', whereClause)
     }
