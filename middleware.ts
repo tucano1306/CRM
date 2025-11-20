@@ -14,6 +14,7 @@ import { shouldCacheRequest } from '@/lib/apiCache'
 
 // Rutas públicas
 const isPublicRoute = createRouteMatcher([
+  '/',  // Página principal accesible sin auth
   '/sign-in(.*)',
   '/sign-up(.*)',
   '/buyer/sign-in(.*)',
@@ -26,6 +27,8 @@ const isPublicRoute = createRouteMatcher([
   '/favicon.ico',
   '/site.webmanifest',
   '/robots.txt',
+  '/_next(.*)',  // Assets de Next.js
+  '/static(.*)',  // Assets estáticos
 ])
 
 // Rutas de vendedor
@@ -341,6 +344,12 @@ export default clerkMiddleware(async (auth, req) => {
 
   // Redirección desde raíz
   if (req.nextUrl.pathname === '/') {
+    // Si el usuario no está autenticado, permitir acceso a la página principal
+    if (!userId) {
+      logger.info(LogCategory.AUTH, 'Allowing unauthenticated access to home page', { ip })
+      return NextResponse.next()
+    }
+    
     // Si no hay parámetro mode, redirigir a página de selección
     if (!modeParam) {
       logger.info(LogCategory.AUTH, '🔄 Redirecting to mode selection page', {

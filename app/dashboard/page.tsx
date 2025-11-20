@@ -131,7 +131,8 @@ export default function DashboardPage() {
     try {
       const result = await apiCall('/api/products?lowStock=true', { timeout: 5000 })
       if (result.success && result.data) {
-        setLowStockProducts(result.data.products || [])
+        // result.data ya es el array de productos
+        setLowStockProducts(Array.isArray(result.data) ? result.data : [])
       }
     } catch (err) {
       console.error('Error fetching low stock products:', err)
@@ -142,8 +143,9 @@ export default function DashboardPage() {
   const fetchPendingOrders = useCallback(async () => {
     try {
       const result = await apiCall('/api/orders?status=PENDING&limit=10', { timeout: 5000 })
-      if (result.success && result.data) {
-        setPendingOrdersList(result.data.orders || [])
+      if (result.success) {
+        // El API devuelve { success, orders, stats }
+        setPendingOrdersList(result.orders || [])
       }
     } catch (err) {
       console.error('Error fetching pending orders:', err)
