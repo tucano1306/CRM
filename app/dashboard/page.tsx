@@ -145,7 +145,8 @@ export default function DashboardPage() {
       const result = await apiCall('/api/orders?status=PENDING&limit=10', { timeout: 5000 })
       if (result.success) {
         // El API devuelve { success, orders, stats }
-        setPendingOrdersList(result.orders || [])
+        const apiResult = result as any
+        setPendingOrdersList(apiResult.orders || [])
       }
     } catch (err) {
       console.error('Error fetching pending orders:', err)
