@@ -51,19 +51,23 @@ export async function GET(request: Request) {
     })
 
     // 🔒 SEGURIDAD: Construir filtro según el rol
-    const whereClause: any = {}
+    const whereClause: any = {
+      AND: []
+    }
     
     if (seller) {
       // VENDEDOR: Solo sus productos
-      whereClause.sellers = {
-        some: {
-          sellerId: seller.id
+      whereClause.AND.push({
+        sellers: {
+          some: {
+            sellerId: seller.id
+          }
         }
-      }
+      })
     } else if (client) {
       // COMPRADOR: Solo productos activos con stock
-      whereClause.isActive = true
-      whereClause.stock = { gt: 0 }
+      whereClause.AND.push({ isActive: true })
+      whereClause.AND.push({ stock: { gt: 0 } })
     } else {
       // Usuario sin rol asignado
       return NextResponse.json({ 
@@ -72,25 +76,27 @@ export async function GET(request: Request) {
     }
     
     if (search) {
-      whereClause.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { sku: { contains: search, mode: 'insensitive' } },
-      ]
+      whereClause.AND.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+          { sku: { contains: search, mode: 'insensitive' } },
+        ]
+      })
     }
 
     // Filtrar por stock bajo (1-9 unidades, no incluye agotados, solo para vendedores)
     if (lowStock && seller) {
-      whereClause.stock = { gt: 0, lt: 10 }
-      whereClause.isActive = true // Solo productos activos, como en stats
-      console.log('🔍 [PRODUCTS API] Low stock filter applied:', whereClause)
+      whereClause.AND.push({ stock: { gt: 0, lt: 10 } })
+      whereClause.AND.push({ isActive: true })
+      console.log('🔍 [PRODUCTS API] Low stock filter applied')
     }
 
     // Filtrar por productos agotados (stock = 0, solo para vendedores)
     if (outOfStock && seller) {
-      whereClause.stock = 0
-      whereClause.isActive = true // Solo productos activos, como en stats
-      console.log('🔍 [PRODUCTS API] Out of stock filter applied:', whereClause)
+      whereClause.AND.push({ stock: 0 })
+      whereClause.AND.push({ isActive: true })
+      console.log('🔍 [PRODUCTS API] Out of stock filter applied')
     }
 
     console.log('📋 [PRODUCTS API] Final where clause:', JSON.stringify(whereClause, null, 2))
