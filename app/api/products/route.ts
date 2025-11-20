@@ -94,6 +94,7 @@ export async function GET(request: Request) {
     }
 
     console.log('📋 [PRODUCTS API] Final where clause:', JSON.stringify(whereClause, null, 2))
+    console.log('🔍 [PRODUCTS API] Filters - lowStock:', lowStock, 'outOfStock:', outOfStock, 'seller:', !!seller)
 
     // ✅ Conteo total y productos paginados (ambos con timeout)
     const total = await withPrismaTimeout(() =>
@@ -101,6 +102,36 @@ export async function GET(request: Request) {
     )
     
     console.log('📊 [PRODUCTS API] Total products found:', total)
+    
+    // Debug: Si no hay productos con filtros de stock, verificar sin filtro
+    if ((lowStock || outOfStock) && total === 0) {
+      console.log('⚠️ [PRODUCTS API] No products found with stock filter, checking without filter...')
+      const allSellerProducts = await prisma.product.count({
+        where: {
+          sellers: { some: { sellerId: seller!.id } },
+          isActive: true
+        }
+      })
+      console.log('📦 [PRODUCTS API] Total active products for seller:', allSellerProducts)
+      
+      const lowStockCount = await prisma.product.count({
+        where: {
+          sellers: { some: { sellerId: seller!.id } },
+          isActive: true,
+          stock: { gt: 0, lt: 10 }
+        }
+      })
+      console.log('⚠️ [PRODUCTS API] Low stock count (1-9):', lowStockCount)
+      
+      const outOfStockCount = await prisma.product.count({
+        where: {
+          sellers: { some: { sellerId: seller!.id } },
+          isActive: true,
+          stock: 0
+        }
+      })
+      console.log('🚨 [PRODUCTS API] Out of stock count (0):', outOfStockCount)
+    }
 
     // Si la página solicitada excede las páginas totales, ajusta a la última página
     const totalPages = Math.max(Math.ceil(total / pageSize), 1)
