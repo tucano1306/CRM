@@ -1,15 +1,22 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useUser } from '@clerk/nextjs'
+import { useSearchParams } from 'next/navigation'
 import ChatWindow from '@/components/chat/ChatWindow'
 import { Card, CardContent } from '@/components/ui/card'
-import { MessageCircle, User } from 'lucide-react'
+import { MessageCircle, User, Package, ShoppingBag } from 'lucide-react'
+import { formatPrice } from '@/lib/utils'
 
-export default function BuyerChatPage() {
+function BuyerChatContent() {
   const { user } = useUser()
+  const searchParams = useSearchParams()
+  const orderId = searchParams.get('order')
+  
   const [seller, setSeller] = useState<any>(null)
+  const [order, setOrder] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [loadingOrder, setLoadingOrder] = useState(!!orderId)
 
   const fetchSellerInfo = useCallback(async () => {
     try {
@@ -38,9 +45,30 @@ export default function BuyerChatPage() {
     }
   }, [])
 
+  const fetchOrderInfo = useCallback(async () => {
+    if (!orderId) return
+    
+    try {
+      console.log('📦 Cargando información de orden:', orderId)
+      const response = await fetch(`/api/buyer/orders/${orderId}`)
+      const data = await response.json()
+      
+      if (data.success && data.order) {
+        setOrder(data.order)
+      }
+    } catch (error) {
+      console.error('Error fetching order:', error)
+    } finally {
+      setLoadingOrder(false)
+    }
+  }, [orderId])
+
   useEffect(() => {
     fetchSellerInfo()
-  }, [fetchSellerInfo])
+    if (orderId) {
+      fetchOrderInfo()
+    }
+  }, [fetchSellerInfo, fetchOrderInfo, orderId])
 
   if (loading) {
     return (
@@ -96,11 +124,89 @@ export default function BuyerChatPage() {
           </div>
         </div>
 
+        {/* Order Context Card */}
+        {orderId && (
+          <div className="mb-6">
+            {loadingOrder ? (
+              <Card className="bg-white rounded-xl shadow-xl border-2 border-purple-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-600 border-t-transparent" />
+                    <p className="text-gray-600">Cargando información de orden...</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : order ? (
+              <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl shadow-xl border-2 border-purple-300">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-4 flex-1">
+                      <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 rounded-xl shadow-md">
+                        <ShoppingBag className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-bold text-purple-900 mb-1">
+                          Orden: {order.orderNumber}
+                        </h3>
+                        <p className="text-sm text-purple-700 mb-2">
+                          {new Date(order.createdAt).toLocaleDateString('es-ES', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })}
+                        </p>
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className={`px-3 py-1 rounded-full font-medium ${
+                            order.status === 'COMPLETED' || order.status === 'DELIVERED' 
+                              ? 'bg-green-100 text-green-800'
+                              : order.status === 'PENDING'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {order.status}
+                          </span>
+                          <span className="text-purple-700 flex items-center gap-1">
+                            <Package className="w-4 h-4" />
+                            {order.orderItems?.length || 0} productos
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-purple-600 font-medium mb-1">Total</p>
+                      <p className="text-2xl font-bold text-purple-900">
+                        {formatPrice(order.totalAmount)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-purple-200">
+                    <p className="text-xs text-purple-600 font-medium mb-2">💬 Pregunta sobre esta orden</p>
+                    <p className="text-sm text-purple-800">
+                      Este chat está vinculado con la orden <span className="font-bold">{order.orderNumber}</span>. 
+                      El vendedor verá esta orden cuando reciba tus mensajes.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="bg-white rounded-xl shadow-xl border-2 border-yellow-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 text-yellow-600">
+                    <span className="text-2xl">⚠️</span>
+                    <p className="font-medium">No se pudo cargar la información de la orden</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
         {/* Chat Window */}
         {seller && seller.clerkUserId ? (
           <ChatWindow 
             receiverId={seller.clerkUserId}
             receiverName={seller.name}
+            orderId={orderId || undefined}
           />
         ) : (
           <Card className="bg-white rounded-xl shadow-xl border-2 border-red-200">
@@ -121,5 +227,19 @@ export default function BuyerChatPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function BuyerChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6 flex items-center justify-center">
+        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 rounded-xl shadow-md">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-white border-t-transparent" />
+        </div>
+      </div>
+    }>
+      <BuyerChatContent />
+    </Suspense>
   )
 }

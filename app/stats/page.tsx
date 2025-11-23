@@ -3,13 +3,14 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { BarChart3, TrendingUp, Users, Package, ShoppingCart, DollarSign, Calendar } from 'lucide-react'
+import { BarChart3, TrendingUp, Users, Package, ShoppingCart, DollarSign, Calendar, Download } from 'lucide-react'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
 import { 
   LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend 
 } from 'recharts'
+import { exportSalesReport, exportProductsReport } from '@/lib/excelExport'
 
 interface SalesData {
   dailySales: Array<{
@@ -139,7 +140,7 @@ export default function StatsPage() {
             title="Estadísticas Avanzadas" 
             description="Análisis detallado del negocio"
           />
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button
               variant={period === 'week' ? 'default' : 'outline'}
               size="sm"
@@ -161,6 +162,32 @@ export default function StatsPage() {
             >
               Año
             </Button>
+            
+            {/* Botones de exportación */}
+            <div className="flex gap-2 border-l pl-2 ml-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportSalesReport(salesData.dailySales, period)}
+                className="text-green-600 hover:bg-green-50"
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Ventas Excel
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportProductsReport(
+                  productStats.topSelling,
+                  productStats.lowStock,
+                  productStats.noSales
+                )}
+                className="text-blue-600 hover:bg-blue-50"
+              >
+                <Download className="h-4 w-4 mr-1" />
+                Productos Excel
+              </Button>
+            </div>
           </div>
         </div>
 

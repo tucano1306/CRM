@@ -3,13 +3,14 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { TrendingUp, Clock, Calendar, Package, BarChart3, Users } from 'lucide-react'
+import { TrendingUp, Clock, Calendar, Package, BarChart3, Users, Download } from 'lucide-react'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
 import { 
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend 
 } from 'recharts'
+import { exportToExcel } from '@/lib/excelExport'
 
 const COLORS = ['#8b5cf6', '#6366f1', '#3b82f6', '#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#84cc16']
 
@@ -193,13 +194,55 @@ export default function AnalyticsPage() {
   const peakHour = hourlyData.reduce((max, curr) => curr.orders > max.orders ? curr : max, hourlyData[0])
   const peakDay = weeklyData.reduce((max, curr) => curr.orders > max.orders ? curr : max, weeklyData[0])
 
+  const exportAnalyticsData = () => {
+    exportToExcel([
+      {
+        name: 'Ventas por Hora',
+        columns: [
+          { header: 'Hora', key: 'hour', width: 12 },
+          { header: 'Órdenes', key: 'orders', width: 12 },
+          { header: 'Ingresos', key: 'revenue', width: 15 }
+        ],
+        data: hourlyData
+      },
+      {
+        name: 'Ventas por Día',
+        columns: [
+          { header: 'Día', key: 'day', width: 15 },
+          { header: 'Órdenes', key: 'orders', width: 12 },
+          { header: 'Ingresos', key: 'revenue', width: 15 }
+        ],
+        data: weeklyData
+      },
+      {
+        name: 'Top Productos',
+        columns: [
+          { header: 'Producto', key: 'name', width: 30 },
+          { header: 'Cantidad', key: 'quantity', width: 12 },
+          { header: 'Ingresos', key: 'revenue', width: 15 }
+        ],
+        data: topProducts
+      }
+    ], `analytics-${new Date().toISOString().split('T')[0]}.xlsx`)
+  }
+
   return (
     <MainLayout>
       <div className="space-y-6">
-        <PageHeader 
-          title="Analytics" 
-          description="Análisis de tendencias y patrones de ventas"
-        />
+        <div className="flex justify-between items-start">
+          <PageHeader 
+            title="Analytics" 
+            description="Análisis de tendencias y patrones de ventas"
+          />
+          <Button
+            onClick={exportAnalyticsData}
+            variant="outline"
+            className="text-green-600 hover:bg-green-50"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Exportar a Excel
+          </Button>
+        </div>
 
         {/* KPIs */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

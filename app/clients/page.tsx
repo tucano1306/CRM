@@ -19,8 +19,11 @@ import {
   ShoppingBag,
   Link2,
   Copy,
-  CheckCircle
+  CheckCircle,
+  History,
+  Download
 } from 'lucide-react'
+import { exportClientsReport, exportClientHistory } from '@/lib/excelExport'
 
 interface ClientWithStats {
   id: string
@@ -56,6 +59,13 @@ export default function ClientsPage() {
   const [sendingInvitation, setSendingInvitation] = useState(false)
   const [invitationMethod, setInvitationMethod] = useState<'email' | 'whatsapp' | 'sms'>('email')
   const [invitationValue, setInvitationValue] = useState('')
+  
+  // Estados para modal de historial
+  const [showHistoryModal, setShowHistoryModal] = useState(false)
+  const [historyClientId, setHistoryClientId] = useState<string | null>(null)
+  const [historyClientName, setHistoryClientName] = useState<string>('')
+  const [clientOrders, setClientOrders] = useState<any[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
   
   // 🐛 DEBUG: Monitorear estado del modal
   useEffect(() => {
@@ -233,6 +243,44 @@ export default function ClientsPage() {
       navigator.clipboard.writeText(invitationLink)
       setLinkCopied(true)
       setTimeout(() => setLinkCopied(false), 2000)
+    }
+  }
+
+  // Ver historial de un cliente
+  const viewClientHistory = async (clientId: string, clientName: string) => {
+    setHistoryClientId(clientId)
+    setHistoryClientName(clientName)
+    setShowHistoryModal(true)
+    setLoadingHistory(true)
+    
+    try {
+      const result = await apiCall(`/api/clients/${clientId}/orders`, {
+        timeout: 10000,
+      })
+      
+      if (result.success) {
+        setClientOrders(result.data || [])
+      } else {
+        alert(result.error || 'Error al cargar historial')
+      }
+    } catch (err) {
+      console.error('Error loading history:', err)
+      alert('Error al cargar historial')
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
+  const closeHistoryModal = () => {
+    setShowHistoryModal(false)
+    setHistoryClientId(null)
+    setHistoryClientName('')
+    setClientOrders([])
+  }
+
+  const exportClientHistoryToExcel = () => {
+    if (clientOrders.length > 0 && historyClientName) {
+      exportClientHistory(historyClientName, clientOrders)
     }
   }
 
@@ -694,6 +742,7 @@ export default function ClientsPage() {
                 onEdit={startEdit}
                 onDelete={deleteClient}
                 onSelect={selectedClientId ? undefined : handleSelectClient}
+                onViewHistory={() => viewClientHistory(client.id, client.name)}
                 colorIndex={index}
                 isExpanded={selectedClientId === client.id}
               />
@@ -862,6 +911,158 @@ export default function ClientsPage() {
                   </div>
                 </div>
               </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Historial de Cliente */}
+      {showHistoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full p-8 animate-fadeIn my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-purple-100 p-3 rounded-xl">
+                  <History className="h-6 w-6 text-purple-600" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900">
+                  📋 Historial de {historyClientName}
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                {clientOrders.length > 0 && (
+                  <button
+                    onClick={exportClientHistoryToExcel}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 transition-all"
+                  >
+                    <Download className="h-4 w-4" />
+                    Exportar Excel
+                  </button>
+                )}
+                <button
+                  onClick={closeHistoryModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+
+            {loadingHistory ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4" />
+                <p className="text-gray-600 text-lg">Cargando historial...</p>
+              </div>
+            ) : clientOrders.length === 0 ? (
+              <div className="text-center py-12">
+                <ShoppingBag className="h-20 w-20 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-gray-700 mb-2">
+                  Sin órdenes registradas
+                </h3>
+                <p className="text-gray-500 text-lg">
+                  Este cliente aún no ha realizado ninguna compra
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Resumen */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-6 text-white">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-blue-100 text-sm font-medium mb-1">Total Órdenes</p>
+                        <p className="text-4xl font-bold">{clientOrders.length}</p>
+                      </div>
+                      <ShoppingBag className="w-12 h-12 text-blue-200 opacity-80" />
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-6 text-white">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-green-100 text-sm font-medium mb-1">Total Gastado</p>
+                        <p className="text-4xl font-bold">
+                          {formatPrice(clientOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0))}
+                        </p>
+                      </div>
+                      <DollarSign className="w-12 h-12 text-green-200 opacity-80" />
+                    </div>
+                  </div>
+                  
+                  <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl p-6 text-white">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-purple-100 text-sm font-medium mb-1">Promedio por Orden</p>
+                        <p className="text-4xl font-bold">
+                          {formatPrice(clientOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0) / clientOrders.length)}
+                        </p>
+                      </div>
+                      <TrendingUp className="w-12 h-12 text-purple-200 opacity-80" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Lista de órdenes */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-bold text-gray-900">Órdenes Recientes</h4>
+                  {clientOrders.map((order) => (
+                    <div
+                      key={order.id}
+                      className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div>
+                          <h5 className="text-xl font-bold text-gray-900">
+                            {order.orderNumber}
+                          </h5>
+                          <p className="text-sm text-gray-500">
+                            {new Date(order.createdAt).toLocaleDateString('es-ES', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <div className={`inline-block px-4 py-2 rounded-lg font-semibold ${
+                            order.status === 'COMPLETED' || order.status === 'DELIVERED' 
+                              ? 'bg-green-100 text-green-800'
+                              : order.status === 'PENDING'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : order.status === 'CANCELED'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-blue-100 text-blue-800'
+                          }`}>
+                            {order.status}
+                          </div>
+                          <p className="text-2xl font-bold text-gray-900 mt-2">
+                            {formatPrice(order.totalAmount)}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {/* Items de la orden */}
+                      <div className="mt-4 space-y-2">
+                        <p className="font-semibold text-gray-700 text-sm uppercase tracking-wide">
+                          Productos ({order.orderItems.length})
+                        </p>
+                        <div className="space-y-1">
+                          {order.orderItems.map((item: any) => (
+                            <div key={item.id} className="flex justify-between text-sm bg-gray-50 p-3 rounded-lg">
+                              <span className="text-gray-700">
+                                {item.productName} <span className="text-gray-500">x{item.quantity}</span>
+                              </span>
+                              <span className="font-semibold text-gray-900">
+                                {formatPrice(item.subtotal)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         </div>

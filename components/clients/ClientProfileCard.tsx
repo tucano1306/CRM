@@ -38,11 +38,12 @@ interface ClientProfileCardProps {
   onEdit: (client: any) => void
   onDelete: (id: string) => void
   onSelect?: (clientId: string) => void
+  onViewHistory?: () => void
   colorIndex: number
   isExpanded?: boolean
 }
 
-export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, colorIndex, isExpanded = false }: ClientProfileCardProps) {
+export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, onViewHistory, colorIndex, isExpanded = false }: ClientProfileCardProps) {
   // Si hay onSelect, el componente está en modo lista; si no, está en modo detalle
   // Si isExpanded es true, forzamos modo expandido y siempre mostramos detalles
   const [expanded, setExpanded] = useState(!onSelect || isExpanded)
@@ -161,6 +162,15 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
 
           {/* Botones de acción */}
           <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+            {onViewHistory && (
+              <button
+                onClick={onViewHistory}
+                className="p-2 bg-white/20 hover:bg-purple-500/50 backdrop-blur-sm rounded-lg transition-colors"
+                title="Ver historial"
+              >
+                <Calendar className="w-4 h-4 text-white" />
+              </button>
+            )}
             <button
               onClick={() => onEdit(client)}
               className="p-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg transition-colors"
