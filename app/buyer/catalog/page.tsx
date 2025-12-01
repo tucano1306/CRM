@@ -659,21 +659,41 @@ export default function CatalogPage() {
             </div>
           </div>
 
-          {/* Filtros de categoría - RESPONSIVE */}
-          <div className="mt-4 md:mt-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setSelectedCategory(category.id)}
-                className={`px-4 py-2 rounded-lg whitespace-nowrap transition-all font-semibold shadow-md ${
-                  selectedCategory === category.id
-                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
-                    : 'bg-white border-2 border-purple-200 text-purple-700 hover:border-purple-400'
-                }`}
-              >
-                {category.emoji} {category.name} ({getCategoryCount(category.id)})
-              </button>
-            ))}
+          {/* Selector de Categorías - Dropdown */}
+          <div className="mt-4 md:mt-6 bg-white rounded-xl p-4 shadow-md">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <label className="flex items-center gap-2 text-gray-700 font-medium whitespace-nowrap">
+                <span className="text-xl">📂</span>
+                <span>Categoría:</span>
+              </label>
+              <div className="relative flex-1 max-w-md">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full appearance-none bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl px-4 py-3 pr-10 text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 cursor-pointer transition-all hover:border-purple-400"
+                >
+                  {categories.map(category => (
+                    <option key={category.id} value={category.id}>
+                      {category.emoji} {category.name} ({getCategoryCount(category.id)})
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="h-5 w-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+              {selectedCategory !== 'all' && (
+                <button
+                  onClick={() => setSelectedCategory('all')}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-all text-sm font-medium"
+                >
+                  <X size={16} />
+                  Limpiar filtro
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
