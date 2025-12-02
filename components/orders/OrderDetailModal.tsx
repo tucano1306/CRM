@@ -195,40 +195,40 @@ export default function OrderDetailModal({
                 )}
 
                 {order.client && (
-                  <div className="bg-white rounded-lg shadow-sm p-6 border">
-                    <h3 className="text-lg font-semibold mb-4">Información del Cliente</h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-600">Nombre</p>
-                        <p className="font-semibold">{order.client.name}</p>
+                  <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border overflow-hidden">
+                    <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Información del Cliente</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
+                      <div className="min-w-0">
+                        <p className="text-gray-600 text-xs sm:text-sm">Nombre</p>
+                        <p className="font-semibold truncate">{order.client.name}</p>
                       </div>
-                      <div>
-                        <p className="text-gray-600">Email</p>
-                        <p className="font-semibold">{order.client.email}</p>
+                      <div className="min-w-0">
+                        <p className="text-gray-600 text-xs sm:text-sm">Email</p>
+                        <p className="font-semibold truncate text-xs sm:text-sm">{order.client.email}</p>
                       </div>
-                      <div>
-                        <p className="text-gray-600">Teléfono</p>
+                      <div className="min-w-0">
+                        <p className="text-gray-600 text-xs sm:text-sm">Teléfono</p>
                         <p className="font-semibold">{order.client.phone}</p>
                       </div>
-                      <div>
-                        <p className="text-gray-600">Dirección</p>
-                        <p className="font-semibold">{order.client.address}</p>
+                      <div className="min-w-0">
+                        <p className="text-gray-600 text-xs sm:text-sm">Dirección</p>
+                        <p className="font-semibold truncate">{order.client.address}</p>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {order.seller && (
-                  <div className="bg-white rounded-lg shadow-sm p-6 border">
-                    <h3 className="text-lg font-semibold mb-4">Información del Vendedor</h3>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-600">Nombre</p>
-                        <p className="font-semibold">{order.seller.name}</p>
+                  <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border overflow-hidden">
+                    <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Información del Vendedor</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
+                      <div className="min-w-0">
+                        <p className="text-gray-600 text-xs sm:text-sm">Nombre</p>
+                        <p className="font-semibold truncate">{order.seller.name}</p>
                       </div>
-                      <div>
-                        <p className="text-gray-600">Email</p>
-                        <p className="font-semibold">{order.seller.email}</p>
+                      <div className="min-w-0">
+                        <p className="text-gray-600 text-xs sm:text-sm">Email</p>
+                        <p className="font-semibold truncate text-xs sm:text-sm">{order.seller.email}</p>
                       </div>
                     </div>
                   </div>

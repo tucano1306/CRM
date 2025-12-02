@@ -302,40 +302,40 @@ export default function OrdersPage() {
               ? 'bg-red-50 border-red-200 text-red-900' 
               : 'bg-yellow-50 border-yellow-200 text-yellow-900'
             } 
-            border-2 rounded-lg p-4 shadow-lg animate-pulse
+            border-2 rounded-lg p-3 sm:p-4 shadow-lg animate-pulse overflow-hidden
           `}>
-            <div className="flex items-start gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
               <div className={`
-                flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center
+                flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center
                 ${pendingOrdersStats.hasOldOrders ? 'bg-red-100' : 'bg-yellow-100'}
               `}>
                 {pendingOrdersStats.hasOldOrders ? (
-                  <AlertTriangle className="w-6 h-6 text-red-600" />
+                  <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
                 ) : (
-                  <Bell className="w-6 h-6 text-yellow-600 animate-bounce" />
+                  <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 animate-bounce" />
                 )}
               </div>
 
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-2">
-                  <h3 className="text-lg font-bold">
+                  <h3 className="text-sm sm:text-lg font-bold leading-tight">
                     {pendingOrdersStats.hasOldOrders 
-                      ? '⚠️ ATENCIÓN: Órdenes Pendientes Urgentes' 
-                      : '📋 Tienes órdenes pendientes de revisión'}
+                      ? '⚠️ ATENCIÓN: Órdenes Urgentes' 
+                      : '📋 Órdenes pendientes'}
                   </h3>
                 </div>
                 
-                <p className="text-sm mb-3">
-                  Tienes <strong className="font-bold text-xl">{pendingOrdersStats.count}</strong> {pendingOrdersStats.count === 1 ? 'orden pendiente' : 'órdenes pendientes'} 
+                <p className="text-xs sm:text-sm mb-3">
+                  Tienes <strong className="font-bold text-lg sm:text-xl">{pendingOrdersStats.count}</strong> {pendingOrdersStats.count === 1 ? 'orden pendiente' : 'órdenes pendientes'} 
                   {pendingOrdersStats.hasOldOrders && (
-                    <span className="ml-2 text-red-700 font-semibold">
-                      (La más antigua tiene {pendingOrdersStats.oldestAgeHours} horas sin revisar)
+                    <span className="block sm:inline sm:ml-2 text-red-700 font-semibold text-xs">
+                      (La más antigua: {pendingOrdersStats.oldestAgeHours}h sin revisar)
                     </span>
                   )}
                 </p>
 
-                <div className="bg-white rounded-lg p-3 shadow-sm">
-                  <p className="text-sm font-medium mb-2">Órdenes que requieren tu atención:</p>
+                <div className="bg-white rounded-lg p-2 sm:p-3 shadow-sm overflow-hidden">
+                  <p className="text-xs sm:text-sm font-medium mb-2">Órdenes que requieren tu atención:</p>
                   <div className="space-y-1">
                     {pendingOrdersStats.orders.slice(0, 5).map(order => {
                       const ageHours = Math.floor((Date.now() - new Date(order.createdAt).getTime()) / (60 * 60 * 1000))
@@ -345,20 +345,20 @@ export default function OrdersPage() {
                         <div 
                           key={order.id} 
                           className={`
-                            flex items-center justify-between p-2 rounded text-xs
+                            flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 rounded text-xs gap-1
                             ${isOld ? 'bg-red-50' : 'bg-gray-50'}
                           `}
                         >
-                          <div className="flex items-center gap-2">
-                            <Clock className={`w-3 h-3 ${isOld ? 'text-red-600' : 'text-gray-500'}`} />
+                          <div className="flex items-center gap-2 min-w-0">
+                            <Clock className={`w-3 h-3 flex-shrink-0 ${isOld ? 'text-red-600' : 'text-gray-500'}`} />
                             <span className="font-semibold">{order.orderNumber}</span>
-                            <span className="text-gray-600">-</span>
-                            <span>{order.client.name}</span>
+                            <span className="text-gray-600 hidden sm:inline">-</span>
+                            <span className="truncate">{order.client.name}</span>
                           </div>
-                          <span className={`font-medium ${isOld ? 'text-red-700' : 'text-gray-600'}`}>
+                          <span className={`font-medium whitespace-nowrap ${isOld ? 'text-red-700' : 'text-gray-600'}`}>
                             {ageHours < 1 
-                              ? 'Hace menos de 1 hora' 
-                              : `Hace ${ageHours} ${ageHours === 1 ? 'hora' : 'horas'}`
+                              ? 'Hace <1h' 
+                              : `Hace ${ageHours}h`
                             }
                           </span>
                         </div>
