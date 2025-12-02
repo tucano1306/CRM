@@ -48,11 +48,14 @@ function ConnectPageContent() {
       
       console.log('📡 Respuesta de validación:', response)
       
-      if (!response.success) {
+      // apiCall envuelve: { success, data: { success, data: seller } }
+      const apiData = response.data
+      
+      if (!response.success || !apiData?.success) {
         throw new Error('Vendedor no encontrado')
       }
 
-      setSellerInfo(response.data)
+      setSellerInfo(apiData.data)
       setStatus('ready')
 
     } catch (err: any) {
