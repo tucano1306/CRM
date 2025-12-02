@@ -23,14 +23,21 @@ export async function GET(req: NextRequest) {
       include: { sellers: true }
     })
 
+    console.log('🔍 [ConnectionRequests] userId:', userId)
+    console.log('🔍 [ConnectionRequests] authUser:', authUser?.id, authUser?.name)
+    console.log('🔍 [ConnectionRequests] sellers:', authUser?.sellers?.map(s => s.id))
+
     const seller = authUser?.sellers?.[0]
 
     if (!seller) {
+      console.log('❌ [ConnectionRequests] No seller found for user:', userId)
       return NextResponse.json(
         { success: false, error: 'No tienes permisos de vendedor' },
         { status: 403 }
       )
     }
+    
+    console.log('✅ [ConnectionRequests] Seller found:', seller.id, seller.name)
 
     const { searchParams } = new URL(req.url)
     const status = searchParams.get('status') || 'PENDING'
