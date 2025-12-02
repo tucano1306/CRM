@@ -40,14 +40,18 @@ export async function GET(request: Request) {
     }
 
     // Buscar el cliente asociado a este usuario
+    // El modelo authenticated_users tiene relación "clients" (plural) no "client"
     const authenticatedUser = await withDbRetry(() => 
       prisma.authenticated_users.findUnique({
         where: { authId: userId },
-        include: { client: true }
+        include: { clients: true }
       })
     )
 
-    if (!authenticatedUser || !authenticatedUser.clientId) {
+    // Obtener el primer cliente asociado (un usuario puede tener varios clientes)
+    const client = authenticatedUser?.clients?.[0]
+
+    if (!authenticatedUser || !client) {
       console.log('⚠️ [BUYER PRODUCTS] Usuario sin cliente asociado')
       return NextResponse.json({
         success: true,
@@ -59,9 +63,9 @@ export async function GET(request: Request) {
       })
     }
 
-    const clientId = authenticatedUser.clientId
+    const clientId = client.id
     console.log('   - Cliente ID:', clientId)
-    console.log('   - Cliente:', authenticatedUser.client?.name)
+    console.log('   - Cliente:', client.name)
 
     // 🔐 AISLAMIENTO: Solo productos asignados a este cliente
     const whereConditions: any = {
@@ -129,7 +133,7 @@ export async function GET(request: Request) {
       notes: cp.notes, // Notas del vendedor para este cliente
     }))
 
-    console.log(`✅ [BUYER PRODUCTS] Encontrados ${products.length} productos para cliente ${authenticatedUser.client?.name}`)
+    console.log(`✅ [BUYER PRODUCTS] Encontrados ${products.length} productos para cliente ${client.name}`)
     
     if (products.length > 0) {
       console.log('   Primeros productos:')
@@ -145,7 +149,7 @@ export async function GET(request: Request) {
       data: {
         data: products,
         total: products.length,
-        clientName: authenticatedUser.client?.name
+        clientName: client.name
       }
     })
 
