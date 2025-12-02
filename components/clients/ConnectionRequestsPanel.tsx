@@ -53,8 +53,10 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
       const response = await apiCall('/api/connection-requests?status=PENDING') as any
       
       if (response.success) {
-        setRequests(response.data || [])
-        setPendingCount(response.pendingCount || response.data?.length || 0)
+        // Asegurar que data sea siempre un array
+        const dataArray = Array.isArray(response.data) ? response.data : []
+        setRequests(dataArray)
+        setPendingCount(response.pendingCount || dataArray.length || 0)
       } else {
         // Si el API falla, simplemente no mostramos el panel
         console.log('Connection requests API not available:', response.error)
@@ -218,7 +220,7 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
               </Button>
             </div>
           ) : (
-            requests.map((request) => (
+            Array.isArray(requests) && requests.map((request) => (
               <div
                 key={request.id}
                 className="bg-white rounded-xl border border-amber-200 p-4 shadow-sm hover:shadow-md transition-all"
