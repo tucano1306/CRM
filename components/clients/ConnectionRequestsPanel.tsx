@@ -48,17 +48,22 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
       console.log('🔍 [ConnectionRequestsPanel] Fetching requests...')
       const response = await apiCall('/api/connection-requests?status=PENDING') as any
       
-      console.log('📡 [ConnectionRequestsPanel] Response:', response)
+      console.log('📡 [ConnectionRequestsPanel] Raw response:', response)
       
-      if (response.success) {
+      // apiCall envuelve la respuesta en { success, data, status }
+      // donde data es el JSON completo de la API
+      const apiData = response.data
+      console.log('📡 [ConnectionRequestsPanel] API data:', apiData)
+      
+      if (response.success && apiData?.success) {
         // Asegurar que data sea siempre un array
-        const dataArray = Array.isArray(response.data) ? response.data : []
+        const dataArray = Array.isArray(apiData.data) ? apiData.data : []
         console.log('✅ [ConnectionRequestsPanel] Requests found:', dataArray.length, dataArray)
         setRequests(dataArray)
-        setPendingCount(response.pendingCount || dataArray.length || 0)
+        setPendingCount(apiData.pendingCount || dataArray.length || 0)
       } else {
         // Si el API falla, simplemente no mostramos el panel
-        console.log('❌ [ConnectionRequestsPanel] API error:', response.error)
+        console.log('❌ [ConnectionRequestsPanel] API error:', apiData?.error || response.error)
         setRequests([])
         setPendingCount(0)
       }
