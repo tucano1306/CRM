@@ -41,11 +41,6 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
   const [error, setError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
 
-  // Evitar errores de hidratación
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
   const fetchRequests = async () => {
     try {
       setLoading(true)
@@ -78,6 +73,9 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
   }
 
   useEffect(() => {
+    setMounted(true)
+    
+    // Hacer fetch inicial
     fetchRequests()
     
     // Refrescar cada 30 segundos
@@ -165,10 +163,25 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
     return null
   }
 
-  // No mostrar si no hay solicitudes pendientes
-  if (!loading && requests.length === 0) {
+  // Mostrar loading mientras carga
+  if (loading) {
+    return (
+      <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl shadow-lg p-6">
+        <div className="flex items-center justify-center gap-3">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500"></div>
+          <span className="text-amber-700">Cargando solicitudes...</span>
+        </div>
+      </div>
+    )
+  }
+
+  // No mostrar si no hay solicitudes pendientes (después de cargar)
+  if (requests.length === 0) {
+    console.log('🔍 [ConnectionRequestsPanel] No hay solicitudes, ocultando panel')
     return null
   }
+
+  console.log('🔍 [ConnectionRequestsPanel] Mostrando panel con', requests.length, 'solicitudes')
 
   return (
     <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl shadow-lg overflow-hidden">
