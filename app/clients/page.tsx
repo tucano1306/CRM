@@ -937,154 +937,169 @@ export default function ClientsPage() {
 
       {/* Modal de Historial de Cliente */}
       {showHistoryModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full p-8 animate-fadeIn my-8 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="bg-purple-100 p-3 rounded-xl">
-                  <History className="h-6 w-6 text-purple-600" />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-4xl w-full animate-fadeIn my-8 max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Header fijo */}
+            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 text-white flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white/20 p-3 rounded-xl">
+                    <History className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl sm:text-2xl font-bold">
+                      Historial de Pedidos
+                    </h3>
+                    <p className="text-purple-100 text-sm">{historyClientName}</p>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">
-                  📋 Historial de {historyClientName}
-                </h3>
-              </div>
-              <div className="flex items-center gap-2">
-                {clientOrders.length > 0 && (
+                <div className="flex items-center gap-2">
+                  {clientOrders && clientOrders.length > 0 && (
+                    <button
+                      onClick={exportClientHistoryToExcel}
+                      className="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all text-sm font-semibold"
+                    >
+                      <Download className="h-4 w-4" />
+                      <span className="hidden sm:inline">Exportar</span>
+                    </button>
+                  )}
                   <button
-                    onClick={exportClientHistoryToExcel}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center gap-2 transition-all"
+                    onClick={closeHistoryModal}
+                    className="bg-white/20 hover:bg-white/30 p-2 rounded-xl transition-colors"
                   >
-                    <Download className="h-4 w-4" />
-                    Exportar Excel
+                    <X className="w-5 h-5" />
                   </button>
-                )}
-                <button
-                  onClick={closeHistoryModal}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X size={24} />
-                </button>
+                </div>
               </div>
             </div>
 
-            {loadingHistory ? (
-              <div className="text-center py-12">
-                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4" />
-                <p className="text-gray-600 text-lg">Cargando historial...</p>
-              </div>
-            ) : clientOrders.length === 0 ? (
-              <div className="text-center py-12">
-                <ShoppingBag className="h-20 w-20 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-gray-700 mb-2">
-                  Sin órdenes registradas
-                </h3>
-                <p className="text-gray-500 text-lg">
-                  Este cliente aún no ha realizado ninguna compra
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Resumen */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl p-6 text-white">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-blue-100 text-sm font-medium mb-1">Total Órdenes</p>
-                        <p className="text-4xl font-bold">{clientOrders.length}</p>
-                      </div>
-                      <ShoppingBag className="w-12 h-12 text-blue-200 opacity-80" />
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-xl p-6 text-white">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-green-100 text-sm font-medium mb-1">Total Gastado</p>
-                        <p className="text-4xl font-bold">
-                          {formatPrice(clientOrders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0))}
-                        </p>
-                      </div>
-                      <DollarSign className="w-12 h-12 text-green-200 opacity-80" />
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl p-6 text-white">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-purple-100 text-sm font-medium mb-1">Promedio por Orden</p>
-                        <p className="text-4xl font-bold">
-                          {formatPrice(clientOrders.length > 0 ? clientOrders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0) / clientOrders.length : 0)}
-                        </p>
-                      </div>
-                      <TrendingUp className="w-12 h-12 text-purple-200 opacity-80" />
-                    </div>
-                  </div>
+            {/* Contenido scrolleable */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {loadingHistory ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600 mx-auto mb-4" />
+                  <p className="text-gray-600 text-lg">Cargando historial...</p>
                 </div>
-
-                {/* Lista de órdenes */}
-                <div className="space-y-4">
-                  <h4 className="text-lg font-bold text-gray-900">Órdenes Recientes</h4>
-                  {clientOrders.map((order) => (
-                    <div
-                      key={order.id}
-                      className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:shadow-lg transition-all"
-                    >
-                      <div className="flex justify-between items-start mb-4">
+              ) : !clientOrders || clientOrders.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                    <ShoppingBag className="h-10 w-10 text-gray-400" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-700 mb-2">
+                    Sin órdenes registradas
+                  </h3>
+                  <p className="text-gray-500">
+                    Este cliente aún no ha realizado ninguna compra
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Resumen */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white">
+                      <div className="flex items-center justify-between">
                         <div>
-                          <h5 className="text-xl font-bold text-gray-900">
-                            {order.orderNumber}
-                          </h5>
-                          <p className="text-sm text-gray-500">
-                            {new Date(order.createdAt).toLocaleDateString('es-ES', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric'
-                            })}
-                          </p>
+                          <p className="text-blue-100 text-xs font-medium mb-1">Total Órdenes</p>
+                          <p className="text-3xl font-black">{clientOrders.length}</p>
                         </div>
-                        <div className="text-right">
-                          <div className={`inline-block px-4 py-2 rounded-lg font-semibold ${
-                            order.status === 'COMPLETED' || order.status === 'DELIVERED' 
-                              ? 'bg-green-100 text-green-800'
-                              : order.status === 'PENDING'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : order.status === 'CANCELED'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {order.status}
-                          </div>
-                          <p className="text-2xl font-bold text-gray-900 mt-2">
-                            {formatPrice(Number(order.totalAmount) || 0)}
-                          </p>
-                        </div>
+                        <ShoppingBag className="w-10 h-10 text-blue-200/50" />
                       </div>
-                      
-                      {/* Items de la orden */}
-                      {order.orderItems && order.orderItems.length > 0 && (
-                        <div className="mt-4 space-y-2">
-                          <p className="font-semibold text-gray-700 text-sm uppercase tracking-wide">
-                            Productos ({order.orderItems.length})
+                    </div>
+                    
+                    <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-4 text-white">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-green-100 text-xs font-medium mb-1">Total Gastado</p>
+                          <p className="text-2xl font-black">
+                            {formatPrice(clientOrders.reduce((sum, order) => sum + (Number(order?.totalAmount) || 0), 0))}
                           </p>
-                          <div className="space-y-1">
-                            {order.orderItems.map((item: any) => (
-                              <div key={item.id} className="flex justify-between text-sm bg-gray-50 p-3 rounded-lg">
+                        </div>
+                        <DollarSign className="w-10 h-10 text-green-200/50" />
+                      </div>
+                    </div>
+                    
+                    <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-4 text-white">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-purple-100 text-xs font-medium mb-1">Promedio</p>
+                          <p className="text-2xl font-black">
+                            {formatPrice(clientOrders.length > 0 ? clientOrders.reduce((sum, order) => sum + (Number(order?.totalAmount) || 0), 0) / clientOrders.length : 0)}
+                          </p>
+                        </div>
+                        <TrendingUp className="w-10 h-10 text-purple-200/50" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Lista de órdenes */}
+                  <div className="space-y-3">
+                    <h4 className="text-lg font-bold text-gray-900">Órdenes Recientes</h4>
+                    {clientOrders.map((order) => order && (
+                      <div
+                        key={order.id || Math.random()}
+                        className="bg-gray-50 border border-gray-200 rounded-2xl p-4 hover:shadow-md transition-all"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-3">
+                          <div>
+                            <h5 className="text-lg font-bold text-gray-900">
+                              {order.orderNumber || 'Sin número'}
+                            </h5>
+                            <p className="text-sm text-gray-500">
+                              {order.createdAt ? new Date(order.createdAt).toLocaleDateString('es-ES', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric'
+                              }) : 'Fecha no disponible'}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className={`px-3 py-1.5 rounded-lg text-sm font-bold ${
+                              order.status === 'COMPLETED' || order.status === 'DELIVERED' 
+                                ? 'bg-green-100 text-green-700'
+                                : order.status === 'PENDING'
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : order.status === 'CANCELED'
+                                ? 'bg-red-100 text-red-700'
+                                : 'bg-blue-100 text-blue-700'
+                            }`}>
+                              {order.status || 'N/A'}
+                            </span>
+                            <p className="text-xl font-black text-gray-900">
+                              {formatPrice(Number(order.totalAmount) || 0)}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Items de la orden */}
+                        {order.orderItems && Array.isArray(order.orderItems) && order.orderItems.length > 0 && (
+                          <div className="space-y-1.5 pt-3 border-t border-gray-200">
+                            <p className="font-semibold text-gray-600 text-xs uppercase tracking-wide">
+                              {order.orderItems.length} productos
+                            </p>
+                            {order.orderItems.slice(0, 5).map((item: any, idx: number) => item && (
+                              <div key={item.id || idx} className="flex justify-between text-sm bg-white p-2.5 rounded-lg">
                                 <span className="text-gray-700">
-                                  {item.productName || item.product?.name || 'Producto'} <span className="text-gray-500">x{item.quantity}</span>
+                                  {item.productName || item.product?.name || 'Producto'}{' '}
+                                  <span className="text-gray-400">x{item.quantity || 1}</span>
                                 </span>
-                                <span className="font-semibold text-gray-900">
+                                <span className="font-bold text-gray-800">
                                   {formatPrice(Number(item.subtotal) || 0)}
                                 </span>
                               </div>
                             ))}
+                            {order.orderItems.length > 5 && (
+                              <p className="text-xs text-gray-500 text-center py-1">
+                                +{order.orderItems.length - 5} productos más...
+                              </p>
+                            )}
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}
