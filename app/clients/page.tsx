@@ -760,7 +760,6 @@ export default function ClientsPage() {
                 onEdit={startEdit}
                 onDelete={deleteClient}
                 onSelect={selectedClientId ? undefined : handleSelectClient}
-                onViewHistory={() => viewClientHistory(client.id, client.name)}
                 onManageCatalog={() => openCatalogModal(client.id, client.name)}
                 colorIndex={index}
                 isExpanded={selectedClientId === client.id}

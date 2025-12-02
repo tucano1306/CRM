@@ -16,7 +16,6 @@ import {
   ChevronDown,
   ChevronUp,
   Package,
-  History,
   Sparkles,
   ExternalLink
 } from 'lucide-react'
@@ -42,13 +41,12 @@ interface ClientProfileCardProps {
   onEdit: (client: any) => void
   onDelete: (id: string) => void
   onSelect?: (clientId: string) => void
-  onViewHistory?: () => void
   onManageCatalog?: () => void
   colorIndex: number
   isExpanded?: boolean
 }
 
-export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, onViewHistory, onManageCatalog, colorIndex, isExpanded = false }: ClientProfileCardProps) {
+export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, onManageCatalog, colorIndex, isExpanded = false }: ClientProfileCardProps) {
   const [expanded, setExpanded] = useState(!onSelect || isExpanded)
   const [isHovered, setIsHovered] = useState(false)
 
@@ -222,23 +220,6 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
             >
               <Package className="w-5 h-5" />
               <span>Catálogo</span>
-            </button>
-          )}
-          
-          {/* Botón Historial */}
-          {onViewHistory && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                console.log('📋 Abriendo historial para:', client.name)
-                onViewHistory()
-              }}
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
-            >
-              <History className="w-5 h-5" />
-              <span>Historial</span>
             </button>
           )}
           
