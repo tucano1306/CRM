@@ -1001,7 +1001,7 @@ export default function ClientsPage() {
                       <div>
                         <p className="text-green-100 text-sm font-medium mb-1">Total Gastado</p>
                         <p className="text-4xl font-bold">
-                          {formatPrice(clientOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0))}
+                          {formatPrice(clientOrders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0))}
                         </p>
                       </div>
                       <DollarSign className="w-12 h-12 text-green-200 opacity-80" />
@@ -1013,7 +1013,7 @@ export default function ClientsPage() {
                       <div>
                         <p className="text-purple-100 text-sm font-medium mb-1">Promedio por Orden</p>
                         <p className="text-4xl font-bold">
-                          {formatPrice(clientOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0) / clientOrders.length)}
+                          {formatPrice(clientOrders.length > 0 ? clientOrders.reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0) / clientOrders.length : 0)}
                         </p>
                       </div>
                       <TrendingUp className="w-12 h-12 text-purple-200 opacity-80" />
@@ -1055,29 +1055,31 @@ export default function ClientsPage() {
                             {order.status}
                           </div>
                           <p className="text-2xl font-bold text-gray-900 mt-2">
-                            {formatPrice(order.totalAmount)}
+                            {formatPrice(Number(order.totalAmount) || 0)}
                           </p>
                         </div>
                       </div>
                       
                       {/* Items de la orden */}
-                      <div className="mt-4 space-y-2">
-                        <p className="font-semibold text-gray-700 text-sm uppercase tracking-wide">
-                          Productos ({order.orderItems.length})
-                        </p>
-                        <div className="space-y-1">
-                          {order.orderItems.map((item: any) => (
-                            <div key={item.id} className="flex justify-between text-sm bg-gray-50 p-3 rounded-lg">
-                              <span className="text-gray-700">
-                                {item.productName} <span className="text-gray-500">x{item.quantity}</span>
-                              </span>
-                              <span className="font-semibold text-gray-900">
-                                {formatPrice(item.subtotal)}
-                              </span>
-                            </div>
-                          ))}
+                      {order.orderItems && order.orderItems.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <p className="font-semibold text-gray-700 text-sm uppercase tracking-wide">
+                            Productos ({order.orderItems.length})
+                          </p>
+                          <div className="space-y-1">
+                            {order.orderItems.map((item: any) => (
+                              <div key={item.id} className="flex justify-between text-sm bg-gray-50 p-3 rounded-lg">
+                                <span className="text-gray-700">
+                                  {item.productName || item.product?.name || 'Producto'} <span className="text-gray-500">x{item.quantity}</span>
+                                </span>
+                                <span className="font-semibold text-gray-900">
+                                  {formatPrice(Number(item.subtotal) || 0)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   ))}
                 </div>
