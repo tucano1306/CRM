@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,36 +26,7 @@ function ConnectPageContent() {
   const token = searchParams.get('token')
   const sellerId = searchParams.get('seller')
 
-  useEffect(() => {
-    if (!isLoaded) return
-
-    // Verificar si hay una invitación pendiente después del login
-    if (userId && typeof window !== 'undefined') {
-      const pending = sessionStorage.getItem('pendingInvitation')
-      if (pending) {
-        const { token: pendingToken, sellerId: pendingSellerId } = JSON.parse(pending)
-        sessionStorage.removeItem('pendingInvitation')
-        
-        // Si no hay token en la URL pero sí en sessionStorage, redirigir con el token
-        if (!token && pendingToken) {
-          router.push(`/buyer/connect?token=${pendingToken}&seller=${pendingSellerId}`)
-          return
-        }
-      }
-    }
-
-    // Si no hay token o sellerId, mostrar error
-    if (!token || !sellerId) {
-      setError('Link de invitación inválido')
-      setLoading(false)
-      return
-    }
-
-    // Validar el token y obtener info del vendedor
-    validateInvitation()
-  }, [isLoaded, token, sellerId, userId])
-
-  const validateInvitation = async () => {
+  const validateInvitation = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
@@ -88,7 +59,36 @@ function ConnectPageContent() {
       setError(err.message || 'Error al validar la invitación')
       setLoading(false)
     }
-  }
+  }, [token, sellerId])
+
+  useEffect(() => {
+    if (!isLoaded) return
+
+    // Verificar si hay una invitación pendiente después del login
+    if (userId && typeof window !== 'undefined') {
+      const pending = sessionStorage.getItem('pendingInvitation')
+      if (pending) {
+        const { token: pendingToken, sellerId: pendingSellerId } = JSON.parse(pending)
+        sessionStorage.removeItem('pendingInvitation')
+        
+        // Si no hay token en la URL pero sí en sessionStorage, redirigir con el token
+        if (!token && pendingToken) {
+          router.push(`/buyer/connect?token=${pendingToken}&seller=${pendingSellerId}`)
+          return
+        }
+      }
+    }
+
+    // Si no hay token o sellerId, mostrar error
+    if (!token || !sellerId) {
+      setError('Link de invitación inválido')
+      setLoading(false)
+      return
+    }
+
+    // Validar el token y obtener info del vendedor
+    validateInvitation()
+  }, [isLoaded, token, sellerId, userId, router, validateInvitation])
 
   const handleConnect = async () => {
     if (!userId) {

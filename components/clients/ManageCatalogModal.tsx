@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import { X, Search, Plus, Package, DollarSign, Eye, EyeOff, Save, Trash2, Edit3, Image as ImageIcon } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -80,6 +81,23 @@ export default function ManageCatalogModal({
     imageUrl: '',
   })
 
+  const fetchClientCatalog = useCallback(async () => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/clients/${clientId}/products`)
+      const data = await response.json()
+
+      if (data.success) {
+        setClientProducts(data.data.products)
+        console.log(`✅ Cargados ${data.data.products.length} productos del catálogo`)
+      }
+    } catch (error) {
+      console.error('Error cargando catálogo:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [clientId])
+
   useEffect(() => {
     if (isOpen) {
       fetchClientCatalog()
@@ -95,24 +113,7 @@ export default function ManageCatalogModal({
         imageUrl: '',
       })
     }
-  }, [isOpen, clientId])
-
-  const fetchClientCatalog = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch(`/api/clients/${clientId}/products`)
-      const data = await response.json()
-
-      if (data.success) {
-        setClientProducts(data.data.products)
-        console.log(`✅ Cargados ${data.data.products.length} productos del catálogo`)
-      }
-    } catch (error) {
-      console.error('Error cargando catálogo:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [isOpen, fetchClientCatalog])
 
   const handleCreateProduct = async () => {
     if (!newProduct.name || !newProduct.price) {
@@ -351,7 +352,7 @@ export default function ManageCatalogModal({
                     {searchTerm ? 'No se encontraron productos' : 'Sin productos asignados'}
                   </p>
                   <p className="text-gray-400 text-sm mb-4">
-                    Crea productos para este cliente en la pestaña "Crear Producto"
+                    Crea productos para este cliente en la pestaña &ldquo;Crear Producto&rdquo;
                   </p>
                   <Button
                     onClick={() => setActiveTab('create')}
@@ -374,12 +375,14 @@ export default function ManageCatalogModal({
                     >
                       <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
                         {/* Image */}
-                        <div className="w-full sm:w-16 h-24 sm:h-16 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                        <div className="w-full sm:w-16 h-24 sm:h-16 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0 relative">
                           {product.imageUrl ? (
-                            <img
+                            <Image
                               src={product.imageUrl}
                               alt={product.name}
-                              className="w-full h-full object-cover"
+                              fill
+                              className="object-cover"
+                              unoptimized
                             />
                           ) : (
                             <Package className="w-8 h-8 text-gray-300" />

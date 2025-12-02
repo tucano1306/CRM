@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { TrendingUp, Clock, Calendar, Package, BarChart3, Users, Download } from 'lucide-react'
@@ -38,11 +38,7 @@ export default function AnalyticsPage() {
   const [productTrends, setProductTrends] = useState<ProductTrendData[]>([])
   const [topProducts, setTopProducts] = useState<any[]>([])
 
-  useEffect(() => {
-    fetchAnalytics()
-  }, [])
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true)
 
@@ -74,7 +70,11 @@ export default function AnalyticsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchAnalytics()
+  }, [fetchAnalytics])
 
   const calculateHourlyStats = (orders: any[]): HourlyData[] => {
     const hourMap = new Map<number, { orders: number; revenue: number }>()
