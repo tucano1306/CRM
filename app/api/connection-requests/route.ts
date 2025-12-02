@@ -35,22 +35,32 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const status = searchParams.get('status') || 'PENDING'
 
-    // Obtener solicitudes
-    const requests = await (prisma as any).connectionRequest.findMany({
-      where: {
-        sellerId: seller.id,
-        status: status
-      },
-      orderBy: { createdAt: 'desc' }
-    })
+    // Obtener solicitudes - con manejo de error si la tabla no existe
+    let requests: any[] = []
+    let pendingCount = 0
+    
+    try {
+      requests = await (prisma as any).connectionRequest.findMany({
+        where: {
+          sellerId: seller.id,
+          status: status
+        },
+        orderBy: { createdAt: 'desc' }
+      })
 
-    // Contar pendientes
-    const pendingCount = await (prisma as any).connectionRequest.count({
-      where: {
-        sellerId: seller.id,
-        status: 'PENDING'
-      }
-    })
+      // Contar pendientes
+      pendingCount = await (prisma as any).connectionRequest.count({
+        where: {
+          sellerId: seller.id,
+          status: 'PENDING'
+        }
+      })
+    } catch (dbError: any) {
+      // Si la tabla no existe, devolver vacío
+      console.log('Connection requests table may not exist yet:', dbError.message)
+      requests = []
+      pendingCount = 0
+    }
 
     return NextResponse.json({
       success: true,

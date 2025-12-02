@@ -43,15 +43,23 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
   const fetchRequests = async () => {
     try {
       setLoading(true)
+      setError(null)
       const response = await apiCall('/api/connection-requests?status=PENDING') as any
       
       if (response.success) {
         setRequests(response.data || [])
         setPendingCount(response.pendingCount || response.data?.length || 0)
+      } else {
+        // Si el API falla, simplemente no mostramos el panel
+        console.log('Connection requests API not available:', response.error)
+        setRequests([])
+        setPendingCount(0)
       }
     } catch (err) {
-      console.error('Error fetching requests:', err)
-      setError('Error al cargar solicitudes')
+      // Error silencioso - el sistema de solicitudes puede no estar disponible aún
+      console.log('Connection requests not available:', err)
+      setRequests([])
+      setPendingCount(0)
     } finally {
       setLoading(false)
     }
