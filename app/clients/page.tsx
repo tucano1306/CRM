@@ -319,21 +319,58 @@ export default function ClientsPage() {
       return
     }
 
+    // Para WhatsApp y SMS, abrir directamente la app
+    if (invitationMethod === 'whatsapp') {
+      // Limpiar el número (solo dígitos)
+      const cleanNumber = invitationValue.replace(/\D/g, '')
+      
+      // Mensaje prellenado
+      const message = encodeURIComponent(
+        `¡Hola! 👋\n\n` +
+        `${sellerName} te invita a conectarte como cliente.\n\n` +
+        `Haz click en el siguiente enlace para registrarte:\n` +
+        `${invitationLink}\n\n` +
+        `¡Te esperamos! 🛒`
+      )
+      
+      // Abrir WhatsApp (funciona en móvil y web)
+      const whatsappUrl = `https://wa.me/${cleanNumber}?text=${message}`
+      window.open(whatsappUrl, '_blank')
+      
+      alert('✅ Se abrió WhatsApp con el mensaje. Solo presiona enviar.')
+      closeInvitationModal()
+      return
+    }
+
+    if (invitationMethod === 'sms') {
+      // Limpiar el número (solo dígitos)
+      const cleanNumber = invitationValue.replace(/\D/g, '')
+      
+      // Mensaje prellenado (más corto para SMS)
+      const message = encodeURIComponent(
+        `${sellerName} te invita a conectarte: ${invitationLink}`
+      )
+      
+      // Abrir app de SMS (funciona en móvil)
+      const smsUrl = `sms:${cleanNumber}?body=${message}`
+      window.open(smsUrl, '_blank')
+      
+      alert('✅ Se abrió la app de mensajes. Solo presiona enviar.')
+      closeInvitationModal()
+      return
+    }
+
+    // Para Email, usar el API de Mailersend
     try {
       setSendingInvitation(true)
       
-      const payload: any = {
+      const payload = {
         invitationLink,
         sellerName,
-        email: null,
+        email: invitationValue,
         whatsapp: null,
         sms: null
       }
-      
-      // Asignar el valor al método seleccionado
-      if (invitationMethod === 'email') payload.email = invitationValue
-      if (invitationMethod === 'whatsapp') payload.whatsapp = invitationValue
-      if (invitationMethod === 'sms') payload.sms = invitationValue
       
       const result = await apiCall('/api/seller/send-invitation', {
         method: 'POST',
@@ -341,16 +378,14 @@ export default function ClientsPage() {
         timeout: 15000
       })
 
-      if (result.success) {
-        const methodNames = {
-          email: 'Email',
-          whatsapp: 'WhatsApp',
-          sms: 'SMS'
-        }
-        alert(`✅ Invitación enviada por ${methodNames[invitationMethod]}`)
+      // apiCall envuelve la respuesta
+      const apiData = result.data
+
+      if (result.success && apiData?.success) {
+        alert(`✅ Invitación enviada por Email a ${invitationValue}`)
         closeInvitationModal()
       } else {
-        alert(result.error || 'Error al enviar la invitación')
+        alert(apiData?.error || result.error || 'Error al enviar la invitación')
       }
     } catch (err) {
       console.error('Error enviando invitación:', err)
