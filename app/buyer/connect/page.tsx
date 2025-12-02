@@ -124,8 +124,11 @@ function ConnectPageContent() {
         throw new Error(response.error || 'Error al conectar con el vendedor')
       }
 
+      // Obtener el estado de la respuesta (viene en response.data o directamente)
+      const connectionStatus = (response as any).status || response.data?.status || 'REQUEST_SENT'
+
       // Manejar diferentes estados de respuesta
-      switch (response.status) {
+      switch (connectionStatus) {
         case 'ALREADY_CONNECTED':
           setStatus('already_connected')
           setTimeout(() => {
