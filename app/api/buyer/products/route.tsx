@@ -4,80 +4,140 @@ import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeo
 import { prisma } from '@/lib/prisma'
 import { withDbRetry } from '@/lib/db-retry'
 
-// GET /api/buyer/products - VERSIÓN SIMPLIFICADA Y REPARADA
+/**
+ * GET /api/buyer/products
+ * 
+ * 🔐 CATÁLOGO AISLADO POR CLIENTE
+ * Cada cliente solo ve los productos que el vendedor le ha asignado
+ * con sus precios personalizados.
+ * 
+ * Si el usuario no está autenticado o no tiene cliente asociado,
+ * se devuelve un catálogo vacío.
+ */
 export async function GET(request: Request) {
   try {
     const { userId } = await auth()
-
-    // ✅ PERMITIR ACCESO SIN AUTENTICACIÓN (para catálogo público)
-    // O autenticado como cualquier rol (SELLER puede ver catálogo también)
-    
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search') || ''
+    const category = searchParams.get('category') || ''
 
-    console.log('🔍 [BUYER PRODUCTS] Buscando productos...')
+    console.log('🔍 [BUYER PRODUCTS] Buscando productos personalizados...')
     console.log('   - Usuario:', userId || 'ANÓNIMO')
     console.log('   - Búsqueda:', search || 'ninguna')
+    console.log('   - Categoría:', category || 'todas')
 
-    // ✅ Filtrar productos activos y con stock
+    // Si no hay usuario autenticado, devolver catálogo vacío
+    if (!userId) {
+      console.log('⚠️ [BUYER PRODUCTS] Usuario no autenticado - catálogo vacío')
+      return NextResponse.json({
+        success: true,
+        data: {
+          data: [],
+          total: 0,
+          message: 'Debes iniciar sesión para ver tu catálogo personalizado'
+        }
+      })
+    }
+
+    // Buscar el cliente asociado a este usuario
+    const authenticatedUser = await withDbRetry(() => 
+      prisma.authenticated_users.findUnique({
+        where: { authId: userId },
+        include: { client: true }
+      })
+    )
+
+    if (!authenticatedUser || !authenticatedUser.clientId) {
+      console.log('⚠️ [BUYER PRODUCTS] Usuario sin cliente asociado')
+      return NextResponse.json({
+        success: true,
+        data: {
+          data: [],
+          total: 0,
+          message: 'No tienes un perfil de comprador configurado'
+        }
+      })
+    }
+
+    const clientId = authenticatedUser.clientId
+    console.log('   - Cliente ID:', clientId)
+    console.log('   - Cliente:', authenticatedUser.client?.name)
+
+    // 🔐 AISLAMIENTO: Solo productos asignados a este cliente
     const whereConditions: any = {
-      isActive: true,
-      stock: { gt: 0 },
+      clientId: clientId,
+      isVisible: true,
+      product: {
+        isActive: true,
+        stock: { gt: 0 }
+      }
     }
 
     // Filtro de búsqueda
     if (search) {
-      whereConditions.OR = [
+      whereConditions.product.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
       ]
     }
 
-    // Obtener productos con retry (transient) y timeout combinados
-    const products = await withDbRetry(() => withPrismaTimeout(() => prisma.product.findMany({
-      where: whereConditions,
-      orderBy: { name: 'asc' },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        price: true,
-        stock: true,
-        unit: true,
-        category: true,
-        imageUrl: true,
-        sku: true,
-        isActive: true,
-      },
-    })))
+    // Filtro de categoría
+    if (category && category !== 'all' && category !== 'TODOS') {
+      whereConditions.product.category = category.toUpperCase()
+    }
 
-    console.log(`✅ [BUYER PRODUCTS] Encontrados ${products.length} productos`)
+    // Obtener productos del catálogo del cliente
+    const clientProducts = await withDbRetry(() => withPrismaTimeout(() => 
+      prisma.clientProduct.findMany({
+        where: whereConditions,
+        include: {
+          product: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              price: true, // Precio base (referencia)
+              stock: true,
+              unit: true,
+              category: true,
+              imageUrl: true,
+              sku: true,
+              isActive: true,
+            }
+          }
+        },
+        orderBy: {
+          product: { name: 'asc' }
+        }
+      })
+    ))
+
+    // Transformar datos para el frontend
+    // El precio que ve el cliente es su customPrice, no el precio base
+    const products = clientProducts.map(cp => ({
+      id: cp.product.id,
+      name: cp.product.name,
+      description: cp.product.description,
+      price: cp.customPrice, // 🔐 Precio personalizado del cliente
+      originalPrice: cp.product.price, // Precio base (oculto o referencia)
+      stock: cp.product.stock,
+      unit: cp.product.unit,
+      category: cp.product.category,
+      imageUrl: cp.product.imageUrl,
+      sku: cp.product.sku,
+      isActive: cp.product.isActive,
+      notes: cp.notes, // Notas del vendedor para este cliente
+    }))
+
+    console.log(`✅ [BUYER PRODUCTS] Encontrados ${products.length} productos para cliente ${authenticatedUser.client?.name}`)
     
-    // Debug: Mostrar primeros 3 productos
     if (products.length > 0) {
       console.log('   Primeros productos:')
       products.slice(0, 3).forEach((p: any) => {
-        console.log(`   - ${p.name} (Stock: ${p.stock}, Active: ${p.isActive})`)
+        console.log(`   - ${p.name} (Precio cliente: $${p.price}, Stock: ${p.stock})`)
       })
     } else {
-      console.log('   ⚠️ No se encontraron productos con stock > 0')
-      
-      // Debug adicional: verificar TODOS los productos
-      const allProducts = await withDbRetry(() => prisma.product.findMany({
-        select: {
-          id: true,
-          name: true,
-          stock: true,
-          isActive: true,
-        }
-      }))
-      console.log(`   ℹ️ Total de productos en DB: ${allProducts.length}`)
-      if (allProducts.length > 0) {
-        console.log('   Todos los productos:')
-        allProducts.forEach((p: any) => {
-          console.log(`   - ${p.name} (Stock: ${p.stock}, Active: ${p.isActive})`)
-        })
-      }
+      console.log('   ⚠️ Este cliente no tiene productos asignados')
     }
 
     return NextResponse.json({
@@ -85,6 +145,7 @@ export async function GET(request: Request) {
       data: {
         data: products,
         total: products.length,
+        clientName: authenticatedUser.client?.name
       }
     })
 
@@ -107,7 +168,5 @@ export async function GET(request: Request) {
       },
       { status: 500 }
     )
-  } finally {
-    // prisma singleton
   }
 }

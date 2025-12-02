@@ -14,7 +14,8 @@ import {
   Award,
   TrendingUp,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Package
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 
@@ -39,11 +40,12 @@ interface ClientProfileCardProps {
   onDelete: (id: string) => void
   onSelect?: (clientId: string) => void
   onViewHistory?: () => void
+  onManageCatalog?: () => void
   colorIndex: number
   isExpanded?: boolean
 }
 
-export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, onViewHistory, colorIndex, isExpanded = false }: ClientProfileCardProps) {
+export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, onViewHistory, onManageCatalog, colorIndex, isExpanded = false }: ClientProfileCardProps) {
   // Si hay onSelect, el componente está en modo lista; si no, está en modo detalle
   // Si isExpanded es true, forzamos modo expandido y siempre mostramos detalles
   const [expanded, setExpanded] = useState(!onSelect || isExpanded)
@@ -162,6 +164,15 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
 
           {/* Botones de acción */}
           <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+            {onManageCatalog && (
+              <button
+                onClick={onManageCatalog}
+                className="p-2 bg-white/20 hover:bg-green-500/50 backdrop-blur-sm rounded-lg transition-colors"
+                title="Gestionar catálogo"
+              >
+                <Package className="w-4 h-4 text-white" />
+              </button>
+            )}
             {onViewHistory && (
               <button
                 onClick={onViewHistory}

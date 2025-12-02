@@ -31,10 +31,32 @@ model Client {
   returns                  Return[]
   creditNotes              CreditNote[]
   notifications            Notification[]
+  clientProducts           ClientProduct[]
 
   @@index([email])
   @@index([sellerId])
   @@map("clients")
+}
+
+// 🔐 Catálogo personalizado por cliente - Aislamiento completo
+model ClientProduct {
+  id          String   @id @default(uuid())
+  clientId    String
+  productId   String
+  customPrice Float    // Precio personalizado para este cliente
+  isVisible   Boolean  @default(true) // Si el cliente puede ver este producto
+  notes       String?  // Notas del vendedor sobre este producto para este cliente
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, productId]) // Un producto por cliente
+  @@index([clientId])
+  @@index([productId])
+  @@index([isVisible])
+  @@map("client_products")
 }
 
 
@@ -92,6 +114,7 @@ model Product {
   productTags         ProductTag[]
   variants            ProductVariant[]
   favorites           Favorite[]
+  clientProducts      ClientProduct[]
 
   @@index([name])
   @@index([unit])

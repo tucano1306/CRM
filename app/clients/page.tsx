@@ -6,6 +6,7 @@ import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
 import { apiCall } from '@/lib/api-client'
 import ClientProfileCard from '@/components/clients/ClientProfileCard'
+import ManageCatalogModal from '@/components/clients/ManageCatalogModal'
 import { formatPrice } from '@/lib/utils'
 import { 
   Plus, 
@@ -66,6 +67,11 @@ export default function ClientsPage() {
   const [historyClientName, setHistoryClientName] = useState<string>('')
   const [clientOrders, setClientOrders] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
+  
+  // Estados para modal de catálogo
+  const [showCatalogModal, setShowCatalogModal] = useState(false)
+  const [catalogClientId, setCatalogClientId] = useState<string | null>(null)
+  const [catalogClientName, setCatalogClientName] = useState<string>('')
   
   // 🐛 DEBUG: Monitorear estado del modal
   useEffect(() => {
@@ -282,6 +288,18 @@ export default function ClientsPage() {
     if (clientOrders.length > 0 && historyClientName) {
       exportClientHistory(historyClientName, clientOrders)
     }
+  }
+
+  const openCatalogModal = (clientId: string, clientName: string) => {
+    setCatalogClientId(clientId)
+    setCatalogClientName(clientName)
+    setShowCatalogModal(true)
+  }
+
+  const closeCatalogModal = () => {
+    setShowCatalogModal(false)
+    setCatalogClientId(null)
+    setCatalogClientName('')
   }
 
   const closeInvitationModal = () => {
@@ -743,6 +761,7 @@ export default function ClientsPage() {
                 onDelete={deleteClient}
                 onSelect={selectedClientId ? undefined : handleSelectClient}
                 onViewHistory={() => viewClientHistory(client.id, client.name)}
+                onManageCatalog={() => openCatalogModal(client.id, client.name)}
                 colorIndex={index}
                 isExpanded={selectedClientId === client.id}
               />
@@ -1066,6 +1085,19 @@ export default function ClientsPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Modal de Gestión de Catálogo */}
+      {showCatalogModal && catalogClientId && (
+        <ManageCatalogModal
+          isOpen={showCatalogModal}
+          onClose={closeCatalogModal}
+          clientId={catalogClientId}
+          clientName={catalogClientName}
+          onSuccess={() => {
+            console.log('✅ Catálogo actualizado')
+          }}
+        />
       )}
     </MainLayout>
   )
