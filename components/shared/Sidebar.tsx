@@ -36,11 +36,6 @@ const menuItems = [
     icon: Home
   },
   {
-    title: 'Productos',
-    href: '/products',
-    icon: Package
-  },
-  {
     title: 'Clientes',
     href: '/clients',
     icon: Users
