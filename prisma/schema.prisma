@@ -324,6 +324,53 @@ enum NotificationType {
   QUOTE_REJECTED         // Comprador → Vendedor (cotización rechazada)
   CREDIT_NOTE_ISSUED     // Vendedor → Comprador
   LOW_STOCK_ALERT        // Sistema → Vendedor
+  CONNECTION_REQUEST     // Comprador → Vendedor (solicitud de conexión)
+  CONNECTION_ACCEPTED    // Vendedor → Comprador (conexión aceptada)
+  CONNECTION_REJECTED    // Vendedor → Comprador (conexión rechazada)
+}
+
+// 🔗 Solicitudes de conexión Buyer → Seller
+enum ConnectionRequestStatus {
+  PENDING   // Esperando respuesta del vendedor
+  ACCEPTED  // Vendedor aceptó
+  REJECTED  // Vendedor rechazó
+  EXPIRED   // Expiró sin respuesta
+}
+
+model ConnectionRequest {
+  id              String                  @id @default(uuid())
+  
+  // Datos del comprador que solicita
+  buyerClerkId    String                  // Clerk User ID del comprador
+  buyerName       String                  // Nombre del comprador
+  buyerEmail      String                  // Email del comprador
+  buyerPhone      String?                 // Teléfono opcional
+  buyerAddress    String?                 // Dirección opcional
+  
+  // Vendedor destino
+  sellerId        String                  // ID del vendedor en DB
+  
+  // Estado de la solicitud
+  status          ConnectionRequestStatus @default(PENDING)
+  
+  // Token de invitación usado (para tracking)
+  invitationToken String?
+  
+  // Respuesta del vendedor
+  responseNote    String?                 // Nota del vendedor al aceptar/rechazar
+  respondedAt     DateTime?               // Cuándo respondió
+  
+  // Auditoría
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  expiresAt       DateTime?               // Fecha de expiración opcional
+
+  @@index([sellerId])
+  @@index([buyerClerkId])
+  @@index([status])
+  @@index([sellerId, status])
+  @@index([createdAt])
+  @@map("connection_requests")
 }
 
 model ChatSchedule {

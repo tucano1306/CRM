@@ -5,22 +5,26 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Loader2, CheckCircle, XCircle, UserPlus } from 'lucide-react'
+import { Loader2, CheckCircle, XCircle, UserPlus, Clock, Send } from 'lucide-react'
 import { apiCall } from '@/lib/api-client'
+
+type ConnectionStatus = 'loading' | 'ready' | 'connecting' | 'request_sent' | 'pending' | 'already_connected' | 'error'
 
 function ConnectPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { isLoaded, userId } = useAuth()
   
-  const [loading, setLoading] = useState(true)
-  const [connecting, setConnecting] = useState(false)
+  const [status, setStatus] = useState<ConnectionStatus>('loading')
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
   const [sellerInfo, setSellerInfo] = useState<{
     name: string
     email: string
     phone?: string
+  } | null>(null)
+  const [requestInfo, setRequestInfo] = useState<{
+    requestId?: string
+    createdAt?: string
   } | null>(null)
 
   const token = searchParams.get('token')
@@ -28,7 +32,7 @@ function ConnectPageContent() {
 
   const validateInvitation = useCallback(async () => {
     try {
-      setLoading(true)
+      setStatus('loading')
       setError(null)
 
       console.log('🔍 Validando invitación:', { token, sellerId })
@@ -43,21 +47,18 @@ function ConnectPageContent() {
       const response = await apiCall(`/api/sellers/${sellerId}`)
       
       console.log('📡 Respuesta de validación:', response)
-      console.log('📡 response.success:', response.success)
-      console.log('📡 response.data:', response.data)
-      console.log('📡 response.error:', response.error)
       
       if (!response.success) {
         throw new Error('Vendedor no encontrado')
       }
 
       setSellerInfo(response.data)
-      setLoading(false)
+      setStatus('ready')
 
     } catch (err: any) {
       console.error('Error validando invitación:', err)
       setError(err.message || 'Error al validar la invitación')
-      setLoading(false)
+      setStatus('error')
     }
   }, [token, sellerId])
 
@@ -82,7 +83,7 @@ function ConnectPageContent() {
     // Si no hay token o sellerId, mostrar error
     if (!token || !sellerId) {
       setError('Link de invitación inválido')
-      setLoading(false)
+      setStatus('error')
       return
     }
 
@@ -103,7 +104,7 @@ function ConnectPageContent() {
     }
 
     try {
-      setConnecting(true)
+      setStatus('connecting')
       setError(null)
 
       console.log('🔗 Conectando con vendedor:', { token, sellerId, userId })
@@ -123,22 +124,43 @@ function ConnectPageContent() {
         throw new Error(response.error || 'Error al conectar con el vendedor')
       }
 
-      setSuccess(true)
-
-      // Redirigir al dashboard del comprador después de 1.5 segundos
-      setTimeout(() => {
-        router.push('/buyer/dashboard')
-      }, 1500)
+      // Manejar diferentes estados de respuesta
+      switch (response.status) {
+        case 'ALREADY_CONNECTED':
+          setStatus('already_connected')
+          setTimeout(() => {
+            router.push('/buyer/dashboard')
+          }, 2000)
+          break
+          
+        case 'PENDING':
+          setStatus('pending')
+          setRequestInfo({
+            requestId: response.data?.requestId,
+            createdAt: response.data?.createdAt
+          })
+          break
+          
+        case 'REQUEST_SENT':
+          setStatus('request_sent')
+          setRequestInfo({
+            requestId: response.data?.requestId
+          })
+          break
+          
+        default:
+          setStatus('request_sent')
+      }
 
     } catch (err: any) {
       console.error('Error conectando con vendedor:', err)
       setError(err.message || 'Error al conectar con el vendedor')
-    } finally {
-      setConnecting(false)
+      setStatus('error')
     }
   }
 
-  if (loading) {
+  // Estado: Cargando
+  if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="w-full max-w-md">
@@ -153,7 +175,8 @@ function ConnectPageContent() {
     )
   }
 
-  if (error && !sellerInfo) {
+  // Estado: Error
+  if (status === 'error' && !sellerInfo) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="w-full max-w-md">
@@ -174,51 +197,157 @@ function ConnectPageContent() {
     )
   }
 
-  if (success) {
+  // Estado: Solicitud enviada
+  if (status === 'request_sent') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-6 w-6 text-green-600" />
-              <CardTitle>¡Conexión Exitosa!</CardTitle>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100">
+        <Card className="w-full max-w-md shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-t-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-full">
+                <Send className="h-6 w-6" />
+              </div>
+              <div>
+                <CardTitle className="text-white">¡Solicitud Enviada!</CardTitle>
+                <CardDescription className="text-green-100">
+                  Tu solicitud está pendiente de aprobación
+                </CardDescription>
+              </div>
             </div>
           </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 mb-4">
-              Te has conectado exitosamente con <span className="font-semibold">{sellerInfo?.name}</span>.
-            </p>
-            <p className="text-sm text-gray-500">
-              Redirigiendo a tu dashboard...
-            </p>
+          <CardContent className="pt-6 space-y-4">
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+              <p className="text-gray-700">
+                Hemos enviado tu solicitud a <span className="font-bold text-green-700">{sellerInfo?.name}</span>.
+              </p>
+              <p className="text-sm text-gray-600 mt-2">
+                Te notificaremos cuando el vendedor apruebe tu solicitud. Esto puede tomar unos minutos.
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <Clock className="h-5 w-5 text-amber-600" />
+              <span className="text-sm text-amber-800">Esperando respuesta del vendedor...</span>
+            </div>
+
+            <Button 
+              onClick={() => router.push('/')} 
+              variant="outline"
+              className="w-full"
+            >
+              Volver al inicio
+            </Button>
           </CardContent>
         </Card>
       </div>
     )
   }
 
+  // Estado: Ya tenía solicitud pendiente
+  if (status === 'pending') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-100">
+        <Card className="w-full max-w-md shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-t-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-full">
+                <Clock className="h-6 w-6" />
+              </div>
+              <div>
+                <CardTitle className="text-white">Solicitud Pendiente</CardTitle>
+                <CardDescription className="text-amber-100">
+                  Ya tienes una solicitud en proceso
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-4">
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <p className="text-gray-700">
+                Ya enviaste una solicitud a <span className="font-bold text-amber-700">{sellerInfo?.name}</span>.
+              </p>
+              <p className="text-sm text-gray-600 mt-2">
+                El vendedor aún no ha respondido. Te notificaremos cuando lo haga.
+              </p>
+            </div>
+
+            <Button 
+              onClick={() => router.push('/')} 
+              variant="outline"
+              className="w-full"
+            >
+              Volver al inicio
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Estado: Ya conectado
+  if (status === 'already_connected') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <Card className="w-full max-w-md shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-t-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-full">
+                <CheckCircle className="h-6 w-6" />
+              </div>
+              <div>
+                <CardTitle className="text-white">¡Ya Estás Conectado!</CardTitle>
+                <CardDescription className="text-blue-100">
+                  Ya eres cliente de este vendedor
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <p className="text-gray-700">
+                Ya estás conectado con <span className="font-bold text-blue-700">{sellerInfo?.name}</span>.
+              </p>
+              <p className="text-sm text-gray-600 mt-2">
+                Redirigiendo a tu dashboard...
+              </p>
+            </div>
+            
+            <div className="flex justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Estado: Listo para conectar
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <UserPlus className="h-6 w-6 text-blue-600" />
-            <CardTitle>Invitación de Vendedor</CardTitle>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-indigo-100">
+      <Card className="w-full max-w-md shadow-xl">
+        <CardHeader className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-t-lg">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-white/20 rounded-full">
+              <UserPlus className="h-6 w-6" />
+            </div>
+            <div>
+              <CardTitle className="text-white">Invitación de Vendedor</CardTitle>
+              <CardDescription className="text-purple-100">
+                Has sido invitado a conectarte
+              </CardDescription>
+            </div>
           </div>
-          <CardDescription>
-            Has sido invitado a conectarte con un vendedor
-          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="pt-6 space-y-4">
           {sellerInfo && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-gray-600 mb-2">Vendedor:</p>
-              <p className="font-semibold text-lg">{sellerInfo.name}</p>
+            <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-5">
+              <p className="text-sm text-gray-500 mb-1">Vendedor:</p>
+              <p className="font-bold text-xl text-purple-800">{sellerInfo.name}</p>
               {sellerInfo.email && (
-                <p className="text-sm text-gray-600 mt-1">{sellerInfo.email}</p>
+                <p className="text-sm text-gray-600 mt-2">📧 {sellerInfo.email}</p>
               )}
               {sellerInfo.phone && (
-                <p className="text-sm text-gray-600">{sellerInfo.phone}</p>
+                <p className="text-sm text-gray-600">📱 {sellerInfo.phone}</p>
               )}
             </div>
           )}
@@ -231,12 +360,14 @@ function ConnectPageContent() {
 
           {!userId ? (
             <div className="space-y-3">
-              <p className="text-sm text-gray-600">
-                Para conectarte con este vendedor, necesitas iniciar sesión o crear una cuenta.
-              </p>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-sm text-blue-800">
+                  📝 Para conectarte necesitas iniciar sesión o crear una cuenta.
+                </p>
+              </div>
               <Button 
                 onClick={handleConnect} 
-                className="w-full"
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
                 size="lg"
               >
                 Continuar
@@ -244,22 +375,27 @@ function ConnectPageContent() {
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-sm text-gray-600">
-                Al aceptar, podrás realizar pedidos y comunicarte directamente con este vendedor.
-              </p>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="text-sm text-green-800">
+                  ✅ Al enviar la solicitud, el vendedor recibirá una notificación y podrá aceptarte como cliente.
+                </p>
+              </div>
               <Button 
                 onClick={handleConnect} 
-                disabled={connecting}
-                className="w-full"
+                disabled={status === 'connecting'}
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
                 size="lg"
               >
-                {connecting ? (
+                {status === 'connecting' ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Conectando...
+                    Enviando solicitud...
                   </>
                 ) : (
-                  'Aceptar y Conectar'
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Enviar Solicitud de Conexión
+                  </>
                 )}
               </Button>
               <Button 

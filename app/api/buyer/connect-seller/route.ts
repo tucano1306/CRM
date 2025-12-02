@@ -5,7 +5,8 @@ import { prisma } from '@/lib/prisma'
 
 /**
  * POST /api/buyer/connect-seller
- * Conecta un comprador (cliente) con un vendedor usando un token de invitación
+ * Crea una solicitud de conexión con un vendedor usando un token de invitación
+ * El vendedor debe aprobar la solicitud para que el cliente sea creado
  */
 export async function POST(request: NextRequest) {
   try {
@@ -35,12 +36,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verificar que el vendedor existe y obtener su authenticated_user
+    // Verificar que el vendedor existe
     const seller = await prisma.seller.findUnique({
-      where: { id: sellerId },
-      include: {
-        authenticated_users: true
-      }
+      where: { id: sellerId }
     })
 
     if (!seller) {
@@ -50,118 +48,133 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Obtener el authId del vendedor para las notificaciones
-    const sellerAuthId = seller.authenticated_users?.[0]?.authId
-
-    // Buscar si el usuario ya tiene un authenticated_user
+    // Buscar si el usuario ya tiene un authenticated_user y un client con este vendedor
     const authUser = await prisma.authenticated_users.findFirst({
-      where: { authId: userId }, // Buscar por authId (el ID de Clerk), no por id
+      where: { authId: userId },
       include: {
-        clients: true
+        clients: {
+          where: { sellerId }
+        }
       }
     })
 
-    let client
-
+    // Si ya está conectado con este vendedor, devolver éxito
     if (authUser && authUser.clients.length > 0) {
-      // El usuario ya tiene un client, actualizar el sellerId
-      client = authUser.clients[0]
-      
-      // Verificar si ya está conectado a este vendedor
-      if (client.sellerId === sellerId) {
-        return NextResponse.json({
-          success: true,
-          message: 'Ya estás conectado con este vendedor',
-          data: {
-            clientId: client.id,
-            sellerId: seller.id
-          }
-        })
-      }
-
-      // Actualizar la conexión con el nuevo vendedor
-      client = await prisma.client.update({
-        where: { id: client.id },
-        data: { sellerId }
-      })
-
-    } else {
-      // El usuario no tiene cliente, obtener info de Clerk
-      const clerkUser = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`
-        }
-      }).then(res => res.json())
-
-      const email = clerkUser.email_addresses?.[0]?.email_address || 'sin-email@example.com'
-      const firstName = clerkUser.first_name || ''
-      const lastName = clerkUser.last_name || ''
-      const fullName = `${firstName} ${lastName}`.trim() || email.split('@')[0]
-      const phone = clerkUser.phone_numbers?.[0]?.phone_number || ''
-
-      // Crear o actualizar authenticated_user usando upsert
-      const authUserData = await prisma.authenticated_users.upsert({
-        where: { authId: userId },
-        update: {
-          email,
-          name: fullName,
-          updatedAt: new Date()
-        },
-        create: {
-          id: userId,
-          authId: userId,
-          email,
-          name: fullName,
-          role: 'CLIENT',
-          updatedAt: new Date()
-        }
-      })
-
-      // Crear el client conectado al vendedor
-      client = await prisma.client.create({
+      return NextResponse.json({
+        success: true,
+        status: 'ALREADY_CONNECTED',
+        message: 'Ya estás conectado con este vendedor',
         data: {
-          name: fullName,
-          email,
-          phone: phone || null,
-          address: 'Por definir',
-          sellerId,
-          authenticated_users: {
-            connect: { id: authUserData.id }
-          }
+          clientId: authUser.clients[0].id,
+          sellerId: seller.id,
+          sellerName: seller.name
         }
       })
     }
 
-    // Crear notificación para el vendedor (siempre, sin importar si era nuevo o actualización)
+    // Verificar si ya tiene una solicitud pendiente
+    const existingRequest = await prisma.connectionRequest.findFirst({
+      where: {
+        buyerClerkId: userId,
+        sellerId,
+        status: 'PENDING'
+      }
+    })
+
+    if (existingRequest) {
+      return NextResponse.json({
+        success: true,
+        status: 'PENDING',
+        message: 'Ya tienes una solicitud pendiente con este vendedor. Espera a que la apruebe.',
+        data: {
+          requestId: existingRequest.id,
+          sellerId: seller.id,
+          sellerName: seller.name,
+          createdAt: existingRequest.createdAt
+        }
+      })
+    }
+
+    // Obtener info del usuario de Clerk
+    const clerkUser = await fetch(`https://api.clerk.com/v1/users/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}`
+      }
+    }).then(res => res.json())
+
+    const email = clerkUser.email_addresses?.[0]?.email_address || 'sin-email@example.com'
+    const firstName = clerkUser.first_name || ''
+    const lastName = clerkUser.last_name || ''
+    const fullName = `${firstName} ${lastName}`.trim() || email.split('@')[0]
+    const phone = clerkUser.phone_numbers?.[0]?.phone_number || ''
+
+    // Crear o actualizar authenticated_user
+    await prisma.authenticated_users.upsert({
+      where: { authId: userId },
+      update: {
+        email,
+        name: fullName,
+        updatedAt: new Date()
+      },
+      create: {
+        id: userId,
+        authId: userId,
+        email,
+        name: fullName,
+        role: 'CLIENT',
+        updatedAt: new Date()
+      }
+    })
+
+    // Crear la solicitud de conexión
+    const connectionRequest = await prisma.connectionRequest.create({
+      data: {
+        buyerClerkId: userId,
+        buyerName: fullName,
+        buyerEmail: email,
+        buyerPhone: phone || null,
+        sellerId,
+        invitationToken: token,
+        status: 'PENDING',
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Expira en 7 días
+      }
+    })
+
+    // Crear notificación para el vendedor
     await prisma.notification.create({
       data: {
         sellerId: seller.id,
-        type: 'NEW_ORDER',
-        title: '🎉 Nuevo cliente conectado',
-        message: `${client.name} aceptó tu invitación y se conectó como cliente`,
+        type: 'CONNECTION_REQUEST',
+        title: '🔔 Nueva solicitud de conexión',
+        message: `${fullName} (${email}) quiere conectarse contigo como cliente`,
+        relatedId: connectionRequest.id,
         metadata: {
-          clientId: client.id,
-          clientName: client.name,
-          clientEmail: client.email,
-          action: 'CLIENT_CONNECTED'
+          requestId: connectionRequest.id,
+          buyerName: fullName,
+          buyerEmail: email,
+          buyerPhone: phone
         }
       }
     })
 
+    console.log('✅ Solicitud de conexión creada:', connectionRequest.id)
+    console.log('📧 Notificación enviada al vendedor:', seller.id, seller.name)
+
     return NextResponse.json({
       success: true,
-      message: 'Conectado exitosamente con el vendedor',
+      status: 'REQUEST_SENT',
+      message: `Solicitud enviada a ${seller.name}. Te notificaremos cuando la apruebe.`,
       data: {
-        clientId: client.id,
+        requestId: connectionRequest.id,
         sellerId: seller.id,
         sellerName: seller.name
       }
     })
 
   } catch (error) {
-    console.error('❌ Error conectando buyer con seller:', error)
+    console.error('❌ Error creando solicitud de conexión:', error)
     return NextResponse.json(
-      { error: 'Error al conectar con el vendedor' },
+      { error: 'Error al enviar solicitud de conexión' },
       { status: 500 }
     )
   }

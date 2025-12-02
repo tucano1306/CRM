@@ -7,6 +7,7 @@ import PageHeader from '@/components/shared/PageHeader'
 import { apiCall } from '@/lib/api-client'
 import ClientProfileCard from '@/components/clients/ClientProfileCard'
 import ManageCatalogModal from '@/components/clients/ManageCatalogModal'
+import ConnectionRequestsPanel from '@/components/clients/ConnectionRequestsPanel'
 import { formatPrice } from '@/lib/utils'
 import { 
   Plus, 
@@ -566,6 +567,16 @@ export default function ClientsPage() {
             <DollarSign className="w-12 h-12 text-purple-200 opacity-80" />
           </div>
         </div>
+      </div>
+
+      {/* 🔔 Panel de Solicitudes de Conexión Pendientes */}
+      <div className="mb-6">
+        <ConnectionRequestsPanel
+          onRequestAccepted={(clientId, clientName) => {
+            // Recargar clientes cuando se acepte una solicitud
+            fetchClients()
+          }}
+        />
       </div>
 
       {/* Barra de búsqueda moderna */}
