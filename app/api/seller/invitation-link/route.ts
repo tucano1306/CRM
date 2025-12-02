@@ -42,11 +42,24 @@ export async function POST(request: NextRequest) {
     })
 
     // Construir la URL completa
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-                   request.headers.get('origin') || 
-                   'http://localhost:3000'
+    // Prioridad: NEXT_PUBLIC_APP_URL > VERCEL_URL > origin > localhost
+    let baseUrl = process.env.NEXT_PUBLIC_APP_URL
+    
+    if (!baseUrl && process.env.VERCEL_URL) {
+      baseUrl = `https://${process.env.VERCEL_URL}`
+    }
+    
+    if (!baseUrl) {
+      baseUrl = request.headers.get('origin') || 'http://localhost:3000'
+    }
+    
+    // Asegurar que no termine con /
+    baseUrl = baseUrl.replace(/\/$/, '')
     
     const invitationLink = `${baseUrl}/buyer/connect?token=${token}&seller=${seller.id}`
+    
+    console.log('🔗 Link generado:', invitationLink)
+    console.log('📍 Base URL usada:', baseUrl)
 
     return NextResponse.json({
       success: true,

@@ -97,9 +97,9 @@ function ConnectPageContent() {
       if (typeof window !== 'undefined') {
         sessionStorage.setItem('pendingInvitation', JSON.stringify({ token, sellerId }))
       }
-      // Redirigir a sign-in con redirect_url para volver aquí
+      // Redirigir a sign-up de comprador con redirect_url para volver aquí
       const currentUrl = window.location.href
-      router.push(`/sign-in?redirect_url=${encodeURIComponent(currentUrl)}`)
+      router.push(`/buyer/sign-up?redirect_url=${encodeURIComponent(currentUrl)}`)
       return
     }
 
