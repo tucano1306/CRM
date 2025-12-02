@@ -378,16 +378,83 @@ export default function ClientsViewWithOrders({
             </div>
           ) : (
             filteredClients.map((clientData, index) => {
-              // Color distintivo por cliente basado en el índice
+              // 🎨 Esquemas de colores vibrantes y modernos
               const colors = [
-                { bg: 'from-purple-400 to-purple-600', border: 'border-purple-300', stat: 'bg-purple-50 border-purple-200 text-purple-600' },
-                { bg: 'from-blue-400 to-blue-600', border: 'border-blue-300', stat: 'bg-blue-50 border-blue-200 text-blue-600' },
-                { bg: 'from-green-400 to-green-600', border: 'border-green-300', stat: 'bg-green-50 border-green-200 text-green-600' },
-                { bg: 'from-orange-400 to-orange-600', border: 'border-orange-300', stat: 'bg-orange-50 border-orange-200 text-orange-600' },
-                { bg: 'from-pink-400 to-pink-600', border: 'border-pink-300', stat: 'bg-pink-50 border-pink-200 text-pink-600' },
-                { bg: 'from-indigo-400 to-indigo-600', border: 'border-indigo-300', stat: 'bg-indigo-50 border-indigo-200 text-indigo-600' },
+                { 
+                  bg: 'from-violet-500 via-purple-500 to-fuchsia-500', 
+                  glow: 'shadow-purple-200',
+                  accent: 'text-purple-600',
+                  light: 'bg-purple-50',
+                  border: 'border-purple-100',
+                  statBg: 'from-purple-100 to-purple-50',
+                  emoji: '💜'
+                },
+                { 
+                  bg: 'from-blue-500 via-cyan-500 to-teal-500', 
+                  glow: 'shadow-blue-200',
+                  accent: 'text-blue-600',
+                  light: 'bg-blue-50',
+                  border: 'border-blue-100',
+                  statBg: 'from-blue-100 to-blue-50',
+                  emoji: '💙'
+                },
+                { 
+                  bg: 'from-emerald-500 via-green-500 to-lime-500', 
+                  glow: 'shadow-green-200',
+                  accent: 'text-emerald-600',
+                  light: 'bg-emerald-50',
+                  border: 'border-emerald-100',
+                  statBg: 'from-emerald-100 to-emerald-50',
+                  emoji: '💚'
+                },
+                { 
+                  bg: 'from-orange-500 via-amber-500 to-yellow-500', 
+                  glow: 'shadow-orange-200',
+                  accent: 'text-orange-600',
+                  light: 'bg-orange-50',
+                  border: 'border-orange-100',
+                  statBg: 'from-orange-100 to-orange-50',
+                  emoji: '🧡'
+                },
+                { 
+                  bg: 'from-rose-500 via-pink-500 to-fuchsia-500', 
+                  glow: 'shadow-pink-200',
+                  accent: 'text-pink-600',
+                  light: 'bg-pink-50',
+                  border: 'border-pink-100',
+                  statBg: 'from-pink-100 to-pink-50',
+                  emoji: '💗'
+                },
+                { 
+                  bg: 'from-indigo-500 via-blue-500 to-purple-500', 
+                  glow: 'shadow-indigo-200',
+                  accent: 'text-indigo-600',
+                  light: 'bg-indigo-50',
+                  border: 'border-indigo-100',
+                  statBg: 'from-indigo-100 to-indigo-50',
+                  emoji: '💜'
+                },
               ]
               const colorScheme = colors[index % colors.length]
+
+              // Calcular nivel del cliente basado en total gastado
+              const getClientLevel = (spent: number) => {
+                if (spent >= 1000) return { emoji: '👑', label: 'VIP', color: 'from-amber-400 to-yellow-500' }
+                if (spent >= 500) return { emoji: '💎', label: 'Premium', color: 'from-purple-400 to-pink-500' }
+                if (spent >= 200) return { emoji: '⭐', label: 'Frecuente', color: 'from-blue-400 to-cyan-500' }
+                return { emoji: '🌱', label: 'Nuevo', color: 'from-green-400 to-emerald-500' }
+              }
+              const clientLevel = getClientLevel(clientData.totalSpent)
+
+              // Calcular tiempo desde última orden
+              const getLastOrderText = () => {
+                const days = Math.floor((Date.now() - new Date(clientData.lastOrderDate).getTime()) / (1000 * 60 * 60 * 24))
+                if (days === 0) return { text: 'Hoy', emoji: '🔥', hot: true }
+                if (days === 1) return { text: 'Ayer', emoji: '✨', hot: true }
+                if (days <= 7) return { text: `Hace ${days} días`, emoji: '📅', hot: false }
+                return { text: `Hace ${days} días`, emoji: '⏰', hot: false }
+              }
+              const lastOrder = getLastOrderText()
               
               return (
                 <div
@@ -396,88 +463,129 @@ export default function ClientsViewWithOrders({
                   style={{
                     animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`
                   }}
-                  className={`bg-white rounded-xl shadow-md hover:shadow-2xl transition-all duration-300 cursor-pointer border-2 ${colorScheme.border} hover:scale-[1.02] group overflow-hidden`}
+                  className={`relative bg-white rounded-2xl shadow-lg ${colorScheme.glow} hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-[1.03] group overflow-hidden`}
                 >
-                  {/* Banda superior de color */}
-                  <div className={`h-1 bg-gradient-to-r ${colorScheme.bg}`} />
+                  {/* 🌈 Banda superior con gradiente vibrante */}
+                  <div className={`h-24 bg-gradient-to-r ${colorScheme.bg} relative overflow-hidden`}>
+                    {/* Decoración de fondo */}
+                    <div className="absolute inset-0 opacity-30 pointer-events-none">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-white/20 rounded-full -translate-y-1/2 translate-x-1/2" />
+                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+                    </div>
+                    
+                    {/* Badge de nivel del cliente */}
+                    <div className={`absolute top-3 right-3 px-3 py-1 bg-gradient-to-r ${clientLevel.color} rounded-full shadow-lg flex items-center gap-1.5`}>
+                      <span className="text-sm">{clientLevel.emoji}</span>
+                      <span className="text-xs font-bold text-white">{clientLevel.label}</span>
+                    </div>
+
+                    {/* Indicador de actividad reciente */}
+                    {lastOrder.hot && (
+                      <div className="absolute top-3 left-3 px-2 py-1 bg-white/20 backdrop-blur-sm rounded-full flex items-center gap-1">
+                        <span className="text-sm">{lastOrder.emoji}</span>
+                        <span className="text-xs font-semibold text-white">{lastOrder.text}</span>
+                      </div>
+                    )}
+                  </div>
                   
-                  <div className="p-6">
-                    {/* Header con Avatar */}
-                    <div className="flex items-start gap-4 mb-4">
-                      <div className={`flex-shrink-0 w-14 h-14 bg-gradient-to-br ${colorScheme.bg} rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg ring-4 ring-white`}>
-                        {clientData.client.name.charAt(0).toUpperCase()}
+                  {/* Avatar flotante */}
+                  <div className="relative px-5 -mt-10">
+                    <div className={`w-20 h-20 bg-gradient-to-br ${colorScheme.bg} rounded-2xl flex items-center justify-center text-white font-black text-3xl shadow-xl ring-4 ring-white transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300`}>
+                      {clientData.client.name.charAt(0).toUpperCase()}
+                    </div>
+                  </div>
+
+                  <div className="p-5 pt-3">
+                    {/* Nombre y contacto */}
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-extrabold text-gray-900 text-xl truncate group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-purple-600 group-hover:to-pink-600 transition-all">
+                          {clientData.client.name}
+                        </h3>
+                        <span className="text-lg">{colorScheme.emoji}</span>
                       </div>
                       
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-bold text-gray-900 text-lg truncate">
-                            {clientData.client.name}
-                          </h3>
-                          <ShoppingBag className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                        </div>
-                        <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
-                          <Mail className="h-3 w-3 flex-shrink-0" />
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <div className={`p-1.5 ${colorScheme.light} rounded-lg`}>
+                            <Mail className={`h-3.5 w-3.5 ${colorScheme.accent}`} />
+                          </div>
                           <span className="truncate">{clientData.client.email}</span>
                         </div>
                         {clientData.client.phone && (
-                          <div className="flex items-center gap-1 text-xs text-gray-600">
-                            <Phone className="h-3 w-3 flex-shrink-0" />
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <div className={`p-1.5 ${colorScheme.light} rounded-lg`}>
+                              <Phone className={`h-3.5 w-3.5 ${colorScheme.accent}`} />
+                            </div>
                             <span>{clientData.client.phone}</span>
                           </div>
                         )}
                       </div>
+                    </div>
 
-                      <div className="flex flex-col items-center gap-1">
-                        <ChevronRight className={`h-6 w-6 text-gray-300 group-hover:text-${colorScheme.border.split('-')[1]}-600 group-hover:translate-x-1 transition-all flex-shrink-0`} />
-                        <span className="text-xs text-gray-400 font-medium">Ver</span>
+                    {/* 📊 Estadísticas con diseño moderno */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className={`relative bg-gradient-to-br ${colorScheme.statBg} rounded-xl p-4 border ${colorScheme.border} overflow-hidden group/stat hover:shadow-md transition-all`}>
+                        <div className="absolute top-0 right-0 opacity-10 pointer-events-none">
+                          <Package className="h-16 w-16 -mt-2 -mr-2" />
+                        </div>
+                        <div className="relative">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Package className={`h-4 w-4 ${colorScheme.accent}`} />
+                            <span className={`text-xs font-semibold ${colorScheme.accent}`}>Órdenes</span>
+                          </div>
+                          <p className="text-3xl font-black text-gray-900">
+                            {clientData.totalOrders}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="relative bg-gradient-to-br from-green-100 to-emerald-50 rounded-xl p-4 border border-green-100 overflow-hidden group/stat hover:shadow-md transition-all">
+                        <div className="absolute top-0 right-0 opacity-10 pointer-events-none">
+                          <DollarSign className="h-16 w-16 -mt-2 -mr-2" />
+                        </div>
+                        <div className="relative">
+                          <div className="flex items-center gap-2 mb-1">
+                            <DollarSign className="h-4 w-4 text-emerald-600" />
+                            <span className="text-xs font-semibold text-emerald-600">Total</span>
+                          </div>
+                          <p className="text-2xl font-black text-gray-900 truncate">
+                            {formatPrice(clientData.totalSpent)}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Estadísticas del Cliente */}
-                    <div className="grid grid-cols-2 gap-3 mb-3">
-                      <div className={`${colorScheme.stat} rounded-lg p-3 border transition-all hover:shadow-md`}>
-                        <div className="flex items-center gap-2 mb-1">
-                          <Package className="h-4 w-4" />
-                          <span className="text-xs font-medium">Órdenes</span>
-                        </div>
-                        <p className="text-lg sm:text-xl md:text-2xl font-bold">
-                          {clientData.totalOrders}
-                        </p>
-                      </div>
-
-                      <div className="bg-green-50 border-green-200 text-green-600 rounded-lg p-3 border transition-all hover:shadow-md">
-                        <div className="flex items-center gap-2 mb-1">
-                          <DollarSign className="h-4 w-4" />
-                          <span className="text-xs font-medium">Total</span>
-                        </div>
-                        <p className="text-base sm:text-lg md:text-xl font-bold text-green-900 break-words">
-                          {formatPrice(clientData.totalSpent)}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Última orden con hora */}
-                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    {/* 📅 Última orden */}
+                    <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-3 border border-gray-200">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-xs text-gray-600">
-                          <Calendar className="h-3.5 w-3.5 text-gray-500" />
-                          <span className="font-medium">Última orden:</span>
+                        <div className="flex items-center gap-2">
+                          <div className="p-2 bg-white rounded-lg shadow-sm">
+                            <Calendar className="h-4 w-4 text-gray-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500">Última orden</p>
+                            <p className="text-sm font-bold text-gray-900">
+                              {new Date(clientData.lastOrderDate).toLocaleDateString('es-ES', {
+                                day: '2-digit',
+                                month: 'short'
+                              })}
+                            </p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-xs font-semibold text-gray-900">
-                            {new Date(clientData.lastOrderDate).toLocaleDateString('es-ES', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric'
-                            })}
-                          </p>
-                          <p className="text-xs text-gray-500 flex items-center justify-end gap-1">
-                            <Clock className="h-3 w-3" />
-                            {new Date(clientData.lastOrderDate).toLocaleTimeString('es-ES', {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </p>
+                        <div className="flex items-center gap-2">
+                          <div className="text-right">
+                            <p className="text-xs text-gray-500">Hora</p>
+                            <p className="text-sm font-semibold text-gray-700">
+                              {new Date(clientData.lastOrderDate).toLocaleTimeString('es-ES', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                          <div className={`p-2 bg-gradient-to-r ${colorScheme.bg} rounded-xl shadow-lg group-hover:scale-110 transition-transform`}>
+                            <ChevronRight className="h-5 w-5 text-white" />
+                          </div>
                         </div>
                       </div>
                     </div>
