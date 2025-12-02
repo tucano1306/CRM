@@ -145,16 +145,16 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Decorative background pattern */}
-      <div className="absolute inset-0 opacity-5">
+      {/* Decorative background pattern - pointer-events-none para no bloquear clicks */}
+      <div className="absolute inset-0 opacity-5 pointer-events-none">
         <div className="absolute top-0 right-0 w-40 h-40 bg-gradient-to-br from-black to-transparent rounded-full -translate-y-20 translate-x-20" />
         <div className="absolute bottom-0 left-0 w-32 h-32 bg-gradient-to-tr from-black to-transparent rounded-full translate-y-16 -translate-x-16" />
       </div>
 
       {/* Header con gradiente vibrante */}
       <div className={`bg-gradient-to-r ${colorScheme.bg} p-5 sm:p-6 relative overflow-hidden`}>
-        {/* Animated sparkles */}
-        <div className="absolute inset-0 overflow-hidden">
+        {/* Animated sparkles - pointer-events-none */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <Sparkles className="absolute top-2 right-8 w-4 h-4 text-white/30 animate-pulse" />
           <Sparkles className="absolute bottom-3 right-16 w-3 h-3 text-white/20 animate-pulse delay-300" />
           <Sparkles className="absolute top-4 right-24 w-2 h-2 text-white/25 animate-pulse delay-500" />
@@ -163,7 +163,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
         <div className="flex items-center gap-4 relative z-10">
           {/* Avatar con animación */}
           <div className={`relative group ${isExpanded ? 'w-20 h-20' : 'w-16 h-16'}`}>
-            <div className={`absolute inset-0 bg-white/20 rounded-2xl rotate-6 group-hover:rotate-12 transition-transform duration-300`} />
+            <div className={`absolute inset-0 bg-white/20 rounded-2xl rotate-6 group-hover:rotate-12 transition-transform duration-300 pointer-events-none`} />
             <div className={`relative w-full h-full rounded-2xl bg-white/30 backdrop-blur-sm flex items-center justify-center border-2 border-white/40`}>
               <span className="text-3xl">{clientLevel.emoji}</span>
             </div>
@@ -206,7 +206,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
       </div>
 
       {/* 🎯 BOTONES DE ACCIÓN - Más grandes y visibles */}
-      <div className="px-4 pb-4" onClick={(e) => e.stopPropagation()}>
+      <div className="px-4 pb-4 relative z-10">
         <div className="grid grid-cols-2 gap-2">
           {/* Botón Catálogo */}
           {onManageCatalog && (
@@ -218,7 +218,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
                 console.log('📦 Abriendo catálogo para:', client.name)
                 onManageCatalog()
               }}
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
             >
               <Package className="w-5 h-5" />
               <span>Catálogo</span>
@@ -235,7 +235,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
                 console.log('📋 Abriendo historial para:', client.name)
                 onViewHistory()
               }}
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
+              className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
             >
               <History className="w-5 h-5" />
               <span>Historial</span>
@@ -251,7 +251,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
               console.log('✏️ Editando cliente:', client.name)
               onEdit(client)
             }}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
           >
             <Edit className="w-5 h-5" />
             <span>Editar</span>
@@ -266,7 +266,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
               console.log('🗑️ Eliminando cliente:', client.name)
               onDelete(client.id)
             }}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
           >
             <Trash2 className="w-5 h-5" />
             <span>Eliminar</span>
