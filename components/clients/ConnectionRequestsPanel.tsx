@@ -98,20 +98,26 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
         body: JSON.stringify({})
       }) as any
 
-      if (response.success) {
+      console.log('📡 [handleAccept] Response:', response)
+      
+      // apiCall envuelve en { success, data, status }
+      const apiData = response.data
+      
+      if (response.success && apiData?.success) {
         // Remover de la lista
         setRequests(prev => prev.filter(r => r.id !== requestId))
         setPendingCount(prev => Math.max(0, prev - 1))
         
-        // Notificar al padre
-        if (onRequestAccepted && response.data?.client) {
-          onRequestAccepted(response.data.client.id, response.data.client.name)
+        // Notificar al padre para refrescar lista de clientes
+        if (onRequestAccepted && apiData.data?.client) {
+          console.log('✅ [handleAccept] Calling onRequestAccepted with:', apiData.data.client)
+          onRequestAccepted(apiData.data.client.id, apiData.data.client.name)
         }
         
         // Mostrar mensaje de éxito
-        alert(`✅ ${response.message || 'Cliente aceptado correctamente'}`)
+        alert(`✅ ${apiData.message || 'Cliente aceptado correctamente'}`)
       } else {
-        throw new Error(response.error || 'Error al aceptar')
+        throw new Error(apiData?.error || response.error || 'Error al aceptar')
       }
     } catch (err: any) {
       console.error('Error accepting request:', err)
