@@ -842,39 +842,41 @@ function CartPageContent() {
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6">
       <div className="max-w-6xl mx-auto">
         {/* Stepper de progreso - NUEVO */}
-        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 mb-6 border-2 border-purple-200">
-          <div className="flex items-center justify-between">
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-4 sm:p-6 mb-6 border-2 border-purple-200 overflow-x-auto">
+          <div className="flex items-center justify-between min-w-[280px] sm:min-w-0">
             {/* Etapa 1: Pedido */}
-            <div className="flex items-center gap-2">
-              <div className={`w-10 h-10 ${orderStep >= 1 ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gray-200'} text-white rounded-full flex items-center justify-center font-bold shadow-md transition-all`}>
+            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 ${orderStep >= 1 ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gray-200'} text-white rounded-full flex items-center justify-center font-bold shadow-md transition-all text-sm sm:text-base`}>
                 {orderStep >= 1 ? '✓' : '1'}
               </div>
-              <span className={`text-sm font-semibold ${orderStep >= 1 ? 'text-purple-600' : 'text-gray-500'}`}>
+              <span className={`text-xs sm:text-sm font-semibold ${orderStep >= 1 ? 'text-purple-600' : 'text-gray-500'}`}>
                 Pedido
               </span>
             </div>
             
-            <div className={`flex-1 h-1 mx-4 rounded transition-all ${orderStep >= 2 ? 'bg-gradient-to-r from-purple-500 to-indigo-500' : 'bg-gray-200'}`}></div>
+            <div className={`flex-1 h-1 mx-1 sm:mx-4 rounded transition-all ${orderStep >= 2 ? 'bg-gradient-to-r from-purple-500 to-indigo-500' : 'bg-gray-200'}`}></div>
             
             {/* Etapa 2: Orden Verificada */}
-            <div className="flex items-center gap-2">
-              <div className={`w-10 h-10 ${orderStep >= 2 ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gray-200'} ${orderStep >= 2 ? 'text-white' : 'text-gray-500'} rounded-full flex items-center justify-center font-bold shadow-md transition-all`}>
+            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 ${orderStep >= 2 ? 'bg-gradient-to-r from-purple-600 to-indigo-600' : 'bg-gray-200'} ${orderStep >= 2 ? 'text-white' : 'text-gray-500'} rounded-full flex items-center justify-center font-bold shadow-md transition-all text-sm sm:text-base`}>
                 {orderStep >= 2 ? '✓' : '2'}
               </div>
-              <span className={`text-sm font-semibold ${orderStep >= 2 ? 'text-purple-600' : 'text-gray-500'}`}>
-                Orden Verificada
+              <span className={`text-xs sm:text-sm font-semibold ${orderStep >= 2 ? 'text-purple-600' : 'text-gray-500'} text-center`}>
+                <span className="hidden sm:inline">Orden Verificada</span>
+                <span className="sm:hidden">Verificada</span>
               </span>
             </div>
             
-            <div className={`flex-1 h-1 mx-4 rounded transition-all ${orderStep >= 3 ? 'bg-gradient-to-r from-emerald-500 to-green-500' : 'bg-gray-200'}`}></div>
+            <div className={`flex-1 h-1 mx-1 sm:mx-4 rounded transition-all ${orderStep >= 3 ? 'bg-gradient-to-r from-emerald-500 to-green-500' : 'bg-gray-200'}`}></div>
             
             {/* Etapa 3: Listo para Envío */}
-            <div className="flex items-center gap-2">
-              <div className={`w-10 h-10 ${orderStep >= 3 ? 'bg-gradient-to-r from-emerald-600 to-green-600' : 'bg-gray-200'} ${orderStep >= 3 ? 'text-white' : 'text-gray-500'} rounded-full flex items-center justify-center font-bold shadow-md transition-all`}>
+            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 ${orderStep >= 3 ? 'bg-gradient-to-r from-emerald-600 to-green-600' : 'bg-gray-200'} ${orderStep >= 3 ? 'text-white' : 'text-gray-500'} rounded-full flex items-center justify-center font-bold shadow-md transition-all text-sm sm:text-base`}>
                 {orderStep >= 3 ? '✓' : '3'}
               </div>
-              <span className={`text-sm font-semibold ${orderStep >= 3 ? 'text-emerald-600' : 'text-gray-500'}`}>
-                Listo para Envío
+              <span className={`text-xs sm:text-sm font-semibold ${orderStep >= 3 ? 'text-emerald-600' : 'text-gray-500'} text-center`}>
+                <span className="hidden sm:inline">Listo para Envío</span>
+                <span className="sm:hidden">Envío</span>
               </span>
             </div>
           </div>

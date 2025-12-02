@@ -35,6 +35,7 @@ import {
   TrendingUp,
   BarChart3,
   RefreshCw,
+  Plus,
 } from 'lucide-react'
 import OrderCountdown from '@/components/buyer/OrderCountdown'
 import { OrderCardSkeleton } from '@/components/skeletons'
@@ -785,9 +786,11 @@ export default function OrdersPage() {
             </div>
             <button
               onClick={() => router.push('/buyer/catalog')}
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold"
+              className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-3 py-2 sm:px-6 sm:py-3 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold text-sm sm:text-base flex items-center gap-1 sm:gap-2"
             >
-              Nueva orden
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Nueva orden</span>
+              <span className="sm:hidden">Nuevo</span>
             </button>
           </div>
         </div>

@@ -206,10 +206,11 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
           {userRole === 'CLIENT' && (
             <button
               onClick={() => setCreateModalOpen(true)}
-              className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center gap-2 font-semibold"
+              className="px-3 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center gap-1 sm:gap-2 font-semibold text-sm sm:text-base"
             >
-              <Plus className="h-5 w-5" />
-              Nueva Orden Recurrente
+              <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Nueva Orden Recurrente</span>
+              <span className="sm:hidden">Nuevo</span>
             </button>
           )}
         </div>
