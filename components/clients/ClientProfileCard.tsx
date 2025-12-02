@@ -144,7 +144,6 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      onClick={isExpanded ? undefined : handleCardClick}
     >
       {/* Decorative background pattern */}
       <div className="absolute inset-0 opacity-5">
@@ -212,7 +211,13 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
           {/* Botón Catálogo */}
           {onManageCatalog && (
             <button
-              onClick={onManageCatalog}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                console.log('📦 Abriendo catálogo para:', client.name)
+                onManageCatalog()
+              }}
               className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
             >
               <Package className="w-5 h-5" />
@@ -223,7 +228,9 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
           {/* Botón Historial */}
           {onViewHistory && (
             <button
+              type="button"
               onClick={(e) => {
+                e.preventDefault()
                 e.stopPropagation()
                 console.log('📋 Abriendo historial para:', client.name)
                 onViewHistory()
@@ -237,8 +244,11 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
           
           {/* Botón Editar */}
           <button
+            type="button"
             onClick={(e) => {
+              e.preventDefault()
               e.stopPropagation()
+              console.log('✏️ Editando cliente:', client.name)
               onEdit(client)
             }}
             className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
@@ -249,8 +259,11 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
           
           {/* Botón Eliminar */}
           <button
+            type="button"
             onClick={(e) => {
+              e.preventDefault()
               e.stopPropagation()
+              console.log('🗑️ Eliminando cliente:', client.name)
               onDelete(client.id)
             }}
             className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200"
