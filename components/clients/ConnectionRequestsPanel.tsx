@@ -39,6 +39,12 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [isExpanded, setIsExpanded] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+
+  // Evitar errores de hidratación
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const fetchRequests = async () => {
     try {
@@ -146,6 +152,11 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
     if (minutes < 60) return `Hace ${minutes} min`
     if (hours < 24) return `Hace ${hours}h`
     return `Hace ${days}d`
+  }
+
+  // No mostrar antes de montar (evitar errores de hidratación)
+  if (!mounted) {
+    return null
   }
 
   // No mostrar si no hay solicitudes pendientes

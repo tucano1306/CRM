@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useUser } from '@clerk/nextjs'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
@@ -570,14 +570,18 @@ export default function ClientsPage() {
       </div>
 
       {/* 🔔 Panel de Solicitudes de Conexión Pendientes */}
-      <div className="mb-6">
-        <ConnectionRequestsPanel
-          onRequestAccepted={(clientId, clientName) => {
-            // Recargar clientes cuando se acepte una solicitud
-            fetchClients()
-          }}
-        />
-      </div>
+      {typeof window !== 'undefined' && (
+        <div className="mb-6">
+          <Suspense fallback={null}>
+            <ConnectionRequestsPanel
+              onRequestAccepted={(clientId, clientName) => {
+                // Recargar clientes cuando se acepte una solicitud
+                fetchClients()
+              }}
+            />
+          </Suspense>
+        </div>
+      )}
 
       {/* Barra de búsqueda moderna */}
       <div className="mb-6">
