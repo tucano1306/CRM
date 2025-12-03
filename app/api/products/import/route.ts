@@ -103,6 +103,7 @@ export async function POST(request: NextRequest) {
     // Procesar datos
     const dataRows = rawData.slice(headerRowIndex + 1)
     const products: any[] = []
+    const existingProducts: any[] = [] // Para productos que ya existen
     const errors: string[] = []
     let created = 0
     let updated = 0
@@ -169,7 +170,11 @@ export async function POST(request: NextRequest) {
               }
             })
             updated++
+            // Guardar para asociar al cliente
+            existingProducts.push({ ...existingProduct, price })
           } else {
+            // Aunque se omita la actualización, guardarlo para asociar al cliente
+            existingProducts.push({ ...existingProduct, price })
             skipped++
           }
         } else {
@@ -191,7 +196,7 @@ export async function POST(request: NextRequest) {
               }
             }
           })
-          products.push(newProduct)
+          products.push({ ...newProduct, price })
           created++
         }
 
@@ -201,8 +206,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Si hay clientId, asociar productos al cliente
-    if (clientId) {
+    // Combinar productos nuevos y existentes para asociar al cliente
+    const allProductsToAssociate = [...products, ...existingProducts]
+
+    // Si hay clientId, asociar TODOS los productos al cliente (nuevos y existentes)
+    if (clientId && allProductsToAssociate.length > 0) {
       // Verificar que el cliente existe y pertenece al vendedor
       const client = await prisma.client.findFirst({
         where: { 
@@ -211,9 +219,10 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      if (client && products.length > 0) {
-        // Crear las asociaciones ClientProduct para cada producto nuevo
-        for (const product of products) {
+      if (client) {
+        let associated = 0
+        // Crear las asociaciones ClientProduct para cada producto
+        for (const product of allProductsToAssociate) {
           try {
             await prisma.clientProduct.upsert({
               where: {
@@ -233,11 +242,12 @@ export async function POST(request: NextRequest) {
                 isVisible: true
               }
             })
+            associated++
           } catch (err) {
             console.error(`Error asociando producto ${product.id} al cliente:`, err)
           }
         }
-        console.log(`✅ ${products.length} productos asociados al cliente: ${client.name}`)
+        console.log(`✅ ${associated} productos asociados al cliente: ${client.name}`)
       }
     }
 
@@ -249,7 +259,8 @@ export async function POST(request: NextRequest) {
         created,
         updated,
         skipped,
-        errors: errors.length
+        errors: errors.length,
+        associatedToClient: clientId ? allProductsToAssociate.length : 0
       },
       errors: errors.slice(0, 10), // Solo mostrar primeros 10 errores
       headers: headers,

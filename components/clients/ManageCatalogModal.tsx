@@ -75,9 +75,12 @@ export default function ManageCatalogModal({
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<{
     success: boolean
-    stats: { created: number; updated: number; skipped: number; errors: number }
+    stats: { created: number; updated: number; skipped: number; errors: number; associatedToClient?: number }
     errors: string[]
   } | null>(null)
+  
+  // Estado para exportar Excel
+  const [exporting, setExporting] = useState(false)
   
   // Estado para crear nuevo producto
   const [newProduct, setNewProduct] = useState({
@@ -107,6 +110,41 @@ export default function ManageCatalogModal({
       setLoading(false)
     }
   }, [clientId])
+
+  // Exportar productos del cliente a Excel
+  const handleExportProducts = async () => {
+    if (clientProducts.length === 0) {
+      alert('No hay productos para exportar')
+      return
+    }
+    
+    setExporting(true)
+    try {
+      const response = await fetch(`/api/clients/${clientId}/products/export`)
+      
+      if (!response.ok) {
+        throw new Error('Error al exportar')
+      }
+      
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      // Limpiar nombre del cliente para el archivo
+      const safeClientName = clientName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30)
+      a.download = `productos_${safeClientName}_${new Date().toISOString().split('T')[0]}.xlsx`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      window.URL.revokeObjectURL(url)
+      console.log('✅ Productos exportados exitosamente')
+    } catch (error) {
+      console.error('Error exportando productos:', error)
+      alert('Error al exportar productos. Intenta de nuevo.')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   useEffect(() => {
     if (isOpen) {
@@ -348,9 +386,9 @@ export default function ManageCatalogModal({
           {activeTab === 'catalog' ? (
             // TAB: Catálogo actual
             <div>
-              {/* Search */}
-              <div className="mb-4 sm:mb-6">
-                <div className="relative">
+              {/* Search and Export */}
+              <div className="mb-4 sm:mb-6 flex gap-2 sm:gap-3">
+                <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
@@ -360,6 +398,21 @@ export default function ManageCatalogModal({
                     className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-sm sm:text-base"
                   />
                 </div>
+                <Button
+                  onClick={handleExportProducts}
+                  disabled={exporting || clientProducts.length === 0}
+                  variant="outline"
+                  className="border-green-500 text-green-700 hover:bg-green-50 px-3 sm:px-4 flex-shrink-0"
+                >
+                  {exporting ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      <Download className="w-5 h-5 sm:mr-2" />
+                      <span className="hidden sm:inline">Exportar</span>
+                    </>
+                  )}
+                </Button>
               </div>
 
               {loading ? (
@@ -869,18 +922,26 @@ export default function ManageCatalogModal({
                     )}
                   </div>
                   
+                  {/* Estadística principal: productos asociados al cliente */}
+                  {importResult.stats.associatedToClient !== undefined && importResult.stats.associatedToClient > 0 && (
+                    <div className="bg-purple-100 rounded-lg p-3 mb-3 text-center">
+                      <p className="text-2xl font-bold text-purple-700">{importResult.stats.associatedToClient}</p>
+                      <p className="text-sm text-purple-600 font-medium">Productos agregados al catálogo de {clientName}</p>
+                    </div>
+                  )}
+                  
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
                     <div className="bg-white rounded-lg p-2 text-center">
                       <p className="text-lg font-bold text-green-600">{importResult.stats.created}</p>
-                      <p className="text-xs text-gray-600">Creados</p>
+                      <p className="text-xs text-gray-600">Nuevos</p>
                     </div>
                     <div className="bg-white rounded-lg p-2 text-center">
                       <p className="text-lg font-bold text-blue-600">{importResult.stats.updated}</p>
                       <p className="text-xs text-gray-600">Actualizados</p>
                     </div>
                     <div className="bg-white rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-gray-500">{importResult.stats.skipped}</p>
-                      <p className="text-xs text-gray-600">Omitidos</p>
+                      <p className="text-lg font-bold text-orange-500">{importResult.stats.skipped}</p>
+                      <p className="text-xs text-gray-600">Ya existían</p>
                     </div>
                     <div className="bg-white rounded-lg p-2 text-center">
                       <p className="text-lg font-bold text-red-500">{importResult.stats.errors}</p>
