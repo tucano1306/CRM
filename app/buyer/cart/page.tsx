@@ -1056,13 +1056,37 @@ function CartPageContent() {
                               >
                                 <Minus size={16} />
                               </button>
-                              <span className="w-12 text-center font-bold text-purple-600">
-                                {updating === item.id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                                ) : (
-                                  item.quantity
-                                )}
-                              </span>
+                              {updating === item.id ? (
+                                <div className="w-16 text-center">
+                                  <Loader2 className="w-4 h-4 animate-spin mx-auto text-purple-600" />
+                                </div>
+                              ) : (
+                                <input
+                                  type="number"
+                                  inputMode="numeric"
+                                  min="1"
+                                  max={item.product.stock}
+                                  value={item.quantity}
+                                  onChange={(e) => {
+                                    // Solo actualizar visualmente, sin llamar API aún
+                                    const val = parseInt(e.target.value) || 1
+                                    // No hacemos nada aquí, solo dejamos que el input cambie
+                                  }}
+                                  onBlur={(e) => {
+                                    const val = parseInt(e.target.value) || 1
+                                    const qty = Math.max(1, Math.min(val, item.product.stock))
+                                    if (qty !== item.quantity) {
+                                      updateQuantity(item.id, qty)
+                                    }
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.currentTarget.blur()
+                                    }
+                                  }}
+                                  className="w-16 text-center font-bold text-purple-600 bg-white border-2 border-purple-300 rounded-lg py-1 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 focus:outline-none"
+                                />
+                              )}
                               <button
                                 onClick={() =>
                                   updateQuantity(item.id, item.quantity + 1)

@@ -309,6 +309,40 @@ export default function CatalogPage() {
     }
   }
 
+  // Establecer cantidad directamente (para input editable)
+  const setQuantityDirect = async (productId: string, newQuantity: number, maxStock: number) => {
+    // Validar que sea un número válido
+    const qty = Math.max(0, Math.min(newQuantity, maxStock))
+    
+    if (qty === 0) {
+      await removeFromCart(productId)
+      return
+    }
+
+    try {
+      const cartItems = await apiCall('/api/buyer/cart', {
+        method: 'GET',
+        timeout: 5000,
+      })
+
+      if (cartItems.success && cartItems.data?.items) {
+        const item = cartItems.data.items.find((i: any) => i.product.id === productId)
+        if (item) {
+          await apiCall(`/api/buyer/cart/items/${item.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quantity: qty }),
+            timeout: 5000,
+          })
+        }
+      }
+      
+      setCart({ ...cart, [productId]: qty })
+    } catch (err) {
+      showToast('Error al actualizar cantidad', 'error')
+    }
+  }
+
   const removeFromCart = async (productId: string) => {
     const product = products.find(p => p.id === productId)
     
@@ -985,8 +1019,8 @@ export default function CatalogPage() {
                   </div>
                 </div>
 
-                {/* Controles de cantidad - MEJORADO */}
-                <div className="flex items-center gap-3 mb-3">
+                {/* Controles de cantidad - MEJORADO CON INPUT EDITABLE */}
+                <div className="flex items-center gap-2 mb-3">
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
@@ -998,9 +1032,29 @@ export default function CatalogPage() {
                     <Minus size={16} className="text-purple-600" />
                   </button>
                   <div className="flex-1 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-purple-600 min-w-[3rem] text-center">
-                      {cart[product.id] || 0}
-                    </span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="0"
+                      max={product.stock}
+                      value={cart[product.id] || 0}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        e.stopPropagation()
+                        const val = parseInt(e.target.value) || 0
+                        setCart({ ...cart, [product.id]: Math.min(val, product.stock) })
+                      }}
+                      onBlur={(e) => {
+                        const val = parseInt(e.target.value) || 0
+                        setQuantityDirect(product.id, val, product.stock)
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.currentTarget.blur()
+                        }
+                      }}
+                      className="w-16 text-center text-xl font-bold text-purple-600 bg-purple-50 border-2 border-purple-200 rounded-lg py-1 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 focus:outline-none"
+                    />
                   </div>
                   <button
                     onClick={(e) => {
@@ -1170,9 +1224,25 @@ export default function CatalogPage() {
                             >
                               <Minus size={14} />
                             </button>
-                            <span className="text-sm font-medium w-8 text-center">
-                              {item.quantity}
-                            </span>
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              min="1"
+                              max={item.stock}
+                              value={item.quantity}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value) || 1
+                                setCart({ ...cart, [item.id]: Math.min(val, item.stock) })
+                              }}
+                              onBlur={(e) => {
+                                const val = parseInt(e.target.value) || 1
+                                setQuantityDirect(item.id, val, item.stock)
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') e.currentTarget.blur()
+                              }}
+                              className="w-12 text-center text-sm font-medium bg-gray-100 border border-gray-300 rounded py-1 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            />
                             <button
                               onClick={() => updateQuantity(item.id, 1)}
                               disabled={item.quantity >= item.stock}
@@ -1326,9 +1396,25 @@ export default function CatalogPage() {
                       >
                         <Minus size={20} />
                       </button>
-                      <span className="w-20 text-center text-2xl font-bold">
-                        {cart[selectedProduct.id] || 0}
-                      </span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min="0"
+                        max={selectedProduct.stock}
+                        value={cart[selectedProduct.id] || 0}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 0
+                          setCart({ ...cart, [selectedProduct.id]: Math.min(val, selectedProduct.stock) })
+                        }}
+                        onBlur={(e) => {
+                          const val = parseInt(e.target.value) || 0
+                          setQuantityDirect(selectedProduct.id, val, selectedProduct.stock)
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') e.currentTarget.blur()
+                        }}
+                        className="w-20 text-center text-2xl font-bold bg-white border-2 border-purple-300 rounded-lg py-2 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 focus:outline-none"
+                      />
                       <button
                         onClick={() => updateQuantity(selectedProduct.id, 1)}
                         disabled={(cart[selectedProduct.id] || 0) >= selectedProduct.stock}
