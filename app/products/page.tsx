@@ -27,8 +27,10 @@ import {
   Tag as TagIcon,
   SlidersHorizontal,
   List,
-  Edit2
+  Edit2,
+  Upload
 } from 'lucide-react'
+import Link from 'next/link'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
 import { ProductCardSkeleton } from '@/components/skeletons'
@@ -630,13 +632,24 @@ export default function ProductsPage() {
             title="Gestión de Productos" 
             description={`${products.length} productos en catálogo`}
           />
-          <Button 
-            onClick={() => setShowForm(!showForm)}
-            className="gap-2 w-full sm:w-auto"
-          >
-            <Plus className="h-4 w-4" />
-            Nuevo Producto
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Link href="/products/import">
+              <Button 
+                variant="outline"
+                className="gap-2 w-full sm:w-auto border-purple-300 text-purple-700 hover:bg-purple-50"
+              >
+                <Upload className="h-4 w-4" />
+                Importar Excel
+              </Button>
+            </Link>
+            <Button 
+              onClick={() => setShowForm(!showForm)}
+              className="gap-2 w-full sm:w-auto"
+            >
+              <Plus className="h-4 w-4" />
+              Nuevo Producto
+            </Button>
+          </div>
         </div>
 
         {/* Tarjetas de Estadísticas de Stock */}
