@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
-import { X, Search, Plus, Package, DollarSign, Eye, EyeOff, Save, Trash2, Edit3, Image as ImageIcon } from 'lucide-react'
+import { X, Search, Plus, Package, DollarSign, Eye, EyeOff, Save, Trash2, Edit3, Image as ImageIcon, Upload, FileSpreadsheet, Download, CheckCircle, Loader2 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 
@@ -62,12 +62,22 @@ export default function ManageCatalogModal({
   clientName,
   onSuccess 
 }: ManageCatalogModalProps) {
-  const [activeTab, setActiveTab] = useState<'catalog' | 'create'>('catalog')
+  const [activeTab, setActiveTab] = useState<'catalog' | 'create' | 'import'>('catalog')
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [clientProducts, setClientProducts] = useState<ClientProduct[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [editingPrices, setEditingPrices] = useState<Record<string, number>>({})
+  
+  // Estado para importar Excel
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [importFile, setImportFile] = useState<File | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<{
+    success: boolean
+    stats: { created: number; updated: number; skipped: number; errors: number }
+    errors: string[]
+  } | null>(null)
   
   // Estado para crear nuevo producto
   const [newProduct, setNewProduct] = useState({
@@ -295,10 +305,10 @@ export default function ManageCatalogModal({
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2 mt-4 sm:mt-6">
+          <div className="flex gap-2 mt-4 sm:mt-6 flex-wrap">
             <button
               onClick={() => setActiveTab('catalog')}
-              className={`px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base ${
+              className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base ${
                 activeTab === 'catalog'
                   ? 'bg-white text-purple-600'
                   : 'bg-white/20 text-white hover:bg-white/30'
@@ -308,15 +318,27 @@ export default function ManageCatalogModal({
             </button>
             <button
               onClick={() => setActiveTab('create')}
-              className={`px-4 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base ${
+              className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base ${
                 activeTab === 'create'
                   ? 'bg-white text-purple-600'
                   : 'bg-white/20 text-white hover:bg-white/30'
               }`}
             >
-              <Plus className="w-4 h-4 inline mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Crear Producto</span>
-              <span className="sm:hidden">Nuevo</span>
+              <Plus className="w-4 h-4 inline mr-1" />
+              <span className="hidden sm:inline">Crear</span>
+              <span className="sm:hidden">+</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('import')}
+              className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base ${
+                activeTab === 'import'
+                  ? 'bg-white text-purple-600'
+                  : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
+            >
+              <Upload className="w-4 h-4 inline mr-1" />
+              <span className="hidden sm:inline">Importar Excel</span>
+              <span className="sm:hidden">Excel</span>
             </button>
           </div>
         </div>
@@ -502,7 +524,7 @@ export default function ManageCatalogModal({
                 </div>
               )}
             </div>
-          ) : (
+          ) : activeTab === 'create' ? (
             // TAB: Crear nuevo producto
             <div>
               <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-4 mb-6">
@@ -659,6 +681,243 @@ export default function ManageCatalogModal({
                   </Button>
                 </div>
               </div>
+            </div>
+          ) : (
+            // TAB: Importar desde Excel
+            <div className="space-y-6">
+              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-4">
+                <h4 className="font-bold text-purple-800 mb-2 flex items-center gap-2">
+                  <FileSpreadsheet className="w-5 h-5" />
+                  Importar productos desde Excel
+                </h4>
+                <p className="text-sm text-gray-600 mb-3">
+                  Sube un archivo Excel con los productos. El sistema detectará automáticamente las columnas:
+                  <strong> Item #, Description, Brand, Pack, Size, Price</strong>
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/products/import')
+                      const blob = await response.blob()
+                      const url = window.URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = 'plantilla_productos.xlsx'
+                      a.click()
+                      window.URL.revokeObjectURL(url)
+                    } catch (err) {
+                      console.error('Error descargando plantilla:', err)
+                    }
+                  }}
+                  className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Descargar plantilla
+                </Button>
+              </div>
+
+              {/* Zona de carga */}
+              <div 
+                className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
+                  importFile 
+                    ? 'border-green-400 bg-green-50' 
+                    : 'border-gray-300 hover:border-purple-400 hover:bg-gray-50'
+                }`}
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation() }}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  if (e.dataTransfer.files?.[0]) {
+                    const file = e.dataTransfer.files[0]
+                    if (file.name.match(/\.(xlsx|xls|csv)$/i)) {
+                      setImportFile(file)
+                      setImportResult(null)
+                    }
+                  }
+                }}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  onChange={(e) => {
+                    if (e.target.files?.[0]) {
+                      setImportFile(e.target.files[0])
+                      setImportResult(null)
+                    }
+                  }}
+                  className="hidden"
+                />
+                
+                {importFile ? (
+                  <div className="space-y-3">
+                    <div className="w-14 h-14 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+                      <FileSpreadsheet className="w-7 h-7 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">{importFile.name}</p>
+                      <p className="text-sm text-gray-500">{(importFile.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setImportFile(null)
+                        setImportResult(null)
+                        if (fileInputRef.current) fileInputRef.current.value = ''
+                      }}
+                    >
+                      Cambiar archivo
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="w-14 h-14 mx-auto bg-purple-100 rounded-full flex items-center justify-center">
+                      <Upload className="w-7 h-7 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">Arrastra tu archivo Excel aquí</p>
+                      <p className="text-sm text-gray-500">o haz clic para seleccionar</p>
+                    </div>
+                    <Button 
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Seleccionar archivo
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Botón de importar */}
+              {importFile && !importResult && (
+                <Button
+                  onClick={async () => {
+                    if (!importFile) return
+                    setImporting(true)
+                    try {
+                      const formData = new FormData()
+                      formData.append('file', importFile)
+                      formData.append('clientId', clientId)
+                      formData.append('updateExisting', 'false')
+
+                      const response = await fetch('/api/products/import', {
+                        method: 'POST',
+                        body: formData
+                      })
+                      const data = await response.json()
+
+                      if (data.success) {
+                        setImportResult({
+                          success: true,
+                          stats: data.stats,
+                          errors: data.errors || []
+                        })
+                        // Recargar catálogo
+                        fetchClientCatalog()
+                      } else {
+                        setImportResult({
+                          success: false,
+                          stats: { created: 0, updated: 0, skipped: 0, errors: 1 },
+                          errors: [data.error || 'Error al importar']
+                        })
+                      }
+                    } catch (err: any) {
+                      setImportResult({
+                        success: false,
+                        stats: { created: 0, updated: 0, skipped: 0, errors: 1 },
+                        errors: [err.message || 'Error al importar']
+                      })
+                    } finally {
+                      setImporting(false)
+                    }
+                  }}
+                  disabled={importing}
+                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 py-3 text-lg font-semibold"
+                >
+                  {importing ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Importando productos...
+                    </>
+                  ) : (
+                    <>
+                      <Package className="w-5 h-5 mr-2" />
+                      Importar Productos para {clientName}
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {/* Resultado */}
+              {importResult && (
+                <div className={`rounded-xl p-4 ${importResult.success ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'}`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    {importResult.success ? (
+                      <>
+                        <CheckCircle className="w-6 h-6 text-green-600" />
+                        <span className="font-bold text-green-800">¡Importación completada!</span>
+                      </>
+                    ) : (
+                      <>
+                        <X className="w-6 h-6 text-red-600" />
+                        <span className="font-bold text-red-800">Error en importación</span>
+                      </>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                    <div className="bg-white rounded-lg p-2 text-center">
+                      <p className="text-lg font-bold text-green-600">{importResult.stats.created}</p>
+                      <p className="text-xs text-gray-600">Creados</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-2 text-center">
+                      <p className="text-lg font-bold text-blue-600">{importResult.stats.updated}</p>
+                      <p className="text-xs text-gray-600">Actualizados</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-2 text-center">
+                      <p className="text-lg font-bold text-gray-500">{importResult.stats.skipped}</p>
+                      <p className="text-xs text-gray-600">Omitidos</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-2 text-center">
+                      <p className="text-lg font-bold text-red-500">{importResult.stats.errors}</p>
+                      <p className="text-xs text-gray-600">Errores</p>
+                    </div>
+                  </div>
+
+                  {importResult.errors.length > 0 && (
+                    <div className="text-sm text-red-700 max-h-24 overflow-y-auto">
+                      {importResult.errors.map((err, i) => (
+                        <p key={i}>• {err}</p>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setImportFile(null)
+                        setImportResult(null)
+                        if (fileInputRef.current) fileInputRef.current.value = ''
+                      }}
+                    >
+                      Importar otro archivo
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setActiveTab('catalog')}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      Ver catálogo
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

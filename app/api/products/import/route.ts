@@ -201,8 +201,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Si hay clientId, crear precios personalizados para ese cliente
-    if (clientId && products.length > 0) {
+    // Si hay clientId, asociar productos al cliente
+    if (clientId) {
       // Verificar que el cliente existe y pertenece al vendedor
       const client = await prisma.client.findFirst({
         where: { 
@@ -211,10 +211,33 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      if (client) {
-        // Aquí podrías crear una tabla de precios personalizados por cliente
-        // Por ahora solo registramos en los logs
-        console.log(`✅ Productos importados para cliente: ${client.name}`)
+      if (client && products.length > 0) {
+        // Crear las asociaciones ClientProduct para cada producto nuevo
+        for (const product of products) {
+          try {
+            await prisma.clientProduct.upsert({
+              where: {
+                clientId_productId: {
+                  clientId: client.id,
+                  productId: product.id
+                }
+              },
+              create: {
+                clientId: client.id,
+                productId: product.id,
+                customPrice: product.price,
+                isVisible: true
+              },
+              update: {
+                customPrice: product.price,
+                isVisible: true
+              }
+            })
+          } catch (err) {
+            console.error(`Error asociando producto ${product.id} al cliente:`, err)
+          }
+        }
+        console.log(`✅ ${products.length} productos asociados al cliente: ${client.name}`)
       }
     }
 
