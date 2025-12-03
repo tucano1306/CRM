@@ -771,7 +771,7 @@ export default function ClientsPage() {
       <div className={`transition-all duration-300 ${
         selectedClientId 
           ? 'grid grid-cols-1 max-w-4xl mx-auto' 
-          : 'grid gap-6 md:grid-cols-2 lg:grid-cols-3'
+          : 'grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3'
       }`}>
         {displayClients.length === 0 ? (
           <div className="col-span-full">

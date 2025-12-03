@@ -134,8 +134,8 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
 
   return (
     <div 
-      className={`relative bg-white rounded-3xl overflow-hidden transition-all duration-500 ${
-        isHovered ? 'shadow-2xl scale-[1.02]' : 'shadow-lg'
+      className={`relative bg-white rounded-2xl sm:rounded-3xl overflow-hidden transition-all duration-500 w-full max-w-full ${
+        isHovered ? 'shadow-2xl sm:scale-[1.02]' : 'shadow-lg'
       } ${colorScheme.glow}`}
       style={{ 
         animation: `fadeInUp 0.5s ease-out ${colorIndex * 0.05}s both`,
@@ -150,7 +150,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
       </div>
 
       {/* Header con gradiente vibrante */}
-      <div className={`bg-gradient-to-r ${colorScheme.bg} p-5 sm:p-6 relative overflow-hidden`}>
+      <div className={`bg-gradient-to-r ${colorScheme.bg} p-4 sm:p-6 relative overflow-hidden`}>
         {/* Animated sparkles - pointer-events-none */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <Sparkles className="absolute top-2 right-8 w-4 h-4 text-white/30 animate-pulse" />
@@ -160,16 +160,16 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
 
         <div className="flex items-center gap-4 relative z-10">
           {/* Avatar con animación */}
-          <div className={`relative group ${isExpanded ? 'w-20 h-20' : 'w-16 h-16'}`}>
-            <div className={`absolute inset-0 bg-white/20 rounded-2xl rotate-6 group-hover:rotate-12 transition-transform duration-300 pointer-events-none`} />
-            <div className={`relative w-full h-full rounded-2xl bg-white/30 backdrop-blur-sm flex items-center justify-center border-2 border-white/40`}>
-              <span className="text-3xl">{clientLevel.emoji}</span>
+          <div className={`relative group flex-shrink-0 ${isExpanded ? 'w-16 h-16 sm:w-20 sm:h-20' : 'w-12 h-12 sm:w-16 sm:h-16'}`}>
+            <div className={`absolute inset-0 bg-white/20 rounded-xl sm:rounded-2xl rotate-6 group-hover:rotate-12 transition-transform duration-300 pointer-events-none`} />
+            <div className={`relative w-full h-full rounded-xl sm:rounded-2xl bg-white/30 backdrop-blur-sm flex items-center justify-center border-2 border-white/40`}>
+              <span className="text-2xl sm:text-3xl">{clientLevel.emoji}</span>
             </div>
           </div>
           
           {/* Info del cliente */}
-          <div className="flex-1 min-w-0">
-            <h3 className={`${isExpanded ? 'text-2xl' : 'text-xl'} font-black text-white mb-1 truncate drop-shadow-sm`}>
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <h3 className={`${isExpanded ? 'text-xl sm:text-2xl' : 'text-base sm:text-xl'} font-black text-white mb-1 truncate drop-shadow-sm`}>
               {client.name}
             </h3>
             <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${clientLevel.color} shadow-lg`}>
@@ -181,30 +181,30 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
       </div>
 
       {/* Stats Cards - Diseño más visual */}
-      <div className="grid grid-cols-2 gap-3 p-4 -mt-4 relative z-10">
-        <div className={`${colorScheme.light} rounded-2xl p-4 text-center transform hover:scale-105 transition-transform duration-200 border border-gray-100 shadow-sm`}>
-          <div className={`w-10 h-10 mx-auto mb-2 rounded-xl bg-gradient-to-br ${colorScheme.button} flex items-center justify-center shadow-lg`}>
-            <ShoppingBag className="w-5 h-5 text-white" />
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 p-3 sm:p-4 -mt-4 relative z-10">
+        <div className={`${colorScheme.light} rounded-xl sm:rounded-2xl p-3 sm:p-4 text-center transform sm:hover:scale-105 transition-transform duration-200 border border-gray-100 shadow-sm`}>
+          <div className={`w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 sm:mb-2 rounded-lg sm:rounded-xl bg-gradient-to-br ${colorScheme.button} flex items-center justify-center shadow-lg`}>
+            <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
-          <p className={`text-2xl sm:text-3xl font-black ${colorScheme.accent}`}>
+          <p className={`text-xl sm:text-3xl font-black ${colorScheme.accent}`}>
             {client.stats?.totalOrders || 0}
           </p>
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Órdenes</p>
+          <p className="text-[10px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide">Órdenes</p>
         </div>
         
-        <div className={`${colorScheme.light} rounded-2xl p-4 text-center transform hover:scale-105 transition-transform duration-200 border border-gray-100 shadow-sm`}>
-          <div className={`w-10 h-10 mx-auto mb-2 rounded-xl bg-gradient-to-br ${colorScheme.button} flex items-center justify-center shadow-lg`}>
-            <DollarSign className="w-5 h-5 text-white" />
+        <div className={`${colorScheme.light} rounded-xl sm:rounded-2xl p-3 sm:p-4 text-center transform sm:hover:scale-105 transition-transform duration-200 border border-gray-100 shadow-sm`}>
+          <div className={`w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-1 sm:mb-2 rounded-lg sm:rounded-xl bg-gradient-to-br ${colorScheme.button} flex items-center justify-center shadow-lg`}>
+            <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           </div>
-          <p className={`text-xl sm:text-2xl font-black ${colorScheme.accent} truncate`}>
+          <p className={`text-lg sm:text-2xl font-black ${colorScheme.accent} truncate`}>
             {formatPrice(client.stats?.totalSpent || 0)}
           </p>
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Gastado</p>
+          <p className="text-[10px] sm:text-xs font-semibold text-gray-500 uppercase tracking-wide">Gastado</p>
         </div>
       </div>
 
       {/* 🎯 BOTONES DE ACCIÓN - Más grandes y visibles */}
-      <div className="px-4 pb-4 relative z-10">
+      <div className="px-3 sm:px-4 pb-3 sm:pb-4 relative z-10">
         <div className="grid grid-cols-2 gap-2">
           {/* Botón Catálogo */}
           {onManageCatalog && (
@@ -216,10 +216,11 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
                 console.log('📦 Abriendo catálogo para:', client.name)
                 onManageCatalog()
               }}
-              className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+              className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl sm:hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
             >
-              <Package className="w-5 h-5" />
-              <span>Catálogo</span>
+              <Package className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="hidden sm:inline">Catálogo</span>
+              <span className="sm:hidden">Cat.</span>
             </button>
           )}
           
@@ -232,9 +233,9 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
               console.log('✏️ Editando cliente:', client.name)
               onEdit(client)
             }}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+            className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl sm:hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
           >
-            <Edit className="w-5 h-5" />
+            <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Editar</span>
           </button>
           
@@ -247,53 +248,54 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
               console.log('🗑️ Eliminando cliente:', client.name)
               onDelete(client.id)
             }}
-            className="flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+            className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl sm:hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
           >
-            <Trash2 className="w-5 h-5" />
-            <span>Eliminar</span>
+            <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Eliminar</span>
+            <span className="sm:hidden">Borrar</span>
           </button>
         </div>
       </div>
 
       {/* Información de contacto - Más compacta */}
-      <div className="px-4 pb-4 space-y-2" onClick={(e) => e.stopPropagation()}>
-        <div className="bg-gray-50 rounded-xl p-3 space-y-2">
+      <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-gray-50 rounded-lg sm:rounded-xl p-2 sm:p-3 space-y-1 sm:space-y-2">
           {/* Email */}
           <a 
             href={`mailto:${client.email}`}
-            className="flex items-center gap-3 hover:bg-white p-2 rounded-lg transition-colors group"
+            className="flex items-center gap-2 sm:gap-3 hover:bg-white p-1.5 sm:p-2 rounded-lg transition-colors group"
           >
-            <div className={`w-8 h-8 rounded-lg ${colorScheme.light} flex items-center justify-center`}>
-              <Mail className={`w-4 h-4 ${colorScheme.accent}`} />
+            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg ${colorScheme.light} flex items-center justify-center flex-shrink-0`}>
+              <Mail className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${colorScheme.accent}`} />
             </div>
-            <span className="text-sm text-gray-700 group-hover:text-blue-600 truncate flex-1">
+            <span className="text-xs sm:text-sm text-gray-700 group-hover:text-blue-600 truncate flex-1">
               {client.email}
             </span>
-            <ExternalLink className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <ExternalLink className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
           </a>
 
           {/* Teléfono */}
           {client.phone && (
             <a 
               href={`tel:${client.phone}`}
-              className="flex items-center gap-3 hover:bg-white p-2 rounded-lg transition-colors group"
+              className="flex items-center gap-2 sm:gap-3 hover:bg-white p-1.5 sm:p-2 rounded-lg transition-colors group"
             >
-              <div className={`w-8 h-8 rounded-lg ${colorScheme.light} flex items-center justify-center`}>
-                <Phone className={`w-4 h-4 ${colorScheme.accent}`} />
+              <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg ${colorScheme.light} flex items-center justify-center flex-shrink-0`}>
+                <Phone className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${colorScheme.accent}`} />
               </div>
-              <span className="text-sm text-gray-700 group-hover:text-blue-600">
+              <span className="text-xs sm:text-sm text-gray-700 group-hover:text-blue-600">
                 {client.phone}
               </span>
-              <ExternalLink className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ExternalLink className="w-3 h-3 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
             </a>
           )}
 
           {/* Dirección */}
-          <div className="flex items-center gap-3 p-2">
-            <div className={`w-8 h-8 rounded-lg ${colorScheme.light} flex items-center justify-center flex-shrink-0`}>
-              <MapPin className={`w-4 h-4 ${colorScheme.accent}`} />
+          <div className="flex items-center gap-2 sm:gap-3 p-1.5 sm:p-2">
+            <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg ${colorScheme.light} flex items-center justify-center flex-shrink-0`}>
+              <MapPin className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${colorScheme.accent}`} />
             </div>
-            <span className="text-sm text-gray-700 truncate">
+            <span className="text-xs sm:text-sm text-gray-700 truncate">
               {client.address}
               {client.zipCode && <span className="text-gray-400"> ({client.zipCode})</span>}
             </span>
@@ -302,14 +304,14 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
       </div>
 
       {/* Footer con info adicional */}
-      <div className={`border-t border-gray-100 px-4 py-3 bg-gray-50/50 flex items-center justify-between`}>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+      <div className={`border-t border-gray-100 px-3 sm:px-4 py-2 sm:py-3 bg-gray-50/50 flex items-center justify-between`}>
+        <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs text-gray-500">
           <Calendar className="w-3 h-3" />
-          <span>Cliente desde {formatDate(client.createdAt)}</span>
+          <span className="truncate">Desde {formatDate(client.createdAt)}</span>
         </div>
         
         {client.stats && client.stats.totalOrders > 0 && (
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600">
+          <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs font-semibold text-gray-600">
             <TrendingUp className={`w-3 h-3 ${colorScheme.accent}`} />
             <span>~{formatPrice(client.stats.totalSpent / client.stats.totalOrders)}/orden</span>
           </div>
