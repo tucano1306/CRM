@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, CheckCircle, XCircle, UserPlus, Clock, Send } from 'lucide-react'
 import { apiCall } from '@/lib/api-client'
 
-type ConnectionStatus = 'loading' | 'ready' | 'connecting' | 'request_sent' | 'pending' | 'already_connected' | 'error'
+type ConnectionStatus = 'loading' | 'ready' | 'connecting' | 'request_sent' | 'pending' | 'already_connected' | 'error' | 'cancelled'
 
 function ConnectPageContent() {
   const searchParams = useSearchParams()
@@ -94,6 +94,14 @@ function ConnectPageContent() {
     validateInvitation()
   }, [isLoaded, token, sellerId, userId, router, validateInvitation])
 
+  const handleCancel = () => {
+    // Limpiar cualquier invitación pendiente
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('pendingInvitation')
+    }
+    setStatus('cancelled')
+  }
+
   const handleConnect = async () => {
     if (!userId) {
       // Guardar el token en sessionStorage para recuperarlo después del login
@@ -175,6 +183,54 @@ function ConnectPageContent() {
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
               <p className="text-gray-600">Validando invitación...</p>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  // Estado: Cancelado
+  if (status === 'cancelled') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-slate-100">
+        <Card className="w-full max-w-md shadow-xl">
+          <CardHeader className="bg-gradient-to-r from-gray-500 to-slate-600 text-white rounded-t-lg">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-white/20 rounded-full">
+                <XCircle className="h-6 w-6" />
+              </div>
+              <div>
+                <CardTitle className="text-white">Solicitud Cancelada</CardTitle>
+                <CardDescription className="text-gray-200">
+                  No se envió ninguna solicitud
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-4">
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+              <p className="text-gray-700">
+                Has cancelado la solicitud de conexión con <span className="font-bold text-gray-800">{sellerInfo?.name || 'el vendedor'}</span>.
+              </p>
+              <p className="text-sm text-gray-600 mt-2">
+                Si cambias de opinión, puedes solicitar un nuevo link de invitación al vendedor.
+              </p>
+            </div>
+
+            <Button 
+              onClick={() => router.push('/')} 
+              className="w-full bg-gradient-to-r from-gray-600 to-slate-700 hover:from-gray-700 hover:to-slate-800"
+            >
+              Volver al inicio
+            </Button>
+            
+            <Button 
+              onClick={() => setStatus('ready')} 
+              variant="outline"
+              className="w-full"
+            >
+              Volver a intentar
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -378,6 +434,13 @@ function ConnectPageContent() {
               >
                 Continuar
               </Button>
+              <Button 
+                onClick={handleCancel} 
+                variant="outline"
+                className="w-full"
+              >
+                No quiero conectarme
+              </Button>
             </div>
           ) : (
             <div className="space-y-3">
@@ -405,7 +468,7 @@ function ConnectPageContent() {
                 )}
               </Button>
               <Button 
-                onClick={() => router.push('/')} 
+                onClick={handleCancel} 
                 variant="outline"
                 className="w-full"
               >
