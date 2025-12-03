@@ -1273,7 +1273,6 @@ function CartPageContent() {
                       <p className={`font-medium ${deliveryMethod === 'delivery' ? 'text-blue-600' : 'text-gray-700'}`}>
                         Entrega a domicilio
                       </p>
-                      <p className="text-sm text-gray-500">2-3 días hábiles - {formatPrice(DELIVERY_FEE)}</p>
                     </div>
                   </label>
                   
@@ -1292,7 +1291,6 @@ function CartPageContent() {
                       <p className={`font-medium ${deliveryMethod === 'pickup' ? 'text-blue-600' : 'text-gray-700'}`}>
                         Recoger en tienda
                       </p>
-                      <p className="text-sm text-gray-500">Disponible hoy - Gratis</p>
                     </div>
                   </label>
 
@@ -1533,26 +1531,6 @@ function CartPageContent() {
                     <span>Impuestos ({formatNumber(TAX_RATE * 100, 0)}%):</span>
                     <span className="font-semibold text-xs">{formatPrice(calculateTax())}</span>
                   </div>
-
-                  {deliveryMethod === 'delivery' && (
-                    <div className="flex justify-between text-gray-600">
-                      <span className="flex items-center gap-1">
-                        <Truck className="w-4 h-4" />
-                        Envío:
-                      </span>
-                      <span className="font-semibold text-xs">{formatPrice(DELIVERY_FEE)}</span>
-                    </div>
-                  )}
-
-                  {deliveryMethod === 'pickup' && (
-                    <div className="flex justify-between text-green-600">
-                      <span className="flex items-center gap-1">
-                        <Store className="w-4 h-4" />
-                        Retiro en tienda:
-                      </span>
-                      <span className="font-semibold">Gratis</span>
-                    </div>
-                  )}
 
                   {selectedCredits.length > 0 && (
                     <div className="flex justify-between text-green-600 font-semibold">
