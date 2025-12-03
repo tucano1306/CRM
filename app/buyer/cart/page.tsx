@@ -1228,7 +1228,7 @@ function CartPageContent() {
                     📝 Notas especiales (opcional)
                   </label>
                   <textarea 
-                    placeholder="Ej: Sin cebolla, bien cocido, empaque especial..."
+                    placeholder=""
                     value={orderNotes}
                     onChange={(e) => setOrderNotes(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
@@ -1298,18 +1298,18 @@ function CartPageContent() {
                     ¿Tienes un cupón?
                   </label>
                   {!appliedCoupon ? (
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <input 
                         type="text"
                         placeholder="Código de descuento"
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                       <button 
                         onClick={applyCoupon}
                         disabled={!couponCode.trim()}
-                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                        className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium whitespace-nowrap flex-shrink-0"
                       >
                         Aplicar
                       </button>
