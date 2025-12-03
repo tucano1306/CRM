@@ -873,19 +873,19 @@ export default function BuyerDashboardPage() {
               {recentOrders.slice(0, 5).map((order) => (
                 <Link key={order.id} href="/buyer/orders">
                   <div 
-                    className="border-2 border-gray-200 rounded-xl p-4 hover:border-purple-400 hover:shadow-lg transition-all cursor-pointer"
+                    className="border-2 border-gray-200 rounded-xl p-3 sm:p-4 hover:border-purple-400 hover:shadow-lg transition-all cursor-pointer"
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg flex items-center justify-center">
-                          <ShoppingBag className="w-6 h-6 text-purple-600" />
+                    <div className="flex items-start sm:items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <ShoppingBag className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
                         </div>
-                        <div>
-                          <p className="font-bold text-gray-900">#{order.orderNumber}</p>
-                          <p className="text-sm text-gray-600 font-medium">{order.itemsCount} productos</p>
+                        <div className="min-w-0">
+                          <p className="font-bold text-gray-900 text-sm sm:text-base">#{order.orderNumber}</p>
+                          <p className="text-xs sm:text-sm text-gray-600 font-medium">{order.itemsCount} productos</p>
                         </div>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(order.status)}`}>
+                      <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap flex-shrink-0 ${getStatusColor(order.status)}`}>
                         {statusLabels[order.status] || order.status}
                       </span>
                     </div>
@@ -900,15 +900,15 @@ export default function BuyerDashboardPage() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-gray-600 font-medium">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs sm:text-sm text-gray-600 font-medium">
                         {new Date(order.createdAt).toLocaleDateString('es-ES', { 
                           day: 'numeric', 
                           month: 'short', 
                           year: 'numeric' 
                         })}
                       </p>
-                      <p className="text-lg font-bold text-purple-600">
+                      <p className="text-base sm:text-lg font-bold text-purple-600">
                         {formatPrice(Number(order.totalAmount))}
                       </p>
                     </div>
