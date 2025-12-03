@@ -56,6 +56,8 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
   const fetchIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const isFetchingRef = useRef(false)
   const previousMessageCountRef = useRef(0) // Para detectar nuevos mensajes
+  const consecutiveErrorsRef = useRef(0) // Contador de errores consecutivos
+  const hasLoadedOnceRef = useRef(false) // Si ya cargó al menos una vez
 
   // Log inicial para debugging
   console.log('💬 ChatWindow montado con:', {
@@ -111,6 +113,11 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
       if (data.success) {
         const newMessages = data.messages
         
+        // Reset contador de errores cuando hay éxito
+        consecutiveErrorsRef.current = 0
+        hasLoadedOnceRef.current = true
+        setError(null)
+        
         // Detectar si hay mensajes nuevos del otro usuario
         if (previousMessageCountRef.current > 0) {
           const newIncomingMessages = newMessages.filter((m: Message) => 
@@ -136,11 +143,19 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
           markAsRead(unreadIds)
         }
       } else {
-        setError(data.error || 'Error cargando mensajes')
+        consecutiveErrorsRef.current++
+        // Solo mostrar error si falló varias veces seguidas y nunca cargó
+        if (consecutiveErrorsRef.current >= 3 && !hasLoadedOnceRef.current) {
+          setError(data.error || 'Error cargando mensajes')
+        }
       }
     } catch (error) {
       console.error('Error fetching messages:', error)
-      setError('Error de conexión')
+      consecutiveErrorsRef.current++
+      // Solo mostrar error si falló varias veces seguidas y nunca cargó
+      if (consecutiveErrorsRef.current >= 3 && !hasLoadedOnceRef.current) {
+        setError('Error de conexión. Reintentando...')
+      }
     } finally {
       isFetchingRef.current = false
       setLoading(false)
@@ -583,12 +598,12 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
           )}
         </div>
 
-        {/* Error */}
+        {/* Error - Solo mostrar si es persistente */}
         {error && (
-          <div className="mx-4 mb-2 p-3 bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 rounded-xl shadow-sm">
-            <p className="text-sm text-red-600 flex items-center gap-2 font-medium">
-              <AlertCircle className="h-4 w-4" />
-              {error}
+          <div className="mx-4 mb-2 p-2 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl shadow-sm">
+            <p className="text-xs text-amber-700 flex items-center gap-2">
+              <div className="animate-spin rounded-full h-3 w-3 border-2 border-amber-500 border-t-transparent" />
+              Reconectando...
             </p>
           </div>
         )}
