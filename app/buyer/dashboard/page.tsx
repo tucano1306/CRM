@@ -612,11 +612,11 @@ export default function BuyerDashboardPage() {
             <div className="flex-1">
               <h4 className="font-bold text-purple-900 mb-2 text-lg">💡 Tip del día</h4>
               <p className="text-purple-800 mb-3 font-medium">
-                Completa tu perfil para recibir recomendaciones personalizadas y ofertas exclusivas basadas en tus preferencias.
+                ¡Explora nuestro catálogo para descubrir nuevos productos y ofertas exclusivas de tu vendedor!
               </p>
-              <Link href="/buyer/profile">
+              <Link href="/buyer/catalog">
                 <button className="text-purple-600 hover:text-purple-700 font-semibold text-sm hover:underline transition-all">
-                  Completar perfil →
+                  Ver catálogo →
                 </button>
               </Link>
             </div>
