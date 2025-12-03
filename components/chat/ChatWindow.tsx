@@ -176,10 +176,10 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
     // Cargar mensajes inicialmente
     fetchMessages()
 
-    // Configurar polling cada 5 segundos
+    // Configurar polling cada 15 segundos (reducido para evitar rate limiting)
     fetchIntervalRef.current = setInterval(() => {
       fetchMessages()
-    }, 5000)
+    }, 15000)
 
     // Cleanup al desmontar o cuando cambien las dependencias
     return () => {
