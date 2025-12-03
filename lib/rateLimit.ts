@@ -184,25 +184,25 @@ class RateLimiter {
 // Configuraciones predefinidas por tipo de endpoint
 // ============================================================================
 
-// API General: 100 requests por minuto
+// API General: 200 requests por minuto (más permisivo para SPAs)
 export const generalRateLimiter = new RateLimiter({
   windowMs: 60 * 1000, // 1 minuto
-  maxRequests: 100,
+  maxRequests: 200,
+  blockDurationMs: 2 * 60 * 1000, // 2 minutos de bloqueo (reducido)
+})
+
+// Auth endpoints: 100 requests por 15 minutos (más permisivo)
+export const authRateLimiter = new RateLimiter({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  maxRequests: 100, // Aumentado de 50 a 100
   blockDurationMs: 5 * 60 * 1000, // 5 minutos de bloqueo
 })
 
-// Auth endpoints: 50 requests por 15 minutos (más permisivo en desarrollo)
-export const authRateLimiter = new RateLimiter({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  maxRequests: 50, // Aumentado de 10 a 50
-  blockDurationMs: 15 * 60 * 1000, // 15 minutos de bloqueo (reducido de 1 hora)
-})
-
-// API pública (sin auth): 20 requests por minuto
+// API pública (sin auth): 50 requests por minuto
 export const publicRateLimiter = new RateLimiter({
   windowMs: 60 * 1000, // 1 minuto
-  maxRequests: 20,
-  blockDurationMs: 15 * 60 * 1000, // 15 minutos de bloqueo
+  maxRequests: 50,
+  blockDurationMs: 2 * 60 * 1000, // 2 minutos de bloqueo
 })
 
 // Cron/Webhooks: 1 request por minuto
