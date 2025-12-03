@@ -82,6 +82,18 @@ export default function ManageCatalogModal({
   // Estado para exportar Excel
   const [exporting, setExporting] = useState(false)
   
+  // Estado para editar producto existente
+  const [editingProduct, setEditingProduct] = useState<ClientProduct | null>(null)
+  const [editForm, setEditForm] = useState({
+    name: '',
+    description: '',
+    price: '',
+    sku: '',
+    category: 'OTROS',
+    unit: 'unit',
+  })
+  const [savingEdit, setSavingEdit] = useState(false)
+  
   // Estado para crear nuevo producto
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -110,6 +122,80 @@ export default function ManageCatalogModal({
       setLoading(false)
     }
   }, [clientId])
+
+  // Abrir modal de edición
+  const handleOpenEdit = (product: ClientProduct) => {
+    setEditingProduct(product)
+    setEditForm({
+      name: product.name,
+      description: product.description || '',
+      price: product.customPrice.toString(),
+      sku: product.sku || '',
+      category: product.category || 'OTROS',
+      unit: product.unit || 'unit',
+    })
+  }
+
+  // Guardar cambios del producto
+  const handleSaveEdit = async () => {
+    if (!editingProduct) return
+    
+    setSavingEdit(true)
+    try {
+      // Actualizar el producto base
+      const productResponse = await fetch(`/api/products/${editingProduct.productId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editForm.name,
+          description: editForm.description || null,
+          sku: editForm.sku || null,
+          category: editForm.category,
+          unit: editForm.unit,
+        })
+      })
+      
+      if (!productResponse.ok) {
+        throw new Error('Error actualizando producto')
+      }
+
+      // Actualizar precio personalizado del cliente
+      const newPrice = parseFloat(editForm.price) || editingProduct.customPrice
+      if (newPrice !== editingProduct.customPrice) {
+        await fetch(`/api/clients/${clientId}/products`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productId: editingProduct.productId,
+            customPrice: newPrice
+          })
+        })
+      }
+
+      // Actualizar lista local
+      setClientProducts(prev => prev.map(p => 
+        p.productId === editingProduct.productId
+          ? {
+              ...p,
+              name: editForm.name,
+              description: editForm.description || null,
+              sku: editForm.sku || null,
+              category: editForm.category,
+              unit: editForm.unit,
+              customPrice: newPrice,
+            }
+          : p
+      ))
+
+      setEditingProduct(null)
+      console.log('✅ Producto actualizado')
+    } catch (error) {
+      console.error('Error guardando producto:', error)
+      alert('Error al guardar los cambios')
+    } finally {
+      setSavingEdit(false)
+    }
+  }
 
   // Exportar productos del cliente a Excel
   const handleExportProducts = async () => {
@@ -483,6 +569,13 @@ export default function ManageCatalogModal({
 
                             {/* Actions */}
                             <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+                              <button
+                                onClick={() => handleOpenEdit(product)}
+                                className="p-1.5 sm:p-2 bg-blue-100 text-blue-600 hover:bg-blue-200 rounded-lg transition-colors"
+                                title="Editar producto"
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
                               <button
                                 onClick={() => handleToggleVisibility(product.productId, product.isVisible)}
                                 className={`p-1.5 sm:p-2 rounded-lg transition-colors ${
@@ -983,6 +1076,158 @@ export default function ManageCatalogModal({
           )}
         </div>
       </div>
+
+      {/* Modal de Edición de Producto */}
+      {editingProduct && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 sm:p-6 text-white rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg">
+                    <Edit3 className="w-5 h-5 sm:w-6 sm:h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-bold">Editar Producto</h3>
+                    <p className="text-blue-100 text-sm">Modificar información del producto</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setEditingProduct(null)}
+                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
+                </button>
+              </div>
+            </div>
+
+            {/* Form */}
+            <div className="p-4 sm:p-6 space-y-4">
+              {/* Nombre */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Nombre del Producto *
+                </label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Ej: Manzana Roja Premium"
+                />
+              </div>
+
+              {/* SKU */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  SKU / Código
+                </label>
+                <input
+                  type="text"
+                  value={editForm.sku}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, sku: e.target.value }))}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono"
+                  placeholder="Ej: MANZ-001"
+                />
+              </div>
+
+              {/* Descripción */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Descripción
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  rows={2}
+                  placeholder="Descripción del producto..."
+                />
+              </div>
+
+              {/* Precio */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  Precio para {clientName} *
+                </label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={editForm.price}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, price: e.target.value }))}
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              {/* Categoría y Unidad */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Categoría
+                  </label>
+                  <select
+                    value={editForm.category}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {CATEGORIES.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Unidad
+                  </label>
+                  <select
+                    value={editForm.unit}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, unit: e.target.value }))}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    {UNITS.map(u => (
+                      <option key={u.value} value={u.value}>{u.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Botones */}
+              <div className="flex gap-3 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditingProduct(null)}
+                  className="flex-1"
+                  disabled={savingEdit}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  disabled={savingEdit || !editForm.name || !editForm.price}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                >
+                  {savingEdit ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-2" />
+                      Guardar Cambios
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
