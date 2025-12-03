@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Download, X, Smartphone, Monitor } from 'lucide-react'
+import Image from 'next/image'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>
@@ -105,7 +106,7 @@ export default function PWAInstallPrompt() {
           
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
-              <img src="/logo.png" alt="Bargain" className="w-10 h-10" />
+              <Image src="/logo.png" alt="Bargain" width={40} height={40} className="w-10 h-10" />
             </div>
             
             <div className="flex-1 min-w-0">
@@ -165,13 +166,13 @@ export default function PWAInstallPrompt() {
                 <span className="flex-shrink-0 w-7 h-7 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm">2</span>
                 <div>
                   <p className="text-gray-900 font-medium">Desplázate hacia abajo</p>
-                  <p className="text-gray-500 text-sm">Busca "Añadir a pantalla de inicio"</p>
+                  <p className="text-gray-500 text-sm">Busca &ldquo;Añadir a pantalla de inicio&rdquo;</p>
                 </div>
               </li>
               <li className="flex gap-3">
                 <span className="flex-shrink-0 w-7 h-7 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm">3</span>
                 <div>
-                  <p className="text-gray-900 font-medium">Toca "Añadir"</p>
+                  <p className="text-gray-900 font-medium">Toca &ldquo;Añadir&rdquo;</p>
                   <p className="text-gray-500 text-sm">¡Listo! La app aparecerá en tu pantalla</p>
                 </div>
               </li>
