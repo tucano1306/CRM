@@ -1276,23 +1276,7 @@ function CartPageContent() {
                     </div>
                   </label>
                   
-                  <label className="flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors"
-                    style={{ borderColor: deliveryMethod === 'pickup' ? '#3b82f6' : '#e5e7eb' }}>
-                    <input 
-                      type="radio" 
-                      name="delivery" 
-                      value="pickup"
-                      checked={deliveryMethod === 'pickup'}
-                      onChange={(e) => setDeliveryMethod(e.target.value as 'delivery' | 'pickup')}
-                      className="w-4 h-4 text-blue-600"
-                    />
-                    <Store className={`w-5 h-5 ${deliveryMethod === 'pickup' ? 'text-blue-600' : 'text-gray-400'}`} />
-                    <div className="flex-1">
-                      <p className={`font-medium ${deliveryMethod === 'pickup' ? 'text-blue-600' : 'text-gray-700'}`}>
-                        Recoger en tienda
-                      </p>
-                    </div>
-                  </label>
+
 
                   {/* Fecha de entrega estimada */}
                   <div className="flex items-center gap-2 text-sm text-gray-600 mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">

@@ -32,15 +32,14 @@ interface ManageCatalogModalProps {
 }
 
 const CATEGORIES = [
-  'FRUTAS',
-  'VERDURAS', 
-  'LACTEOS',
   'CARNES',
-  'MARISCOS',
+  'EMBUTIDOS',
+  'SALSAS',
+  'LACTEOS',
+  'GRANOS',
+  'VEGETALES',
+  'CONDIMENTOS',
   'BEBIDAS',
-  'PANADERIA',
-  'ABARROTES',
-  'LIMPIEZA',
   'OTROS'
 ]
 
@@ -156,7 +155,9 @@ export default function ManageCatalogModal({
       })
       
       if (!productResponse.ok) {
-        throw new Error('Error actualizando producto')
+        const errorData = await productResponse.json().catch(() => ({}))
+        console.error('❌ Error del servidor:', errorData)
+        throw new Error(errorData.error || errorData.details || 'Error actualizando producto')
       }
 
       // Actualizar precio personalizado del cliente
@@ -189,9 +190,9 @@ export default function ManageCatalogModal({
 
       setEditingProduct(null)
       console.log('✅ Producto actualizado')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error guardando producto:', error)
-      alert('Error al guardar los cambios')
+      alert(error.message || 'Error al guardar los cambios')
     } finally {
       setSavingEdit(false)
     }
