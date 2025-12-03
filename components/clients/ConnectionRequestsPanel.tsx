@@ -36,44 +36,42 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
   const [requests, setRequests] = useState<ConnectionRequest[]>([])
   const [pendingCount, setPendingCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [initialLoad, setInitialLoad] = useState(true) // Para distinguir carga inicial vs polling
   const [processingId, setProcessingId] = useState<string | null>(null)
   const [isExpanded, setIsExpanded] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
 
-  const fetchRequests = async () => {
+  const fetchRequests = async (isPolling = false) => {
     try {
-      setLoading(true)
+      // Solo mostrar loading en la carga inicial, no en polling
+      if (!isPolling) {
+        setLoading(true)
+      }
       setError(null)
-      console.log('🔍 [ConnectionRequestsPanel] Fetching requests...')
       const response = await apiCall('/api/connection-requests?status=PENDING') as any
-      
-      console.log('📡 [ConnectionRequestsPanel] Raw response:', response)
       
       // apiCall envuelve la respuesta en { success, data, status }
       // donde data es el JSON completo de la API
       const apiData = response.data
-      console.log('📡 [ConnectionRequestsPanel] API data:', apiData)
       
       if (response.success && apiData?.success) {
         // Asegurar que data sea siempre un array
         const dataArray = Array.isArray(apiData.data) ? apiData.data : []
-        console.log('✅ [ConnectionRequestsPanel] Requests found:', dataArray.length, dataArray)
         setRequests(dataArray)
         setPendingCount(apiData.pendingCount || dataArray.length || 0)
       } else {
         // Si el API falla, simplemente no mostramos el panel
-        console.log('❌ [ConnectionRequestsPanel] API error:', apiData?.error || response.error)
         setRequests([])
         setPendingCount(0)
       }
     } catch (err) {
       // Error silencioso - el sistema de solicitudes puede no estar disponible aún
-      console.log('❌ [ConnectionRequestsPanel] Exception:', err)
       setRequests([])
       setPendingCount(0)
     } finally {
       setLoading(false)
+      setInitialLoad(false)
     }
   }
 
@@ -81,10 +79,10 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
     setMounted(true)
     
     // Hacer fetch inicial
-    fetchRequests()
+    fetchRequests(false)
     
-    // Refrescar cada 30 segundos
-    const interval = setInterval(fetchRequests, 30000)
+    // Refrescar cada 30 segundos (silencioso, sin mostrar loading)
+    const interval = setInterval(() => fetchRequests(true), 30000)
     return () => clearInterval(interval)
   }, [])
 
@@ -174,8 +172,8 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
     return null
   }
 
-  // Mostrar loading mientras carga
-  if (loading) {
+  // Solo mostrar loading en la carga inicial (no en polling)
+  if (loading && initialLoad) {
     return (
       <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl shadow-lg p-6">
         <div className="flex items-center justify-center gap-3">
@@ -188,11 +186,8 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
 
   // No mostrar si no hay solicitudes pendientes (después de cargar)
   if (requests.length === 0) {
-    console.log('🔍 [ConnectionRequestsPanel] No hay solicitudes, ocultando panel')
     return null
   }
-
-  console.log('🔍 [ConnectionRequestsPanel] Mostrando panel con', requests.length, 'solicitudes')
 
   return (
     <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl shadow-lg overflow-hidden">
@@ -243,7 +238,7 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
           ) : error ? (
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
               <p className="text-red-600">{error}</p>
-              <Button variant="outline" size="sm" onClick={fetchRequests} className="mt-2">
+              <Button variant="outline" size="sm" onClick={() => fetchRequests(false)} className="mt-2">
                 Reintentar
               </Button>
             </div>
