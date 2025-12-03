@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { ProductCategory } from '@prisma/client'
+import { autoClassifyCategory } from '@/lib/autoClassifyCategory'
 import * as XLSX from 'xlsx'
 
 /**
@@ -99,55 +100,6 @@ export async function POST(request: NextRequest) {
         error: 'El archivo debe tener al menos una columna de Description o Item #',
         headers: headers
       }, { status: 400 })
-    }
-
-    // 🏷️ Función para auto-clasificar productos por categoría basándose en palabras clave
-    // Categorías disponibles: CARNES, EMBUTIDOS, SALSAS, LACTEOS, GRANOS, VEGETALES, CONDIMENTOS, BEBIDAS, OTROS
-    const autoClassifyCategory = (productName: string, description: string = ''): ProductCategory => {
-      const text = `${productName} ${description}`.toLowerCase()
-      
-      // Carnes (incluye pollo, cerdo, res, pescados, mariscos)
-      if (/\b(beef|steak|ribeye|sirloin|ground beef|carne|res|bistec|filete|t-bone|tenderloin|brisket|chuck|roast|veal|ternera|lomo|costilla|chuleta|picanha|flank|chicken|pollo|turkey|pavo|wing|ala|thigh|muslo|breast|pechuga|drumstick|hen|gallina|duck|pato|pork|cerdo|bacon|tocino|ham|jamón|jamon|puerco|lechon|chicharron|fish|pescado|salmon|tuna|atun|shrimp|camaron|camarón|lobster|langosta|crab|cangrejo|seafood|mariscos|tilapia|cod|bacalao|mahi|snapper|pargo|trout|trucha|squid|calamar|octopus|pulpo|clam|almeja|mussel|mejillon|oyster|ostra|scallop|meat)\b/.test(text)) {
-        return ProductCategory.CARNES
-      }
-      
-      // Embutidos
-      if (/\b(salami|pepperoni|mortadela|bologna|hot dog|frankfurter|wiener|deli meat|lunch meat|prosciutto|pancetta|longaniza|morcilla|butifarra|embutido|chorizo|salchicha|sausage)\b/.test(text)) {
-        return ProductCategory.EMBUTIDOS
-      }
-      
-      // Lácteos
-      if (/\b(milk|leche|cheese|queso|yogurt|yogur|butter|mantequilla|cream|crema|dairy|lacteo|mozzarella|cheddar|parmesan|parmesano|ricotta|feta|gouda|brie|cottage|sour cream)\b/.test(text)) {
-        return ProductCategory.LACTEOS
-      }
-      
-      // Vegetales (frutas y verduras)
-      if (/\b(apple|manzana|banana|platano|plátano|orange|naranja|grape|uva|strawberry|fresa|mango|pineapple|piña|watermelon|sandia|sandía|melon|melón|lemon|limon|limón|lime|lima|peach|durazno|pear|pera|cherry|cereza|blueberry|arandano|arándano|raspberry|frambuesa|kiwi|papaya|coconut|coco|avocado|aguacate|fruit|fruta|tomato|tomate|lettuce|lechuga|onion|cebolla|pepper|pimiento|carrot|zanahoria|potato|papa|patata|cucumber|pepino|broccoli|brocoli|brócoli|spinach|espinaca|celery|apio|garlic|ajo|corn|maiz|maíz|cabbage|repollo|cauliflower|coliflor|zucchini|calabacin|calabacín|eggplant|berenjena|mushroom|champiñon|champiñón|hongo|asparagus|esparrago|espárrago|vegetable|vegetal|verdura|salad|ensalada)\b/.test(text)) {
-        return ProductCategory.VEGETALES
-      }
-      
-      // Bebidas
-      if (/\b(water|agua|juice|jugo|soda|refresco|cola|sprite|fanta|beer|cerveza|wine|vino|coffee|cafe|café|tea|te|té|drink|bebida|energy|energetica|energética|gatorade|powerade)\b/.test(text)) {
-        return ProductCategory.BEBIDAS
-      }
-      
-      // Granos (arroz, frijoles, pasta, cereales, panadería)
-      if (/\b(rice|arroz|beans|frijoles|frijol|pasta|spaghetti|macaroni|noodle|fideos|lentils|lentejas|oat|avena|cereal|grain|grano|flour|harina|bread|pan|cake|pastel|cookie|galleta|muffin|croissant|bagel|baguette|donut|dona)\b/.test(text)) {
-        return ProductCategory.GRANOS
-      }
-      
-      // Salsas
-      if (/\b(sauce|salsa|ketchup|mayo|mayonesa|mustard|mostaza|dressing|aderezo|bbq|teriyaki|soy sauce|salsa de soya|hot sauce|picante|marinara|alfredo|pesto)\b/.test(text)) {
-        return ProductCategory.SALSAS
-      }
-      
-      // Condimentos
-      if (/\b(salt|sal|sugar|azucar|azúcar|spice|especia|condiment|condimento|oil|aceite|vinegar|vinagre|pepper|pimienta|oregano|orégano|cumin|comino|paprika|cinnamon|canela|garlic powder|onion powder|seasoning|sazon|sazón)\b/.test(text)) {
-        return ProductCategory.CONDIMENTOS
-      }
-      
-      // Por defecto
-      return ProductCategory.OTROS
     }
 
     // Procesar datos

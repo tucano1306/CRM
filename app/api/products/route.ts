@@ -6,6 +6,7 @@ import { createProductSchema, validateSchema } from '@/lib/validations'
 import { sanitizeText } from '@/lib/sanitize'
 import { withCache, CACHE_CONFIGS, getAdaptiveCache } from '@/lib/apiCache'
 import { invalidateProductsCache } from '@/lib/cache-invalidation'
+import { autoClassifyCategory } from '@/lib/autoClassifyCategory'
 
 // GET /api/products - Obtener productos
 // ✅ CON TIMEOUT DE 5 SEGUNDOS
@@ -227,6 +228,11 @@ export async function POST(request: Request) {
 
     console.log('✅ [CREATE PRODUCT] Validaciones pasadas, creando producto...')
 
+    // 🏷️ Auto-clasificar categoría si no se proporcionó o está en OTROS
+    const finalCategory = (!sanitizedData.category || sanitizedData.category === 'OTROS')
+      ? autoClassifyCategory(sanitizedData.name, sanitizedData.description || '')
+      : sanitizedData.category
+
     // 🔒 SEGURIDAD: Obtener vendedor del usuario autenticado
     const seller = await prisma.seller.findFirst({
       where: {
@@ -256,7 +262,7 @@ export async function POST(request: Request) {
           sku: sanitizedData.sku,
           imageUrl: sanitizedData.imageUrl || null,
           isActive: sanitizedData.isActive ?? true,
-          category: sanitizedData.category,
+          category: finalCategory,
           sellers: {
             create: {
               sellerId: seller.id
