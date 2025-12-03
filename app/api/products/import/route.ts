@@ -14,14 +14,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
-    // Buscar el vendedor
-    const seller = await prisma.seller.findFirst({
-      where: { clerkId: userId }
+    // Buscar el usuario autenticado y su seller
+    const authUser = await prisma.authenticated_users.findFirst({
+      where: { authId: userId },
+      include: { sellers: true }
     })
 
-    if (!seller) {
+    if (!authUser || authUser.sellers.length === 0) {
       return NextResponse.json({ error: 'Vendedor no encontrado' }, { status: 404 })
     }
+
+    const seller = authUser.sellers[0]
 
     // Obtener el archivo del form data
     const formData = await request.formData()
@@ -140,13 +143,15 @@ export async function POST(request: NextRequest) {
           continue
         }
 
-        // Buscar si el producto ya existe (por SKU)
+        // Buscar si el producto ya existe (por SKU y asociado al seller)
         let existingProduct = null
         if (sku) {
           existingProduct = await prisma.product.findFirst({
             where: { 
-              sellerId: seller.id,
-              sku: sku
+              sku: sku,
+              sellers: {
+                some: { sellerId: seller.id }
+              }
             }
           })
         }
@@ -168,17 +173,22 @@ export async function POST(request: NextRequest) {
             skipped++
           }
         } else {
-          // Crear nuevo producto
+          // Crear nuevo producto y asociarlo al seller
           const newProduct = await prisma.product.create({
             data: {
-              sellerId: seller.id,
               name: productName,
               description: description || null,
               price: price,
               sku: sku || null,
               stock: 999, // Stock inicial alto
               isActive: true,
-              lowStockThreshold: 10,
+              sellers: {
+                create: {
+                  sellerId: seller.id,
+                  sellerPrice: price,
+                  isAvailable: true
+                }
+              }
             }
           })
           products.push(newProduct)
