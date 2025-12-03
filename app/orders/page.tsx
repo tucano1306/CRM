@@ -383,10 +383,14 @@ export default function OrdersPage() {
                       text-white
                     `}
                     onClick={() => {
-                      // Scroll a la primera orden pendiente
-                      const firstPendingElement = document.querySelector('[data-order-status="PENDING"]')
-                      if (firstPendingElement) {
-                        firstPendingElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                      // Buscar el primer cliente con órdenes pendientes y hacer click
+                      const firstClientWithPending = document.querySelector('[data-client-has-pending="true"]') as HTMLElement
+                      if (firstClientWithPending) {
+                        firstClientWithPending.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                        // Dar tiempo al scroll y luego hacer click para abrir el modal
+                        setTimeout(() => {
+                          firstClientWithPending.click()
+                        }, 500)
                       }
                     }}
                   >

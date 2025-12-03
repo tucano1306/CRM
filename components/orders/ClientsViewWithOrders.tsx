@@ -456,9 +456,13 @@ export default function ClientsViewWithOrders({
               }
               const lastOrder = getLastOrderText()
               
+              // Verificar si este cliente tiene órdenes pendientes
+              const hasPendingOrders = clientData.orders.some(o => o.status === 'PENDING')
+              
               return (
                 <div
                   key={clientData.client.id}
+                  data-client-has-pending={hasPendingOrders ? 'true' : 'false'}
                   onClick={() => setSelectedClient(clientData)}
                   style={{
                     animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`
