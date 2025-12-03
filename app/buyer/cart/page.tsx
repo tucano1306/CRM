@@ -78,6 +78,7 @@ function CartPageContent() {
   const [creditAmounts, setCreditAmounts] = useState<Record<string, number>>({}) // Monto a usar de cada crédito
   const [showCreditsSection, setShowCreditsSection] = useState(false)
   const [loadingCredits, setLoadingCredits] = useState(true)
+  const [editingQuantity, setEditingQuantity] = useState<Record<string, string>>({}) // Para editar cantidades directamente
   
   // Nuevos estados para el flujo de verificación
   const [orderStep, setOrderStep] = useState<1 | 2 | 3>(1) // 1: Pedido, 2: Orden Verificada, 3: Listo para envío
@@ -1062,19 +1063,34 @@ function CartPageContent() {
                                 </div>
                               ) : (
                                 <input
-                                  type="number"
+                                  type="text"
                                   inputMode="numeric"
-                                  min="1"
-                                  max={item.product.stock}
-                                  value={item.quantity}
+                                  pattern="[0-9]*"
+                                  value={editingQuantity[item.id] !== undefined ? editingQuantity[item.id] : item.quantity}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    // Seleccionar todo el texto al hacer clic
+                                    ;(e.target as HTMLInputElement).select()
+                                  }}
+                                  onFocus={(e) => {
+                                    // Inicializar el estado de edición con el valor actual
+                                    setEditingQuantity(prev => ({ ...prev, [item.id]: item.quantity.toString() }))
+                                    e.target.select()
+                                  }}
                                   onChange={(e) => {
-                                    // Solo actualizar visualmente, sin llamar API aún
-                                    const val = parseInt(e.target.value) || 1
-                                    // No hacemos nada aquí, solo dejamos que el input cambie
+                                    // Permitir solo números
+                                    const val = e.target.value.replace(/[^0-9]/g, '')
+                                    setEditingQuantity(prev => ({ ...prev, [item.id]: val }))
                                   }}
                                   onBlur={(e) => {
                                     const val = parseInt(e.target.value) || 1
                                     const qty = Math.max(1, Math.min(val, item.product.stock))
+                                    // Limpiar estado de edición
+                                    setEditingQuantity(prev => {
+                                      const newState = { ...prev }
+                                      delete newState[item.id]
+                                      return newState
+                                    })
                                     if (qty !== item.quantity) {
                                       updateQuantity(item.id, qty)
                                     }
@@ -1128,9 +1144,9 @@ function CartPageContent() {
                           </div>
 
                           {/* Subtotal del item */}
-                          <div className="text-right">
+                          <div className="text-right flex-shrink-0 min-w-0">
                             <p className="text-xs text-gray-500">Subtotal</p>
-                            <p className="text-lg font-bold text-gray-800 transition-all duration-300">
+                            <p className="text-sm sm:text-lg font-bold text-gray-800 transition-all duration-300 truncate max-w-[100px] sm:max-w-[150px]">
                               {formatPrice(item.price * item.quantity)}
                             </p>
                           </div>
