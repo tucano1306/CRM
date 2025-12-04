@@ -7,6 +7,7 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import PWAInstallPrompt from '@/components/pwa/PWAInstallPrompt'
+import NotificationInitializer from '@/components/notifications/NotificationInitializer'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -54,6 +55,7 @@ export default function RootLayout({
         <body className={inter.className}>
           <QueryProvider>
             <PendingRedirectHandler />
+            <NotificationInitializer />
             {children}
             <PWAInstallPrompt />
           </QueryProvider>

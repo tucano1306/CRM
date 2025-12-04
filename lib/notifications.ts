@@ -537,3 +537,143 @@ export async function sendAutomaticCancellationMessage(
     // No lanzar error para no bloquear la cancelación
   }
 }
+
+// ============================================================================
+// NOTIFICACIONES PUSH Y BADGES (CLIENTE)
+// ============================================================================
+
+interface PushNotificationData {
+  title: string
+  body: string
+  icon?: string
+  tag?: string
+  url?: string
+  vibrate?: number[]
+  requireInteraction?: boolean
+}
+
+/**
+ * Clase singleton para manejar notificaciones push del lado del cliente
+ */
+class PushNotificationService {
+  private static instance: PushNotificationService
+  private swRegistration: ServiceWorkerRegistration | null = null
+  private permission: NotificationPermission = 'default'
+
+  private constructor() {}
+
+  static getInstance(): PushNotificationService {
+    if (!PushNotificationService.instance) {
+      PushNotificationService.instance = new PushNotificationService()
+    }
+    return PushNotificationService.instance
+  }
+
+  // Inicializar el servicio (llamar al cargar la app)
+  async init(): Promise<boolean> {
+    if (typeof window === 'undefined') return false
+    
+    if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+      console.warn('⚠️ Notificaciones no soportadas')
+      return false
+    }
+
+    try {
+      this.swRegistration = await navigator.serviceWorker.register('/sw.js')
+      console.log('✅ Service Worker registrado')
+
+      this.permission = await Notification.requestPermission()
+      console.log('📬 Permiso notificaciones:', this.permission)
+
+      return this.permission === 'granted'
+    } catch (error) {
+      console.error('❌ Error inicializando notificaciones:', error)
+      return false
+    }
+  }
+
+  hasPermission(): boolean {
+    return this.permission === 'granted'
+  }
+
+  // Enviar notificación push local
+  async sendNotification(data: PushNotificationData): Promise<boolean> {
+    if (!this.hasPermission() || !this.swRegistration) {
+      return false
+    }
+
+    try {
+      await this.swRegistration.showNotification(data.title, {
+        body: data.body,
+        icon: data.icon || '/logo.png',
+        badge: '/logo.png',
+        tag: data.tag || 'bargain-' + Date.now(),
+        vibrate: data.vibrate || [200, 100, 200],
+        data: { url: data.url || '/' },
+        requireInteraction: data.requireInteraction || false,
+      })
+      return true
+    } catch (error) {
+      console.error('❌ Error enviando notificación:', error)
+      return false
+    }
+  }
+
+  // Actualizar badge del ícono de la app (número en el ícono)
+  async setBadge(count: number): Promise<void> {
+    if (typeof window === 'undefined') return
+
+    if ('setAppBadge' in navigator) {
+      try {
+        if (count > 0) {
+          await (navigator as any).setAppBadge(count)
+        } else {
+          await (navigator as any).clearAppBadge()
+        }
+      } catch (error) {
+        console.error('Error badge:', error)
+      }
+    }
+
+    // Enviar al Service Worker
+    if (this.swRegistration?.active) {
+      this.swRegistration.active.postMessage({ type: 'SET_BADGE', count })
+    }
+  }
+
+  async clearBadge(): Promise<void> {
+    await this.setBadge(0)
+  }
+
+  // Vibrar el dispositivo
+  vibrate(pattern: number | number[] = [200, 100, 200]): void {
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(pattern)
+    }
+  }
+
+  // Reproducir sonido
+  playSound(soundUrl: string = '/notification.mp3'): void {
+    if (typeof window === 'undefined') return
+    try {
+      const audio = new Audio(soundUrl)
+      audio.volume = 0.5
+      audio.play().catch(() => {})
+    } catch (error) {}
+  }
+}
+
+export const pushNotificationService = PushNotificationService.getInstance()
+
+// Hook para React
+export function usePushNotifications() {
+  return {
+    init: () => pushNotificationService.init(),
+    notify: (data: PushNotificationData) => pushNotificationService.sendNotification(data),
+    setBadge: (count: number) => pushNotificationService.setBadge(count),
+    clearBadge: () => pushNotificationService.clearBadge(),
+    vibrate: (pattern?: number | number[]) => pushNotificationService.vibrate(pattern),
+    playSound: (url?: string) => pushNotificationService.playSound(url),
+    hasPermission: () => pushNotificationService.hasPermission()
+  }
+}
