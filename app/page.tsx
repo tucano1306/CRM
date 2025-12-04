@@ -71,7 +71,7 @@ export default function HomePage() {
                 )}
 
                 {/* Opciones para VENDEDOR */}
-                {userRole === 'SELLER' && (
+                {(userRole === 'SELLER' || !userRole) && (
                   <div className="space-y-2">
                     <Link href="/dashboard">
                       <Button className="w-full">
@@ -86,36 +86,6 @@ export default function HomePage() {
                     <Link href="/orders">
                       <Button className="w-full" variant="outline">
                         Ver Órdenes
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-
-                {/* Opciones para ADMIN */}
-                {userRole === 'ADMIN' && (
-                  <div className="space-y-2">
-                    <Link href="/dashboard">
-                      <Button className="w-full">
-                        Ir al Dashboard
-                      </Button>
-                    </Link>
-                    <Link href="/clients">
-                      <Button className="w-full" variant="outline">
-                        Gestionar Clientes
-                      </Button>
-                    </Link>
-                  </div>
-                )}
-
-                {/* Sin rol asignado - redirigir a selección de modo */}
-                {!userRole && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500 mb-2">
-                      Selecciona cómo deseas usar la aplicación
-                    </p>
-                    <Link href="/select-mode">
-                      <Button className="w-full">
-                        Continuar
                       </Button>
                     </Link>
                   </div>
