@@ -603,15 +603,22 @@ class PushNotificationService {
     }
 
     try {
-      await this.swRegistration.showNotification(data.title, {
+      // Usar any para evitar errores de tipos con propiedades experimentales
+      const options: NotificationOptions & { vibrate?: number[]; data?: any } = {
         body: data.body,
         icon: data.icon || '/logo.png',
         badge: '/logo.png',
         tag: data.tag || 'bargain-' + Date.now(),
-        vibrate: data.vibrate || [200, 100, 200],
         data: { url: data.url || '/' },
         requireInteraction: data.requireInteraction || false,
-      })
+      }
+      
+      // Agregar vibrate si está soportado
+      if (data.vibrate) {
+        (options as any).vibrate = data.vibrate
+      }
+      
+      await this.swRegistration.showNotification(data.title, options as NotificationOptions)
       return true
     } catch (error) {
       console.error('❌ Error enviando notificación:', error)
