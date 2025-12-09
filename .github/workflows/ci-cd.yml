@@ -127,14 +127,14 @@ jobs:
         continue-on-error: true
 
       - name: 🔍 SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
             -Dsonar.projectKey=tucano1306_CRM
-            -Dsonar.organization=tucano1306
+            -Dsonar.organization=leonardo
 
       - name: 🔐 Run npm audit
         run: npm audit --audit-level=high || true
