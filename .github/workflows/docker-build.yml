@@ -1,8 +1,8 @@
 # ==============================================================================
-# GitHub Actions - CI/CD Pipeline for Food Orders CRM
+# GitHub Actions - Docker Build Pipeline for Food Orders CRM
 # ==============================================================================
 
-name: CI/CD Pipeline
+name: Docker Build
 
 on:
   push:
