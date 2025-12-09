@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
         if (!tag) {
           return NextResponse.json({ error: 'Tag requerido' }, { status: 400 })
         }
-        revalidateTag(tag)
+        revalidateTag(tag, 'max')
         console.log(`✅ [REVALIDATE] Tag revalidated: ${tag}`)
         break
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         if (!tags || !Array.isArray(tags)) {
           return NextResponse.json({ error: 'Tags array requerido' }, { status: 400 })
         }
-        tags.forEach((t: string) => revalidateTag(t))
+        tags.forEach((t: string) => revalidateTag(t, 'max'))
         console.log(`✅ [REVALIDATE] Tags revalidated: ${tags.join(', ')}`)
         break
 

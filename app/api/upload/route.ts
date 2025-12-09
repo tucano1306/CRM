@@ -199,13 +199,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-/**
- * Configuración para permitir archivos grandes
- */
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '5mb',
-    },
-  },
-}
+// Route segment config for App Router (Next.js 14+)
+export const maxDuration = 60 // seconds
+export const dynamic = 'force-dynamic'
+

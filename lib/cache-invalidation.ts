@@ -21,12 +21,12 @@ export async function revalidateApp(options: RevalidateOptions) {
     }
 
     if (options.tag) {
-      revalidateTag(options.tag)
+      revalidateTag(options.tag, 'max')
       console.log(`✅ [CACHE] Revalidated tag: ${options.tag}`)
     }
 
     if (options.tags) {
-      options.tags.forEach(tag => revalidateTag(tag))
+      options.tags.forEach(tag => revalidateTag(tag, 'max'))
       console.log(`✅ [CACHE] Revalidated tags: ${options.tags.join(', ')}`)
     }
 
