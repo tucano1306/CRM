@@ -134,7 +134,7 @@ jobs:
         with:
           args: >
             -Dsonar.projectKey=tucano1306_CRM
-            -Dsonar.organization=leonardo
+            -Dsonar.organization=tucano1306-1
 
       - name: 🔐 Run npm audit
         run: npm audit --audit-level=high || true
