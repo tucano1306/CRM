@@ -94,7 +94,7 @@ export async function GET() {
           id: quotes[0].id,
           quoteNumber: quotes[0].quoteNumber,
           status: quotes[0].status,
-          itemsCount: quotes[0].items.length
+          itemsCount: quotes[0].items?.length ?? 0
         })
       }
     } 

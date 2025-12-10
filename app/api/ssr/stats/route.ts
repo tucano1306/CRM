@@ -123,9 +123,11 @@ export async function GET() {
     const salesSummary = result.sales_summary
     const monthlyTrends = result.monthly_trends || []
     
-    // Calcular crecimiento mensual
-    const growthRate = monthlyTrends.length >= 2 
-      ? ((Number(monthlyTrends[0].revenue) - Number(monthlyTrends[1].revenue)) / Number(monthlyTrends[1].revenue) * 100)
+    // Calcular crecimiento mensual (evitar división por cero)
+    const rev0 = monthlyTrends.length >= 1 ? Number(monthlyTrends[0]?.revenue) || 0 : 0
+    const rev1 = monthlyTrends.length >= 2 ? Number(monthlyTrends[1]?.revenue) || 0 : 0
+    const growthRate = monthlyTrends.length >= 2 && rev1 !== 0
+      ? ((rev0 - rev1) / rev1 * 100)
       : 0
 
     const responseData = {

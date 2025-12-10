@@ -49,10 +49,14 @@ export function DataPrefetcher<T>({
     }
 
     // Fetch y cache
-    fetchFn().then((data) => {
-      dataCache.set(cacheKey, data)
-      onDataFetched?.(data)
-    })
+    fetchFn()
+      .then((data) => {
+        dataCache.set(cacheKey, data)
+        onDataFetched?.(data)
+      })
+      .catch((err) => {
+        console.error('Prefetch failed:', err)
+      })
   }, [fetchFn, cacheKey, onDataFetched])
 
   return null
@@ -72,11 +76,17 @@ export function useDataCache<T>(key: string, fetchFn: () => Promise<T>) {
     }
 
     // Fetch si no está en cache
-    fetchFn().then((result) => {
-      dataCache.set(key, result)
-      setData(result)
-      setLoading(false)
-    })
+    fetchFn()
+      .then((result) => {
+        dataCache.set(key, result)
+        setData(result)
+      })
+      .catch((err) => {
+        console.error('Data fetch failed:', err)
+      })
+      .finally(() => {
+        setLoading(false)
+      })
   }, [key, fetchFn])
 
   return { data, loading }

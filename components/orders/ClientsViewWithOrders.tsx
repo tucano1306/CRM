@@ -126,7 +126,7 @@ export default function ClientsViewWithOrders({
       body.style.overflow = ''
       html.style.overflow = ''
       
-      window.scrollTo(0, parseInt(scrollY || '0') * -1)
+      window.scrollTo(0, parseInt(scrollY || '0', 10) * -1)
     }
 
     // Cleanup al desmontar

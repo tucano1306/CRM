@@ -852,6 +852,7 @@ describe('Validation Schemas', () => {
         items: [
           {
             productId: '550e8400-e29b-41d4-a716-446655440001',
+            productName: 'Fresh Chicken Breast',
             quantity: 10,
             pricePerUnit: 50.00,
           },
@@ -873,6 +874,7 @@ describe('Validation Schemas', () => {
         items: [
           {
             productId: '550e8400-e29b-41d4-a716-446655440001',
+            productName: 'Test Product',
             quantity: 1,
             pricePerUnit: 10,
           },
@@ -893,6 +895,7 @@ describe('Validation Schemas', () => {
         items: [
           {
             productId: '550e8400-e29b-41d4-a716-446655440001',
+            productName: 'Test Product',
             quantity: 1,
             pricePerUnit: 10,
           },
@@ -913,6 +916,7 @@ describe('Validation Schemas', () => {
         items: [
           {
             productId: '550e8400-e29b-41d4-a716-446655440001',
+            productName: 'Test Product',
             quantity: 1,
             pricePerUnit: 10,
           },
