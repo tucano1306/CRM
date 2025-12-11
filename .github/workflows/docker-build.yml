@@ -356,7 +356,7 @@ jobs:
   notify:
     name: Notify Success
     runs-on: ubuntu-latest
-    needs: [build, security, deploy-vercel]
+    needs: [build, security]
     if: success() && github.ref == 'refs/heads/main'
 
     steps:
