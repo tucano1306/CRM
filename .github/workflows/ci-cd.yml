@@ -123,7 +123,7 @@ jobs:
         run: npm ci
 
       - name: 🧪 Run tests with coverage
-        run: npm run test:coverage || true
+        run: npm run test:coverage
         continue-on-error: true
 
       - name: 🔍 SonarCloud Scan
@@ -135,6 +135,7 @@ jobs:
           args: >
             -Dsonar.projectKey=tucano1306_CRM
             -Dsonar.organization=tucano1306-1
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
       - name: 🔐 Run npm audit
         run: npm audit --audit-level=high || true
