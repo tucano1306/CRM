@@ -1083,7 +1083,7 @@ function CartPageContent() {
                                     setEditingQuantity(prev => ({ ...prev, [item.id]: val }))
                                   }}
                                   onBlur={(e) => {
-                                    const val = parseInt(e.target.value) || 1
+                                    const val = parseInt(e.target.value, 10) || 1
                                     const qty = Math.max(1, Math.min(val, item.product.stock))
                                     // Limpiar estado de edición
                                     setEditingQuantity(prev => {

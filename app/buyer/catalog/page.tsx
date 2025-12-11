@@ -761,7 +761,7 @@ export default function CatalogPage() {
                     min="0" 
                     max="100"
                     value={priceRange[1]}
-                    onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
+                    onChange={(e) => setPriceRange([0, parseInt(e.target.value, 10)])}
                     className="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                   />
                   <div className="flex justify-between text-xs text-gray-600 mt-2">
@@ -1041,11 +1041,11 @@ export default function CatalogPage() {
                       onClick={(e) => e.stopPropagation()}
                       onChange={(e) => {
                         e.stopPropagation()
-                        const val = parseInt(e.target.value) || 0
+                        const val = parseInt(e.target.value, 10) || 0
                         setCart({ ...cart, [product.id]: Math.min(val, product.stock) })
                       }}
                       onBlur={(e) => {
-                        const val = parseInt(e.target.value) || 0
+                        const val = parseInt(e.target.value, 10) || 0
                         setQuantityDirect(product.id, val, product.stock)
                       }}
                       onKeyDown={(e) => {
@@ -1231,11 +1231,11 @@ export default function CatalogPage() {
                               max={item.stock}
                               value={item.quantity}
                               onChange={(e) => {
-                                const val = parseInt(e.target.value) || 1
+                                const val = parseInt(e.target.value, 10) || 1
                                 setCart({ ...cart, [item.id]: Math.min(val, item.stock) })
                               }}
                               onBlur={(e) => {
-                                const val = parseInt(e.target.value) || 1
+                                const val = parseInt(e.target.value, 10) || 1
                                 setQuantityDirect(item.id, val, item.stock)
                               }}
                               onKeyDown={(e) => {
@@ -1403,11 +1403,11 @@ export default function CatalogPage() {
                         max={selectedProduct.stock}
                         value={cart[selectedProduct.id] || 0}
                         onChange={(e) => {
-                          const val = parseInt(e.target.value) || 0
+                          const val = parseInt(e.target.value, 10) || 0
                           setCart({ ...cart, [selectedProduct.id]: Math.min(val, selectedProduct.stock) })
                         }}
                         onBlur={(e) => {
-                          const val = parseInt(e.target.value) || 0
+                          const val = parseInt(e.target.value, 10) || 0
                           setQuantityDirect(selectedProduct.id, val, selectedProduct.stock)
                         }}
                         onKeyDown={(e) => {

@@ -429,7 +429,7 @@ export default function CreateReturnModal({ isOpen, onClose, onSuccess }: Create
                           min="0"
                           max={item.maxQuantity}
                           value={item.quantityReturned}
-                          onChange={(e) => handleItemQuantityChange(item.orderItemId, parseInt(e.target.value) || 0)}
+                          onChange={(e) => handleItemQuantityChange(item.orderItemId, parseInt(e.target.value, 10) || 0)}
                           className="w-20 px-3 py-2 border rounded-lg text-center focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         />
                         <Button
