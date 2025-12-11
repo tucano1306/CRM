@@ -7,6 +7,20 @@ import { prisma } from '@/lib/prisma'
 import { withResilientDb } from '@/lib/db-retry'
 import { withPrismaTimeout } from '@/lib/timeout'
 
+// Common includes for return queries
+const getReturnIncludes = (isClient: boolean) => ({
+  order: { select: { orderNumber: true, createdAt: true } },
+  ...(isClient ? {
+    seller: { select: { name: true, email: true } }
+  } : {
+    client: { select: { name: true, email: true, phone: true } }
+  }),
+  items: {
+    include: { product: { select: { name: true, unit: true } } }
+  },
+  creditNote: true
+})
+
 // GET - Obtener devoluciones
 export async function GET(request: Request) {
   try {
@@ -16,139 +30,48 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url)
-    const role = searchParams.get('role') // 'seller' o 'client'
-    const orderId = searchParams.get('orderId') // Filtrar por orden específica
+    const role = searchParams.get('role')
+    const orderId = searchParams.get('orderId')
 
-    console.log('📋 [RETURNS GET] Params:', { role, orderId, userId })
-
-    // Obtener usuario
     const authUser = await withResilientDb(() => prisma.authenticated_users.findUnique({
       where: { authId: userId },
-      include: { 
-        sellers: true,
-        clients: true
-      }
+      include: { sellers: true, clients: true }
     }))
 
     if (!authUser) {
       return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
     }
 
-    let returns
-
-    // Determinar el rol del usuario si no se especifica
     const isClient = authUser.clients.length > 0
     const isSeller = authUser.sellers.length > 0
     const effectiveRole = role || (isClient ? 'client' : isSeller ? 'seller' : null)
 
-    console.log('🎭 [RETURNS GET] Effective role:', effectiveRole, { isClient, isSeller })
-
+    // Build where clause based on role
+    let whereClause: any
     if (effectiveRole === 'client' && isClient) {
-      // Cliente: ver sus propias devoluciones
-      const clientId = authUser.clients[0].id
-      const whereClause: any = { clientId }
-      if (orderId) {
-        console.log('🔍 [RETURNS GET CLIENT] Filtering by orderId:', orderId)
-        whereClause.orderId = orderId
-      }
-      console.log('🔎 [RETURNS GET CLIENT] Where clause:', JSON.stringify(whereClause, null, 2))
-      
-      console.log('💾 [RETURNS GET CLIENT] Executing Prisma query...')
-      returns = await withResilientDb(() => prisma.return.findMany({
-        where: whereClause,
-        include: {
-          order: {
-            select: {
-              orderNumber: true,
-              createdAt: true
-            }
-          },
-          seller: {
-            select: {
-              name: true,
-              email: true
-            }
-          },
-          items: {
-            include: {
-              product: {
-                select: {
-                  name: true,
-                  unit: true
-                }
-              }
-            }
-          },
-          creditNote: true
-        },
-        orderBy: { createdAt: 'desc' }
-      }))
+      whereClause = { clientId: authUser.clients[0].id }
     } else if (isSeller) {
-      // Si es vendedor, ver todas las devoluciones de sus clientes
-      const sellerId = authUser.sellers[0].id
-      const whereClause: any = { sellerId }
-      if (orderId) {
-        console.log('🔍 [RETURNS GET SELLER] Filtering by orderId:', orderId)
-        whereClause.orderId = orderId
-      }
-      console.log('🔎 [RETURNS GET SELLER] Where clause:', JSON.stringify(whereClause, null, 2))
-      
-      console.log('💾 [RETURNS GET SELLER] Executing Prisma query...')
-      returns = await withResilientDb(() => prisma.return.findMany({
-        where: whereClause,
-        include: {
-          order: {
-            select: {
-              orderNumber: true,
-              createdAt: true
-            }
-          },
-          client: {
-            select: {
-              name: true,
-              email: true,
-              phone: true
-            }
-          },
-          items: {
-            include: {
-              product: {
-                select: {
-                  name: true,
-                  unit: true
-                }
-              }
-            }
-          },
-          creditNote: true
-        },
-        orderBy: { createdAt: 'desc' }
-      }))
+      whereClause = { sellerId: authUser.sellers[0].id }
     } else {
       return NextResponse.json({ error: 'Usuario sin permisos' }, { status: 403 })
     }
 
+    if (orderId) whereClause.orderId = orderId
+
+    const returns = await withResilientDb(() => prisma.return.findMany({
+      where: whereClause,
+      include: getReturnIncludes(effectiveRole === 'client'),
+      orderBy: { createdAt: 'desc' }
+    }))
+
     console.log('✅ [RETURNS GET] Found returns:', returns.length)
-    console.log('📦 [RETURNS GET] Returns sample:', returns.length > 0 ? { 
-      id: returns[0].id, 
-      hasItems: Array.isArray(returns[0].items),
-      itemsCount: returns[0].items?.length || 0 
-    } : 'no returns')
     
-    return NextResponse.json({
-      success: true,
-      data: returns
-    })
+    return NextResponse.json({ success: true, data: returns })
 
   } catch (error) {
-    console.error('❌ [RETURNS GET] Error fetching returns:', error)
-    console.error('❌ [RETURNS GET] Error type:', typeof error)
-    console.error('❌ [RETURNS GET] Error message:', error instanceof Error ? error.message : JSON.stringify(error))
+    console.error('❌ [RETURNS GET] Error:', error)
     return NextResponse.json(
-      { 
-        error: 'Error al obtener devoluciones',
-        message: error instanceof Error ? error.message : 'Error desconocido'
-      },
+      { error: 'Error al obtener devoluciones', message: error instanceof Error ? error.message : 'Error desconocido' },
       { status: 500 }
     )
   }

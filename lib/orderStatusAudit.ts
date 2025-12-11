@@ -237,22 +237,26 @@ function validateClientTransition(
   currentStatus: OrderStatus,
   newStatus: OrderStatus
 ): { allowed: boolean; reason?: string } {
-  // Cliente puede marcar como recibida
-  if (newStatus === 'DELIVERED') {
-    const validFromStatuses: OrderStatus[] = ['IN_DELIVERY', 'PARTIALLY_DELIVERED', 'CONFIRMED']
-    if (!validFromStatuses.includes(currentStatus)) {
-      return { allowed: false, reason: 'Solo puedes marcar como recibida una orden que esté en camino' }
-    }
+  // Transiciones permitidas para clientes
+  const clientTransitions: Record<OrderStatus, OrderStatus[]> = {
+    IN_DELIVERY: ['DELIVERED'],
+    PARTIALLY_DELIVERED: ['DELIVERED'],
+    CONFIRMED: ['DELIVERED', 'CANCELED'],
+    PENDING: ['CANCELED'],
+  } as Record<OrderStatus, OrderStatus[]>
+
+  const allowedStatuses = clientTransitions[currentStatus] || []
+  
+  if (allowedStatuses.includes(newStatus)) {
     return { allowed: true }
   }
   
-  // Cliente puede cancelar orden pendiente o confirmada
+  if (newStatus === 'DELIVERED') {
+    return { allowed: false, reason: 'Solo puedes marcar como recibida una orden que esté en camino' }
+  }
+  
   if (newStatus === 'CANCELED') {
-    const cancellableStatuses: OrderStatus[] = ['PENDING', 'CONFIRMED']
-    if (!cancellableStatuses.includes(currentStatus)) {
-      return { allowed: false, reason: 'Solo puedes cancelar órdenes pendientes o confirmadas' }
-    }
-    return { allowed: true }
+    return { allowed: false, reason: 'Solo puedes cancelar órdenes pendientes o confirmadas' }
   }
   
   return { allowed: false, reason: 'Los clientes solo pueden marcar órdenes como recibidas o cancelarlas' }

@@ -5,95 +5,46 @@ import { formatPrice } from '@/lib/utils'
 import { createRecurringOrderSchema, validateSchema } from '@/lib/validations'
 import { sanitizeText } from '@/lib/sanitize'
 
+// Helper: Common include options for recurring orders
+const recurringOrderInclude = {
+  items: { include: { product: true } },
+  executions: {
+    orderBy: { executedAt: 'desc' as const },
+    take: 5,
+    include: { order: true }
+  },
+  client: { select: { name: true, email: true } }
+}
+
 // GET - Obtener órdenes recurrentes
 export async function GET(request: Request) {
   try {
     const { userId } = await auth()
-
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'No autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 })
     }
 
-    // Obtener usuario autenticado
     const authUser = await prisma.authenticated_users.findUnique({
       where: { authId: userId },
-      include: { 
-        clients: true,
-        sellers: true
-      }
+      include: { clients: true, sellers: true }
     })
 
     if (!authUser) {
-      return NextResponse.json(
-        { success: false, error: 'Usuario no encontrado' },
-        { status: 404 }
-      )
+      return NextResponse.json({ success: false, error: 'Usuario no encontrado' }, { status: 404 })
     }
 
-    let recurringOrders
+    // Client gets only their orders, seller gets all
+    const whereClause = authUser.clients.length > 0 
+      ? { clientId: authUser.clients[0].id } 
+      : {}
 
-    // Si es cliente, obtener solo sus órdenes
-    if (authUser.clients.length > 0) {
-      const clientId = authUser.clients[0].id
-
-      recurringOrders = await prisma.recurringOrder.findMany({
-        where: { clientId },
-        include: {
-          items: {
-            include: {
-              product: true
-            }
-          },
-          executions: {
-            orderBy: { executedAt: 'desc' },
-            take: 5,
-            include: {
-              order: true
-            }
-          },
-          client: {
-            select: {
-              name: true,
-              email: true
-            }
-          }
-        },
-        orderBy: { nextExecutionDate: 'asc' }
-      })
-    } else {
-      // Si es vendedor, obtener todas las órdenes
-      recurringOrders = await prisma.recurringOrder.findMany({
-        include: {
-          items: {
-            include: {
-              product: true
-            }
-          },
-          executions: {
-            orderBy: { executedAt: 'desc' },
-            take: 5,
-            include: {
-              order: true
-            }
-          },
-          client: {
-            select: {
-              name: true,
-              email: true
-            }
-          }
-        },
-        orderBy: { nextExecutionDate: 'asc' }
-      })
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: recurringOrders
+    const recurringOrders = await prisma.recurringOrder.findMany({
+      where: whereClause,
+      include: recurringOrderInclude,
+      orderBy: { nextExecutionDate: 'asc' }
     })
+
+    return NextResponse.json({ success: true, data: recurringOrders })
   } catch (error) {
     console.error('Error fetching recurring orders:', error)
     return NextResponse.json(
