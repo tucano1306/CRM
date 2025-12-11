@@ -1066,7 +1066,7 @@ function CartPageContent() {
                                   type="text"
                                   inputMode="numeric"
                                   pattern="[0-9]*"
-                                  value={editingQuantity[item.id] !== undefined ? editingQuantity[item.id] : item.quantity}
+                                  value={editingQuantity[item.id] ?? item.quantity}
                                   onClick={(e) => {
                                     e.stopPropagation()
                                     // Seleccionar todo el texto al hacer clic

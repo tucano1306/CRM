@@ -16,7 +16,7 @@ export default function SellerSignUpPage() {
           path="/sign-up"
           routing="path"
           signInUrl="/sign-in"
-          afterSignUpUrl="/products"
+          fallbackRedirectUrl="/products"
         />
       </div>
     </div>

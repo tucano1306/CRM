@@ -15,7 +15,7 @@ export default function BuyerSignInPage() {
               card: "shadow-xl"
             }
           }}
-          redirectUrl="/buyer/catalog"
+          fallbackRedirectUrl="/buyer/catalog"
           signUpUrl="/buyer/sign-up"
         />
       </div>

@@ -33,7 +33,7 @@ export default function LoginPage() {
           routing="path"
           path="/login"
           signUpUrl="/sign-up"
-          afterSignInUrl="/dashboard"
+          fallbackRedirectUrl="/dashboard"
         />
 
         <div className="mt-6 p-4 bg-white rounded-lg shadow-md">

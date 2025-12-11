@@ -112,7 +112,7 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
 
           <div className="border-t border-purple-500/30 p-4 bg-purple-700/30 backdrop-blur-sm">
             <div className="flex items-center gap-3">
-              <UserButton afterSignOutUrl="/sign-in" />
+              <UserButton afterSignOutUrl="/" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">{user?.firstName}</p>
                 <p className="text-xs text-purple-100">{user?.primaryEmailAddress?.emailAddress}</p>
