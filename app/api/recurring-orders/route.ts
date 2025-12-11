@@ -283,6 +283,36 @@ function getFrequencyLabel(frequency: string): string {
   }
 }
 
+// Helper: Calculate days until next weekly occurrence
+function getDaysUntilWeekday(nextDate: Date, targetDay: number): number {
+  const currentDay = nextDate.getDay()
+  const daysUntil = (targetDay - currentDay + 7) % 7
+  return daysUntil === 0 ? 7 : daysUntil // Same day means next week
+}
+
+// Helper: Get valid day of month (handles months with fewer days)
+function getValidDayOfMonth(year: number, month: number, day: number): number {
+  const lastDayOfMonth = new Date(year, month + 1, 0).getDate()
+  return Math.min(day, lastDayOfMonth)
+}
+
+// Frequency handlers
+const frequencyHandlers: Record<string, (date: Date, opts: {dayOfWeek?: number, dayOfMonth?: number, customDays?: number}) => void> = {
+  DAILY: (date) => date.setDate(date.getDate() + 1),
+  WEEKLY: (date, {dayOfWeek}) => {
+    const daysToAdd = dayOfWeek !== undefined ? getDaysUntilWeekday(date, dayOfWeek) : 7
+    date.setDate(date.getDate() + daysToAdd)
+  },
+  BIWEEKLY: (date) => date.setDate(date.getDate() + 14),
+  MONTHLY: (date, {dayOfMonth}) => {
+    date.setMonth(date.getMonth() + 1)
+    if (dayOfMonth) {
+      date.setDate(getValidDayOfMonth(date.getFullYear(), date.getMonth(), dayOfMonth))
+    }
+  },
+  CUSTOM: (date, {customDays}) => date.setDate(date.getDate() + (customDays || 7)),
+}
+
 // Función auxiliar para calcular próxima fecha
 function calculateNextExecutionDate(
   frequency: string,
@@ -291,68 +321,17 @@ function calculateNextExecutionDate(
   dayOfMonth?: number,
   customDays?: number
 ): Date {
-  const baseDate = startDate ? new Date(startDate) : new Date()
   const now = new Date()
-  let nextDate = new Date(baseDate)
+  let nextDate = startDate ? new Date(startDate) : new Date()
+  
+  // Use today if base date is in the past
+  if (nextDate < now) nextDate = new Date(now)
 
-  // Si la fecha base es en el pasado, usar hoy
-  if (nextDate < now) {
-    nextDate = new Date(now)
-  }
+  // Apply frequency handler
+  const handler = frequencyHandlers[frequency] || frequencyHandlers.WEEKLY
+  handler(nextDate, { dayOfWeek, dayOfMonth, customDays })
 
-  switch (frequency) {
-    case 'DAILY':
-      // Si es hoy, programar para mañana
-      if (nextDate.toDateString() === now.toDateString()) {
-        nextDate.setDate(nextDate.getDate() + 1)
-      }
-      break
-
-    case 'WEEKLY':
-      // Encontrar el próximo día de la semana especificado
-      if (dayOfWeek !== undefined) {
-        const currentDay = nextDate.getDay()
-        let daysUntilNext = (dayOfWeek - currentDay + 7) % 7
-        
-        // Si es el mismo día, programar para la próxima semana
-        if (daysUntilNext === 0) {
-          daysUntilNext = 7
-        }
-        
-        nextDate.setDate(nextDate.getDate() + daysUntilNext)
-      } else {
-        nextDate.setDate(nextDate.getDate() + 7)
-      }
-      break
-
-    case 'BIWEEKLY':
-      nextDate.setDate(nextDate.getDate() + 14)
-      break
-
-    case 'MONTHLY':
-      if (dayOfMonth) {
-        // Ir al próximo mes
-        nextDate.setMonth(nextDate.getMonth() + 1)
-        // Establecer el día del mes
-        nextDate.setDate(Math.min(dayOfMonth, new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate()))
-      } else {
-        nextDate.setMonth(nextDate.getMonth() + 1)
-      }
-      break
-
-    case 'CUSTOM':
-      if (customDays) {
-        nextDate.setDate(nextDate.getDate() + customDays)
-      } else {
-        nextDate.setDate(nextDate.getDate() + 7) // Default a semanal
-      }
-      break
-
-    default:
-      nextDate.setDate(nextDate.getDate() + 7)
-  }
-
-  // Asegurar que la fecha esté en el futuro
+  // Ensure date is in the future
   if (nextDate <= now) {
     nextDate = new Date(now)
     nextDate.setDate(nextDate.getDate() + 1)

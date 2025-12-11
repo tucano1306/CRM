@@ -8,6 +8,39 @@ import { withCache, CACHE_CONFIGS, getAdaptiveCache } from '@/lib/apiCache'
 import { invalidateProductsCache } from '@/lib/cache-invalidation'
 import { autoClassifyCategory } from '@/lib/autoClassifyCategory'
 
+// Helper: Build where clause for seller
+function buildSellerWhereClause(sellerId: string, lowStock: boolean, outOfStock: boolean): any {
+  const whereClause: any = {
+    sellers: { some: { sellerId } }
+  }
+  
+  if (lowStock) {
+    whereClause.stock = { gt: 0, lt: 10 }
+    whereClause.isActive = true
+  } else if (outOfStock) {
+    whereClause.stock = 0
+    whereClause.isActive = true
+  }
+  
+  return whereClause
+}
+
+// Helper: Build where clause for client (buyer)
+function buildClientWhereClause(): any {
+  return { isActive: true, stock: { gt: 0 } }
+}
+
+// Helper: Add search filter to where clause
+function addSearchFilter(whereClause: any, search: string | null): void {
+  if (search) {
+    whereClause.OR = [
+      { name: { contains: search, mode: 'insensitive' } },
+      { description: { contains: search, mode: 'insensitive' } },
+      { sku: { contains: search, mode: 'insensitive' } },
+    ]
+  }
+}
+
 // GET /api/products - Obtener productos
 // ✅ CON TIMEOUT DE 5 SEGUNDOS
 // ✅ VENDEDORES: Solo sus productos
@@ -16,86 +49,41 @@ import { autoClassifyCategory } from '@/lib/autoClassifyCategory'
 export async function GET(request: Request) {
   try {
     const { userId } = await auth()
-
     if (!userId) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-  const { searchParams } = new URL(request.url)
-  const search = searchParams.get('search')
-  const lowStockParam = searchParams.get('lowStock')
-  const outOfStockParam = searchParams.get('outOfStock')
-  const pageParam = searchParams.get('page')
-  const pageSizeParam = searchParams.get('pageSize')
+    const { searchParams } = new URL(request.url)
+    const search = searchParams.get('search')
+    const lowStock = searchParams.get('lowStock') === 'true'
+    const outOfStock = searchParams.get('outOfStock') === 'true'
+    let page = Math.max(parseInt(searchParams.get('page') || '1', 10) || 1, 1)
+    let pageSize = Math.min(Math.max(parseInt(searchParams.get('pageSize') || '20', 10) || 20, 1), 100)
 
-  const lowStock = lowStockParam === 'true'
-  const outOfStock = outOfStockParam === 'true'
-  let page = Math.max(parseInt(pageParam || '1', 10) || 1, 1)
-  let pageSize = parseInt(pageSizeParam || '20', 10) || 20
-  pageSize = Math.min(Math.max(pageSize, 1), 100) // 1..100
-
-    // 🔒 SEGURIDAD: Determinar si el usuario es vendedor o comprador
+    // Determine user role
     const seller = await prisma.seller.findFirst({
-      where: {
-        authenticated_users: {
-          some: { authId: userId }
-        }
-      }
+      where: { authenticated_users: { some: { authId: userId } } }
     })
 
-    const client = await prisma.client.findFirst({
-      where: {
-        authenticated_users: {
-          some: { authId: userId }
-        }
-      }
-    })
+    const client = !seller ? await prisma.client.findFirst({
+      where: { authenticated_users: { some: { authId: userId } } }
+    }) : null
 
-    // 🔒 SEGURIDAD: Construir filtro según el rol
-    const whereClause: any = {}
-    
+    // Build where clause based on role
+    let whereClause: any
     if (seller) {
-      // VENDEDOR: Solo sus productos
-      whereClause.sellers = {
-        some: {
-          sellerId: seller.id
-        }
-      }
-      
-      // Filtros de stock para vendedor
-      if (lowStock) {
-        // Stock bajo: 1-9 unidades, no incluye agotados
-        whereClause.stock = { gt: 0, lt: 10 }
-        whereClause.isActive = true
-        console.log('🔍 [PRODUCTS API] Low stock filter applied for seller:', seller.id)
-      } else if (outOfStock) {
-        // Productos agotados: stock = 0
-        whereClause.stock = 0
-        whereClause.isActive = true
-        console.log('🔍 [PRODUCTS API] Out of stock filter applied for seller:', seller.id)
-      }
-      
+      whereClause = buildSellerWhereClause(seller.id, lowStock, outOfStock)
     } else if (client) {
-      // COMPRADOR: Solo productos activos con stock
-      whereClause.isActive = true
-      whereClause.stock = { gt: 0 }
+      whereClause = buildClientWhereClause()
     } else {
-      // Usuario sin rol asignado
       return NextResponse.json({ 
         error: 'No tienes permisos para ver productos. Debes ser vendedor o comprador registrado.' 
       }, { status: 403 })
     }
     
-    if (search) {
-      whereClause.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { sku: { contains: search, mode: 'insensitive' } },
-      ]
-    }
+    addSearchFilter(whereClause, search)
 
     console.log('📋 [PRODUCTS API] Final where clause:', JSON.stringify(whereClause, null, 2))
-    console.log('🔍 [PRODUCTS API] Filters - lowStock:', lowStock, 'outOfStock:', outOfStock, 'seller:', !!seller)
 
     // ✅ Conteo total y productos paginados (ambos con timeout)
     const total = await withPrismaTimeout(() =>
