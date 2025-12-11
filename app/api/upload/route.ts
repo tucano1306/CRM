@@ -6,6 +6,61 @@ import { v4 as uuidv4 } from 'uuid'
 import { fileTypeFromBuffer } from 'file-type'
 import { sanitizeText } from '@/lib/sanitize'
 
+// Constants
+const MAX_SIZE = 5 * 1024 * 1024 // 5MB
+const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'csv']
+const ALLOWED_MIME_TYPES = [
+  'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+  'application/pdf', 'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain', 'text/csv'
+]
+const EXTENSION_TO_MIME: Record<string, string[]> = {
+  'jpg': ['image/jpeg'], 'jpeg': ['image/jpeg'], 'png': ['image/png'],
+  'gif': ['image/gif'], 'webp': ['image/webp'], 'pdf': ['application/pdf'],
+  'doc': ['application/msword'],
+  'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+  'xls': ['application/vnd.ms-excel'],
+  'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+  'txt': ['text/plain'], 'csv': ['text/csv', 'text/plain']
+}
+
+// Helper: Validate file basics (size, name, extension)
+function validateFileBasics(file: File): string | null {
+  if (file.size > MAX_SIZE) return 'El archivo es demasiado grande. Máximo 5MB'
+  if (file.size < 1) return 'El archivo está vacío'
+  
+  const sanitizedFileName = sanitizeText(file.name)
+  if (!sanitizedFileName || sanitizedFileName.length > 255) return 'Nombre de archivo inválido'
+  
+  const ext = sanitizedFileName.split('.').pop()?.toLowerCase()
+  if (!ext || !ALLOWED_EXTENSIONS.includes(ext)) {
+    return `Extensión no permitida. Permitidas: ${ALLOWED_EXTENSIONS.join(', ')}`
+  }
+  
+  if (!ALLOWED_MIME_TYPES.includes(file.type)) return 'Tipo de archivo no permitido'
+  
+  return null
+}
+
+// Helper: Validate file content matches extension
+async function validateFileContent(buffer: Buffer, extension: string): Promise<string | null> {
+  const textExtensions = ['txt', 'csv']
+  if (textExtensions.includes(extension)) return null
+  
+  const detectedType = await fileTypeFromBuffer(buffer)
+  if (!detectedType) return 'No se pudo detectar el tipo de archivo. Posiblemente corrupto'
+  
+  const expectedMimes = EXTENSION_TO_MIME[extension] || []
+  if (!expectedMimes.includes(detectedType.mime)) {
+    return `El contenido del archivo no coincide con su extensión`
+  }
+  
+  return null
+}
+
 /**
  * POST /api/upload
  * Subir archivos (imágenes, documentos, etc.)
@@ -15,167 +70,58 @@ import { sanitizeText } from '@/lib/sanitize'
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth()
-
     if (!userId) {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
     const formData = await request.formData()
     const file = formData.get('file') as File
-
     if (!file) {
-      return NextResponse.json(
-        { error: 'No se proporcionó ningún archivo' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'No se proporcionó ningún archivo' }, { status: 400 })
     }
 
-    // ✅ VALIDACIÓN 1: Tamaño máximo (5MB)
-    const MAX_SIZE = 5 * 1024 * 1024 // 5MB en bytes
-    if (file.size > MAX_SIZE) {
-      return NextResponse.json(
-        { error: 'El archivo es demasiado grande. Máximo 5MB' },
-        { status: 400 }
-      )
+    // Validate file basics
+    const basicError = validateFileBasics(file)
+    if (basicError) {
+      return NextResponse.json({ error: basicError }, { status: 400 })
     }
 
-    // ✅ VALIDACIÓN 2: Tamaño mínimo (evitar archivos vacíos)
-    if (file.size < 1) {
-      return NextResponse.json(
-        { error: 'El archivo está vacío' },
-        { status: 400 }
-      )
-    }
-
-    // ✅ VALIDACIÓN 3: Nombre de archivo
     const sanitizedFileName = sanitizeText(file.name)
-    if (!sanitizedFileName || sanitizedFileName.length > 255) {
-      return NextResponse.json(
-        { error: 'Nombre de archivo inválido' },
-        { status: 400 }
-      )
-    }
-
-    // ✅ VALIDACIÓN 4: Extensión permitida
-    const fileExtension = sanitizedFileName.split('.').pop()?.toLowerCase()
-    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'csv']
+    const fileExtension = sanitizedFileName.split('.').pop()!.toLowerCase()
     
-    if (!fileExtension || !allowedExtensions.includes(fileExtension)) {
-      return NextResponse.json(
-        { error: `Extensión no permitida. Permitidas: ${allowedExtensions.join(', ')}` },
-        { status: 400 }
-      )
-    }
-
-    // Convertir File a Buffer
+    // Convert to buffer and validate content
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-
-    // ✅ VALIDACIÓN 5: Tipo MIME declarado
-    const allowedMimeTypes = [
-      'image/jpeg',
-      'image/jpg', 
-      'image/png',
-      'image/gif',
-      'image/webp',
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'text/plain',
-      'text/csv'
-    ]
-
-    if (!allowedMimeTypes.includes(file.type)) {
-      return NextResponse.json(
-        { error: 'Tipo de archivo no permitido' },
-        { status: 400 }
-      )
-    }
-
-    // ✅ VALIDACIÓN 6: Contenido real del archivo (Magic Bytes)
-    const detectedType = await fileTypeFromBuffer(buffer)
     
-    // Mapeo de extensiones a MIME types permitidos
-    const extensionToMime: Record<string, string[]> = {
-      'jpg': ['image/jpeg'],
-      'jpeg': ['image/jpeg'],
-      'png': ['image/png'],
-      'gif': ['image/gif'],
-      'webp': ['image/webp'],
-      'pdf': ['application/pdf'],
-      'doc': ['application/msword'],
-      'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-      'xls': ['application/vnd.ms-excel'],
-      'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-      'txt': ['text/plain'],
-      'csv': ['text/csv', 'text/plain']
+    const contentError = await validateFileContent(buffer, fileExtension)
+    if (contentError) {
+      return NextResponse.json({ error: contentError }, { status: 400 })
     }
 
-    // Para archivos de texto (txt, csv) que no tienen magic bytes
-    const textExtensions = ['txt', 'csv']
-    if (!textExtensions.includes(fileExtension)) {
-      if (!detectedType) {
-        return NextResponse.json(
-          { error: 'No se pudo detectar el tipo de archivo. Posiblemente corrupto' },
-          { status: 400 }
-        )
-      }
-
-      const expectedMimes = extensionToMime[fileExtension] || []
-      if (!expectedMimes.includes(detectedType.mime)) {
-        return NextResponse.json(
-          { 
-            error: 'El contenido del archivo no coincide con su extensión',
-            details: `Extensión: ${fileExtension}, Contenido detectado: ${detectedType.mime}`
-          },
-          { status: 400 }
-        )
-      }
-    }
-
-    // ✅ VALIDACIÓN 7: Generar nombre único seguro
+    // Generate unique filename and save
     const uniqueFileName = `${uuidv4()}.${fileExtension}`
-
-    // ✅ SEGURIDAD: Guardar en /public/uploads con path seguro
     const uploadDir = path.join(process.cwd(), 'public', 'uploads')
     const filePath = path.join(uploadDir, uniqueFileName)
 
-    // Prevenir path traversal
+    // Prevent path traversal
     const resolvedPath = path.resolve(filePath)
     const resolvedUploadDir = path.resolve(uploadDir)
     if (!resolvedPath.startsWith(resolvedUploadDir)) {
-      return NextResponse.json(
-        { error: 'Ruta de archivo inválida' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Ruta de archivo inválida' }, { status: 400 })
     }
 
-    // Crear directorio si no existe
+    // Create directory if needed and save file
     const fs = require('fs')
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true })
     }
-
-    // ✅ Guardar archivo
     await writeFile(filePath, buffer)
 
-    // Determinar tipo de archivo para el frontend
     const attachmentType = file.type.startsWith('image/') ? 'image' : 'document'
 
-    // Log de seguridad
     console.log('📁 [UPLOAD] Archivo subido:', {
-      userId,
-      fileName: sanitizedFileName,
-      savedAs: uniqueFileName,
-      size: file.size,
-      type: file.type,
-      detectedType: detectedType?.mime || 'text',
-      timestamp: new Date().toISOString()
+      userId, fileName: sanitizedFileName, savedAs: uniqueFileName,
+      size: file.size, type: file.type, timestamp: new Date().toISOString()
     })
 
     // Retornar URL pública
