@@ -25,6 +25,7 @@ export interface WASMResult extends WorkerResult {
 class WASMWorkerPool extends WorkerPool {
   private wasmCapableWorkers = new Set<string>()
   private loadedModules = new Set<string>()
+  private initPromise: Promise<void> | null = null
 
   constructor(scriptPath: string, options: WorkerPoolOptions = {}) {
     // Usar el script WASM worker
@@ -32,7 +33,18 @@ class WASMWorkerPool extends WorkerPool {
     super(wasmWorkerPath, options)
     
     console.log('🧪 WASM Worker Pool initialized')
-    this.checkWorkersWASMCapability()
+    // Defer async initialization - store promise for later await if needed
+    this.initPromise = this.checkWorkersWASMCapability()
+  }
+
+  /**
+   * Ensure async initialization is complete
+   */
+  public async ensureInitialized(): Promise<void> {
+    if (this.initPromise) {
+      await this.initPromise
+      this.initPromise = null
+    }
   }
 
   /**

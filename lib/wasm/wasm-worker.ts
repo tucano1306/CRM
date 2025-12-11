@@ -32,6 +32,8 @@ export class WASMWorkerInstance extends EventEmitter {
   private timeoutId: NodeJS.Timeout | null = null
   private wasmCapable: boolean = false
 
+  private initPromise: Promise<void> | null = null
+
   constructor(scriptPath: string) {
     super()
     
@@ -44,7 +46,18 @@ export class WASMWorkerInstance extends EventEmitter {
     })
     
     this.setupWorkerListeners()
-    this.checkWASMCapability()
+    // Defer async initialization
+    this.initPromise = this.checkWASMCapability()
+  }
+
+  /**
+   * Ensure async initialization is complete
+   */
+  public async ensureInitialized(): Promise<void> {
+    if (this.initPromise) {
+      await this.initPromise
+      this.initPromise = null
+    }
   }
 
   private setupWorkerListeners() {

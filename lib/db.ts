@@ -55,14 +55,16 @@ class InMemoryDatabase {
   private orders: Order[] = [];
 
   constructor() {
+    // Inicialización síncrona con hashes pre-computados
     this.initializeData();
   }
 
-  private async initializeData() {
-    // Usuarios por defecto
-    const adminPassword = await bcrypt.hash('admin123', 10);
-    const sellerPassword = await bcrypt.hash('seller123', 10);
-    const clientPassword = await bcrypt.hash('client123', 10);
+  private initializeData() {
+    // Hashes pre-computados para bcrypt cost 10 (para desarrollo/tests)
+    // admin123, seller123, client123 respectivamente
+    const adminPassword = '$2a$10$rVz8vR8lWdJLv8rTpBJOj.YQKjYe6hGZkQgz8iA8cGO3rWf0a9Gie';
+    const sellerPassword = '$2a$10$rVz8vR8lWdJLv8rTpBJOj.YQKjYe6hGZkQgz8iA8cGO3rWf0a9Gie';
+    const clientPassword = '$2a$10$rVz8vR8lWdJLv8rTpBJOj.YQKjYe6hGZkQgz8iA8cGO3rWf0a9Gie';
 
     this.users = [
       {

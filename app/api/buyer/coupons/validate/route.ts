@@ -5,6 +5,28 @@ import { z } from 'zod'
 import { validateSchema } from '@/lib/validations'
 import { sanitizeText } from '@/lib/sanitize'
 
+// Helper: Validar estado del cupón
+function validateCouponStatus(coupon: any, cartTotal: number): string | null {
+  const now = new Date()
+  
+  if (!coupon.isActive) return 'Este cupón ya no está activo'
+  if (coupon.validFrom > now) return 'Este cupón aún no es válido'
+  if (coupon.validUntil && coupon.validUntil < now) return 'Este cupón ha expirado'
+  if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) return 'Este cupón ha alcanzado su límite de usos'
+  if (coupon.minPurchase && cartTotal < coupon.minPurchase) return `Compra mínima de $${coupon.minPurchase.toFixed(2)} requerida`
+  
+  return null // No errors
+}
+
+// Helper: Calcular descuento
+function calculateDiscount(coupon: any, cartTotal: number): number {
+  if (coupon.discountType === 'PERCENTAGE') {
+    const discount = cartTotal * coupon.discountValue
+    return coupon.maxDiscount ? Math.min(discount, coupon.maxDiscount) : discount
+  }
+  return coupon.discountValue // FIXED
+}
+
 // POST - Validar cupón
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +40,7 @@ export async function POST(request: NextRequest) {
     // ✅ Validar schema
     const validateCouponSchema = z.object({
       code: z.string().min(1).max(50),
-      cartTotal: z.number().min(0) // Required para validaciones
+      cartTotal: z.number().min(0)
     })
 
     const validation = validateSchema(validateCouponSchema, body)
@@ -27,8 +49,6 @@ export async function POST(request: NextRequest) {
     }
 
     const { code, cartTotal } = validation.data
-
-    // ✅ Sanitizar código
     const sanitizedCode = sanitizeText(code).toUpperCase()
 
     // Buscar cupón
@@ -37,61 +57,17 @@ export async function POST(request: NextRequest) {
     })
 
     if (!coupon) {
-      return NextResponse.json({
-        success: false,
-        error: 'Cupón no válido'
-      }, { status: 404 })
+      return NextResponse.json({ success: false, error: 'Cupón no válido' }, { status: 404 })
     }
 
-    // Validaciones
-    const now = new Date()
-
-    if (!coupon.isActive) {
-      return NextResponse.json({
-        success: false,
-        error: 'Este cupón ya no está activo'
-      }, { status: 400 })
-    }
-
-    if (coupon.validFrom > now) {
-      return NextResponse.json({
-        success: false,
-        error: 'Este cupón aún no es válido'
-      }, { status: 400 })
-    }
-
-    if (coupon.validUntil && coupon.validUntil < now) {
-      return NextResponse.json({
-        success: false,
-        error: 'Este cupón ha expirado'
-      }, { status: 400 })
-    }
-
-    if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) {
-      return NextResponse.json({
-        success: false,
-        error: 'Este cupón ha alcanzado su límite de usos'
-      }, { status: 400 })
-    }
-
-    if (coupon.minPurchase && cartTotal < coupon.minPurchase) {
-      return NextResponse.json({
-        success: false,
-        error: `Compra mínima de $${coupon.minPurchase.toFixed(2)} requerida`
-      }, { status: 400 })
+    // Validar cupón
+    const validationError = validateCouponStatus(coupon, cartTotal)
+    if (validationError) {
+      return NextResponse.json({ success: false, error: validationError }, { status: 400 })
     }
 
     // Calcular descuento
-    let discountAmount = 0
-    if (coupon.discountType === 'PERCENTAGE') {
-      discountAmount = cartTotal * coupon.discountValue
-      if (coupon.maxDiscount && discountAmount > coupon.maxDiscount) {
-        discountAmount = coupon.maxDiscount
-      }
-    } else {
-      // FIXED
-      discountAmount = coupon.discountValue
-    }
+    const discountAmount = calculateDiscount(coupon, cartTotal)
 
     return NextResponse.json({
       success: true,
@@ -100,17 +76,14 @@ export async function POST(request: NextRequest) {
         description: coupon.description,
         discountType: coupon.discountType,
         discountValue: coupon.discountValue,
-        discountAmount: discountAmount,
+        discountAmount,
         finalTotal: Math.max(0, cartTotal - discountAmount)
       },
       message: `Cupón ${coupon.code} aplicado correctamente`
     })
   } catch (error) {
     console.error('Error validating coupon:', error)
-    return NextResponse.json(
-      { error: 'Error al validar cupón' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Error al validar cupón' }, { status: 500 })
   }
 }
 

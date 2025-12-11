@@ -38,10 +38,12 @@ class JobQueue extends EventEmitter {
   private processing = false
   private maxConcurrentJobs = 5
   private currentJobs = 0
+  private initialized = false
 
   constructor() {
     super()
-    this.startProcessing()
+    // Schedule processing to start asynchronously after construction
+    setImmediate(() => this.startProcessing())
   }
 
   /**
