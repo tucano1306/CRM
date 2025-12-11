@@ -457,7 +457,7 @@ export default function BuyerDashboardPage() {
             </h3>
             <select 
               value={chartPeriod}
-              onChange={(e) => setChartPeriod(e.target.value as any)}
+              onChange={(e) => setChartPeriod(e.target.value as '6months' | 'year' | 'all')}
               className="px-4 py-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-medium text-gray-700 bg-white shadow-sm hover:border-purple-400 transition-colors"
             >
               <option value="6months">Últimos 6 meses</option>

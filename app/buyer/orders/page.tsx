@@ -901,7 +901,7 @@ export default function OrdersPage() {
             {/* Ordenar por */}
             <select 
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
+              onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'highest' | 'lowest')}
               className="px-4 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none bg-white transition-all"
             >
               <option value="newest">Más recientes</option>
@@ -913,7 +913,7 @@ export default function OrdersPage() {
             {/* Filtro por rango de fecha */}
             <select 
               value={dateRange}
-              onChange={(e) => setDateRange(e.target.value as any)}
+              onChange={(e) => setDateRange(e.target.value as '7days' | '30days' | '90days' | 'all')}
               className="px-4 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none bg-white transition-all"
             >
               <option value="7days">Últimos 7 días</option>

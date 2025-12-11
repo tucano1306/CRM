@@ -161,7 +161,7 @@ export default function QuoteDetailModal({ quote, isOpen, onClose }: QuoteDetail
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id as 'info' | 'products' | 'actions')}
                   className={`
                     flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all
                     ${isActive ? 'bg-white text-purple-600 shadow-sm' : 'text-gray-600 hover:bg-white/50'}
