@@ -878,7 +878,7 @@ export default function ManageCatalogModal({
                   e.stopPropagation()
                   if (e.dataTransfer.files?.[0]) {
                     const file = e.dataTransfer.files[0]
-                    if (file.name.match(/\.(xlsx|xls|csv)$/i)) {
+                    if (/\.(xlsx|xls|csv)$/i.test(file.name)) {
                       setImportFile(file)
                       setImportResult(null)
                     }

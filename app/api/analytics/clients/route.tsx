@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
         .filter((item): item is typeof item & { clientId: string } => item.clientId !== null)
         .map(async (item) => {
           const client = await prisma.client.findUnique({
-            where: { id: item.clientId as string },
+            where: { id: item.clientId },
             select: {
               id: true,
               name: true,
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
           });
 
           const lastOrder = await prisma.order.findFirst({
-            where: { clientId: item.clientId as string },
+            where: { clientId: item.clientId },
             orderBy: { createdAt: 'desc' },
             select: {
               id: true,
@@ -84,7 +84,7 @@ export async function GET(request: NextRequest) {
         .filter((item): item is typeof item & { clientId: string } => item.clientId !== null)
         .map(async (item) => {
           const client = await prisma.client.findUnique({
-            where: { id: item.clientId as string },
+            where: { id: item.clientId },
             select: {
               id: true,
               name: true,

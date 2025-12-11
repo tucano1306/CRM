@@ -41,7 +41,7 @@ export default function HomePage() {
           {/* Usuario autenticado */}
           <SignedIn>
             <div className="flex justify-center mb-4">
-              <UserButton afterSignOutUrl="/" />
+              <UserButton />
             </div>
             
             {loadingRole ? (
