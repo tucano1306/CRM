@@ -1,13 +1,13 @@
 /**
  * Servicio de notificaciones multicanal
- * Soporta: Email, SMS, WhatsApp, Push
+ * Soporta: Email (Mailersend), SMS (Twilio), WhatsApp (Twilio), Notificaciones App
  * 
  * Configuración requerida en .env:
+ * - MAILERSEND_API_KEY: Para envío de emails via Mailersend
  * - TWILIO_ACCOUNT_SID: Para SMS y WhatsApp
  * - TWILIO_AUTH_TOKEN: Token de autenticación Twilio
  * - TWILIO_PHONE_NUMBER: Número de teléfono Twilio para SMS
- * - TWILIO_WHATSAPP_NUMBER: Número de WhatsApp Business
- * - RESEND_API_KEY: Para envío de emails (o usar otro proveedor)
+ * - TWILIO_WHATSAPP_NUMBER: Número de WhatsApp Business (ej: +14155238886)
  * - NEXT_PUBLIC_APP_URL: URL base de la aplicación
  */
 
@@ -139,47 +139,32 @@ const MESSAGE_TEMPLATES: Record<NotificationType, {
 }
 
 /**
- * Envía notificación por Email usando Resend (o el proveedor configurado)
+ * Envía notificación por Email usando Mailersend
  */
-async function sendEmail(
+async function sendEmailNotification(
   to: string,
   subject: string,
   htmlBody: string
 ): Promise<NotificationResult> {
   try {
-    // Si tienes Resend configurado
-    if (process.env.RESEND_API_KEY) {
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
-        },
-        body: JSON.stringify({
-          from: process.env.EMAIL_FROM || 'noreply@tudominio.com',
-          to,
-          subject,
-          html: htmlBody
-        })
-      })
+    // Importar dinámicamente para evitar problemas de circular dependency
+    const { sendEmail } = await import('@/lib/mailersend')
+    
+    const result = await sendEmail({
+      to,
+      subject,
+      html: htmlBody
+    })
 
-      if (response.ok) {
-        const data = await response.json()
-        return { success: true, channel: 'EMAIL', messageId: data.id }
-      } else {
-        const error = await response.text()
-        console.error('Error enviando email:', error)
-        return { success: false, channel: 'EMAIL', error }
-      }
+    if (result.success) {
+      return { success: true, channel: 'EMAIL', messageId: result.messageId }
+    } else {
+      console.error('Error enviando email:', result.error)
+      return { success: false, channel: 'EMAIL', error: result.error }
     }
 
-    // Fallback: log para desarrollo
-    console.log('[EMAIL] To:', to, 'Subject:', subject)
-    console.log('[EMAIL] Body:', htmlBody.substring(0, 200) + '...')
-    return { success: true, channel: 'EMAIL', messageId: 'dev-' + Date.now() }
-
   } catch (error) {
-    console.error('Error en sendEmail:', error)
+    console.error('Error en sendEmailNotification:', error)
     return { success: false, channel: 'EMAIL', error: String(error) }
   }
 }
@@ -192,14 +177,15 @@ async function sendSMS(
   message: string
 ): Promise<NotificationResult> {
   try {
-    if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
-      console.log('[SMS] Twilio no configurado. Mensaje:', message.substring(0, 100))
-      return { success: true, channel: 'SMS', messageId: 'dev-' + Date.now() }
-    }
-
     const accountSid = process.env.TWILIO_ACCOUNT_SID
     const authToken = process.env.TWILIO_AUTH_TOKEN
     const fromNumber = process.env.TWILIO_PHONE_NUMBER
+
+    if (!accountSid || !authToken || !fromNumber) {
+      console.log('📱 [SMS] Twilio no configurado. Destinatario:', to)
+      console.log('📱 [SMS] Mensaje:', message.substring(0, 100) + '...')
+      return { success: false, channel: 'SMS', error: 'Twilio no configurado' }
+    }
 
     // Formatear número si es necesario
     const formattedTo = to.startsWith('+') ? to : `+${to}`
@@ -214,7 +200,7 @@ async function sendSMS(
         },
         body: new URLSearchParams({
           To: formattedTo,
-          From: fromNumber!,
+          From: fromNumber,
           Body: message
         })
       }
@@ -222,15 +208,16 @@ async function sendSMS(
 
     if (response.ok) {
       const data = await response.json()
+      console.log('✅ [SMS] Enviado a', formattedTo, '- SID:', data.sid)
       return { success: true, channel: 'SMS', messageId: data.sid }
     } else {
       const error = await response.text()
-      console.error('Error enviando SMS:', error)
+      console.error('❌ [SMS] Error:', error)
       return { success: false, channel: 'SMS', error }
     }
 
   } catch (error) {
-    console.error('Error en sendSMS:', error)
+    console.error('❌ [SMS] Error de conexión:', error)
     return { success: false, channel: 'SMS', error: String(error) }
   }
 }
@@ -243,14 +230,15 @@ async function sendWhatsApp(
   message: string
 ): Promise<NotificationResult> {
   try {
-    if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN) {
-      console.log('[WHATSAPP] Twilio no configurado. Mensaje:', message.substring(0, 100))
-      return { success: true, channel: 'WHATSAPP', messageId: 'dev-' + Date.now() }
-    }
-
     const accountSid = process.env.TWILIO_ACCOUNT_SID
     const authToken = process.env.TWILIO_AUTH_TOKEN
     const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER || process.env.TWILIO_PHONE_NUMBER
+
+    if (!accountSid || !authToken || !fromNumber) {
+      console.log('💬 [WHATSAPP] Twilio no configurado. Destinatario:', to)
+      console.log('💬 [WHATSAPP] Mensaje:', message.substring(0, 150) + '...')
+      return { success: false, channel: 'WHATSAPP', error: 'Twilio no configurado' }
+    }
 
     // Formatear número WhatsApp
     const formattedTo = to.startsWith('+') ? `whatsapp:${to}` : `whatsapp:+${to}`
@@ -274,15 +262,16 @@ async function sendWhatsApp(
 
     if (response.ok) {
       const data = await response.json()
+      console.log('✅ [WHATSAPP] Enviado a', formattedTo, '- SID:', data.sid)
       return { success: true, channel: 'WHATSAPP', messageId: data.sid }
     } else {
       const error = await response.text()
-      console.error('Error enviando WhatsApp:', error)
+      console.error('❌ [WHATSAPP] Error:', error)
       return { success: false, channel: 'WHATSAPP', error }
     }
 
   } catch (error) {
-    console.error('Error en sendWhatsApp:', error)
+    console.error('❌ [WHATSAPP] Error de conexión:', error)
     return { success: false, channel: 'WHATSAPP', error: String(error) }
   }
 }
@@ -330,7 +319,7 @@ export async function sendMultichannelNotification(
   if (channel === 'ALL') {
     // Enviar por todos los canales disponibles
     if (clientEmail) {
-      results.push(await sendEmail(clientEmail, subject, htmlBody))
+      results.push(await sendEmailNotification(clientEmail, subject, htmlBody))
     }
     if (clientPhone) {
       // SMS usa mensaje corto siempre (límite de caracteres)
@@ -341,7 +330,7 @@ export async function sendMultichannelNotification(
       results.push(await sendWhatsApp(clientWhatsapp || clientPhone!, whatsappMessage))
     }
   } else if (channel === 'EMAIL' && clientEmail) {
-    results.push(await sendEmail(clientEmail, subject, htmlBody))
+    results.push(await sendEmailNotification(clientEmail, subject, htmlBody))
   } else if (channel === 'SMS' && clientPhone) {
     results.push(await sendSMS(clientPhone, shortMessage.substring(0, 160)))
   } else if (channel === 'WHATSAPP' && (clientWhatsapp || clientPhone)) {
@@ -349,7 +338,7 @@ export async function sendMultichannelNotification(
   } else {
     // Fallback a email si el canal preferido no está disponible
     if (clientEmail) {
-      results.push(await sendEmail(clientEmail, subject, htmlBody))
+      results.push(await sendEmailNotification(clientEmail, subject, htmlBody))
     }
   }
 
