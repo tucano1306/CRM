@@ -2,11 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useUser } from '@clerk/nextjs'
+import { useSearchParams } from 'next/navigation'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
 import ChatWindow from '@/components/chat/ChatWindow'
 import { Card, CardContent } from '@/components/ui/card'
-import { MessageCircle, Users, Inbox } from 'lucide-react'
+import { MessageCircle, Users, Inbox, AlertTriangle } from 'lucide-react'
 
 interface Client {
   id: string
@@ -18,9 +19,15 @@ interface Client {
 
 export default function SellerChatPage() {
   const { user } = useUser()
+  const searchParams = useSearchParams()
   const [clients, setClients] = useState<Client[]>([])
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)
   const [loading, setLoading] = useState(true)
+  
+  // Obtener parámetros de URL para abrir chat automáticamente
+  const clientIdFromUrl = searchParams.get('clientId')
+  const orderIdFromUrl = searchParams.get('orderId')
+  const [orderContext, setOrderContext] = useState<string | null>(null)
 
   const fetchClients = useCallback(async () => {
     try {
@@ -30,8 +37,19 @@ export default function SellerChatPage() {
       if (data.success) {
         setClients(data.clients)
         
-        // Seleccionar primer cliente automáticamente
-        if (data.clients.length > 0 && !selectedClient) {
+        // Si hay clientId en URL, seleccionar ese cliente
+        if (clientIdFromUrl) {
+          const clientFromUrl = data.clients.find((c: Client) => c.id === clientIdFromUrl)
+          if (clientFromUrl) {
+            setSelectedClient(clientFromUrl)
+            // Guardar contexto de orden si existe
+            if (orderIdFromUrl) {
+              setOrderContext(orderIdFromUrl)
+            }
+          }
+        }
+        // Si no hay URL param, seleccionar primer cliente
+        else if (data.clients.length > 0 && !selectedClient) {
           setSelectedClient(data.clients[0])
         }
       }
@@ -40,7 +58,7 @@ export default function SellerChatPage() {
     } finally {
       setLoading(false)
     }
-  }, [selectedClient])
+  }, [clientIdFromUrl, orderIdFromUrl, selectedClient])
 
   useEffect(() => {
     fetchClients()
@@ -149,10 +167,26 @@ export default function SellerChatPage() {
 
         {/* Ventana de Chat - Full width on mobile, 8 cols on desktop */}
         <div className="col-span-1 md:col-span-8 lg:col-span-9">
+          {/* Banner de contexto si viene de una orden con problema */}
+          {orderContext && selectedClient && (
+            <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-800">
+                  💬 Chat iniciado desde revisión de orden
+                </p>
+                <p className="text-xs text-amber-600">
+                  Resuelve los problemas de stock con {selectedClient.name}
+                </p>
+              </div>
+            </div>
+          )}
+          
           {selectedClient ? (
             <ChatWindow
               receiverId={selectedClient.clerkUserId}
               receiverName={selectedClient.name}
+              orderContext={orderContext}
             />
           ) : (
             <Card className="h-[500px] md:h-[600px] flex items-center justify-center">

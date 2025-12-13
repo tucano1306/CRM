@@ -32,12 +32,13 @@ interface ChatWindowProps {
   receiverId: string
   receiverName: string
   orderId?: string
+  orderContext?: string | null // ID de orden cuando se abre desde revisión de problemas
 }
 
 // Emojis populares
 const EMOJIS = ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙', '👍', '👎', '👌', '✌️', '🤞', '🤝', '👏', '🙌', '👐', '🤲', '🙏', '✍️', '💪', '🦾', '🦿', '🦵', '🦶', '❤️', '🧡', '💛', '💚', '💙', '💜', '🤎', '🖤', '🤍', '💯', '💢', '💥', '💫', '💦', '💨']
 
-export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWindowProps) {
+export default function ChatWindow({ receiverId, receiverName, orderId, orderContext }: ChatWindowProps) {
   const { user } = useUser()
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
