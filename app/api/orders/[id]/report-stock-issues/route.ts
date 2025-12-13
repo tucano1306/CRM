@@ -42,10 +42,10 @@ export async function POST(
       where: { id: orderId },
       include: {
         seller: {
-          include: { authenticated_users: { select: { authId: true } } }
+          include: { authenticated_users: { select: { id: true, authId: true }, take: 1 } }
         },
         client: {
-          include: { authenticated_users: { select: { authId: true }, take: 1 } }
+          include: { authenticated_users: { select: { id: true, authId: true }, take: 1 } }
         }
       }
     })
@@ -229,7 +229,8 @@ export async function POST(
 
     // 4. Enviar mensaje automático al CHAT de la app
     const sellerAuthId = order.seller.authenticated_users?.[0]?.authId
-    if (sellerAuthId && buyerAuthId) {
+    const sellerUserId = order.seller.authenticated_users?.[0]?.id
+    if (sellerAuthId && buyerAuthId && sellerUserId) {
       try {
         // Mensaje más corto para el chat
         let chatMessage = `⚠️ *Aviso sobre tu Pedido #${order.orderNumber}*\n\n`
@@ -245,9 +246,11 @@ export async function POST(
           data: {
             senderId: sellerAuthId,
             receiverId: buyerAuthId,
-            content: chatMessage,
+            message: chatMessage,
             messageType: 'STOCK_ISSUE',
-            relatedOrderId: orderId
+            userId: sellerUserId,
+            sellerId: order.sellerId,
+            orderId: orderId
           }
         })
         console.log('✅ [CHAT] Mensaje enviado al chat de la app')
