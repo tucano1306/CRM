@@ -68,7 +68,7 @@ interface Order {
   }
   orderItems: OrderItem[]
   hasIssues?: boolean
-  orderIssues?: Array<{
+  issues?: Array<{
     id: string
     productName: string
     issueType: string
@@ -115,7 +115,7 @@ export default function OrderDetailModal({
 
   // Mapear issues a productos
   const getProductIssue = (productName: string) => {
-    return order.orderIssues?.find(issue => issue.productName === productName)
+    return order.issues?.find(issue => issue.productName === productName)
   }
 
   // Manejar eliminación de producto

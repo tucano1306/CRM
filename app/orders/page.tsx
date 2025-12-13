@@ -65,7 +65,7 @@ interface OrderWithItems {
       unit: string
     }
   }>
-  orderIssues?: Array<{
+  issues?: Array<{
     id: string
     productName: string
     issueType: string

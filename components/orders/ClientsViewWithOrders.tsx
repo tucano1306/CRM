@@ -63,7 +63,7 @@ interface Order {
   client: Client
   orderItems: any[]
   hasIssues?: boolean
-  orderIssues?: Array<{
+  issues?: Array<{
     id: string
     productName: string
     issueType: string
