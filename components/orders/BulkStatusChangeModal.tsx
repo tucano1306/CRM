@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, CheckCircle, Package, Truck, AlertCircle, Eye, Lock, AlertTriangle, Check, Minus, Send, Loader2 } from 'lucide-react'
+import { X, CheckCircle, Package, Truck, AlertCircle, Eye, Lock, AlertTriangle, Check, Send, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatPrice } from '@/lib/utils'
 
@@ -94,7 +94,6 @@ export default function BulkStatusChangeModal({
   selectedOrdersData = [],
   onReportStockIssues
 }: BulkStatusChangeModalProps) {
-  const [mode, setMode] = useState<'status' | 'stock'>('status')
   const [newStatus, setNewStatus] = useState<OrderStatus | ''>('')
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
@@ -105,7 +104,6 @@ export default function BulkStatusChangeModal({
   // Reset al cerrar
   useEffect(() => {
     if (!isOpen) {
-      setMode('status')
       setNewStatus('')
       setNotes('')
       setProductIssues(new Map())
@@ -114,7 +112,10 @@ export default function BulkStatusChangeModal({
 
   if (!isOpen) return null
 
+  // Obtener la orden seleccionada (si es solo 1)
   const singleOrder = selectedOrdersData.length === 1 ? selectedOrdersData[0] : null
+  const orderItems = singleOrder?.orderItems || []
+  const hasProducts = orderItems.length > 0
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -138,10 +139,8 @@ export default function BulkStatusChangeModal({
     const existing = newMap.get(key)
     
     if (existing?.issueType === issueType) {
-      // Si ya tiene el mismo tipo, lo quitamos
       newMap.delete(key)
     } else {
-      // Establecer el nuevo issue
       newMap.set(key, {
         productId: item.productId || item.id,
         productName: item.productName,
@@ -187,12 +186,12 @@ export default function BulkStatusChangeModal({
         <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-purple-50 to-blue-50">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
-              📦 Gestión de Orden
+              📦 Revisar Orden
             </h2>
             <p className="text-sm text-gray-600 mt-1">
-              {selectedCount === 1 && singleOrder 
-                ? `Orden #${singleOrder.orderNumber} - ${singleOrder.client.name}`
-                : `${selectedCount} órdenes seleccionadas`}
+              {singleOrder 
+                ? `Orden #${singleOrder.orderNumber} - ${singleOrder.client?.name || 'Cliente'}`
+                : `${selectedCount} orden${selectedCount !== 1 ? 'es' : ''} seleccionada${selectedCount !== 1 ? 's' : ''}`}
             </p>
           </div>
           <button
@@ -203,38 +202,154 @@ export default function BulkStatusChangeModal({
           </button>
         </div>
 
-        {/* Tabs - Solo mostrar si es una sola orden */}
-        {singleOrder && onReportStockIssues && (
-          <div className="flex border-b">
-            <button
-              onClick={() => setMode('status')}
-              className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
-                mode === 'status' 
-                  ? 'text-purple-600 border-b-2 border-purple-600 bg-purple-50' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              🔄 Cambiar Estado
-            </button>
-            <button
-              onClick={() => setMode('stock')}
-              className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
-                mode === 'stock' 
-                  ? 'text-red-600 border-b-2 border-red-600 bg-red-50' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              ⚠️ Reportar Problemas de Stock
-            </button>
-          </div>
-        )}
+        <div className="p-6 space-y-6">
+          {/* Sección de Productos - Solo si hay una orden y tiene productos */}
+          {hasProducts && (
+            <div className="space-y-4">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <p className="text-sm text-amber-800 font-medium">
+                  ⚠️ ¿Hay productos sin stock o con stock parcial?
+                </p>
+                <p className="text-xs text-amber-600 mt-1">
+                  Selecciona los productos con problemas para notificar al comprador
+                </p>
+              </div>
 
-        {/* Contenido según modo */}
-        {mode === 'status' ? (
-          /* Modo: Cambio de Estado */
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              {/* Lista de productos */}
+              <div className="border rounded-lg overflow-hidden">
+                <div className="bg-gray-100 px-4 py-3 border-b">
+                  <h4 className="font-medium text-sm flex items-center justify-between">
+                    <span>📋 Productos de la Orden</span>
+                    <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded">{orderItems.length} productos</span>
+                  </h4>
+                </div>
+                
+                <div className="divide-y max-h-[250px] overflow-y-auto">
+                  {orderItems.map((item) => {
+                    const issue = productIssues.get(item.id)
+                    const isOutOfStock = issue?.issueType === 'OUT_OF_STOCK'
+                    const isPartialStock = issue?.issueType === 'PARTIAL_STOCK'
+                    const hasIssue = isOutOfStock || isPartialStock
+
+                    return (
+                      <div 
+                        key={item.id}
+                        className={`p-4 transition-colors ${hasIssue ? 'bg-red-50' : 'hover:bg-gray-50'}`}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-gray-900 truncate">{item.productName}</p>
+                            <p className="text-sm text-gray-500">
+                              Cantidad: {item.quantity} {item.product?.unit || 'unid.'} • {formatPrice(item.subtotal)}
+                            </p>
+                          </div>
+
+                          <div className="flex gap-2 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => toggleProductIssue(item, 'OUT_OF_STOCK')}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+                                isOutOfStock
+                                  ? 'bg-red-600 text-white ring-2 ring-red-300'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700'
+                              }`}
+                            >
+                              {isOutOfStock && <Check className="w-3 h-3" />}
+                              ❌ Sin Stock
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => toggleProductIssue(item, 'PARTIAL_STOCK')}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+                                isPartialStock
+                                  ? 'bg-yellow-500 text-white ring-2 ring-yellow-300'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-yellow-100 hover:text-yellow-700'
+                              }`}
+                            >
+                              {isPartialStock && <Check className="w-3 h-3" />}
+                              ⚠️ Parcial
+                            </button>
+                          </div>
+                        </div>
+
+                        {isPartialStock && (
+                          <div className="mt-3 flex items-center gap-3 pl-4 border-l-2 border-yellow-400">
+                            <label className="text-sm text-gray-600">Cantidad disponible:</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max={item.quantity - 1}
+                              value={issue?.availableQty || 0}
+                              onChange={(e) => updateAvailableQty(item.id, parseInt(e.target.value) || 0)}
+                              className="w-20 px-2 py-1 border rounded text-sm"
+                            />
+                            <span className="text-xs text-gray-500">de {item.quantity} solicitados</span>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Botón de notificar - solo si hay issues */}
+              {issuesCount > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <h5 className="font-medium text-red-800 mb-2">📋 Problemas seleccionados ({issuesCount})</h5>
+                  <ul className="text-sm text-red-700 space-y-1 mb-3">
+                    {Array.from(productIssues.values())
+                      .filter(i => i.issueType)
+                      .map((issue, idx) => (
+                        <li key={idx} className="flex items-center gap-2">
+                          <span>{issue.issueType === 'OUT_OF_STOCK' ? '❌' : '⚠️'}</span>
+                          <span className="font-medium">{issue.productName}</span>
+                          <span className="text-red-600">
+                            {issue.issueType === 'OUT_OF_STOCK' 
+                              ? '(Sin stock)'
+                              : `(Disponible: ${issue.availableQty} de ${issue.requestedQty})`}
+                          </span>
+                        </li>
+                      ))}
+                  </ul>
+                  <Button
+                    onClick={handleSendStockNotification}
+                    className="w-full bg-red-600 hover:bg-red-700"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Notificar al Comprador
+                      </>
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Separador visual */}
+          {hasProducts && (
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-gray-500">O cambiar estado</span>
+              </div>
+            </div>
+          )}
+
+          {/* Sección de Cambio de Estado */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             {currentStatus && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-sm text-blue-800">
                   <strong>Estado actual:</strong> {STATUS_OPTIONS.find(s => s.value === currentStatus)?.label}
                 </p>
@@ -243,13 +358,12 @@ export default function BulkStatusChangeModal({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nuevo Estado *
+                Nuevo Estado
               </label>
               <select
                 value={newStatus}
                 onChange={(e) => setNewStatus(e.target.value as OrderStatus)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                required
               >
                 <option value="">-- Selecciona un estado --</option>
                 {STATUS_OPTIONS.map((option) => (
@@ -267,167 +381,26 @@ export default function BulkStatusChangeModal({
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Agrega notas sobre este cambio de estado..."
-                rows={3}
+                placeholder="Agrega notas sobre este cambio..."
+                rows={2}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none"
               />
             </div>
 
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <ul className="list-disc list-inside text-sm text-gray-600 space-y-1">
-                <li>El estado se cambiará a: <strong>{newStatus ? STATUS_OPTIONS.find(s => s.value === newStatus)?.label : 'Seleccionar'}</strong></li>
-                <li>Se notificará al cliente</li>
-              </ul>
-            </div>
-
             <div className="flex gap-3 pt-4 border-t">
               <Button type="button" onClick={onClose} variant="outline" className="flex-1" disabled={loading}>
                 Cancelar
               </Button>
-              <Button type="submit" className="flex-1 bg-purple-600 hover:bg-purple-700" disabled={loading || !newStatus}>
-                {loading ? 'Actualizando...' : 'Actualizar Estado'}
+              <Button 
+                type="submit" 
+                className="flex-1 bg-purple-600 hover:bg-purple-700" 
+                disabled={loading || !newStatus}
+              >
+                {loading ? 'Actualizando...' : 'Cambiar Estado'}
               </Button>
             </div>
           </form>
-        ) : (
-          /* Modo: Reportar Problemas de Stock */
-          <div className="p-6 space-y-6">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-sm text-red-800">
-                <strong>⚠️ Selecciona los productos con problemas de stock</strong>
-                <br />
-                El comprador recibirá una notificación con los detalles.
-              </p>
-            </div>
-
-            {/* Lista de productos */}
-            <div className="border rounded-lg overflow-hidden">
-              <div className="bg-gray-100 px-4 py-3 border-b">
-                <h4 className="font-medium text-sm flex items-center justify-between">
-                  <span>Productos de la Orden</span>
-                  <span className="text-xs text-gray-500">{singleOrder?.orderItems.length} productos</span>
-                </h4>
-              </div>
-              
-              <div className="divide-y max-h-[300px] overflow-y-auto">
-                {singleOrder?.orderItems.map((item) => {
-                  const issue = productIssues.get(item.id)
-                  const isOutOfStock = issue?.issueType === 'OUT_OF_STOCK'
-                  const isPartialStock = issue?.issueType === 'PARTIAL_STOCK'
-                  const hasIssue = isOutOfStock || isPartialStock
-
-                  return (
-                    <div 
-                      key={item.id}
-                      className={`p-4 transition-colors ${hasIssue ? 'bg-red-50' : 'hover:bg-gray-50'}`}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 truncate">{item.productName}</p>
-                          <p className="text-sm text-gray-500">
-                            Cantidad: {item.quantity} {item.product?.unit || 'unid.'} • {formatPrice(item.subtotal)}
-                          </p>
-                        </div>
-
-                        <div className="flex gap-2 shrink-0">
-                          {/* Botón Sin Stock */}
-                          <button
-                            type="button"
-                            onClick={() => toggleProductIssue(item, 'OUT_OF_STOCK')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
-                              isOutOfStock
-                                ? 'bg-red-600 text-white ring-2 ring-red-300'
-                                : 'bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700'
-                            }`}
-                          >
-                            {isOutOfStock && <Check className="w-3 h-3" />}
-                            ❌ Sin Stock
-                          </button>
-
-                          {/* Botón Stock Parcial */}
-                          <button
-                            type="button"
-                            onClick={() => toggleProductIssue(item, 'PARTIAL_STOCK')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
-                              isPartialStock
-                                ? 'bg-yellow-500 text-white ring-2 ring-yellow-300'
-                                : 'bg-gray-100 text-gray-700 hover:bg-yellow-100 hover:text-yellow-700'
-                            }`}
-                          >
-                            {isPartialStock && <Check className="w-3 h-3" />}
-                            ⚠️ Parcial
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Input de cantidad disponible para stock parcial */}
-                      {isPartialStock && (
-                        <div className="mt-3 flex items-center gap-3 pl-4 border-l-2 border-yellow-400">
-                          <label className="text-sm text-gray-600">Cantidad disponible:</label>
-                          <input
-                            type="number"
-                            min="0"
-                            max={item.quantity - 1}
-                            value={issue?.availableQty || 0}
-                            onChange={(e) => updateAvailableQty(item.id, parseInt(e.target.value) || 0)}
-                            className="w-20 px-2 py-1 border rounded text-sm"
-                          />
-                          <span className="text-xs text-gray-500">de {item.quantity} solicitados</span>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Resumen */}
-            {issuesCount > 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h5 className="font-medium text-yellow-800 mb-2">📋 Resumen de problemas ({issuesCount})</h5>
-                <ul className="text-sm text-yellow-700 space-y-1">
-                  {Array.from(productIssues.values())
-                    .filter(i => i.issueType)
-                    .map((issue, idx) => (
-                      <li key={idx} className="flex items-center gap-2">
-                        <span>{issue.issueType === 'OUT_OF_STOCK' ? '❌' : '⚠️'}</span>
-                        <span className="font-medium">{issue.productName}</span>
-                        <span className="text-yellow-600">
-                          {issue.issueType === 'OUT_OF_STOCK' 
-                            ? '(Sin stock)'
-                            : `(Disponible: ${issue.availableQty} de ${issue.requestedQty})`}
-                        </span>
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Botones */}
-            <div className="flex gap-3 pt-4 border-t">
-              <Button type="button" onClick={onClose} variant="outline" className="flex-1" disabled={loading}>
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleSendStockNotification}
-                className="flex-1 bg-red-600 hover:bg-red-700"
-                disabled={loading || issuesCount === 0}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Enviando...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4 mr-2" />
-                    Notificar al Comprador ({issuesCount})
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   )

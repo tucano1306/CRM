@@ -930,7 +930,7 @@ export default function ClientsViewWithOrders({
                             className="bg-purple-600 hover:bg-purple-700 shadow-lg hover:shadow-xl transition-all text-xs sm:text-sm h-8 sm:h-9 w-full sm:w-auto"
                           >
                             <Package className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
-                            Cambiar Estado
+                            Revisar Orden
                           </Button>
                         </div>
                       )}
@@ -966,7 +966,7 @@ export default function ClientsViewWithOrders({
         />
       )}
 
-      {/* Modal de Cambio Masivo de Estado */}
+      {/* Modal de Revisar Orden */}
       {showBulkStatusModal && (
         <BulkStatusChangeModal
           isOpen={showBulkStatusModal}
