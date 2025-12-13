@@ -14,6 +14,12 @@ type UserRoles = {
   isClient: boolean
   roles: string[]
   needsRegistration: boolean
+  roleConflict?: {
+    type: string
+    currentRole: string
+    blockedRole: string
+    message: string
+  } | null
   userData?: {
     name: string
     email: string
@@ -131,6 +137,33 @@ function SelectModeContent() {
           </p>
         </div>
 
+        {/* 🔒 Mensaje de Conflicto de Roles - IMPORTANTE */}
+        {roles.roleConflict && (
+          <div className="mb-8 mx-auto max-w-2xl">
+            <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-5 flex items-start gap-4 shadow-md">
+              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Lock className="w-6 h-6 text-orange-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-orange-900 text-lg mb-2">
+                  ⚠️ Cuenta con rol asignado
+                </h3>
+                <p className="text-orange-800 mb-3">
+                  {roles.roleConflict.message}
+                </p>
+                <div className="bg-orange-100 rounded p-3 text-sm">
+                  <p className="text-orange-900">
+                    <strong>Tu rol actual:</strong> {roles.roleConflict.currentRole === 'SELLER' ? '🏪 Vendedor' : '🛒 Comprador'}
+                  </p>
+                  <p className="text-orange-700 mt-1">
+                    Solo puedes acceder con las opciones disponibles para tu rol.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Mensaje de Error */}
         {error && (
           <div className="mb-8 mx-auto max-w-2xl">
@@ -199,22 +232,24 @@ function SelectModeContent() {
               </Card>
             </Link>
           ) : (
-            <Card className="h-full opacity-50 cursor-not-allowed border-2 border-gray-300">
+            <Card className={`h-full cursor-not-allowed border-2 ${roles.roleConflict?.blockedRole === 'SELLER' ? 'border-orange-300 bg-orange-50/30' : 'border-gray-300'} opacity-50`}>
               <CardHeader className="text-center pb-4">
-                <div className="mx-auto mb-4 w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Lock className="w-10 h-10 text-gray-400" />
+                <div className={`mx-auto mb-4 w-20 h-20 ${roles.roleConflict?.blockedRole === 'SELLER' ? 'bg-orange-100' : 'bg-gray-100'} rounded-full flex items-center justify-center`}>
+                  <Lock className={`w-10 h-10 ${roles.roleConflict?.blockedRole === 'SELLER' ? 'text-orange-500' : 'text-gray-400'}`} />
                 </div>
-                <CardTitle className="text-2xl font-bold text-gray-500">
+                <CardTitle className={`text-2xl font-bold ${roles.roleConflict?.blockedRole === 'SELLER' ? 'text-orange-600' : 'text-gray-500'}`}>
                   Vendedor
                 </CardTitle>
-                <CardDescription className="text-base text-gray-500">
-                  No disponible
+                <CardDescription className={`text-base ${roles.roleConflict?.blockedRole === 'SELLER' ? 'text-orange-500' : 'text-gray-500'}`}>
+                  {roles.roleConflict?.blockedRole === 'SELLER' ? '🔒 Bloqueado' : 'No disponible'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="bg-gray-50 p-4 rounded-lg text-center">
-                  <p className="text-sm text-gray-600">
-                    No tienes permisos de vendedor
+                <div className={`${roles.roleConflict?.blockedRole === 'SELLER' ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'} p-4 rounded-lg text-center`}>
+                  <p className={`text-sm ${roles.roleConflict?.blockedRole === 'SELLER' ? 'text-orange-700 font-medium' : 'text-gray-600'}`}>
+                    {roles.roleConflict?.blockedRole === 'SELLER' 
+                      ? 'Tu cuenta ya está registrada como Comprador. No puedes acceder como Vendedor.'
+                      : 'No tienes permisos de vendedor'}
                   </p>
                 </div>
               </CardContent>
@@ -266,22 +301,24 @@ function SelectModeContent() {
               </Card>
             </Link>
           ) : (
-            <Card className="h-full opacity-50 cursor-not-allowed border-2 border-gray-300">
+            <Card className={`h-full cursor-not-allowed border-2 ${roles.roleConflict?.blockedRole === 'CLIENT' ? 'border-orange-300 bg-orange-50/30' : 'border-gray-300'} opacity-50`}>
               <CardHeader className="text-center pb-4">
-                <div className="mx-auto mb-4 w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center">
-                  <Lock className="w-10 h-10 text-gray-400" />
+                <div className={`mx-auto mb-4 w-20 h-20 ${roles.roleConflict?.blockedRole === 'CLIENT' ? 'bg-orange-100' : 'bg-gray-100'} rounded-full flex items-center justify-center`}>
+                  <Lock className={`w-10 h-10 ${roles.roleConflict?.blockedRole === 'CLIENT' ? 'text-orange-500' : 'text-gray-400'}`} />
                 </div>
-                <CardTitle className="text-2xl font-bold text-gray-500">
+                <CardTitle className={`text-2xl font-bold ${roles.roleConflict?.blockedRole === 'CLIENT' ? 'text-orange-600' : 'text-gray-500'}`}>
                   Comprador
                 </CardTitle>
-                <CardDescription className="text-base text-gray-500">
-                  No disponible
+                <CardDescription className={`text-base ${roles.roleConflict?.blockedRole === 'CLIENT' ? 'text-orange-500' : 'text-gray-500'}`}>
+                  {roles.roleConflict?.blockedRole === 'CLIENT' ? '🔒 Bloqueado' : 'No disponible'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="bg-gray-50 p-4 rounded-lg text-center">
-                  <p className="text-sm text-gray-600">
-                    No tienes permisos de comprador
+                <div className={`${roles.roleConflict?.blockedRole === 'CLIENT' ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'} p-4 rounded-lg text-center`}>
+                  <p className={`text-sm ${roles.roleConflict?.blockedRole === 'CLIENT' ? 'text-orange-700 font-medium' : 'text-gray-600'}`}>
+                    {roles.roleConflict?.blockedRole === 'CLIENT' 
+                      ? 'Tu cuenta ya está registrada como Vendedor. No puedes acceder como Comprador.'
+                      : 'No tienes permisos de comprador'}
                   </p>
                 </div>
               </CardContent>
@@ -298,6 +335,11 @@ function SelectModeContent() {
           <p className="text-xs text-gray-400">
             Roles disponibles: {roles.roles.join(', ') || 'Ninguno'}
           </p>
+          {roles.roleConflict && (
+            <p className="text-xs text-orange-500 mt-1">
+              ⚠️ Tu cuenta tiene restricción de rol único
+            </p>
+          )}
           <p className="text-xs text-gray-400 mt-2">
             Versión de prueba - Deployment en Vercel
           </p>

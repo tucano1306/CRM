@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
+import { getRelativeTime, formatDateTime } from '@/lib/utils'
 import { 
   Clock, 
   CheckCircle, 
@@ -98,34 +99,6 @@ export default function OrderStatusHistory({ orderId, refreshTrigger }: OrderSta
   useEffect(() => {
     fetchHistory()
   }, [orderId, refreshTrigger, fetchHistory]) // Refresca cuando cambia refreshTrigger
-
-  
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return new Intl.DateTimeFormat('es-ES', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date)
-  }
-
-  const getRelativeTime = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
-
-    if (diffMins < 1) return 'Hace un momento'
-    if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins !== 1 ? 's' : ''}`
-    if (diffHours < 24) return `Hace ${diffHours} hora${diffHours !== 1 ? 's' : ''}`
-    if (diffDays < 7) return `Hace ${diffDays} día${diffDays !== 1 ? 's' : ''}`
-    return formatDate(dateString)
-  }
 
   const getRoleBadge = (role: string) => {
     const roleConfig: Record<string, { label: string; color: string }> = {
@@ -265,7 +238,7 @@ export default function OrderStatusHistory({ orderId, refreshTrigger }: OrderSta
                         {getRelativeTime(entry.createdAt)}
                       </span>
                       <span className="text-xs text-gray-400">
-                        ({formatDate(entry.createdAt)})
+                        ({formatDateTime(entry.createdAt)})
                       </span>
                     </div>
 

@@ -219,7 +219,7 @@ export default function CatalogPage() {
     showToast('Selección limpiada', 'info')
   }
 
-  // Agregar al carrito
+  // Agregar al carrito (OPTIMIZADO - una sola llamada API)
   const addToCart = async () => {
     if (selectedProducts.size === 0) {
       showToast('Selecciona al menos un producto', 'error')
@@ -228,21 +228,56 @@ export default function CatalogPage() {
 
     setSubmitting(true)
     try {
-      // Agregar cada producto seleccionado al carrito
-      for (const [productId, quantity] of selectedProducts) {
-        await apiCall('/api/buyer/cart', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productId, quantity }),
-          timeout: 5000,
-        })
-      }
+      // Preparar items para batch
+      const items = Array.from(selectedProducts.entries()).map(([productId, quantity]) => ({
+        productId,
+        quantity
+      }))
 
-      showToast(`✅ ${selectedProducts.size} producto(s) agregado(s) al carrito`, 'success')
-      setSelectedProducts(new Map())
-      
-      // Opcional: redirigir al carrito
-      // router.push('/buyer/cart')
+      // Una sola llamada API para todos los productos
+      const result = await apiCall('/api/buyer/cart/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items }),
+        timeout: 15000,
+      })
+
+      if (result.success && result.data) {
+        const { summary, results } = result.data
+        
+        // Mostrar productos con error de stock
+        const stockErrors = results?.filter((r: { success: boolean; error?: string }) => 
+          !r.success && r.error?.includes('stock')
+        ) || []
+        
+        if (stockErrors.length > 0) {
+          const errorNames = stockErrors.map((e: { productName?: string; error?: string }) => 
+            `${e.productName || 'Producto'}: ${e.error}`
+          ).join('\n')
+          showToast(`⚠️ Algunos productos sin stock:\n${errorNames}`, 'error')
+        }
+        
+        if (summary?.success > 0) {
+          showToast(`✅ ${summary.success} producto(s) agregado(s) al carrito`, 'success')
+          
+          // Limpiar solo los productos agregados exitosamente
+          setSelectedProducts(prev => {
+            const newMap = new Map(prev)
+            results?.forEach((r: { success: boolean; productId: string }) => {
+              if (r.success) {
+                newMap.delete(r.productId)
+              }
+            })
+            return newMap
+          })
+        }
+        
+        if (summary?.failed > 0 && summary?.success === 0) {
+          showToast('❌ No se pudieron agregar los productos', 'error')
+        }
+      } else {
+        showToast(result.error || 'Error al agregar productos', 'error')
+      }
     } catch (err) {
       showToast(getErrorMessage(err), 'error')
     } finally {
@@ -486,19 +521,33 @@ export default function CatalogPage() {
 
                       {/* Stock desktop */}
                       <div className="col-span-2 hidden md:flex items-center">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          product.stock > 50 ? 'bg-green-100 text-green-700' :
-                          product.stock > 10 ? 'bg-yellow-100 text-yellow-700' :
-                          product.stock > 0 ? 'bg-red-100 text-red-700' :
-                          'bg-gray-100 text-gray-500'
-                        }`}>
-                          {product.stock > 0 ? `${product.stock} ${product.unit}` : 'Sin stock'}
-                        </span>
+                        {isOutOfStock ? (
+                          <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-red-500 text-white flex items-center gap-1 animate-pulse">
+                            <AlertCircle className="w-3 h-3" />
+                            SIN STOCK
+                          </span>
+                        ) : (
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            product.stock > 50 ? 'bg-green-100 text-green-700' :
+                            product.stock > 10 ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-red-100 text-red-700'
+                          }`}>
+                            {product.stock} {product.unit}
+                          </span>
+                        )}
                       </div>
 
                       {/* Cantidad */}
                       <div className="col-span-6 md:col-span-3 flex items-center justify-center gap-2">
-                        {isSelected ? (
+                        {isOutOfStock ? (
+                          <div className="flex flex-col items-center">
+                            <span className="text-red-500 text-xs font-bold flex items-center gap-1 bg-red-50 px-3 py-1.5 rounded-lg">
+                              <AlertCircle className="w-4 h-4" />
+                              No disponible
+                            </span>
+                            <span className="text-gray-400 text-[10px] mt-1">Sin stock</span>
+                          </div>
+                        ) : isSelected ? (
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => updateQuantity(product.id, quantity - 1)}
@@ -523,7 +572,7 @@ export default function CatalogPage() {
                           </div>
                         ) : (
                           <span className="text-gray-400 text-sm">
-                            {isOutOfStock ? 'No disponible' : 'Seleccionar'}
+                            Seleccionar
                           </span>
                         )}
                       </div>

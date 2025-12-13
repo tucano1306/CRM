@@ -119,12 +119,6 @@ export function getInvitationEmailTemplate(params: {
                 🔗 Aceptar Invitación
               </a>
             </center>
-            <p style="color: #6b7280; font-size: 14px;">
-              O copia este link en tu navegador:<br>
-              <code style="background: #e5e7eb; padding: 5px 10px; border-radius: 4px; display: inline-block; margin-top: 10px;">
-                ${params.invitationLink}
-              </code>
-            </p>
             <p style="color: #ef4444; font-size: 14px;">
               ⚠️ Este link es válido por 7 días.
             </p>

@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useUser } from '@clerk/nextjs'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { 
   ShoppingCart, Package, Clock, CheckCircle, 
   TrendingUp, Store, Heart, MessageCircle, RefreshCw,
-  ArrowUpRight, DollarSign, Plus, CreditCard, FileText, AlertCircle, ShoppingBag, X, Phone, Lightbulb
+  ArrowUpRight, DollarSign, Plus, CreditCard, AlertCircle, ShoppingBag, X, Phone
 } from 'lucide-react'
 import Link from 'next/link'
 import { DashboardStatsSkeleton } from '@/components/skeletons'
@@ -40,19 +39,8 @@ export default function BuyerDashboardPage() {
   const [chartPeriod, setChartPeriod] = useState<'6months' | 'year' | 'all'>('6months')
   const [activeTab, setActiveTab] = useState<'shop' | 'manage' | 'support'>('shop')
   const [showQuickActions, setShowQuickActions] = useState(false)
-  const [featuredProducts, setFeaturedProducts] = useState<any[]>([])
   const [frequentProducts, setFrequentProducts] = useState<any[]>([])
   const [addingToCart, setAddingToCart] = useState<string | null>(null)
-
-  // Datos del programa de fidelidad (en producción vendrían de la API)
-  const loyaltyData = {
-    currentPoints: 1250,
-    nextReward: 1500,
-    pointsToNextReward: 250,
-    progressPercentage: 83,
-    currentLevel: 'Gold',
-    nextLevel: 'Platinum'
-  }
 
 
   // Calcular datos mensuales para el gráfico
@@ -88,26 +76,8 @@ export default function BuyerDashboardPage() {
 
   useEffect(() => {
     fetchBuyerData()
-    loadFeaturedProducts()
     loadFrequentProducts()
   }, [])
-
-  const loadFeaturedProducts = async () => {
-    try {
-      const response = await fetch('/api/products/popular')
-      const result = await response.json()
-      console.log('🌟 Featured products:', result)
-      if (result.success && result.data && Array.isArray(result.data)) {
-        // Eliminar duplicados usando Map por ID
-        const uniqueProducts = Array.from(
-          new Map(result.data.map((p: any) => [p.id, p])).values()
-        ).slice(0, 4)
-        setFeaturedProducts(uniqueProducts)
-      }
-    } catch (error) {
-      console.error('Error loading featured products:', error)
-    }
-  }
 
   const loadFrequentProducts = async () => {
     try {
@@ -350,38 +320,6 @@ export default function BuyerDashboardPage() {
           </div>
         )}
 
-        {/* Programa de Fidelidad */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 text-white shadow-xl hover:shadow-2xl transition-all">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-2xl font-bold mb-2">🎁 Programa de Fidelidad</h3>
-              <p className="text-purple-100 mb-4 font-medium">Acumula puntos con cada compra</p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-bold">{loyaltyData.currentPoints.toLocaleString()}</span>
-                <span className="text-xl">puntos</span>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-purple-100 mb-2 font-medium">Próxima recompensa en</p>
-              <p className="text-3xl font-bold">{loyaltyData.pointsToNextReward}</p>
-              <p className="text-sm">puntos</p>
-            </div>
-          </div>
-          
-          {/* Barra de progreso */}
-          <div className="mt-6">
-            <div className="bg-white/20 rounded-full h-3 overflow-hidden backdrop-blur-sm">
-              <div 
-                className="bg-white h-3 rounded-full transition-all shadow-lg" 
-                style={{ width: `${loyaltyData.progressPercentage}%` }} 
-              />
-            </div>
-            <p className="text-sm text-purple-100 mt-2 font-medium">
-              {loyaltyData.progressPercentage}% hacia tu siguiente nivel ({loyaltyData.nextLevel})
-            </p>
-          </div>
-        </div>
-
         {/* Stats Cards Interactivas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <Link href="/buyer/orders?status=all">
@@ -522,51 +460,6 @@ export default function BuyerDashboardPage() {
           )}
         </div>
 
-        {/* Productos Destacados */}
-        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-2xl p-6 mb-8 shadow-lg hover:shadow-xl transition-all">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">✨ Productos Destacados</h3>
-            <Link href="/buyer/catalog" className="text-purple-600 hover:text-purple-700 font-semibold text-sm flex items-center gap-1 transition-colors">
-              Ver todos <ArrowUpRight className="w-4 h-4" />
-            </Link>
-          </div>
-          
-          {featuredProducts.length === 0 ? (
-            <div className="text-center py-8">
-              <Package className="w-12 h-12 text-purple-200 mx-auto mb-3" />
-              <p className="text-gray-600 text-sm font-medium">No hay productos destacados disponibles</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {featuredProducts.map(product => (
-                <div key={product.id} className="bg-white rounded-xl p-4 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-1 group">
-                  <div className="relative h-32 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-lg mb-3 overflow-hidden flex items-center justify-center">
-                    <Package className="w-16 h-16 text-purple-400 group-hover:scale-110 transition-transform" />
-                  </div>
-                  <h4 className="font-semibold text-sm mb-2 text-gray-900 line-clamp-2">{product.name}</h4>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-purple-600 font-bold text-lg">{formatPrice(Number(product.price))}</span>
-                  </div>
-                  <button 
-                    onClick={() => addToCart(product.id)}
-                    disabled={addingToCart === product.id}
-                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1 shadow-md"
-                  >
-                    {addingToCart === product.id ? (
-                      <>Agregando...</>
-                    ) : (
-                      <>
-                        <Plus className="w-4 h-4" />
-                        Agregar
-                      </>
-                    )}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
         {/* Compra Nuevamente - Productos Frecuentes */}
         <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 mb-8">
           <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6">🔁 Compra Nuevamente</h3>
@@ -601,26 +494,6 @@ export default function BuyerDashboardPage() {
               ))}
             </div>
           )}
-        </div>
-
-        {/* Tips/Ayuda Contextual */}
-        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-2xl p-6 mb-8 shadow-md hover:shadow-lg transition-all">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
-              <Lightbulb className="w-6 h-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-purple-900 mb-2 text-lg">💡 Tip del día</h4>
-              <p className="text-purple-800 mb-3 font-medium">
-                ¡Explora nuestro catálogo para descubrir nuevos productos y ofertas exclusivas de tu vendedor!
-              </p>
-              <Link href="/buyer/catalog">
-                <button className="text-purple-600 hover:text-purple-700 font-semibold text-sm hover:underline transition-all">
-                  Ver catálogo →
-                </button>
-              </Link>
-            </div>
-          </div>
         </div>
 
         {/* Acciones Rápidas con Tabs */}
@@ -748,43 +621,29 @@ export default function BuyerDashboardPage() {
                   </div>
                 </Link>
 
-                <Link href="/buyer/returns">
-                  <div className="p-4 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-100 hover:to-rose-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-red-200">
+                <Link href="/buyer/recurring-orders">
+                  <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-amber-200">
                     <div className="flex items-center gap-3">
-                      <div className="bg-gradient-to-br from-red-500 to-rose-600 p-2 rounded-lg">
+                      <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2 rounded-lg">
                         <RefreshCw className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-red-900">Devoluciones</h3>
-                        <p className="text-sm text-red-700 font-medium">Gestionar devoluciones</p>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-
-                <Link href="/buyer/credit-notes">
-                  <div className="p-4 bg-gradient-to-r from-teal-50 to-cyan-50 hover:from-teal-100 hover:to-cyan-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-teal-200">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-gradient-to-br from-teal-500 to-cyan-600 p-2 rounded-lg">
-                        <FileText className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-teal-900">Notas de Crédito</h3>
-                        <p className="text-sm text-teal-700 font-medium">Ver tus créditos</p>
+                        <h3 className="font-bold text-amber-900">Órdenes Recurrentes</h3>
+                        <p className="text-sm text-amber-700 font-medium">Automatiza tus pedidos</p>
                       </div>
                     </div>
                   </div>
                 </Link>
 
                 <Link href="/buyer/orders">
-                  <div className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-amber-200">
+                  <div className="p-4 bg-gradient-to-r from-teal-50 to-cyan-50 hover:from-teal-100 hover:to-cyan-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-teal-200">
                     <div className="flex items-center gap-3">
-                      <div className="bg-gradient-to-br from-amber-500 to-yellow-600 p-2 rounded-lg">
+                      <div className="bg-gradient-to-br from-teal-500 to-cyan-600 p-2 rounded-lg">
                         <CreditCard className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-amber-900">Pagos</h3>
-                        <p className="text-sm text-amber-700 font-medium">Historial de pagos</p>
+                        <h3 className="font-bold text-teal-900">Pagos</h3>
+                        <p className="text-sm text-teal-700 font-medium">Historial de pagos</p>
                       </div>
                     </div>
                   </div>

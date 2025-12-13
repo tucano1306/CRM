@@ -6,6 +6,9 @@ import { prisma } from '@/lib/prisma'
  * GET /api/auth/check-roles
  * Verifica qué roles tiene el usuario autenticado en la base de datos
  * Retorna: { isSeller: boolean, isClient: boolean, roles: string[] }
+ * 
+ * También detecta conflictos de roles para prevenir que un vendedor
+ * intente loguearse como comprador y viceversa.
  */
 export async function GET() {
   try {
@@ -45,7 +48,8 @@ export async function GET() {
         isSeller: false,
         isClient: false,
         roles: [],
-        needsRegistration: true
+        needsRegistration: true,
+        roleConflict: null
       })
     }
 
@@ -57,12 +61,34 @@ export async function GET() {
     if (hasSeller) roles.push('SELLER')
     if (hasClient) roles.push('CLIENT')
 
+    // Determinar si existe un conflicto de roles exclusivos
+    // Un usuario solo puede tener UN rol: vendedor O comprador (no ambos)
+    let roleConflict = null
+    if (hasSeller && !hasClient) {
+      // Es SOLO vendedor - no puede ser comprador
+      roleConflict = {
+        type: 'SELLER_ONLY',
+        currentRole: 'SELLER',
+        blockedRole: 'CLIENT',
+        message: `Tu cuenta (${authUser.email}) ya está registrada como Vendedor. No puedes acceder como Comprador. Por favor, usa tu cuenta de vendedor.`
+      }
+    } else if (hasClient && !hasSeller) {
+      // Es SOLO comprador - no puede ser vendedor
+      roleConflict = {
+        type: 'CLIENT_ONLY',
+        currentRole: 'CLIENT',
+        blockedRole: 'SELLER',
+        message: `Tu cuenta (${authUser.email}) ya está registrada como Comprador. No puedes acceder como Vendedor. Por favor, usa tu cuenta de comprador.`
+      }
+    }
+
     return NextResponse.json({
       exists: true,
       isSeller: hasSeller,
       isClient: hasClient,
       roles,
       needsRegistration: roles.length === 0,
+      roleConflict,
       userData: {
         name: authUser.name,
         email: authUser.email,

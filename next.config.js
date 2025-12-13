@@ -4,6 +4,9 @@ const { withSentryConfig } = require('@sentry/nextjs');
 const nextConfig = {
   // Enable standalone output for Docker
   output: 'standalone',
+
+  // 🔇 Disable dev indicators (yellow build indicator banner)
+  devIndicators: false,
   
   // Image optimization
   images: {

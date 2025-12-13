@@ -20,8 +20,6 @@ import {
   CheckCircle,
   ArrowUpDown,
   FileText,
-  Truck,
-  Store,
 } from 'lucide-react'
 
 type ToastMessage = {
@@ -60,7 +58,6 @@ function CartPageContent() {
   const [creatingOrder, setCreatingOrder] = useState(false)
   const [toasts, setToasts] = useState<ToastMessage[]>([])
   const [orderNotes, setOrderNotes] = useState('')
-  const [deliveryMethod, setDeliveryMethod] = useState<'delivery' | 'pickup'>('delivery')
   
   // Checkboxes para selección
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
@@ -71,7 +68,6 @@ function CartPageContent() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
   const TAX_RATE = 0.10
-  const DELIVERY_FEE = 5.00
 
   // Mostrar toast
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -175,6 +171,17 @@ function CartPageContent() {
       return
     }
 
+    // Optimistic update - actualizar estado local inmediatamente
+    setCart(prevCart => {
+      if (!prevCart) return prevCart
+      return {
+        ...prevCart,
+        items: prevCart.items.map(i => 
+          i.id === itemId ? { ...i, quantity: newQuantity } : i
+        )
+      }
+    })
+
     try {
       setUpdating(itemId)
 
@@ -185,13 +192,14 @@ function CartPageContent() {
         timeout: 5000,
       })
 
-      if (result.success) {
-        showToast('✓ Cantidad actualizada', 'success')
+      if (!result.success) {
+        // Revertir si falla
         await fetchCart()
-      } else {
         showToast(result.error || 'Error actualizando cantidad', 'error')
       }
     } catch (err) {
+      // Revertir si falla
+      await fetchCart()
       showToast(getErrorMessage(err), 'error')
     } finally {
       setUpdating(null)
@@ -221,7 +229,7 @@ function CartPageContent() {
     }
   }
 
-  // Remove selected items
+  // Remove selected items (OPTIMIZADO - una sola llamada API)
   const removeSelectedItems = async () => {
     if (selectedItems.size === 0) {
       showToast('Selecciona productos para eliminar', 'info')
@@ -231,17 +239,34 @@ function CartPageContent() {
     if (!confirm(`¿Eliminar ${selectedItems.size} producto(s)?`)) return
 
     try {
-      for (const itemId of selectedItems) {
-        await apiCall(`/api/buyer/cart/items/${itemId}`, {
-          method: 'DELETE',
-          timeout: 5000,
-        })
+      const itemIds = Array.from(selectedItems)
+      
+      // Una sola llamada API para eliminar todos
+      const result = await apiCall('/api/buyer/cart/batch', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemIds }),
+        timeout: 10000,
+      })
+
+      if (result.success) {
+        const deletedCount = result.data?.deletedCount || selectedItems.size
+        showToast(`${deletedCount} producto(s) eliminado(s)`, 'info')
+        setSelectedItems(new Set())
+        
+        // Actualizar carrito con los datos devueltos o refetch
+        if (result.data?.cart) {
+          setCart(result.data.cart)
+        } else {
+          await fetchCart()
+        }
+      } else {
+        showToast(result.error || 'Error eliminando productos', 'error')
+        await fetchCart()
       }
-      showToast(`${selectedItems.size} producto(s) eliminado(s)`, 'info')
-      setSelectedItems(new Set())
-      await fetchCart()
     } catch (err) {
       showToast(getErrorMessage(err), 'error')
+      await fetchCart()
     }
   }
 
@@ -257,12 +282,8 @@ function CartPageContent() {
     return calculateSubtotal() * TAX_RATE
   }
 
-  const calculateDeliveryFee = () => {
-    return deliveryMethod === 'delivery' ? DELIVERY_FEE : 0
-  }
-
   const calculateTotal = () => {
-    return calculateSubtotal() + calculateTax() + calculateDeliveryFee()
+    return calculateSubtotal() + calculateTax()
   }
 
   // Create order
@@ -280,7 +301,6 @@ function CartPageContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           notes: orderNotes || null,
-          deliveryMethod: deliveryMethod,
           idempotencyKey: uuidv4(),
           // Solo enviar items seleccionados
           selectedItemIds: Array.from(selectedItems)
@@ -515,6 +535,22 @@ function CartPageContent() {
                         <p className="text-xs text-gray-500">
                           {item.product.sku || item.product.unit}
                         </p>
+                        {/* Stock warning */}
+                        {item.product.stock === 0 ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                            <AlertCircle className="w-3 h-3" />
+                            SIN STOCK
+                          </span>
+                        ) : item.product.stock <= item.quantity ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">
+                            <AlertCircle className="w-3 h-3" />
+                            Último(s) {item.product.stock}
+                          </span>
+                        ) : item.product.stock <= 10 ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">
+                            Stock bajo: {item.product.stock}
+                          </span>
+                        ) : null}
                         {/* Precio móvil */}
                         <p className="text-sm font-bold text-purple-600 md:hidden">
                           {formatPrice(item.price)}
@@ -586,37 +622,6 @@ function CartPageContent() {
                 Resumen del Pedido
               </h2>
 
-              {/* Método de entrega */}
-              <div className="mb-4">
-                <p className="text-sm font-medium text-gray-600 mb-2">Método de entrega:</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => setDeliveryMethod('delivery')}
-                    className={`p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all ${
-                      deliveryMethod === 'delivery'
-                        ? 'border-purple-500 bg-purple-50 text-purple-700'
-                        : 'border-gray-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <Truck className="w-5 h-5" />
-                    <span className="text-sm font-medium">Delivery</span>
-                    <span className="text-xs text-gray-500">{formatPrice(DELIVERY_FEE)}</span>
-                  </button>
-                  <button
-                    onClick={() => setDeliveryMethod('pickup')}
-                    className={`p-3 rounded-lg border-2 flex flex-col items-center gap-1 transition-all ${
-                      deliveryMethod === 'pickup'
-                        ? 'border-purple-500 bg-purple-50 text-purple-700'
-                        : 'border-gray-200 hover:border-purple-300'
-                    }`}
-                  >
-                    <Store className="w-5 h-5" />
-                    <span className="text-sm font-medium">Recoger</span>
-                    <span className="text-xs text-gray-500">Gratis</span>
-                  </button>
-                </div>
-              </div>
-
               {/* Notas */}
               <div className="mb-4">
                 <label className="text-sm font-medium text-gray-600 mb-2 block">
@@ -640,12 +645,6 @@ function CartPageContent() {
                 <div className="flex justify-between text-gray-600">
                   <span>Impuestos (10%):</span>
                   <span className="font-medium">{formatPrice(calculateTax())}</span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>Envío:</span>
-                  <span className="font-medium">
-                    {deliveryMethod === 'pickup' ? 'Gratis' : formatPrice(calculateDeliveryFee())}
-                  </span>
                 </div>
                 <div className="flex justify-between text-xl font-bold pt-3 border-t-2 border-purple-200">
                   <span className="text-gray-800">Total:</span>

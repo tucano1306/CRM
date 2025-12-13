@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import ThemeToggle from './ThemeToggle'
-import NotificationBellSeller from '../notifications/NotificationBellSeller'
+import UnifiedNotificationBell from '../notifications/UnifiedNotificationBell'
 import { NotificationProvider } from '../providers/NotificationProvider'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 import { UserButton } from '@clerk/nextjs'
@@ -134,7 +134,7 @@ export default function Sidebar() {
             </div>
           )}
           <div className="flex items-center gap-2">
-            {!isCollapsed && <NotificationBellSeller />}
+            {!isCollapsed && <UnifiedNotificationBell role="seller" />}
             {!isCollapsed && <ThemeToggle />}
             <Button
               variant="ghost"
@@ -244,7 +244,7 @@ export default function Sidebar() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <NotificationBellSeller />
+            <UnifiedNotificationBell role="seller" />
             <ThemeToggle />
             <UserButton 
               afterSignOutUrl="/"

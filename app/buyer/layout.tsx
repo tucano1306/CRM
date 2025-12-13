@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
-import NotificationBell from '@/components/notifications/NotificationBell'
+import UnifiedNotificationBell from '@/components/notifications/UnifiedNotificationBell'
 import { NotificationProvider } from '@/components/providers/NotificationProvider'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 import { useCartCount } from '@/hooks/useCartCount'
@@ -115,7 +115,7 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
                 <p className="text-sm font-semibold text-white truncate">{user?.firstName}</p>
                 <p className="text-xs text-purple-100">{user?.primaryEmailAddress?.emailAddress}</p>
               </div>
-              <NotificationBell />
+              <UnifiedNotificationBell role="buyer" />
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
           </button>
           <h1 className="font-bold">Food CRM</h1>
           <div className="flex items-center gap-3">
-            <NotificationBell />
+            <UnifiedNotificationBell role="buyer" />
             <UserButton />
           </div>
         </header>
