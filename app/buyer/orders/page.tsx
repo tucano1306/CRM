@@ -886,15 +886,45 @@ export default function OrdersPage() {
 
   // Contactar por WhatsApp
   const handleContactViaWhatsApp = () => {
-    if (contactOrderInfo?.seller?.phone) {
-      const phone = contactOrderInfo.seller.phone.replace(/\D/g, '') // Limpiar caracteres
-      const message = encodeURIComponent(`Hola! Soy ${contactOrderInfo.client?.name || 'tu cliente'}. Tengo una consulta sobre mi orden #${contactOrderInfo.orderNumber}`)
-      window.open(`https://wa.me/${phone}?text=${message}`, '_blank')
-    } else {
-      alert('El vendedor no tiene número de WhatsApp registrado')
+    if (!contactOrderInfo) {
+      alert('Error: No hay información de la orden')
+      return
     }
-    setShowContactModal(false)
-    setContactOrderInfo(null)
+    
+    if (contactOrderInfo.seller?.phone) {
+      // Limpiar caracteres no numéricos excepto el +
+      let phone = contactOrderInfo.seller.phone.replace(/[^\d+]/g, '')
+      // Si no tiene código de país, agregar uno por defecto (ajustar según país)
+      if (!phone.startsWith('+') && !phone.startsWith('1')) {
+        phone = '1' + phone // Asume código de USA/Canadá, ajustar según necesidad
+      }
+      // Remover el + para la URL de WhatsApp
+      phone = phone.replace('+', '')
+      
+      const message = encodeURIComponent(
+        `Hola! Soy ${contactOrderInfo.client?.name || 'tu cliente'}. Tengo una consulta sobre mi orden #${contactOrderInfo.orderNumber}`
+      )
+      
+      // Usar window.location para mejor compatibilidad
+      const whatsappUrl = `https://wa.me/${phone}?text=${message}`
+      
+      // Cerrar modal primero
+      setShowContactModal(false)
+      setContactOrderInfo(null)
+      
+      // Abrir WhatsApp en nueva pestaña
+      const newWindow = window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
+      
+      // Fallback si el popup fue bloqueado
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        // Intentar con location.href como alternativa
+        window.location.href = whatsappUrl
+      }
+    } else {
+      alert('El vendedor no tiene número de WhatsApp registrado. Por favor, usa el chat de la aplicación.')
+      setShowContactModal(false)
+      setContactOrderInfo(null)
+    }
   }
 
   // ✅ ESTADO DE LOADING
@@ -1505,22 +1535,31 @@ export default function OrdersPage() {
                   </div>
 
                   {/* Acciones rápidas */}
-                  <div className="flex gap-2">
-                    {/* Botón cancelar para PENDING y CONFIRMED */}
-                    {(order.status === 'PENDING' || order.status === 'CONFIRMED') && (
+                  <div className="flex gap-2 flex-wrap">
+                    {/* Botón cancelar para PENDING, CONFIRMED, REVIEWING, ISSUE_REPORTED */}
+                    {(order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'REVIEWING' || order.status === 'ISSUE_REPORTED') && (
                       <button 
                         onClick={(e) => handleQuickCancel(order.id, e)}
-                        className="flex-1 bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 text-red-600 py-2 rounded-lg hover:border-red-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
+                        className="flex-1 min-w-[100px] bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 text-red-600 py-2 rounded-lg hover:border-red-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
                       >
                         <XCircle className="w-4 h-4" />
                         Cancelar
                       </button>
                     )}
                     
+                    {/* Botón reordenar siempre visible */}
+                    <button 
+                      onClick={(e) => handleQuickReorder(order, e)}
+                      className="flex-1 min-w-[100px] bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 text-emerald-600 py-2 rounded-lg hover:border-emerald-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Reordenar
+                    </button>
+                    
                     {(order.status === 'CONFIRMED' || order.status === 'PREPARING' || order.status === 'IN_DELIVERY') && (
                       <button 
                         onClick={(e) => handleQuickTrack(order, e)}
-                        className="flex-1 bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 text-cyan-600 py-2 rounded-lg hover:border-cyan-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
+                        className="flex-1 min-w-[100px] bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 text-cyan-600 py-2 rounded-lg hover:border-cyan-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
                       >
                         <MapPin className="w-4 h-4" />
                         Rastrear
@@ -1528,22 +1567,13 @@ export default function OrdersPage() {
                     )}
                     
                     {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && (
-                      <>
-                        <button 
-                          onClick={(e) => handleQuickReorder(order, e)}
-                          className="flex-1 bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 text-emerald-600 py-2 rounded-lg hover:border-emerald-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
-                        >
-                          <RotateCcw className="w-4 h-4" />
-                          Reordenar
-                        </button>
-                        <button 
-                          onClick={(e) => handleQuickInvoice(order, e)}
-                          className="flex-1 bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 text-purple-600 py-2 rounded-lg hover:border-purple-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
-                        >
-                          <FileText className="w-4 h-4" />
-                          Factura
-                        </button>
-                      </>
+                      <button 
+                        onClick={(e) => handleQuickInvoice(order, e)}
+                        className="flex-1 min-w-[100px] bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 text-purple-600 py-2 rounded-lg hover:border-purple-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Factura
+                      </button>
                     )}
 
                     <button 
@@ -1730,9 +1760,9 @@ export default function OrdersPage() {
                     </div>
 
                     {/* Derecha: Acciones */}
-                    <div className="flex gap-2 flex-shrink-0">
-                      {/* Botón cancelar para PENDING y CONFIRMED */}
-                      {(order.status === 'PENDING' || order.status === 'CONFIRMED') && (
+                    <div className="flex gap-2 flex-shrink-0 flex-wrap">
+                      {/* Botón cancelar para PENDING, CONFIRMED, REVIEWING, ISSUE_REPORTED */}
+                      {(order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'REVIEWING' || order.status === 'ISSUE_REPORTED') && (
                         <button 
                           onClick={(e) => handleQuickCancel(order.id, e)}
                           className="bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 text-red-600 p-2 rounded-lg hover:border-red-300 hover:shadow-lg transition-all"
@@ -1741,6 +1771,15 @@ export default function OrdersPage() {
                           <XCircle className="w-5 h-5" />
                         </button>
                       )}
+                      
+                      {/* Botón reordenar siempre visible */}
+                      <button 
+                        onClick={(e) => handleQuickReorder(order, e)}
+                        className="bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 text-emerald-600 p-2 rounded-lg hover:border-emerald-300 hover:shadow-lg transition-all"
+                        title="Reordenar"
+                      >
+                        <RotateCcw className="w-5 h-5" />
+                      </button>
                       
                       {/* Botón para confirmar recepción (EN_DELIVERY) */}
                       {order.status === 'IN_DELIVERY' && (
@@ -1768,22 +1807,13 @@ export default function OrdersPage() {
                       )}
                       
                       {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && (
-                        <>
-                          <button 
-                            onClick={(e) => handleQuickReorder(order, e)}
-                            className="bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 text-emerald-600 p-2 rounded-lg hover:border-emerald-300 hover:shadow-lg transition-all"
-                            title="Reordenar"
-                          >
-                            <RotateCcw className="w-5 h-5" />
-                          </button>
-                          <button 
-                            onClick={(e) => handleQuickInvoice(order, e)}
-                            className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 text-purple-600 p-2 rounded-lg hover:border-purple-300 hover:shadow-lg transition-all"
-                            title="Ver factura"
-                          >
-                            <FileText className="w-5 h-5" />
-                          </button>
-                        </>
+                        <button 
+                          onClick={(e) => handleQuickInvoice(order, e)}
+                          className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 text-purple-600 p-2 rounded-lg hover:border-purple-300 hover:shadow-lg transition-all"
+                          title="Ver factura"
+                        >
+                          <FileText className="w-5 h-5" />
+                        </button>
                       )}
 
                       <button 

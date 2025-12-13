@@ -420,3 +420,42 @@ export async function notifyBuyerOrderCreated(
     return [{ success: false, channel: 'EMAIL', error: String(error) }]
   }
 }
+
+/**
+ * Envía notificación a un comprador (cliente)
+ */
+export async function notifyBuyer(
+  clientId: string,
+  type: NotificationType,
+  data: NotificationData
+): Promise<NotificationResult[]> {
+  try {
+    const client = await prisma.client.findUnique({
+      where: { id: clientId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true
+      }
+    })
+
+    if (!client) {
+      console.error('Cliente no encontrado:', clientId)
+      return [{ success: false, channel: 'EMAIL', error: 'Cliente no encontrado' }]
+    }
+
+    return sendMultichannelNotification({
+      clientId: client.id,
+      clientName: client.name,
+      clientEmail: client.email,
+      clientPhone: client.phone,
+      preferredChannel: 'WHATSAPP', // Compradores prefieren WhatsApp
+      type,
+      data: { ...data, buyerName: client.name }
+    })
+  } catch (error) {
+    console.error('Error notificando comprador:', error)
+    return [{ success: false, channel: 'EMAIL', error: String(error) }]
+  }
+}

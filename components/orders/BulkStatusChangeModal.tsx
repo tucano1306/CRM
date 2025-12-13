@@ -13,7 +13,8 @@ import {
   Loader2,
   Lock,
   MessageSquare,
-  Mail
+  Mail,
+  Trash2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatPrice } from '@/lib/utils'
@@ -110,6 +111,13 @@ export default function BulkStatusChangeModal({
   // Estado para problemas de stock
   const [productIssues, setProductIssues] = useState<Map<string, ProductIssue>>(new Map())
   const [confirmNotes, setConfirmNotes] = useState('')
+  
+  // Estado para eliminación de productos
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteItemInfo, setDeleteItemInfo] = useState<{itemId: string, productName: string} | null>(null)
+  const [deleteReason, setDeleteReason] = useState('')
+  const [deletingItem, setDeletingItem] = useState<string | null>(null)
+  const [deletedItems, setDeletedItems] = useState<Set<string>>(new Set())
 
   // Reset al cerrar
   useEffect(() => {
@@ -117,6 +125,10 @@ export default function BulkStatusChangeModal({
       setStep('review')
       setProductIssues(new Map())
       setConfirmNotes('')
+      setShowDeleteModal(false)
+      setDeleteItemInfo(null)
+      setDeleteReason('')
+      setDeletedItems(new Set())
     }
   }, [isOpen])
 
@@ -154,6 +166,54 @@ export default function BulkStatusChangeModal({
     if (existing) {
       newMap.set(itemId, { ...existing, availableQty: qty })
       setProductIssues(newMap)
+    }
+  }
+
+  // Abrir modal de eliminación
+  const openDeleteModal = (item: OrderItem) => {
+    setDeleteItemInfo({ itemId: item.id, productName: item.productName })
+    setDeleteReason('')
+    setShowDeleteModal(true)
+  }
+
+  // Confirmar eliminación de producto
+  const handleConfirmDelete = async () => {
+    if (!singleOrder || !deleteItemInfo || !deleteReason.trim()) {
+      alert('Por favor, escribe el motivo de la eliminación')
+      return
+    }
+
+    try {
+      setDeletingItem(deleteItemInfo.itemId)
+      
+      const response = await fetch(`/api/orders/${singleOrder.id}/items/${deleteItemInfo.itemId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          reason: deleteReason,
+          bySeller: true 
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Error al eliminar producto')
+      }
+
+      // Marcar como eliminado localmente
+      setDeletedItems(prev => new Set([...prev, deleteItemInfo.itemId]))
+      
+      // Cerrar modal
+      setShowDeleteModal(false)
+      setDeleteItemInfo(null)
+      setDeleteReason('')
+      
+      alert(`✅ "${deleteItemInfo.productName}" eliminado de la orden. El comprador ha sido notificado.`)
+    } catch (error) {
+      console.error('Error deleting product:', error)
+      alert(error instanceof Error ? error.message : 'Error al eliminar el producto')
+    } finally {
+      setDeletingItem(null)
     }
   }
 
@@ -345,6 +405,22 @@ export default function BulkStatusChangeModal({
                             {isPartialStock && <Check className="w-3 h-3" />}
                             ⚠️ Parcial
                           </button>
+
+                          <button
+                            type="button"
+                            onClick={() => openDeleteModal(item)}
+                            disabled={deletingItem === item.id || deletedItems.has(item.id)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+                              deletedItems.has(item.id)
+                                ? 'bg-gray-400 text-white cursor-not-allowed'
+                                : deletingItem === item.id
+                                ? 'bg-gray-300 text-gray-500 cursor-wait'
+                                : 'bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700'
+                            }`}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            {deletedItems.has(item.id) ? 'Eliminado' : 'Eliminar'}
+                          </button>
                         </div>
                       </div>
 
@@ -517,6 +593,65 @@ export default function BulkStatusChangeModal({
           </div>
         </div>
       </div>
+
+      {/* Modal de eliminación con motivo */}
+      {showDeleteModal && deleteItemInfo && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[70] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-red-100 rounded-full">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-lg">Eliminar Producto</h3>
+                <p className="text-sm text-gray-500">{deleteItemInfo.productName}</p>
+              </div>
+            </div>
+
+            <p className="text-gray-600 mb-4">
+              Por favor, escribe el motivo de la eliminación. El comprador será notificado.
+            </p>
+
+            <textarea
+              value={deleteReason}
+              onChange={(e) => setDeleteReason(e.target.value)}
+              placeholder="Ej: Producto agotado temporalmente, Precio incorrecto..."
+              className="w-full border rounded-lg p-3 text-sm min-h-[100px] resize-none focus:ring-2 focus:ring-red-200 focus:border-red-400"
+              autoFocus
+            />
+
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setDeleteItemInfo(null)
+                  setDeleteReason('')
+                }}
+                className="flex-1 px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={!deleteReason.trim() || deletingItem !== null}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {deletingItem ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Eliminando...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Eliminar
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 
