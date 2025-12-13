@@ -283,7 +283,14 @@ export default function ClientsViewWithOrders({
   // Obtener datos completos de las órdenes seleccionadas
   const getSelectedOrdersData = () => {
     if (!selectedClient) return []
-    return selectedClient.orders.filter(o => selectedOrders.includes(o.id))
+    const data = selectedClient.orders.filter(o => selectedOrders.includes(o.id))
+    console.log('🔍 getSelectedOrdersData:', {
+      selectedClient: selectedClient.client.name,
+      selectedOrders,
+      ordersData: data,
+      firstOrderItems: data[0]?.orderItems
+    })
+    return data
   }
 
   // Filtrar órdenes del cliente seleccionado

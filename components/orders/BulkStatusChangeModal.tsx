@@ -119,6 +119,14 @@ export default function BulkStatusChangeModal({
   const orderItems = singleOrder?.orderItems || []
   const hasProducts = orderItems.length > 0
 
+  // DEBUG - Ver qué datos llegan
+  console.log('🔍 BulkStatusChangeModal Debug:', {
+    selectedOrdersData,
+    singleOrder,
+    orderItems,
+    hasProducts
+  })
+
   const toggleProductIssue = (item: OrderItem, issueType: StockIssueType) => {
     const key = item.id
     const newMap = new Map(productIssues)
