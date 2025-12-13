@@ -283,14 +283,7 @@ export default function ClientsViewWithOrders({
   // Obtener datos completos de las órdenes seleccionadas
   const getSelectedOrdersData = () => {
     if (!selectedClient) return []
-    const data = selectedClient.orders.filter(o => selectedOrders.includes(o.id))
-    console.log('🔍 getSelectedOrdersData:', {
-      selectedClient: selectedClient.client.name,
-      selectedOrders,
-      ordersData: data,
-      firstOrderItems: data[0]?.orderItems
-    })
-    return data
+    return selectedClient.orders.filter(o => selectedOrders.includes(o.id))
   }
 
   // Filtrar órdenes del cliente seleccionado
@@ -331,14 +324,6 @@ export default function ClientsViewWithOrders({
     const totalOrders = filteredClients.reduce((sum, c) => sum + c.totalOrders, 0)
     const totalRevenue = filteredClients.reduce((sum, c) => sum + c.totalSpent, 0)
     const averagePerClient = totalClients > 0 ? totalRevenue / totalClients : 0
-
-    console.log('📊 Estadísticas filtradas:', {
-      searchTerm,
-      totalClients,
-      totalOrders,
-      totalRevenue,
-      averagePerClient
-    })
 
     return {
       totalClients,

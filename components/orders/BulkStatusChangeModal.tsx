@@ -119,14 +119,6 @@ export default function BulkStatusChangeModal({
   const orderItems = singleOrder?.orderItems || []
   const hasProducts = orderItems.length > 0
 
-  // DEBUG - Ver qué datos llegan
-  console.log('🔍 BulkStatusChangeModal Debug:', {
-    selectedOrdersData,
-    singleOrder,
-    orderItems,
-    hasProducts
-  })
-
   const toggleProductIssue = (item: OrderItem, issueType: StockIssueType) => {
     const key = item.id
     const newMap = new Map(productIssues)
@@ -189,19 +181,46 @@ export default function BulkStatusChangeModal({
     }
   }
 
-  // Reportar problemas de stock y notificar al comprador
+  // Reportar problemas de stock y notificar al comprador por TODOS los canales
   const handleReportIssues = async () => {
-    if (!singleOrder || issuesCount === 0 || !onReportStockIssues) return
+    if (!singleOrder || issuesCount === 0) return
 
     try {
       setLoading(true)
       const issues = Array.from(productIssues.values()).filter(i => i.issueType !== null)
-      await onReportStockIssues(singleOrder.id, issues)
-      alert(`✅ Se notificó al comprador sobre ${issuesCount} producto(s) con problemas de stock. Ahora pueden comunicarse para resolver.`)
+      
+      // Usar el nuevo endpoint que envía notificaciones multicanal
+      const response = await fetch(`/api/orders/${singleOrder.id}/report-stock-issues`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ issues })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Error al reportar problemas')
+      }
+
+      const result = await response.json()
+      
+      // Mostrar resumen de notificaciones enviadas
+      const outOfStock = issues.filter(i => i.issueType === 'OUT_OF_STOCK')
+      const partialStock = issues.filter(i => i.issueType === 'PARTIAL_STOCK')
+      
+      let summaryMsg = `✅ Notificación enviada al comprador:\n\n`
+      if (outOfStock.length > 0) {
+        summaryMsg += `❌ Sin stock: ${outOfStock.map(i => i.productName).join(', ')}\n`
+      }
+      if (partialStock.length > 0) {
+        summaryMsg += `⚠️ Stock parcial: ${partialStock.map(i => `${i.productName} (${i.availableQty}/${i.requestedQty})`).join(', ')}\n`
+      }
+      summaryMsg += `\n📱 Se envió por: WhatsApp, Email, SMS y App`
+      
+      alert(summaryMsg)
       onClose()
     } catch (error) {
       console.error('Error reporting stock issues:', error)
-      alert('Error al reportar los problemas de stock')
+      alert(error instanceof Error ? error.message : 'Error al reportar los problemas de stock')
     } finally {
       setLoading(false)
     }

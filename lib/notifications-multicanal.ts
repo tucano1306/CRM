@@ -321,6 +321,11 @@ export async function sendMultichannelNotification(
   // Determinar qué canales usar
   const channel = forceChannel || preferredChannel || 'EMAIL'
 
+  // Para mensajes CUSTOM, usar el mensaje completo en WhatsApp/SMS si existe
+  const whatsappMessage = type === 'CUSTOM' && data.customMessage 
+    ? data.customMessage 
+    : shortMessage
+  
   // Enviar según el canal preferido o todos
   if (channel === 'ALL') {
     // Enviar por todos los canales disponibles
@@ -328,17 +333,19 @@ export async function sendMultichannelNotification(
       results.push(await sendEmail(clientEmail, subject, htmlBody))
     }
     if (clientPhone) {
-      results.push(await sendSMS(clientPhone, shortMessage))
+      // SMS usa mensaje corto siempre (límite de caracteres)
+      results.push(await sendSMS(clientPhone, shortMessage.substring(0, 160)))
     }
     if (clientWhatsapp || clientPhone) {
-      results.push(await sendWhatsApp(clientWhatsapp || clientPhone!, shortMessage))
+      // WhatsApp usa mensaje completo para CUSTOM
+      results.push(await sendWhatsApp(clientWhatsapp || clientPhone!, whatsappMessage))
     }
   } else if (channel === 'EMAIL' && clientEmail) {
     results.push(await sendEmail(clientEmail, subject, htmlBody))
   } else if (channel === 'SMS' && clientPhone) {
-    results.push(await sendSMS(clientPhone, shortMessage))
+    results.push(await sendSMS(clientPhone, shortMessage.substring(0, 160)))
   } else if (channel === 'WHATSAPP' && (clientWhatsapp || clientPhone)) {
-    results.push(await sendWhatsApp(clientWhatsapp || clientPhone!, shortMessage))
+    results.push(await sendWhatsApp(clientWhatsapp || clientPhone!, whatsappMessage))
   } else {
     // Fallback a email si el canal preferido no está disponible
     if (clientEmail) {
