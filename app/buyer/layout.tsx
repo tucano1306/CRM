@@ -24,7 +24,6 @@ export default function BuyerLayout({ children }: { children: React.ReactNode })
     { name: 'Carrito', href: '/buyer/cart', icon: ShoppingCart },
     { name: 'Órdenes', href: '/buyer/orders', icon: Package },
     { name: 'Órdenes Recurrentes', href: '/buyer/recurring-orders', icon: RefreshCw },
-    { name: 'Mis Créditos', href: '/buyer/credit-notes', icon: DollarSign },
     { name: 'Chat con Vendedor', href: '/buyer/chat', icon: MessageCircle },
   ]
 
