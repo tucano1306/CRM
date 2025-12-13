@@ -154,18 +154,36 @@ export async function POST(
     // ENVIAR NOTIFICACIONES POR TODOS LOS CANALES
     // ===============================================
 
-    // 1. Notificación en la APP
-    await createNotification({
-      clientId: order.clientId,
-      type: 'ORDER_STATUS_CHANGED',
-      title: '⚠️ Problemas con tu pedido',
-      message: `Tu orden #${order.orderNumber} tiene ${issues.length} producto(s) con problemas de stock. El vendedor te contactará.`,
-      orderId,
-      relatedId: createdIssues[0]?.id
+    console.log('🔔 [NOTIFICACIONES] Iniciando envío de notificaciones...')
+    console.log('🔔 [NOTIFICACIONES] Cliente:', {
+      id: order.client.id,
+      name: order.client.name,
+      email: order.client.email,
+      phone: order.client.phone,
+      whatsappNumber: order.client.whatsappNumber
     })
+
+    // 1. Notificación en la APP
+    console.log('📱 [APP] Creando notificación in-app...')
+    try {
+      await createNotification({
+        clientId: order.clientId,
+        type: 'ORDER_STATUS_CHANGED',
+        title: '⚠️ Problemas con tu pedido',
+        message: `Tu orden #${order.orderNumber} tiene ${issues.length} producto(s) con problemas de stock. El vendedor te contactará.`,
+        orderId,
+        relatedId: createdIssues[0]?.id
+      })
+      console.log('✅ [APP] Notificación in-app creada')
+    } catch (appError) {
+      console.error('❌ [APP] Error creando notificación:', appError)
+    }
 
     // 2. Notificación Multicanal (Email, SMS, WhatsApp)
     const notificationResults = []
+    
+    console.log('📤 [MULTICANAL] Enviando notificaciones multicanal...')
+    console.log('📤 [MULTICANAL] Mensaje:', fullMessage.substring(0, 200) + '...')
     
     try {
       // Enviar por el canal preferido y adicionales
@@ -181,9 +199,10 @@ export async function POST(
           customMessage: fullMessage
         }
       })
+      console.log('📤 [MULTICANAL] Resultados:', JSON.stringify(results, null, 2))
       notificationResults.push(...results)
     } catch (notifError) {
-      console.error('Error enviando notificaciones multicanal:', notifError)
+      console.error('❌ [MULTICANAL] Error enviando notificaciones:', notifError)
     }
 
     // 3. Evento Realtime al comprador
@@ -206,6 +225,35 @@ export async function POST(
           }))
         }
       )
+    }
+
+    // 4. Enviar mensaje automático al CHAT de la app
+    const sellerAuthId = order.seller.authenticated_users?.[0]?.authId
+    if (sellerAuthId && buyerAuthId) {
+      try {
+        // Mensaje más corto para el chat
+        let chatMessage = `⚠️ *Aviso sobre tu Pedido #${order.orderNumber}*\n\n`
+        if (outOfStock.length > 0) {
+          chatMessage += `❌ Sin stock: ${outOfStock.map(i => i.productName).join(', ')}\n`
+        }
+        if (partialStock.length > 0) {
+          chatMessage += `⚠️ Stock parcial: ${partialStock.map(i => `${i.productName} (${i.availableQty}/${i.requestedQty})`).join(', ')}\n`
+        }
+        chatMessage += `\n📞 Te contactaré para resolver esto.`
+
+        await prisma.chatMessage.create({
+          data: {
+            senderId: sellerAuthId,
+            receiverId: buyerAuthId,
+            content: chatMessage,
+            messageType: 'STOCK_ISSUE',
+            relatedOrderId: orderId
+          }
+        })
+        console.log('✅ [CHAT] Mensaje enviado al chat de la app')
+      } catch (chatError) {
+        console.error('❌ [CHAT] Error enviando mensaje al chat:', chatError)
+      }
     }
 
     return NextResponse.json({

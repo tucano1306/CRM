@@ -321,10 +321,11 @@ export async function sendMultichannelNotification(
     if (clientEmail) {
       results.push(await sendEmailNotification(clientEmail, subject, htmlBody))
     }
-    if (clientPhone) {
-      // SMS usa mensaje corto siempre (límite de caracteres)
-      results.push(await sendSMS(clientPhone, shortMessage.substring(0, 160)))
-    }
+    // NOTA: SMS desactivado - el número Twilio sandbox es solo para WhatsApp
+    // Para activar SMS necesitas comprar un número de teléfono en Twilio
+    // if (clientPhone) {
+    //   results.push(await sendSMS(clientPhone, shortMessage.substring(0, 160)))
+    // }
     if (clientWhatsapp || clientPhone) {
       // WhatsApp usa mensaje completo para CUSTOM
       results.push(await sendWhatsApp(clientWhatsapp || clientPhone!, whatsappMessage))
