@@ -41,6 +41,7 @@ export const RealtimeEvents = {
   ORDER_UPDATED: 'order:updated',
   ORDER_STATUS_CHANGED: 'order:status-changed',
   ORDER_CREATED: 'order:created',
+  ORDER_ITEM_ADDED: 'order:item_added',
   
   // Chat
   CHAT_MESSAGE_NEW: 'chat:message-new',

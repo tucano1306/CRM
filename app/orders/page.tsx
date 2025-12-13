@@ -124,6 +124,18 @@ export default function OrdersPage() {
     !!user?.id // Solo activar si hay userId
   )
 
+  // Tiempo real: escuchar cuando se agregan productos a órdenes
+  useRealtimeSubscription(
+    `seller-${user?.id || 'unknown'}`,
+    RealtimeEvents.ORDER_ITEM_ADDED,
+    (payload) => {
+      console.log('🔄 Product added to order in realtime:', payload)
+      // Refrescar órdenes cuando hay cambios
+      fetchOrders()
+    },
+    !!user?.id
+  )
+
   useEffect(() => {
     fetchOrders()
   }, [])

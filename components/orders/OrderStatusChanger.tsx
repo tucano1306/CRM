@@ -160,10 +160,10 @@ export default function OrderStatusChanger({
   // Filtrar estados disponibles según el rol del usuario
   const getAvailableStatuses = () => {
     if (userRole === 'seller') {
-      // Vendedor puede cambiar a: Confirmada, En Entrega, Completada
+      // Vendedor puede cambiar a: Revisando, Confirmada, Completada (en el sistema)
       return statusOptions.filter(opt => 
-        opt.value === 'CONFIRMED' || 
-        opt.value === 'IN_DELIVERY' ||
+        opt.value === 'REVIEWING' || 
+        opt.value === 'LOCKED' ||
         opt.value === 'COMPLETED'
       )
     }

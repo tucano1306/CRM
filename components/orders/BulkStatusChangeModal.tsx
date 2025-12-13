@@ -481,7 +481,7 @@ export default function BulkStatusChangeModal({
 
   const modalContent = (
     <div 
-      className="fixed inset-0 flex items-center justify-center p-4"
+      className="fixed inset-0 flex items-center justify-center p-2 sm:p-4"
       style={{ zIndex: 9999999 }}
     >
       {/* Overlay */}
@@ -490,95 +490,120 @@ export default function BulkStatusChangeModal({
         onClick={onClose}
       />
       
-      {/* Modal */}
-      <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto relative">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-green-50">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900">
+      {/* Modal - Más grande y legible */}
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden relative flex flex-col">
+        {/* Header - Más prominente */}
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b-2 border-gray-100 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2">
               📦 Revisar Pedido
             </h2>
             {singleOrder && (
-              <div className="mt-1">
-                <p className="text-sm font-medium text-gray-700">
-                  Orden #{singleOrder.orderNumber}
+              <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
+                <p className="text-base sm:text-lg font-semibold text-blue-100">
+                  #{singleOrder.orderNumber}
                 </p>
-                <p className="text-sm text-gray-500">
-                  Cliente: {singleOrder.client?.name || 'Cliente'}
+                <p className="text-sm sm:text-base text-blue-200">
+                  👤 {singleOrder.client?.name || 'Cliente'}
                 </p>
               </div>
             )}
           </div>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="p-2 hover:bg-white/20 rounded-full transition-colors"
           >
-            <X size={24} />
+            <X size={28} />
           </button>
         </div>
 
-        <div className="p-6">
-          {/* Instrucciones */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <h3 className="font-medium text-blue-800 mb-2">📋 Instrucciones</h3>
-            <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
-              <li>Revisa la lista de productos solicitados</li>
-              <li>Si <strong>todos están disponibles</strong> → Haz clic en "Confirmar Pedido"</li>
-              <li>Si <strong>falta algún producto</strong> → Márcalo y notifica al comprador</li>
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+          {/* Instrucciones - Más grandes */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4 sm:p-5 mb-6">
+            <h3 className="font-bold text-blue-800 mb-3 text-base sm:text-lg flex items-center gap-2">
+              📋 ¿Qué debes hacer?
+            </h3>
+            <ol className="text-sm sm:text-base text-blue-700 space-y-2">
+              <li className="flex items-start gap-2">
+                <span className="font-bold bg-blue-200 px-2 py-0.5 rounded text-xs">1</span>
+                <span>Revisa cada producto de la lista</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold bg-blue-200 px-2 py-0.5 rounded text-xs">2</span>
+                <span><strong>Disponible</strong> → Marca "✅ OK"</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold bg-blue-200 px-2 py-0.5 rounded text-xs">3</span>
+                <span><strong>Sin stock</strong> → Marca "❌ No hay" y notifica</span>
+              </li>
             </ol>
           </div>
 
-          {/* Lista de productos */}
+          {/* Lista de productos - Más grande y legible */}
           {hasProducts ? (
-            <div className="border rounded-lg overflow-hidden mb-6">
-              <div className="bg-gray-100 px-4 py-3 border-b">
-                <div className="flex items-center justify-between">
+            <div className="border-2 border-gray-200 rounded-xl overflow-hidden mb-6">
+              {/* Header de productos */}
+              <div className="bg-gray-50 px-4 sm:px-6 py-4 border-b-2 border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={selectedItems.size === orderItems.length && orderItems.length > 0}
                         onChange={toggleAllSelection}
-                        className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                       />
-                      <span className="text-sm font-medium text-gray-700">Seleccionar todos</span>
+                      <span className="text-sm sm:text-base font-medium text-gray-700">Todos</span>
                     </label>
-                    <h4 className="font-medium text-sm">
-                      📋 Productos ({orderItems.length})
+                    <h4 className="font-bold text-base sm:text-lg text-gray-800">
+                      📋 {orderItems.length} Productos
                     </h4>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {selectedItems.size > 0 && (
                       <button
                         onClick={acceptAllSelected}
-                        className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-medium hover:bg-green-200 transition-all flex items-center gap-1"
+                        className="px-3 sm:px-4 py-2 bg-green-500 text-white rounded-lg text-sm font-bold hover:bg-green-600 transition-all flex items-center gap-1.5 shadow-sm"
                       >
-                        <Check className="w-3 h-3" />
-                        Aceptar seleccionados ({selectedItems.size})
+                        <Check className="w-4 h-4" />
+                        Aceptar ({selectedItems.size})
                       </button>
                     )}
                     <button
                       onClick={openAddProductModal}
-                      className="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-medium hover:bg-purple-200 transition-all flex items-center gap-1"
+                      className="px-3 sm:px-4 py-2 bg-purple-500 text-white rounded-lg text-sm font-bold hover:bg-purple-600 transition-all flex items-center gap-1.5 shadow-sm"
                     >
-                      <Plus className="w-3 h-3" />
-                      Agregar producto
+                      <Plus className="w-4 h-4" />
+                      Agregar
                     </button>
-                    <span className="text-sm text-gray-500">
-                      Total: {formatPrice(singleOrder?.totalAmount || 0)}
+                    <span className="px-3 py-2 bg-gray-200 rounded-lg text-sm sm:text-base font-bold text-gray-700">
+                      {formatPrice(singleOrder?.totalAmount || 0)}
                     </span>
                   </div>
                 </div>
-                {/* Resumen de estados */}
-                <div className="mt-2 flex items-center gap-4 text-xs">
-                  <span className="text-green-600">✅ Aceptados: {acceptedItems.size}</span>
-                  <span className="text-red-600">❌ Sin stock: {Array.from(productIssues.values()).filter(i => i.issueType === 'OUT_OF_STOCK').length}</span>
-                  <span className="text-yellow-600">⚠️ Parciales: {Array.from(productIssues.values()).filter(i => i.issueType === 'PARTIAL_STOCK').length}</span>
-                  <span className="text-gray-500">⏳ Pendientes: {orderItems.length - acceptedItems.size - productIssues.size}</span>
+                
+                {/* Resumen de estados - Más grande */}
+                <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="bg-green-100 rounded-lg px-3 py-2 text-center">
+                    <span className="text-lg sm:text-xl font-bold text-green-700">{acceptedItems.size}</span>
+                    <p className="text-xs sm:text-sm text-green-600">✅ Aceptados</p>
+                  </div>
+                  <div className="bg-red-100 rounded-lg px-3 py-2 text-center">
+                    <span className="text-lg sm:text-xl font-bold text-red-700">{Array.from(productIssues.values()).filter(i => i.issueType === 'OUT_OF_STOCK').length}</span>
+                    <p className="text-xs sm:text-sm text-red-600">❌ Sin stock</p>
+                  </div>
+                  <div className="bg-yellow-100 rounded-lg px-3 py-2 text-center">
+                    <span className="text-lg sm:text-xl font-bold text-yellow-700">{Array.from(productIssues.values()).filter(i => i.issueType === 'PARTIAL_STOCK').length}</span>
+                    <p className="text-xs sm:text-sm text-yellow-600">⚠️ Parciales</p>
+                  </div>
+                  <div className="bg-gray-100 rounded-lg px-3 py-2 text-center">
+                    <span className="text-lg sm:text-xl font-bold text-gray-700">{orderItems.length - acceptedItems.size - productIssues.size}</span>
+                    <p className="text-xs sm:text-sm text-gray-600">⏳ Pendientes</p>
+                  </div>
                 </div>
               </div>
               
-              <div className="divide-y max-h-[300px] overflow-y-auto">
+              <div className="divide-y-2 divide-gray-100 max-h-[40vh] sm:max-h-[50vh] overflow-y-auto">
                 {orderItems.map((item) => {
                   const issue = productIssues.get(item.id)
                   const isOutOfStock = issue?.issueType === 'OUT_OF_STOCK'
@@ -590,109 +615,116 @@ export default function BulkStatusChangeModal({
                   return (
                     <div 
                       key={item.id}
-                      className={`p-4 transition-colors ${
+                      className={`p-4 sm:p-5 transition-colors ${
                         isAccepted ? 'bg-green-50' :
                         hasIssue ? 'bg-red-50' : 
                         isSelected ? 'bg-purple-50' :
                         'hover:bg-gray-50'
                       }`}
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        {/* Checkbox de selección */}
-                        <div className="flex items-center pt-1">
+                      {/* Fila principal del producto */}
+                      <div className="flex items-start gap-3 sm:gap-4">
+                        {/* Checkbox */}
+                        <div className="pt-1">
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => toggleItemSelection(item.id)}
-                            className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                            className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                           />
                         </div>
                         
+                        {/* Info del producto */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            {isAccepted && <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />}
-                            {isOutOfStock && <X className="w-4 h-4 text-red-500 flex-shrink-0" />}
-                            {isPartialStock && <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0" />}
-                            {!isAccepted && !hasIssue && <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />}
-                            <p className="font-medium text-gray-900 truncate">{item.productName}</p>
-                            {isAccepted && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Aceptado</span>}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {isAccepted && <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />}
+                            {isOutOfStock && <X className="w-5 h-5 text-red-500 flex-shrink-0" />}
+                            {isPartialStock && <AlertTriangle className="w-5 h-5 text-yellow-500 flex-shrink-0" />}
+                            {!isAccepted && !hasIssue && <Package className="w-5 h-5 text-gray-400 flex-shrink-0" />}
+                            <p className="font-bold text-base sm:text-lg text-gray-900">{item.productName}</p>
+                            {isAccepted && <span className="text-xs sm:text-sm bg-green-200 text-green-800 px-2 py-0.5 rounded-full font-semibold">✓ Aceptado</span>}
                           </div>
-                          <p className="text-sm text-gray-500 ml-6">
-                            Cantidad: {item.quantity} {item.product?.unit || 'unid.'} • {formatPrice(item.subtotal)}
-                          </p>
-                        </div>
-
-                        <div className="flex gap-1 shrink-0 flex-wrap justify-end">
-                          {/* Botón Aceptado */}
-                          <button
-                            type="button"
-                            onClick={() => toggleProductIssue(item, 'ACCEPTED')}
-                            className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
-                              isAccepted
-                                ? 'bg-green-600 text-white ring-2 ring-green-300'
-                                : 'bg-gray-100 text-gray-700 hover:bg-green-100 hover:text-green-700'
-                            }`}
-                          >
-                            {isAccepted && <Check className="w-3 h-3" />}
-                            ✅ OK
-                          </button>
-                          
-                          <button
-                            type="button"
-                            onClick={() => toggleProductIssue(item, 'OUT_OF_STOCK')}
-                            className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
-                              isOutOfStock
-                                ? 'bg-red-600 text-white ring-2 ring-red-300'
-                                : 'bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700'
-                            }`}
-                          >
-                            {isOutOfStock && <Check className="w-3 h-3" />}
-                            ❌ No hay
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => toggleProductIssue(item, 'PARTIAL_STOCK')}
-                            className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
-                              isPartialStock
-                                ? 'bg-yellow-500 text-white ring-2 ring-yellow-300'
-                                : 'bg-gray-100 text-gray-700 hover:bg-yellow-100 hover:text-yellow-700'
-                            }`}
-                          >
-                            {isPartialStock && <Check className="w-3 h-3" />}
-                            ⚠️ Parcial
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => openDeleteModal(item)}
-                            disabled={deletingItem === item.id || deletedItems.has(item.id)}
-                            className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
-                              deletedItems.has(item.id)
-                                ? 'bg-gray-400 text-white cursor-not-allowed'
-                                : deletingItem === item.id
-                                ? 'bg-gray-300 text-gray-500 cursor-wait'
-                                : 'bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700'
-                            }`}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                            {deletedItems.has(item.id) ? 'Eliminado' : 'Eliminar'}
-                          </button>
+                          <div className="mt-1 flex items-center gap-3 text-sm sm:text-base text-gray-600">
+                            <span className="font-semibold bg-gray-100 px-2 py-0.5 rounded">
+                              {item.quantity} {item.product?.unit || 'unid.'}
+                            </span>
+                            <span className="font-bold text-gray-800">{formatPrice(item.subtotal)}</span>
+                          </div>
                         </div>
                       </div>
 
+                      {/* Botones de acción - En fila separada para móviles */}
+                      <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 ml-8 sm:ml-9">
+                        {/* Botón Aceptado */}
+                        <button
+                          type="button"
+                          onClick={() => toggleProductIssue(item, 'ACCEPTED')}
+                          className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-bold transition-all flex items-center gap-1.5 ${
+                            isAccepted
+                              ? 'bg-green-600 text-white shadow-lg ring-2 ring-green-300'
+                              : 'bg-white border-2 border-gray-200 text-gray-700 hover:bg-green-50 hover:border-green-300 hover:text-green-700'
+                          }`}
+                        >
+                          {isAccepted && <Check className="w-4 h-4" />}
+                          ✅ OK
+                        </button>
+                        
+                        <button
+                          type="button"
+                          onClick={() => toggleProductIssue(item, 'OUT_OF_STOCK')}
+                          className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-bold transition-all flex items-center gap-1.5 ${
+                            isOutOfStock
+                              ? 'bg-red-600 text-white shadow-lg ring-2 ring-red-300'
+                              : 'bg-white border-2 border-gray-200 text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700'
+                          }`}
+                        >
+                          {isOutOfStock && <Check className="w-4 h-4" />}
+                          ❌ No hay
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => toggleProductIssue(item, 'PARTIAL_STOCK')}
+                          className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-bold transition-all flex items-center gap-1.5 ${
+                            isPartialStock
+                              ? 'bg-yellow-500 text-white shadow-lg ring-2 ring-yellow-300'
+                              : 'bg-white border-2 border-gray-200 text-gray-700 hover:bg-yellow-50 hover:border-yellow-300 hover:text-yellow-700'
+                          }`}
+                        >
+                          {isPartialStock && <Check className="w-4 h-4" />}
+                          ⚠️ Parcial
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => openDeleteModal(item)}
+                          disabled={deletingItem === item.id || deletedItems.has(item.id)}
+                          className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-bold transition-all flex items-center gap-1.5 ${
+                            deletedItems.has(item.id)
+                              ? 'bg-gray-400 text-white cursor-not-allowed'
+                              : deletingItem === item.id
+                              ? 'bg-gray-300 text-gray-500 cursor-wait'
+                              : 'bg-white border-2 border-gray-200 text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700'
+                          }`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          {deletedItems.has(item.id) ? 'Eliminado' : 'Quitar'}
+                        </button>
+                      </div>
+
+                      {/* Input de cantidad parcial */}
                       {isPartialStock && (
-                        <div className="mt-3 flex items-center gap-3 ml-6 pl-4 border-l-2 border-yellow-400">
-                          <label className="text-sm text-gray-600">Disponible:</label>
+                        <div className="mt-4 flex items-center gap-3 ml-8 sm:ml-9 p-3 bg-yellow-100 rounded-lg border-2 border-yellow-300">
+                          <label className="text-sm sm:text-base font-medium text-yellow-800">Disponibles:</label>
                           <input
                             type="number"
                             min="0"
                             max={item.quantity - 1}
                             value={issue?.availableQty || 0}
                             onChange={(e) => updateAvailableQty(item.id, parseInt(e.target.value) || 0)}
-                            className="w-20 px-2 py-1 border rounded text-sm"
+                            className="w-24 px-3 py-2 border-2 border-yellow-400 rounded-lg text-base font-bold text-center focus:ring-2 focus:ring-yellow-500"
                           />
-                          <span className="text-xs text-gray-500">de {item.quantity} solicitados</span>
+                          <span className="text-sm sm:text-base text-yellow-700">de {item.quantity}</span>
                         </div>
                       )}
                     </div>

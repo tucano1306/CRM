@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { notifyBuyer } from '@/lib/notifications-multicanal'
-import { sendRealtimeEvent, getBuyerChannel } from '@/lib/supabase-server'
+import { sendRealtimeEvent, getBuyerChannel, getSellerChannel } from '@/lib/supabase-server'
 
 // POST /api/orders/[id]/items - Seller agrega un producto a una orden
 export async function POST(
@@ -144,19 +144,21 @@ export async function POST(
         }
       })
 
-      // Enviar notificación multicanal
+      // Enviar notificación multicanal con el tipo correcto
       await notifyBuyer(
         order.clientId,
-        'ORDER_STATUS_CHANGED',
+        'PRODUCT_ADDED',
         {
           orderNumber: order.orderNumber,
           orderId: order.id,
           sellerName: order.seller.name,
-          message: `${order.seller.name} ha ${actionText} en tu orden #${order.orderNumber}`
+          productName: product.name,
+          quantity: existingItem ? updatedQuantity : quantity,
+          note: note || undefined
         }
       )
 
-      // Enviar evento en tiempo real
+      // Enviar evento en tiempo real al comprador
       await sendRealtimeEvent(
         getBuyerChannel(buyerAuthUser.authId),
         'order:item_added',
@@ -170,6 +172,20 @@ export async function POST(
         }
       )
     }
+
+    // Enviar evento en tiempo real al vendedor para actualizar su UI
+    await sendRealtimeEvent(
+      getSellerChannel(userId),
+      'order:item_added',
+      {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        productName: product.name,
+        quantity: existingItem ? updatedQuantity : quantity,
+        clientName: order.client.name,
+        isUpdate: !!existingItem
+      }
+    )
 
     return NextResponse.json({
       success: true,

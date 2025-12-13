@@ -18,7 +18,10 @@ import {
   Box,
   Eye,
   Lock,
-  AlertTriangle
+  AlertTriangle,
+  Trash2,
+  Plus,
+  MessageCircle
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 
@@ -38,15 +41,19 @@ type OrderStatus =
   | 'PAYMENT_PENDING'
   | 'PAID'
 
+type HistoryType = 'STATUS_CHANGE' | 'PRODUCT_DELETED' | 'PRODUCT_ACTION'
+
 interface HistoryEntry {
   id: string
+  type?: HistoryType
   previousStatus: OrderStatus | null
-  newStatus: OrderStatus
+  newStatus: OrderStatus | null
   changedBy: string
   changedByName: string
   changedByRole: string
   notes: string | null
   createdAt: string
+  description?: string
 }
 
 const statusConfig: Record<OrderStatus, { label: string; icon: any; color: string }> = {
@@ -157,99 +164,142 @@ export default function OrderStatusHistory({ orderId, refreshTrigger }: OrderSta
 
   return (
     <Card>
-      <CardContent className="p-6">
-        <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+      <CardContent className="p-4 sm:p-6">
+        <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-base sm:text-lg">
           <FileText className="h-5 w-5 text-blue-600" />
-          Historial de Cambios de Estado
+          Historial Completo de la Orden
         </h4>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {history.map((entry, index) => {
-            const NewStatusIcon = statusConfig[entry.newStatus].icon
-            const PreviousStatusIcon = entry.previousStatus 
-              ? statusConfig[entry.previousStatus].icon 
-              : null
+            // Determinar el tipo de entrada
+            const entryType = entry.type || 'STATUS_CHANGE'
+            const isStatusChange = entryType === 'STATUS_CHANGE' && entry.newStatus
+            const isProductDeleted = entryType === 'PRODUCT_DELETED'
+            const isProductAction = entryType === 'PRODUCT_ACTION'
+            
+            // Iconos según el tipo
+            const getEntryIcon = () => {
+              if (isProductDeleted) return Trash2
+              if (isProductAction) {
+                if (entry.notes?.includes('agregado') || entry.notes?.includes('actualizado')) return Plus
+                return MessageCircle
+              }
+              if (isStatusChange && entry.newStatus) return statusConfig[entry.newStatus]?.icon || Clock
+              return Clock
+            }
+            
+            const getEntryColor = () => {
+              if (isProductDeleted) return 'text-red-500'
+              if (isProductAction) {
+                if (entry.notes?.includes('agregado') || entry.notes?.includes('actualizado')) return 'text-green-500'
+                return 'text-blue-500'
+              }
+              if (isStatusChange && entry.newStatus) return statusConfig[entry.newStatus]?.color || 'text-gray-500'
+              return 'text-gray-500'
+            }
+
+            const getEntryBgColor = () => {
+              if (isProductDeleted) return 'bg-red-50 border-red-200'
+              if (isProductAction) return 'bg-green-50 border-green-200'
+              if (index === 0 && isStatusChange) return 'bg-blue-50 border-blue-300'
+              return 'bg-white border-gray-200'
+            }
+
+            const EntryIcon = getEntryIcon()
 
             return (
               <div 
                 key={entry.id}
-                className={`relative border rounded-lg p-4 ${
-                  index === 0 ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-white'
-                }`}
+                className={`relative border-2 rounded-xl p-4 sm:p-5 ${getEntryBgColor()} transition-all`}
               >
-                {/* Timeline line */}
-                {index < history.length - 1 && (
-                  <div className="absolute left-8 top-16 bottom-0 w-0.5 bg-gray-300" />
-                )}
-
-                <div className="flex items-start gap-4">
-                  {/* Estado visual */}
+                <div className="flex items-start gap-3 sm:gap-4">
+                  {/* Icono */}
                   <div className="flex-shrink-0">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center ${
+                      isProductDeleted ? 'bg-red-100' :
+                      isProductAction ? 'bg-green-100' :
                       index === 0 ? 'bg-blue-100' : 'bg-gray-100'
                     }`}>
-                      <NewStatusIcon 
-                        className={`h-6 w-6 ${statusConfig[entry.newStatus].color}`} 
-                      />
+                      <EntryIcon className={`h-5 w-5 sm:h-6 sm:w-6 ${getEntryColor()}`} />
                     </div>
                   </div>
 
                   {/* Contenido */}
                   <div className="flex-1 min-w-0">
-                    {/* Cambio de estado */}
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      {entry.previousStatus ? (
-                        <>
-                          <span className={`font-medium ${
-                            statusConfig[entry.previousStatus].color
-                          }`}>
-                            {statusConfig[entry.previousStatus].label}
-                          </span>
-                          <ArrowRight className="h-4 w-4 text-gray-400" />
-                        </>
-                      ) : (
-                        <span className="text-sm text-gray-500">Estado inicial:</span>
-                      )}
-                      <span className={`font-semibold ${
-                        statusConfig[entry.newStatus].color
-                      }`}>
-                        {statusConfig[entry.newStatus].label}
-                      </span>
-                      {index === 0 && (
-                        <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
-                          Actual
+                    {/* Título según tipo */}
+                    {isStatusChange && entry.newStatus ? (
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        {entry.previousStatus ? (
+                          <>
+                            <span className={`font-medium text-sm sm:text-base ${
+                              statusConfig[entry.previousStatus]?.color || 'text-gray-500'
+                            }`}>
+                              {statusConfig[entry.previousStatus]?.label || entry.previousStatus}
+                            </span>
+                            <ArrowRight className="h-4 w-4 text-gray-400" />
+                          </>
+                        ) : (
+                          <span className="text-xs sm:text-sm text-gray-500">Estado inicial:</span>
+                        )}
+                        <span className={`font-bold text-sm sm:text-base ${
+                          statusConfig[entry.newStatus]?.color || 'text-gray-600'
+                        }`}>
+                          {statusConfig[entry.newStatus]?.label || entry.newStatus}
                         </span>
-                      )}
-                    </div>
+                        {index === 0 && (
+                          <span className="ml-2 px-2 py-0.5 bg-blue-200 text-blue-800 text-xs rounded-full font-bold">
+                            Actual
+                          </span>
+                        )}
+                      </div>
+                    ) : isProductDeleted ? (
+                      <div className="mb-2">
+                        <span className="font-bold text-red-700 text-sm sm:text-base flex items-center gap-2">
+                          <Trash2 className="h-4 w-4" />
+                          Producto Eliminado
+                        </span>
+                        {entry.description && (
+                          <p className="text-sm text-gray-700 mt-1">{entry.description}</p>
+                        )}
+                      </div>
+                    ) : isProductAction ? (
+                      <div className="mb-2">
+                        <span className="font-bold text-green-700 text-sm sm:text-base flex items-center gap-2">
+                          {entry.notes?.includes('agregado') ? <Plus className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
+                          {entry.notes?.includes('agregado') ? 'Producto Agregado' : 'Acción en Producto'}
+                        </span>
+                      </div>
+                    ) : null}
 
                     {/* Usuario y rol */}
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <User className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-700 font-medium">
+                      <span className="text-sm sm:text-base text-gray-700 font-medium">
                         {entry.changedByName}
                       </span>
                       {getRoleBadge(entry.changedByRole)}
                     </div>
 
                     {/* Fecha */}
-                    <div className="flex items-center gap-2 mb-2">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <Calendar className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm text-gray-600">
+                      <span className="text-sm text-gray-600 font-medium">
                         {getRelativeTime(entry.createdAt)}
                       </span>
-                      <span className="text-xs text-gray-400">
+                      <span className="text-xs text-gray-400 hidden sm:inline">
                         ({formatDateTime(entry.createdAt)})
                       </span>
                     </div>
 
                     {/* Notas */}
                     {entry.notes && (
-                      <div className="mt-3 p-3 bg-gray-50 rounded border border-gray-200">
+                      <div className="mt-3 p-3 bg-white/80 rounded-lg border border-gray-200">
                         <div className="flex items-start gap-2">
                           <FileText className="h-4 w-4 text-gray-500 flex-shrink-0 mt-0.5" />
                           <div>
-                            <p className="text-xs text-gray-500 font-medium mb-1">Notas:</p>
-                            <p className="text-sm text-gray-700">{entry.notes}</p>
+                            <p className="text-xs text-gray-500 font-medium mb-1">Detalle:</p>
+                            <p className="text-sm sm:text-base text-gray-700">{entry.notes}</p>
                           </div>
                         </div>
                       </div>

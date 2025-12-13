@@ -962,35 +962,6 @@ export default function ClientsViewWithOrders({
                 userRole={userRole === 'seller' ? 'SELLER' : 'CLIENT'}
               />
             </div>
-
-            {/* BARRA FLOTANTE INFERIOR - Siempre visible cuando hay órdenes seleccionadas */}
-            {userRole === 'seller' && selectedOrders.length > 0 && (
-              <div className="sticky bottom-0 left-0 right-0 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] border-t border-emerald-400 z-50">
-                <div className="flex items-center justify-between gap-4 max-w-3xl mx-auto">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-white/25 backdrop-blur rounded-full flex items-center justify-center text-white font-bold text-xl border-2 border-white/40 shadow-lg">
-                      {selectedOrders.length}
-                    </div>
-                    <div className="text-white">
-                      <p className="font-bold text-base sm:text-lg">
-                        {selectedOrders.length === 1 ? '1 orden seleccionada' : `${selectedOrders.length} órdenes seleccionadas`}
-                      </p>
-                      <p className="text-emerald-100 text-xs sm:text-sm">
-                        Listo para revisar productos
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    onClick={() => setShowBulkStatusModal(true)}
-                    size="lg"
-                    className="bg-white text-emerald-600 hover:bg-emerald-50 shadow-xl hover:shadow-2xl transition-all text-base sm:text-lg h-12 sm:h-14 font-bold px-6 sm:px-8 rounded-xl animate-pulse hover:animate-none"
-                  >
-                    <Package className="h-5 w-5 sm:h-6 sm:w-6 mr-2" />
-                    Ver Productos
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
         </>,
         document.body

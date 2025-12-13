@@ -468,75 +468,120 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Tabla de Últimas Órdenes */}
+      {/* Tabla de Últimas Órdenes - Responsive */}
       <div className="mt-6 bg-white rounded-lg shadow-lg p-4 sm:p-6">
         <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
           <ShoppingCart size={20} className="sm:w-6 sm:h-6 text-blue-600" />
           <span>Últimas Órdenes</span>
         </h2>
         {recentOrders.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    # Orden
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    Cliente
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    Total
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
-                    Estado
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentOrders.map((order) => (
-                  <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-3 px-4 text-sm font-medium text-gray-900">
-                      {order.orderNumber}
-                    </td>
-                    <td className="py-3 px-4 text-sm text-gray-700">
-                      {order.clientName}
-                    </td>
-                    <td className="py-3 px-4 text-xs font-semibold text-gray-900">
+          <>
+            {/* Vista móvil - Tarjetas */}
+            <div className="sm:hidden space-y-3">
+              {recentOrders.map((order) => (
+                <div 
+                  key={order.id} 
+                  className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                  onClick={() => router.push('/orders')}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <p className="font-bold text-gray-900 text-base">{order.orderNumber}</p>
+                      <p className="text-sm text-gray-600">{order.clientName}</p>
+                    </div>
+                    <span
+                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                        order.status === 'PENDING'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : order.status === 'IN_PROGRESS'
+                          ? 'bg-blue-100 text-blue-800'
+                          : order.status === 'COMPLETED'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {order.status}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-bold text-green-600">
                       {formatPrice(order.totalAmount)}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          order.status === 'PENDING'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : order.status === 'IN_PROGRESS'
-                            ? 'bg-blue-100 text-blue-800'
-                            : order.status === 'COMPLETED'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={() => router.push('/orders')}
-                        className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
-                        title="Ver orden"
-                      >
-                        <Eye size={18} />
-                      </button>
-                    </td>
+                    </span>
+                    <button
+                      className="text-blue-600 hover:text-blue-800 p-2 rounded-lg bg-blue-50 flex items-center gap-1 text-sm font-medium"
+                    >
+                      <Eye size={16} />
+                      Ver
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Vista desktop - Tabla */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      # Orden
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      Cliente
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      Total
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">
+                      Estado
+                    </th>
+                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
+                      Acciones
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {recentOrders.map((order) => (
+                    <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-4 text-sm font-medium text-gray-900">
+                        {order.orderNumber}
+                      </td>
+                      <td className="py-3 px-4 text-sm text-gray-700">
+                        {order.clientName}
+                      </td>
+                      <td className="py-3 px-4 text-sm font-semibold text-gray-900">
+                        {formatPrice(order.totalAmount)}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                            order.status === 'PENDING'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : order.status === 'IN_PROGRESS'
+                              ? 'bg-blue-100 text-blue-800'
+                              : order.status === 'COMPLETED'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          onClick={() => router.push('/orders')}
+                          className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
+                          title="Ver orden"
+                        >
+                          <Eye size={18} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
           <p className="text-gray-500 text-center py-4">
             No hay órdenes recientes

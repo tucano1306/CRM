@@ -527,12 +527,8 @@ export default function OrderDetailModal({
                   <h4 className="font-medium text-gray-700 mb-2">Estados disponibles:</h4>
                   <ul className="text-sm text-gray-600 space-y-1">
                     <li>• <strong>Revisando</strong> - Verificando disponibilidad de productos</li>
-                    <li>• <strong>Confirmado</strong> - Orden lista para preparar</li>
-                    <li>• <strong>Preparando</strong> - En proceso de preparación</li>
-                    <li>• <strong>Listo</strong> - Listo para recoger/enviar</li>
-                    <li>• <strong>En camino</strong> - En proceso de entrega</li>
-                    <li>• <strong>Entregado</strong> - Entregado al cliente</li>
-                    <li>• <strong>Completado</strong> - Orden finalizada</li>
+                    <li>• <strong>Confirmada</strong> - Orden confirmada y lista para procesar</li>
+                    <li>• <strong>Completada</strong> - Orden finalizada en el sistema</li>
                   </ul>
                 </div>
               </div>

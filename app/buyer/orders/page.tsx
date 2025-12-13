@@ -293,6 +293,30 @@ export default function OrdersPage() {
     }
   )
 
+  // 🔥 TIEMPO REAL: Escuchar cuando el vendedor agrega un producto
+  useRealtimeSubscription(
+    'buyer-orders',
+    RealtimeEvents.ORDER_ITEM_ADDED,
+    (payload) => {
+      console.log('🔥 [BUYER] Producto agregado a orden:', payload)
+      
+      // Mostrar notificación toast
+      setToastMessage(`📦 ${payload.sellerName} agregó "${payload.productName}" a tu orden #${payload.orderNumber}`)
+      setToastStatus('success')
+      setShowToast(true)
+      
+      // Refrescar órdenes para obtener los datos actualizados
+      fetchOrders()
+      
+      // Si el modal está abierto con esta orden, actualizarla
+      if (selectedOrder?.id === payload.orderId) {
+        fetchOrders().then(() => {
+          // Volver a cargar la orden seleccionada después de actualizar
+        })
+      }
+    }
+  )
+
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState<'ALL' | OrderStatus>('ALL')

@@ -21,6 +21,7 @@ export type NotificationType =
   | 'ORDER_STATUS_CHANGED'
   | 'ORDER_DELIVERED'
   | 'PAYMENT_RECEIVED'
+  | 'PRODUCT_ADDED'
   | 'CUSTOM'
 
 // Canal de notificación
@@ -36,6 +37,8 @@ export interface NotificationData {
   buyerName?: string
   status?: string
   total?: number
+  quantity?: number
+  note?: string
   deliveryDate?: string
   customMessage?: string
   [key: string]: string | number | undefined
@@ -121,6 +124,17 @@ const MESSAGE_TEMPLATES: Record<NotificationType, {
       <p>¡Gracias por tu compra!</p>
     `,
     shortBody: (data) => `🎉 Tu pedido #${data.orderNumber} ha sido entregado. ¡Gracias!`
+  },
+  PRODUCT_ADDED: {
+    subject: 'Producto agregado a tu pedido',
+    body: (data) => `
+      <h2>📦 Pedido #${data.orderNumber} - Producto Agregado</h2>
+      <p>Hola ${data.buyerName},</p>
+      <p>${data.sellerName} ha agregado <strong>${data.productName}</strong> (${data.quantity} unid.) a tu pedido.</p>
+      ${data.note ? `<p><strong>Nota:</strong> ${data.note}</p>` : ''}
+      <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/buyer/orders">Ver tu pedido</a></p>
+    `,
+    shortBody: (data) => `📦 ${data.sellerName} agregó "${data.productName}" (${data.quantity}) a tu pedido #${data.orderNumber}. Revisa tu orden.`
   },
   PAYMENT_RECEIVED: {
     subject: 'Pago recibido',
