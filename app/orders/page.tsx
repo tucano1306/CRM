@@ -37,6 +37,7 @@ interface OrderWithItems {
   deliveryInstructions: string | null
   createdAt: string
   clientId: string  // Agregado para compatibilidad con ClientsViewWithOrders
+  hasIssues?: boolean
   client: {
     id: string
     name: string
@@ -63,6 +64,14 @@ interface OrderWithItems {
       sku: string | null
       unit: string
     }
+  }>
+  orderIssues?: Array<{
+    id: string
+    productName: string
+    issueType: string
+    requestedQty: number
+    availableQty: number
+    status: string
   }>
   creditNoteUsages?: Array<{
     id: string

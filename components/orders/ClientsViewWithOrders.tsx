@@ -62,6 +62,15 @@ interface Order {
   clientId: string
   client: Client
   orderItems: any[]
+  hasIssues?: boolean
+  orderIssues?: Array<{
+    id: string
+    productName: string
+    issueType: string
+    requestedQty: number
+    availableQty: number
+    status: string
+  }>
 }
 
 interface ClientWithOrders {

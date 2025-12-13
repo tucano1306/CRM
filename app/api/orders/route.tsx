@@ -133,6 +133,17 @@ export async function GET(request: Request) {
               },
             },
           },
+          // ← Para mostrar problemas de stock en el modal
+          orderIssues: {
+            select: {
+              id: true,
+              productName: true,
+              issueType: true,
+              requestedQty: true,
+              availableQty: true,
+              status: true,
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',
