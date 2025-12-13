@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useSearchParams } from 'next/navigation'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
 import ChatWindow from '@/components/chat/ChatWindow'
 import { Card, CardContent } from '@/components/ui/card'
-import { MessageCircle, Users, Inbox, AlertTriangle } from 'lucide-react'
+import { MessageCircle, Users, Inbox, AlertTriangle, Loader2 } from 'lucide-react'
 
 interface Client {
   id: string
@@ -17,7 +17,7 @@ interface Client {
   unreadCount: number
 }
 
-export default function SellerChatPage() {
+function SellerChatContent() {
   const { user } = useUser()
   const searchParams = useSearchParams()
   const [clients, setClients] = useState<Client[]>([])
@@ -206,5 +206,23 @@ export default function SellerChatPage() {
         </div>
       </div>
     </MainLayout>
+  )
+}
+
+// Componente principal con Suspense boundary
+export default function SellerChatPage() {
+  return (
+    <Suspense fallback={
+      <MainLayout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center">
+            <Loader2 className="animate-spin h-12 w-12 text-purple-600 mx-auto mb-4" />
+            <p className="text-gray-600">Cargando chat...</p>
+          </div>
+        </div>
+      </MainLayout>
+    }>
+      <SellerChatContent />
+    </Suspense>
   )
 }
