@@ -32,6 +32,12 @@ interface OrderItem {
   pricePerUnit: number
   subtotal: number
   itemNote?: string | null
+  // Campos de eliminación/sustitución
+  isDeleted?: boolean
+  deletedReason?: string | null
+  deletedAt?: string | null
+  substitutedWith?: string | null
+  substituteName?: string | null
   product: {
     id?: string
     sku?: string | null
@@ -282,6 +288,63 @@ export default function OrderDetailModal({
                   const hasIssue = !!issue
                   const isOutOfStock = issue?.issueType === 'OUT_OF_STOCK'
                   const isPartialStock = issue?.issueType === 'PARTIAL_STOCK'
+                  const isDeleted = item.isDeleted
+                  const wasSubstituted = item.substitutedWith
+
+                  // Renderizar item eliminado de forma especial
+                  if (isDeleted) {
+                    return (
+                      <div 
+                        key={item.id} 
+                        className="bg-gray-100 rounded-lg shadow-sm p-4 border border-gray-300 opacity-75"
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <Trash2 className="h-4 w-4 text-gray-500" />
+                              <p className="font-semibold text-gray-500 line-through">{item.productName}</p>
+                              <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full font-medium">
+                                ELIMINADO
+                              </span>
+                            </div>
+                            
+                            {item.product.sku && (
+                              <p className="text-xs text-gray-400 font-mono ml-6 line-through">SKU: {item.product.sku}</p>
+                            )}
+                            
+                            <p className="text-sm text-gray-400 mt-1 ml-6 line-through">
+                              {item.quantity} {item.product.unit} × {formatPrice(Number(item.pricePerUnit))}
+                            </p>
+
+                            {/* Motivo de eliminación */}
+                            {item.deletedReason && (
+                              <div className="mt-2 ml-6 p-2 bg-gray-200 rounded text-sm">
+                                <span className="font-medium text-gray-700">📝 Motivo del comprador:</span>
+                                <p className="text-gray-600 mt-1 italic">"{item.deletedReason}"</p>
+                              </div>
+                            )}
+
+                            {/* Si fue sustituido */}
+                            {wasSubstituted && item.substituteName && (
+                              <div className="mt-2 ml-6 p-2 bg-blue-50 rounded border border-blue-200 text-sm">
+                                <span className="font-medium text-blue-800">🔄 Sustituido por:</span>
+                                <p className="text-blue-700 font-semibold">{item.substituteName}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-gray-400 line-through">
+                              {formatPrice(item.quantity * Number(item.pricePerUnit))}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {item.deletedAt ? new Date(item.deletedAt).toLocaleDateString() : ''}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
 
                   return (
                     <div 

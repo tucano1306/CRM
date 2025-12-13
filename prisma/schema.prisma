@@ -235,6 +235,13 @@ model OrderItem {
   availableQty Int?            // Cantidad disponible (null = no revisado)
   issueNote    String?         // Nota del problema con este item
   
+  // Campos para eliminación/sustitución por buyer
+  isDeleted        Boolean   @default(false)    // Si el buyer eliminó este item
+  deletedReason    String?                      // Motivo de eliminación escrito por buyer
+  deletedAt        DateTime?                    // Fecha de eliminación
+  substitutedWith  String?                      // ID del producto sustituto (si aplica)
+  substituteName   String?                      // Nombre del producto sustituto
+  
   // Relations
   orderId      String
   order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)

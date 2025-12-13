@@ -59,6 +59,11 @@ interface OrderWithItems {
     pricePerUnit: number
     subtotal: number
     itemNote?: string | null
+    isDeleted?: boolean
+    deletedReason?: string | null
+    deletedAt?: string | null
+    substitutedWith?: string | null
+    substituteName?: string | null
     product: {
       id: string
       sku: string | null

@@ -69,6 +69,12 @@ type OrderItem = {
   subtotal: number
   productId: string
   itemNote?: string | null
+  // Campos de eliminación/sustitución
+  isDeleted?: boolean
+  deletedReason?: string | null
+  deletedAt?: string | null
+  substitutedWith?: string | null
+  substituteName?: string | null
   product: {
     sku?: string | null
     unit: string
@@ -306,6 +312,18 @@ export default function OrdersPage() {
   const [showSubstituteModal, setShowSubstituteModal] = useState<string | null>(null)
   const [sendingMessage, setSendingMessage] = useState(false)
   
+  // Modal de eliminación con motivo
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteItemInfo, setDeleteItemInfo] = useState<{itemId: string, productName: string} | null>(null)
+  const [deleteReason, setDeleteReason] = useState('')
+  
+  // Modal de sustitución de producto
+  const [showSubstituteSelector, setShowSubstituteSelector] = useState(false)
+  const [substituteItemInfo, setSubstituteItemInfo] = useState<{itemId: string, productName: string, productId: string} | null>(null)
+  const [catalogProducts, setCatalogProducts] = useState<any[]>([])
+  const [loadingCatalog, setLoadingCatalog] = useState(false)
+  const [catalogSearch, setCatalogSearch] = useState('')
+  
   // Paginación y filtro por fecha
   const [currentPage, setCurrentPage] = useState(1)
   const [dateRange, setDateRange] = useState<'7days' | '30days' | '90days' | 'all'>('30days')
@@ -513,32 +531,50 @@ export default function OrdersPage() {
     return selectedOrder?.issues?.find(issue => issue.productName === productName)
   }
 
-  // Eliminar producto de la orden (buyer decide no quererlo)
-  const handleRemoveProduct = async (itemId: string, productName: string) => {
-    if (!selectedOrder) return
-    
-    const confirmed = confirm(`¿Estás seguro de eliminar "${productName}" de tu orden?`)
-    if (!confirmed) return
+  // Abrir modal para eliminar producto (con motivo)
+  const openDeleteModal = (itemId: string, productName: string) => {
+    setDeleteItemInfo({ itemId, productName })
+    setDeleteReason('')
+    setShowDeleteModal(true)
+  }
+
+  // Confirmar eliminación con motivo
+  const handleConfirmDelete = async () => {
+    if (!selectedOrder || !deleteItemInfo) return
+    if (!deleteReason.trim()) {
+      alert('Por favor, escribe el motivo de la eliminación')
+      return
+    }
     
     try {
-      setRemovingItem(itemId)
+      setRemovingItem(deleteItemInfo.itemId)
       
-      const result = await apiCall(`/api/buyer/orders/${selectedOrder.id}/items/${itemId}`, {
+      const result = await apiCall(`/api/buyer/orders/${selectedOrder.id}/items/${deleteItemInfo.itemId}`, {
         method: 'DELETE',
+        body: JSON.stringify({ reason: deleteReason }),
         timeout: 5000,
       })
       
       if (result.success) {
-        setToastMessage(`✅ "${productName}" eliminado de la orden`)
+        setToastMessage(`✅ "${deleteItemInfo.productName}" eliminado de la orden`)
         setToastStatus('success')
         setShowToast(true)
         
-        // Actualizar la orden localmente
+        // Actualizar la orden localmente - marcar como eliminado en vez de filtrar
         setSelectedOrder(prev => prev ? {
           ...prev,
-          orderItems: prev.orderItems.filter(item => item.id !== itemId),
+          orderItems: prev.orderItems.map(item => 
+            item.id === deleteItemInfo.itemId 
+              ? { ...item, isDeleted: true, deletedReason: deleteReason, deletedAt: new Date().toISOString() }
+              : item
+          ),
           totalAmount: result.data?.newTotal || prev.totalAmount
         } : null)
+        
+        // Cerrar modal y limpiar
+        setShowDeleteModal(false)
+        setDeleteItemInfo(null)
+        setDeleteReason('')
         
         // Refrescar órdenes
         fetchOrders()
@@ -552,6 +588,74 @@ export default function OrdersPage() {
       setRemovingItem(null)
     }
   }
+
+  // Abrir selector de sustitución
+  const openSubstituteSelector = async (itemId: string, productName: string, productId: string) => {
+    setSubstituteItemInfo({ itemId, productName, productId })
+    setShowSubstituteSelector(true)
+    setCatalogSearch('')
+    
+    // Cargar productos del catálogo del vendedor
+    try {
+      setLoadingCatalog(true)
+      const result = await apiCall(`/api/sellers/${selectedOrder?.seller?.id}/products`, {
+        timeout: 5000,
+      })
+      if (result.success && result.data) {
+        // Filtrar el producto actual
+        setCatalogProducts(result.data.filter((p: any) => p.id !== productId && p.stock > 0))
+      }
+    } catch (error) {
+      console.error('Error loading catalog:', error)
+    } finally {
+      setLoadingCatalog(false)
+    }
+  }
+
+  // Confirmar sustitución
+  const handleConfirmSubstitute = async (newProduct: any) => {
+    if (!selectedOrder || !substituteItemInfo) return
+    
+    try {
+      setRemovingItem(substituteItemInfo.itemId)
+      
+      const result = await apiCall(`/api/buyer/orders/${selectedOrder.id}/items/${substituteItemInfo.itemId}/substitute`, {
+        method: 'POST',
+        body: JSON.stringify({ 
+          newProductId: newProduct.id,
+          newProductName: newProduct.name,
+          reason: `Sustituido por: ${newProduct.name}`
+        }),
+        timeout: 5000,
+      })
+      
+      if (result.success) {
+        setToastMessage(`✅ "${substituteItemInfo.productName}" sustituido por "${newProduct.name}"`)
+        setToastStatus('success')
+        setShowToast(true)
+        
+        // Cerrar modal
+        setShowSubstituteSelector(false)
+        setSubstituteItemInfo(null)
+        
+        // Refrescar órdenes
+        fetchOrders()
+      } else {
+        alert(result.error || 'Error al sustituir el producto')
+      }
+    } catch (error) {
+      console.error('Error substituting product:', error)
+      alert('Error al sustituir el producto')
+    } finally {
+      setRemovingItem(null)
+    }
+  }
+
+  // Productos del catálogo filtrados
+  const filteredCatalogProducts = catalogProducts.filter(p => 
+    p.name.toLowerCase().includes(catalogSearch.toLowerCase()) ||
+    p.sku?.toLowerCase().includes(catalogSearch.toLowerCase())
+  )
 
   // Aceptar cantidad parcial de un producto
   const handleAcceptPartial = async (itemId: string, productName: string, newQty: number) => {
@@ -1875,6 +1979,49 @@ export default function OrdersPage() {
                       const hasIssue = !!issue
                       const isOutOfStock = issue?.issueType === 'OUT_OF_STOCK'
                       const isPartialStock = issue?.issueType === 'PARTIAL_STOCK'
+                      const isDeleted = item.isDeleted
+                      const wasSubstituted = item.substitutedWith
+                      
+                      // Si el item fue eliminado, mostrar versión especial
+                      if (isDeleted) {
+                        return (
+                          <div 
+                            key={item.id} 
+                            className="rounded-xl border bg-gray-100 border-gray-300 opacity-75"
+                          >
+                            <div className="flex items-center gap-4 p-4">
+                              <div className="flex-shrink-0 w-16 h-16 rounded-lg flex items-center justify-center bg-gray-200">
+                                <Trash2 className="w-8 h-8 text-gray-500" />
+                              </div>
+                              <div className="flex-1">
+                                <h4 className="font-semibold text-gray-500 line-through">
+                                  {item.productName}
+                                </h4>
+                                <p className="text-xs text-gray-500 line-through">
+                                  {item.quantity} {item.product?.unit || 'und'} × {formatPrice(item.pricePerUnit)}
+                                </p>
+                                <div className="mt-2 p-2 rounded-lg text-sm bg-gray-200 text-gray-700">
+                                  <span>🗑️ <strong>Eliminado por ti</strong></span>
+                                  {item.deletedReason && (
+                                    <p className="mt-1 text-xs italic">Motivo: "{item.deletedReason}"</p>
+                                  )}
+                                </div>
+                                {wasSubstituted && item.substituteName && (
+                                  <div className="mt-2 p-2 rounded-lg text-sm bg-green-100 text-green-800">
+                                    <span>🔄 Sustituido por: <strong>{item.substituteName}</strong></span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <p className="font-bold text-sm text-gray-400 line-through">
+                                  {formatPrice(item.quantity * Number(item.pricePerUnit))}
+                                </p>
+                                <span className="text-xs text-red-500 font-medium">ELIMINADO</span>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      }
                       
                       return (
                         <div 
@@ -1957,7 +2104,15 @@ export default function OrdersPage() {
                                   </button>
                                 )}
                                 <button
-                                  onClick={() => handleRemoveProduct(item.id, item.productName)}
+                                  onClick={() => openSubstituteSelector(item.id, item.productName, item.productId)}
+                                  disabled={removingItem === item.id}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                  <RefreshCw className="w-3 h-3" />
+                                  Sustituir producto
+                                </button>
+                                <button
+                                  onClick={() => openDeleteModal(item.id, item.productName)}
                                   disabled={removingItem === item.id}
                                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 rounded-lg transition-colors disabled:opacity-50"
                                 >
@@ -1982,18 +2137,18 @@ export default function OrdersPage() {
                       )
                     })}
                     
-                    {/* Resumen de totales */}
+                    {/* Resumen de totales - solo contar items activos */}
                     <div className="mt-6 pt-4 border-t space-y-2 text-sm">
                       <div className="flex justify-between text-gray-600">
                         <span>Subtotal:</span>
                         <span>
-                          {formatPrice(selectedOrder.orderItems?.reduce((sum, item) => sum + Number(item.subtotal), 0) || 0)}
+                          {formatPrice(selectedOrder.orderItems?.filter(i => !i.isDeleted).reduce((sum, item) => sum + Number(item.subtotal), 0) || 0)}
                         </span>
                       </div>
                       <div className="flex justify-between text-gray-600">
                         <span>Impuestos (10%):</span>
                         <span>
-                          {formatPrice((selectedOrder.orderItems?.reduce((sum, item) => sum + Number(item.subtotal), 0) || 0) * 0.1)}
+                          {formatPrice((selectedOrder.orderItems?.filter(i => !i.isDeleted).reduce((sum, item) => sum + Number(item.subtotal), 0) || 0) * 0.1)}
                         </span>
                       </div>
                       
@@ -2003,7 +2158,7 @@ export default function OrdersPage() {
                           <div className="flex justify-between text-gray-900 font-semibold pt-2 border-t">
                             <span>Total Orden:</span>
                             <span>
-                              {formatPrice((selectedOrder.orderItems?.reduce((sum, item) => sum + Number(item.subtotal), 0) || 0) * 1.1)}
+                              {formatPrice((selectedOrder.orderItems?.filter(i => !i.isDeleted).reduce((sum, item) => sum + Number(item.subtotal), 0) || 0) * 1.1)}
                             </span>
                           </div>
                           
@@ -2584,6 +2739,150 @@ export default function OrdersPage() {
         }
       `}</style>
     </div>
+    
+    {/* Modal de eliminación con motivo */}
+    {showDeleteModal && deleteItemInfo && (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-red-100 rounded-full">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Eliminar producto</h3>
+                <p className="text-sm text-gray-500">"{deleteItemInfo.productName}"</p>
+              </div>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-4">
+              Por favor, escribe el motivo por el que deseas eliminar este producto. 
+              Este mensaje será enviado al vendedor.
+            </p>
+            
+            <textarea
+              value={deleteReason}
+              onChange={(e) => setDeleteReason(e.target.value)}
+              placeholder="Ej: Ya no lo necesito, prefiero otro producto, precio muy alto..."
+              className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
+              rows={3}
+            />
+            
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false)
+                  setDeleteItemInfo(null)
+                  setDeleteReason('')
+                }}
+                className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmDelete}
+                disabled={!deleteReason.trim() || removingItem === deleteItemInfo.itemId}
+                className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {removingItem === deleteItemInfo.itemId ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Eliminando...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4" />
+                    Confirmar eliminación
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    
+    {/* Modal de sustitución de producto */}
+    {showSubstituteSelector && substituteItemInfo && (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] flex flex-col">
+          <div className="p-6 border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-blue-100 rounded-full">
+                  <RefreshCw className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Sustituir producto</h3>
+                  <p className="text-sm text-gray-500">Reemplazar "{substituteItemInfo.productName}"</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setShowSubstituteSelector(false)
+                  setSubstituteItemInfo(null)
+                  setCatalogSearch('')
+                }}
+                className="p-2 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {/* Buscador */}
+            <div className="mt-4 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                value={catalogSearch}
+                onChange={(e) => setCatalogSearch(e.target.value)}
+                placeholder="Buscar producto alternativo..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+          
+          {/* Lista de productos */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {loadingCatalog ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+              </div>
+            ) : filteredCatalogProducts.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <Package className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                <p>No se encontraron productos disponibles</p>
+              </div>
+            ) : (
+              <div className="grid gap-3">
+                {filteredCatalogProducts.map((product) => (
+                  <button
+                    key={product.id}
+                    onClick={() => handleConfirmSubstitute(product)}
+                    disabled={removingItem === substituteItemInfo.itemId}
+                    className="flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all text-left disabled:opacity-50"
+                  >
+                    <div className="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Package className="w-7 h-7 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-semibold text-gray-900 truncate">{product.name}</h4>
+                      <p className="text-xs text-gray-500">
+                        SKU: {product.sku || 'N/A'} • Stock: {product.stock} {product.unit || 'und'}
+                      </p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-bold text-blue-600">{formatPrice(product.price)}</p>
+                      <p className="text-xs text-gray-500">/{product.unit || 'und'}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
     </>
   )
 }

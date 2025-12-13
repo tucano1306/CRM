@@ -16,6 +16,15 @@ export async function DELETE(
     }
 
     const { id: orderId, itemId } = await params
+    
+    // Obtener el motivo de eliminación del body
+    let reason = ''
+    try {
+      const body = await request.json()
+      reason = body.reason || 'Sin motivo especificado'
+    } catch {
+      reason = 'Sin motivo especificado'
+    }
 
     // Verificar que el buyer sea dueño de la orden
     const authUser = await prisma.authenticated_users.findFirst({
@@ -51,10 +60,11 @@ export async function DELETE(
       return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 })
     }
 
-    // Solo permitir modificar si la orden está en ISSUE_REPORTED
-    if (order.status !== 'ISSUE_REPORTED') {
+    // Permitir modificar si la orden está en ISSUE_REPORTED o PENDING o REVIEWING
+    const allowedStatuses = ['ISSUE_REPORTED', 'PENDING', 'REVIEWING']
+    if (!allowedStatuses.includes(order.status)) {
       return NextResponse.json({ 
-        error: 'Solo puedes modificar productos cuando hay issues reportados' 
+        error: 'No puedes modificar productos en este estado de la orden' 
       }, { status: 400 })
     }
 
@@ -64,14 +74,20 @@ export async function DELETE(
       return NextResponse.json({ error: 'Producto no encontrado en la orden' }, { status: 404 })
     }
 
-    // Eliminar el item
-    await prisma.orderItem.delete({
-      where: { id: itemId }
+    // Marcar como eliminado en vez de borrar físicamente
+    await prisma.orderItem.update({
+      where: { id: itemId },
+      data: {
+        isDeleted: true,
+        deletedReason: reason,
+        deletedAt: new Date(),
+        subtotal: 0 // El subtotal pasa a 0 para no contar en el total
+      }
     })
 
-    // Recalcular el total
-    const remainingItems = order.orderItems.filter(item => item.id !== itemId)
-    const newSubtotal = remainingItems.reduce((sum, item) => sum + Number(item.subtotal), 0)
+    // Recalcular el total excluyendo items eliminados
+    const activeItems = order.orderItems.filter(item => item.id !== itemId && !item.isDeleted)
+    const newSubtotal = activeItems.reduce((sum, item) => sum + Number(item.subtotal), 0)
     const newTotal = newSubtotal * 1.10 // Añadir impuesto
 
     // Actualizar el total de la orden
@@ -93,14 +109,14 @@ export async function DELETE(
       })
     }
 
-    // Crear mensaje en el chat notificando al vendedor
+    // Crear mensaje en el chat notificando al vendedor CON EL MOTIVO
     const sellerUserId = order.seller.authenticated_users[0]?.id
     if (sellerUserId) {
       await prisma.chatMessage.create({
         data: {
           senderId: authUser.id,
           receiverId: sellerUserId,
-          message: `📦 He decidido ELIMINAR "${itemToRemove.productName}" de mi orden #${order.orderNumber} debido al problema de stock.`,
+          message: `📦 He decidido ELIMINAR "${itemToRemove.productName}" de mi orden #${order.orderNumber}.\n\n📝 Motivo: ${reason}`,
           userId: authUser.id,
           orderId: orderId,
           sellerId: order.sellerId
@@ -119,7 +135,7 @@ export async function DELETE(
           orderNumber: order.orderNumber,
           orderId: order.id,
           buyerName: order.client.name,
-          message: `${order.client.name} eliminó "${itemToRemove.productName}" de la orden #${order.orderNumber}`
+          message: `${order.client.name} eliminó "${itemToRemove.productName}" de la orden #${order.orderNumber}. Motivo: ${reason}`
         }
       )
 
@@ -132,6 +148,7 @@ export async function DELETE(
           orderNumber: order.orderNumber,
           itemName: itemToRemove.productName,
           buyerName: order.client.name,
+          reason: reason,
           newTotal: newTotal
         }
       )
@@ -141,7 +158,8 @@ export async function DELETE(
       success: true,
       message: 'Producto eliminado de la orden',
       newTotal: newTotal,
-      removedItem: itemToRemove.productName
+      removedItem: itemToRemove.productName,
+      reason: reason
     })
 
   } catch (error) {
