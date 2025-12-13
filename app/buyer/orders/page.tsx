@@ -3029,98 +3029,140 @@ export default function OrdersPage() {
             </div>
           </div>
           
-          <div className="p-4 border-b bg-gray-50">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={selectedReorderItems.size === reorderOrder.orderItems.filter(i => !i.isDeleted).length}
-                onChange={toggleAllReorderItems}
-                className="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-              />
-              <span className="font-medium text-gray-700">
-                Seleccionar todos ({selectedReorderItems.size} de {reorderOrder.orderItems.filter(i => !i.isDeleted).length})
-              </span>
-            </label>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="space-y-2">
-              {reorderOrder.orderItems.map(item => {
-                if (item.isDeleted) return null
-                const isSelected = selectedReorderItems.has(item.id)
+          {/* Verificar si hay productos activos */}
+          {reorderOrder.orderItems.filter(i => !i.isDeleted).length === 0 ? (
+            /* No hay productos - mostrar mensaje y opción de ir al catálogo */
+            <div className="flex-1 p-6 flex flex-col items-center justify-center text-center">
+              <div className="p-4 bg-amber-100 rounded-full mb-4">
+                <Package className="w-12 h-12 text-amber-600" />
+              </div>
+              <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                No hay productos disponibles
+              </h4>
+              <p className="text-gray-600 mb-6">
+                Esta orden no tiene productos activos para reordenar. 
+                Todos los productos fueron eliminados o están agotados.
+              </p>
+              <div className="space-y-3 w-full max-w-xs">
+                <button
+                  onClick={() => {
+                    setShowReorderModal(false)
+                    setReorderOrder(null)
+                    router.push(`/buyer/catalog?seller=${reorderOrder.seller?.id || ''}`)
+                  }}
+                  className="w-full px-4 py-3 text-sm font-bold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 rounded-xl transition-all flex items-center justify-center gap-2"
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  Ir al Catálogo
+                </button>
+                <button
+                  onClick={() => {
+                    setShowReorderModal(false)
+                    setReorderOrder(null)
+                  }}
+                  className="w-full px-4 py-3 text-sm font-medium text-gray-600 bg-white border-2 border-gray-200 hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Hay productos - mostrar lista normal */
+            <>
+              <div className="p-4 border-b bg-gray-50">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedReorderItems.size === reorderOrder.orderItems.filter(i => !i.isDeleted).length}
+                    onChange={toggleAllReorderItems}
+                    className="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <span className="font-medium text-gray-700">
+                    Seleccionar todos ({selectedReorderItems.size} de {reorderOrder.orderItems.filter(i => !i.isDeleted).length})
+                  </span>
+                </label>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4">
+                <div className="space-y-2">
+                  {reorderOrder.orderItems.map(item => {
+                    if (item.isDeleted) return null
+                    const isSelected = selectedReorderItems.has(item.id)
+                    
+                    return (
+                      <label 
+                        key={item.id}
+                        className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                          isSelected 
+                            ? 'border-emerald-300 bg-emerald-50' 
+                            : 'border-gray-200 hover:border-gray-300 bg-white'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleReorderItem(item.id)}
+                          className="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className={`font-medium truncate ${isSelected ? 'text-emerald-800' : 'text-gray-900'}`}>
+                            {item.productName}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {item.quantity} {item.product?.unit || 'unid.'} • {formatPrice(item.pricePerUnit)} c/u
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className={`font-semibold ${isSelected ? 'text-emerald-600' : 'text-gray-700'}`}>
+                            {formatPrice(item.subtotal)}
+                          </p>
+                        </div>
+                      </label>
+                    )
+                  })}
+                </div>
+              </div>
+              
+              <div className="p-4 border-t bg-gray-50">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-gray-600">Productos seleccionados:</span>
+                  <span className="font-bold text-lg text-emerald-600">
+                    {selectedReorderItems.size} productos
+                  </span>
+                </div>
                 
-                return (
-                  <label 
-                    key={item.id}
-                    className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                      isSelected 
-                        ? 'border-emerald-300 bg-emerald-50' 
-                        : 'border-gray-200 hover:border-gray-300 bg-white'
-                    }`}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowReorderModal(false)
+                      setReorderOrder(null)
+                      setSelectedReorderItems(new Set())
+                    }}
+                    className="flex-1 px-4 py-3 text-sm font-medium text-gray-600 bg-white border-2 border-gray-200 hover:bg-gray-50 rounded-xl transition-colors"
                   >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleReorderItem(item.id)}
-                      className="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className={`font-medium truncate ${isSelected ? 'text-emerald-800' : 'text-gray-900'}`}>
-                        {item.productName}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {item.quantity} {item.product?.unit || 'unid.'} • {formatPrice(item.pricePerUnit)} c/u
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className={`font-semibold ${isSelected ? 'text-emerald-600' : 'text-gray-700'}`}>
-                        {formatPrice(item.subtotal)}
-                      </p>
-                    </div>
-                  </label>
-                )
-              })}
-            </div>
-          </div>
-          
-          <div className="p-4 border-t bg-gray-50">
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-gray-600">Productos seleccionados:</span>
-              <span className="font-bold text-lg text-emerald-600">
-                {selectedReorderItems.size} productos
-              </span>
-            </div>
-            
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowReorderModal(false)
-                  setReorderOrder(null)
-                  setSelectedReorderItems(new Set())
-                }}
-                className="flex-1 px-4 py-3 text-sm font-medium text-gray-600 bg-white border-2 border-gray-200 hover:bg-gray-50 rounded-xl transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleConfirmReorder}
-                disabled={selectedReorderItems.size === 0 || reordering}
-                className="flex-1 px-4 py-3 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {reordering ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Agregando...
-                  </>
-                ) : (
-                  <>
-                    <ShoppingBag className="w-4 h-4" />
-                    Agregar al Carrito
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleConfirmReorder}
+                    disabled={selectedReorderItems.size === 0 || reordering}
+                    className="flex-1 px-4 py-3 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {reordering ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Agregando...
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag className="w-4 h-4" />
+                        Agregar al Carrito
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     )}

@@ -14,7 +14,10 @@ import {
   Lock,
   MessageSquare,
   Mail,
-  Trash2
+  Trash2,
+  Plus,
+  Search,
+  ShoppingBag
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatPrice } from '@/lib/utils'
@@ -134,6 +137,17 @@ export default function BulkStatusChangeModal({
   const [deleteReason, setDeleteReason] = useState('')
   const [deletingItem, setDeletingItem] = useState<string | null>(null)
   const [deletedItems, setDeletedItems] = useState<Set<string>>(new Set())
+  
+  // Estado para agregar productos
+  const [showAddProductModal, setShowAddProductModal] = useState(false)
+  const [sellerProducts, setSellerProducts] = useState<any[]>([])
+  const [loadingProducts, setLoadingProducts] = useState(false)
+  const [productSearch, setProductSearch] = useState('')
+  const [selectedProduct, setSelectedProduct] = useState<any>(null)
+  const [addQuantity, setAddQuantity] = useState(1)
+  const [addNote, setAddNote] = useState('')
+  const [addingProduct, setAddingProduct] = useState(false)
+  const [addedProducts, setAddedProducts] = useState<Set<string>>(new Set())
 
   // Reset al cerrar
   useEffect(() => {
@@ -147,6 +161,13 @@ export default function BulkStatusChangeModal({
       setDeletedItems(new Set())
       setAcceptedItems(new Set())
       setSelectedItems(new Set())
+      setShowAddProductModal(false)
+      setSellerProducts([])
+      setProductSearch('')
+      setSelectedProduct(null)
+      setAddQuantity(1)
+      setAddNote('')
+      setAddedProducts(new Set())
     }
   }, [isOpen])
 
@@ -296,6 +317,85 @@ export default function BulkStatusChangeModal({
       setDeletingItem(null)
     }
   }
+
+  // Abrir modal para agregar producto
+  const openAddProductModal = async () => {
+    if (!singleOrder) return
+    
+    setShowAddProductModal(true)
+    setLoadingProducts(true)
+    
+    try {
+      // Intentar obtener productos activos
+      const response = await fetch('/api/products?active=true&limit=100')
+      
+      if (response.ok) {
+        const data = await response.json()
+        // La API puede devolver { products: [...] } o { data: [...] } o directamente [...]
+        const products = data.products || data.data || (Array.isArray(data) ? data : [])
+        setSellerProducts(products.filter((p: any) => p.isActive !== false))
+      } else {
+        console.error('Error fetching products:', response.status)
+        setSellerProducts([])
+      }
+    } catch (error) {
+      console.error('Error loading products:', error)
+      setSellerProducts([])
+    } finally {
+      setLoadingProducts(false)
+    }
+  }
+
+  // Agregar producto a la orden
+  const handleAddProduct = async () => {
+    if (!singleOrder || !selectedProduct || addQuantity <= 0) {
+      alert('Selecciona un producto y cantidad válida')
+      return
+    }
+
+    try {
+      setAddingProduct(true)
+      
+      const response = await fetch(`/api/orders/${singleOrder.id}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productId: selectedProduct.id,
+          quantity: addQuantity,
+          note: addNote || undefined
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Error al agregar producto')
+      }
+
+      const result = await response.json()
+      
+      // Marcar como agregado
+      setAddedProducts(prev => new Set([...prev, selectedProduct.id]))
+      
+      // Limpiar selección
+      setSelectedProduct(null)
+      setAddQuantity(1)
+      setAddNote('')
+      
+      alert(`✅ ${result.message}. El comprador ha sido notificado.`)
+      
+    } catch (error) {
+      console.error('Error adding product:', error)
+      alert(error instanceof Error ? error.message : 'Error al agregar el producto')
+    } finally {
+      setAddingProduct(false)
+    }
+  }
+
+  // Filtrar productos por búsqueda
+  const filteredProducts = sellerProducts.filter(product => 
+    product.name?.toLowerCase().includes(productSearch.toLowerCase()) ||
+    product.sku?.toLowerCase().includes(productSearch.toLowerCase())
+  )
 
   const issuesCount = Array.from(productIssues.values()).filter(i => i.issueType !== null && i.issueType !== 'ACCEPTED').length
   const allProductsOk = issuesCount === 0 && acceptedItems.size === orderItems.length
@@ -457,6 +557,13 @@ export default function BulkStatusChangeModal({
                         Aceptar seleccionados ({selectedItems.size})
                       </button>
                     )}
+                    <button
+                      onClick={openAddProductModal}
+                      className="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-medium hover:bg-purple-200 transition-all flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Agregar producto
+                    </button>
                     <span className="text-sm text-gray-500">
                       Total: {formatPrice(singleOrder?.totalAmount || 0)}
                     </span>
@@ -818,6 +925,159 @@ export default function BulkStatusChangeModal({
                 )}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de agregar producto */}
+      {showAddProductModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[70] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[80vh] flex flex-col">
+            <div className="p-4 border-b flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-purple-100 rounded-full">
+                  <Plus className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg">Agregar Producto</h3>
+                  <p className="text-sm text-gray-500">Orden #{singleOrder?.orderNumber}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowAddProductModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Buscador */}
+            <div className="p-4 border-b">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar producto..."
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-200 focus:border-purple-400"
+                />
+              </div>
+            </div>
+
+            {/* Lista de productos */}
+            <div className="flex-1 overflow-y-auto p-4">
+              {loadingProducts ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                </div>
+              ) : filteredProducts.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Package className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                  <p>No se encontraron productos</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredProducts.slice(0, 20).map((product: any) => {
+                    const isSelected = selectedProduct?.id === product.id
+                    const wasAdded = addedProducts.has(product.id)
+                    
+                    return (
+                      <button
+                        key={product.id}
+                        onClick={() => setSelectedProduct(product)}
+                        disabled={wasAdded}
+                        className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
+                          wasAdded 
+                            ? 'border-green-300 bg-green-50 cursor-not-allowed'
+                            : isSelected 
+                            ? 'border-purple-400 bg-purple-50' 
+                            : 'border-gray-200 hover:border-purple-200 hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-gray-900">{product.name}</p>
+                            <p className="text-sm text-gray-500">
+                              {product.sku && `SKU: ${product.sku} • `}
+                              {formatPrice(product.price)} / {product.unit || 'unid.'}
+                            </p>
+                          </div>
+                          {wasAdded && (
+                            <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                              ✓ Agregado
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Formulario de cantidad */}
+            {selectedProduct && (
+              <div className="p-4 border-t bg-purple-50">
+                <div className="flex items-center gap-4 mb-3">
+                  <div className="flex-1">
+                    <p className="font-medium text-purple-900">{selectedProduct.name}</p>
+                    <p className="text-sm text-purple-600">{formatPrice(selectedProduct.price)} / {selectedProduct.unit || 'unid.'}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm text-gray-600">Cantidad:</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={addQuantity}
+                      onChange={(e) => setAddQuantity(parseInt(e.target.value) || 1)}
+                      className="w-20 px-2 py-1 border rounded text-center"
+                    />
+                  </div>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Nota (opcional)"
+                  value={addNote}
+                  onChange={(e) => setAddNote(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg text-sm mb-3"
+                />
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium text-purple-800">
+                    Subtotal: {formatPrice(selectedProduct.price * addQuantity)}
+                  </span>
+                  <button
+                    onClick={handleAddProduct}
+                    disabled={addingProduct}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {addingProduct ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Agregando...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4" />
+                        Agregar a la orden
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Botón cerrar */}
+            {!selectedProduct && (
+              <div className="p-4 border-t">
+                <button
+                  onClick={() => setShowAddProductModal(false)}
+                  className="w-full px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  Cerrar
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
