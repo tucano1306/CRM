@@ -100,7 +100,10 @@ export function useRealtimeSubscription(
           console.log('✅ Realtime subscribed:', channelName)
           setIsConnected(true)
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Realtime error:', channelName)
+          // Solo mostrar warning, no error (evita errores rojos en consola)
+          console.warn('⚠️ Realtime channel unavailable:', channelName, '- Notifications will work via polling')
+          setIsConnected(false)
+        } else if (status === 'CLOSED') {
           setIsConnected(false)
         }
       })
@@ -156,7 +159,9 @@ export function useRealtimeChannel(
         console.log('✅ Realtime channel subscribed:', channelName)
         setIsConnected(true)
       } else if (status === 'CHANNEL_ERROR') {
-        console.error('❌ Realtime channel error:', channelName)
+        console.warn('⚠️ Realtime channel unavailable:', channelName)
+        setIsConnected(false)
+      } else if (status === 'CLOSED') {
         setIsConnected(false)
       }
     })

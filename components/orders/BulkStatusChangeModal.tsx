@@ -494,12 +494,12 @@ export default function BulkStatusChangeModal({
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Enviando...
+                    Enviando notificación...
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4 mr-2" />
-                    Notificar Faltantes ({issuesCount})
+                    📱 Notificar Faltantes ({issuesCount})
                   </>
                 )}
               </Button>
@@ -511,7 +511,7 @@ export default function BulkStatusChangeModal({
             {allProductsOk ? (
               <p>✅ Al confirmar, el cliente recibirá notificación por SMS, Email y WhatsApp</p>
             ) : (
-              <p>⚠️ Al notificar faltantes, el cliente podrá responder y acordar una solución contigo</p>
+              <p>📲 Se enviará automáticamente por: <strong>WhatsApp, Email, SMS</strong> y notificación en la App</p>
             )}
           </div>
         </div>
