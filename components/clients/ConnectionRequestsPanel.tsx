@@ -172,16 +172,9 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
     return null
   }
 
-  // Solo mostrar loading en la carga inicial (no en polling)
+  // No mostrar nada durante la carga inicial (evitar flash visual)
   if (loading && initialLoad) {
-    return (
-      <div className="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl shadow-lg p-6">
-        <div className="flex items-center justify-center gap-3">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500"></div>
-          <span className="text-amber-700">Cargando solicitudes...</span>
-        </div>
-      </div>
-    )
+    return null
   }
 
   // No mostrar si no hay solicitudes pendientes (después de cargar)
