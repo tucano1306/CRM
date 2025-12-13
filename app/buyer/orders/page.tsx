@@ -537,7 +537,7 @@ export default function OrdersPage() {
         setSelectedOrder(prev => prev ? {
           ...prev,
           orderItems: prev.orderItems.filter(item => item.id !== itemId),
-          totalAmount: result.newTotal || prev.totalAmount
+          totalAmount: result.data?.newTotal || prev.totalAmount
         } : null)
         
         // Refrescar órdenes
@@ -578,8 +578,8 @@ export default function OrdersPage() {
         fetchOrders()
         
         // Actualizar el modal
-        if (result.order) {
-          setSelectedOrder(result.order)
+        if (result.data?.order) {
+          setSelectedOrder(result.data.order)
         }
       } else {
         alert(result.error || 'Error al ajustar la cantidad')
@@ -592,8 +592,8 @@ export default function OrdersPage() {
     }
   }
 
-  // Contactar al vendedor sobre un producto
-  const handleContactSeller = async (productName: string, issueType: string) => {
+  // Contactar al vendedor sobre un producto con problema de stock
+  const handleContactSellerAboutIssue = async (productName: string, issueType: string) => {
     if (!selectedOrder?.seller?.id) {
       alert('No se puede contactar al vendedor')
       return
@@ -1969,7 +1969,7 @@ export default function OrdersPage() {
                                   Eliminar producto
                                 </button>
                                 <button
-                                  onClick={() => handleContactSeller(item.productName, issue?.issueType || '')}
+                                  onClick={() => handleContactSellerAboutIssue(item.productName, issue?.issueType || '')}
                                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 rounded-lg transition-colors"
                                 >
                                   <MessageCircle className="w-3 h-3" />
