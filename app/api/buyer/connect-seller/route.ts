@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { token, sellerId } = body
+    const { token, sellerId, phone: phoneFromForm } = body
 
     if (!token || !sellerId) {
       return NextResponse.json(
@@ -106,7 +106,8 @@ export async function POST(request: NextRequest) {
     const firstName = clerkUser.first_name || ''
     const lastName = clerkUser.last_name || ''
     const fullName = `${firstName} ${lastName}`.trim() || email.split('@')[0]
-    const phone = clerkUser.phone_numbers?.[0]?.phone_number || ''
+    // Preferir teléfono del formulario, luego el de Clerk
+    const phone = phoneFromForm || clerkUser.phone_numbers?.[0]?.phone_number || ''
 
     // Crear o actualizar authenticated_user
     await prisma.authenticated_users.upsert({

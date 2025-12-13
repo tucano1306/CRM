@@ -5,7 +5,9 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Loader2, CheckCircle, XCircle, UserPlus, Clock, Send } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Loader2, CheckCircle, XCircle, UserPlus, Clock, Send, Phone } from 'lucide-react'
 import { apiCall } from '@/lib/api-client'
 
 type ConnectionStatus = 'loading' | 'ready' | 'connecting' | 'request_sent' | 'pending' | 'already_connected' | 'error' | 'cancelled'
@@ -26,6 +28,9 @@ function ConnectPageContent() {
     requestId?: string
     createdAt?: string
   } | null>(null)
+  
+  // Campo de teléfono para el formulario
+  const [phoneNumber, setPhoneNumber] = useState('')
 
   const token = searchParams.get('token')
   const sellerId = searchParams.get('seller')
@@ -118,14 +123,15 @@ function ConnectPageContent() {
       setStatus('connecting')
       setError(null)
 
-      console.log('🔗 Conectando con vendedor:', { token, sellerId, userId })
+      console.log('🔗 Conectando con vendedor:', { token, sellerId, userId, phoneNumber })
 
       // Conectar el comprador con el vendedor
       const response = await apiCall('/api/buyer/connect-seller', {
         method: 'POST',
         body: JSON.stringify({
           token,
-          sellerId
+          sellerId,
+          phone: phoneNumber || undefined  // Enviar teléfono si se proporcionó
         })
       })
 
@@ -443,7 +449,26 @@ function ConnectPageContent() {
               </Button>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
+              {/* Campo de teléfono */}
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  Tu número de teléfono (para recibir notificaciones)
+                </Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+1 (786) 258-5427"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="w-full"
+                />
+                <p className="text-xs text-gray-500">
+                  Recibirás notificaciones por SMS y WhatsApp sobre tus pedidos
+                </p>
+              </div>
+
               <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                 <p className="text-sm text-green-800">
                   ✅ Al enviar la solicitud, el vendedor recibirá una notificación y podrá aceptarte como cliente.

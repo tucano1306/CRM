@@ -83,6 +83,7 @@ export async function POST(
           name: request.buyerName,
           email: request.buyerEmail,
           phone: request.buyerPhone || '',
+          whatsappNumber: request.buyerPhone || '', // Usar mismo número para WhatsApp
           address: request.buyerAddress || 'Por definir',
           sellerId: seller.id
         }
