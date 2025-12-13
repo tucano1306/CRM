@@ -329,6 +329,12 @@ export default function OrdersPage() {
   const [showContactModal, setShowContactModal] = useState(false)
   const [contactOrderInfo, setContactOrderInfo] = useState<Order | null>(null)
   
+  // Modal de reordenar con selección de productos
+  const [showReorderModal, setShowReorderModal] = useState(false)
+  const [reorderOrder, setReorderOrder] = useState<Order | null>(null)
+  const [selectedReorderItems, setSelectedReorderItems] = useState<Set<string>>(new Set())
+  const [reordering, setReordering] = useState(false)
+  
   // Paginación y filtro por fecha
   const [currentPage, setCurrentPage] = useState(1)
   const [dateRange, setDateRange] = useState<'7days' | '30days' | '90days' | 'all'>('30days')
@@ -816,12 +822,28 @@ export default function OrdersPage() {
   const handleQuickReorder = async (order: Order, e: React.MouseEvent) => {
     e.stopPropagation()
     
-    if (confirm('¿Quieres agregar todos los productos de esta orden al carrito?')) {
-      try {
-        let addedCount = 0
-        
-        // Agregar cada producto de la orden al carrito
-        for (const item of order.orderItems) {
+    // Abrir modal para seleccionar productos
+    setReorderOrder(order)
+    // Seleccionar todos los productos por defecto (solo los no eliminados)
+    const activeItems = order.orderItems.filter(item => !item.isDeleted)
+    setSelectedReorderItems(new Set(activeItems.map(item => item.id)))
+    setShowReorderModal(true)
+  }
+
+  // Confirmar reorden con productos seleccionados
+  const handleConfirmReorder = async () => {
+    if (!reorderOrder || selectedReorderItems.size === 0) {
+      alert('Selecciona al menos un producto para reordenar')
+      return
+    }
+    
+    try {
+      setReordering(true)
+      let addedCount = 0
+      
+      // Agregar solo los productos seleccionados al carrito
+      for (const item of reorderOrder.orderItems) {
+        if (selectedReorderItems.has(item.id) && !item.isDeleted) {
           try {
             await apiCall('/api/buyer/cart/items', {
               method: 'POST',
@@ -836,26 +858,58 @@ export default function OrdersPage() {
             console.error(`Error adding product ${item.productName}:`, error)
           }
         }
-        
-        if (addedCount > 0) {
-          setToastMessage(`✅ ${addedCount} productos agregados al carrito`)
-          setToastStatus('success')
-          setShowToast(true)
-          // Esperar un momento y redirigir al carrito
-          setTimeout(() => {
-            router.push('/buyer/cart')
-          }, 1500)
-        } else {
-          setToastMessage('No se pudieron agregar los productos')
-          setToastStatus('error')
-          setShowToast(true)
-        }
-      } catch (error) {
-        setToastMessage('Error al reordenar')
+      }
+      
+      // Cerrar modal
+      setShowReorderModal(false)
+      setReorderOrder(null)
+      setSelectedReorderItems(new Set())
+      
+      if (addedCount > 0) {
+        setToastMessage(`✅ ${addedCount} productos agregados al carrito`)
+        setToastStatus('success')
+        setShowToast(true)
+        // Esperar un momento y redirigir al carrito
+        setTimeout(() => {
+          router.push('/buyer/cart')
+        }, 1500)
+      } else {
+        setToastMessage('No se pudieron agregar los productos')
         setToastStatus('error')
         setShowToast(true)
-        console.error('Error reordering:', error)
       }
+    } catch (error) {
+      setToastMessage('Error al reordenar')
+      setToastStatus('error')
+      setShowToast(true)
+      console.error('Error reordering:', error)
+    } finally {
+      setReordering(false)
+    }
+  }
+
+  // Toggle selección de item para reordenar
+  const toggleReorderItem = (itemId: string) => {
+    setSelectedReorderItems(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId)
+      } else {
+        newSet.add(itemId)
+      }
+      return newSet
+    })
+  }
+
+  // Seleccionar/deseleccionar todos para reordenar
+  const toggleAllReorderItems = () => {
+    if (!reorderOrder) return
+    const activeItems = reorderOrder.orderItems.filter(item => !item.isDeleted)
+    
+    if (selectedReorderItems.size === activeItems.length) {
+      setSelectedReorderItems(new Set())
+    } else {
+      setSelectedReorderItems(new Set(activeItems.map(item => item.id)))
     }
   }
 
@@ -891,9 +945,15 @@ export default function OrdersPage() {
       return
     }
     
-    if (contactOrderInfo.seller?.phone) {
+    // Debug: ver qué datos del seller tenemos
+    console.log('Seller data:', contactOrderInfo.seller)
+    console.log('Seller phone:', contactOrderInfo.seller?.phone)
+    
+    const sellerPhone = contactOrderInfo.seller?.phone
+    
+    if (sellerPhone && sellerPhone.trim() !== '') {
       // Limpiar caracteres no numéricos excepto el +
-      let phone = contactOrderInfo.seller.phone.replace(/[^\d+]/g, '')
+      let phone = sellerPhone.replace(/[^\d+]/g, '')
       // Si no tiene código de país, agregar uno por defecto (ajustar según país)
       if (!phone.startsWith('+') && !phone.startsWith('1')) {
         phone = '1' + phone // Asume código de USA/Canadá, ajustar según necesidad
@@ -908,6 +968,8 @@ export default function OrdersPage() {
       // Usar window.location para mejor compatibilidad
       const whatsappUrl = `https://wa.me/${phone}?text=${message}`
       
+      console.log('WhatsApp URL:', whatsappUrl)
+      
       // Cerrar modal primero
       setShowContactModal(false)
       setContactOrderInfo(null)
@@ -921,7 +983,8 @@ export default function OrdersPage() {
         window.location.href = whatsappUrl
       }
     } else {
-      alert('El vendedor no tiene número de WhatsApp registrado. Por favor, usa el chat de la aplicación.')
+      console.warn('No phone found for seller:', contactOrderInfo.seller)
+      alert(`El vendedor "${contactOrderInfo.seller?.name || 'desconocido'}" no tiene número de WhatsApp registrado (phone: ${sellerPhone || 'null'}). Por favor, usa el chat de la aplicación.`)
       setShowContactModal(false)
       setContactOrderInfo(null)
     }
@@ -2945,6 +3008,118 @@ export default function OrdersPage() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      </div>
+    )}
+    
+    {/* Modal de reordenar con selección de productos */}
+    {showReorderModal && reorderOrder && (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] flex flex-col">
+          <div className="p-6 border-b">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-emerald-100 rounded-full">
+                <RotateCcw className="w-6 h-6 text-emerald-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Reordenar Productos</h3>
+                <p className="text-sm text-gray-500">Orden #{reorderOrder.orderNumber}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="p-4 border-b bg-gray-50">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedReorderItems.size === reorderOrder.orderItems.filter(i => !i.isDeleted).length}
+                onChange={toggleAllReorderItems}
+                className="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              <span className="font-medium text-gray-700">
+                Seleccionar todos ({selectedReorderItems.size} de {reorderOrder.orderItems.filter(i => !i.isDeleted).length})
+              </span>
+            </label>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="space-y-2">
+              {reorderOrder.orderItems.map(item => {
+                if (item.isDeleted) return null
+                const isSelected = selectedReorderItems.has(item.id)
+                
+                return (
+                  <label 
+                    key={item.id}
+                    className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                      isSelected 
+                        ? 'border-emerald-300 bg-emerald-50' 
+                        : 'border-gray-200 hover:border-gray-300 bg-white'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleReorderItem(item.id)}
+                      className="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-medium truncate ${isSelected ? 'text-emerald-800' : 'text-gray-900'}`}>
+                        {item.productName}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {item.quantity} {item.product?.unit || 'unid.'} • {formatPrice(item.pricePerUnit)} c/u
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className={`font-semibold ${isSelected ? 'text-emerald-600' : 'text-gray-700'}`}>
+                        {formatPrice(item.subtotal)}
+                      </p>
+                    </div>
+                  </label>
+                )
+              })}
+            </div>
+          </div>
+          
+          <div className="p-4 border-t bg-gray-50">
+            <div className="flex justify-between items-center mb-4">
+              <span className="text-gray-600">Productos seleccionados:</span>
+              <span className="font-bold text-lg text-emerald-600">
+                {selectedReorderItems.size} productos
+              </span>
+            </div>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowReorderModal(false)
+                  setReorderOrder(null)
+                  setSelectedReorderItems(new Set())
+                }}
+                className="flex-1 px-4 py-3 text-sm font-medium text-gray-600 bg-white border-2 border-gray-200 hover:bg-gray-50 rounded-xl transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmReorder}
+                disabled={selectedReorderItems.size === 0 || reordering}
+                className="flex-1 px-4 py-3 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {reordering ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Agregando...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBag className="w-4 h-4" />
+                    Agregar al Carrito
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
