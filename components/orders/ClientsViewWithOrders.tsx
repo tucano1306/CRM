@@ -906,26 +906,42 @@ export default function ClientsViewWithOrders({
                         </Button>
                       </div>
 
-                      {selectedOrders.length > 0 && (
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto sm:ml-auto bg-gradient-to-r from-purple-50 to-purple-100 border-2 border-purple-300 rounded-lg px-3 sm:px-4 py-2 sm:py-2.5 animate-scale-in">
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-600 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm flex-shrink-0">
-                              {selectedOrders.length}
+                      {/* Sección de revisar orden - siempre visible */}
+                      <div className={`flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 w-full sm:w-auto sm:ml-auto rounded-xl px-4 sm:px-5 py-3 sm:py-3.5 transition-all duration-300 ${
+                        selectedOrders.length > 0 
+                          ? 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-lg shadow-emerald-200' 
+                          : 'bg-gradient-to-r from-gray-100 to-gray-200 border-2 border-dashed border-gray-300'
+                      }`}>
+                        {selectedOrders.length > 0 ? (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 backdrop-blur rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base flex-shrink-0 border-2 border-white/30">
+                                {selectedOrders.length}
+                              </div>
+                              <span className="text-sm sm:text-base font-semibold text-white">
+                                {selectedOrders.length === 1 ? 'orden lista para revisar' : 'órdenes seleccionadas'}
+                              </span>
                             </div>
-                            <span className="text-xs sm:text-sm font-semibold text-purple-900">
-                              {selectedOrders.length === 1 ? 'orden seleccionada' : 'órdenes seleccionadas'}
+                            <Button
+                              onClick={() => setShowBulkStatusModal(true)}
+                              size="lg"
+                              className="bg-white text-emerald-600 hover:bg-emerald-50 shadow-lg hover:shadow-xl transition-all text-sm sm:text-base h-10 sm:h-11 w-full sm:w-auto font-bold px-6"
+                            >
+                              <Package className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                              Ver Productos
+                            </Button>
+                          </>
+                        ) : (
+                          <div className="flex items-center gap-3 w-full justify-center sm:justify-start">
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-300 rounded-full flex items-center justify-center text-gray-500 flex-shrink-0">
+                              <CheckSquare className="h-4 w-4 sm:h-5 sm:w-5" />
+                            </div>
+                            <span className="text-sm sm:text-base font-medium text-gray-500">
+                              👆 Selecciona una orden para ver sus productos
                             </span>
                           </div>
-                          <Button
-                            onClick={() => setShowBulkStatusModal(true)}
-                            size="sm"
-                            className="bg-purple-600 hover:bg-purple-700 shadow-lg hover:shadow-xl transition-all text-xs sm:text-sm h-8 sm:h-9 w-full sm:w-auto"
-                          >
-                            <Package className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
-                            Revisar Orden
-                          </Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
