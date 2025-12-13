@@ -102,6 +102,7 @@ type Order = {
     name: string
     email: string
     id?: string
+    phone?: string | null
   }
   rating?: number | null
   ratingComment?: string | null
@@ -323,6 +324,10 @@ export default function OrdersPage() {
   const [catalogProducts, setCatalogProducts] = useState<any[]>([])
   const [loadingCatalog, setLoadingCatalog] = useState(false)
   const [catalogSearch, setCatalogSearch] = useState('')
+  
+  // Modal de opciones de contacto
+  const [showContactModal, setShowContactModal] = useState(false)
+  const [contactOrderInfo, setContactOrderInfo] = useState<Order | null>(null)
   
   // Paginación y filtro por fecha
   const [currentPage, setCurrentPage] = useState(1)
@@ -599,14 +604,22 @@ export default function OrdersPage() {
     try {
       setLoadingCatalog(true)
       const result = await apiCall(`/api/sellers/${selectedOrder?.seller?.id}/products`, {
-        timeout: 5000,
+        timeout: 10000,
       })
+      console.log('Catalog API response:', result) // Debug
       if (result.success && result.data) {
-        // Filtrar el producto actual
-        setCatalogProducts(result.data.filter((p: any) => p.id !== productId && p.stock > 0))
+        // La API devuelve { success, data: [...products], count }
+        // result.data contiene el objeto completo, así que products están en result.data.data o directamente result.data
+        const products = Array.isArray(result.data) ? result.data : (result.data.data || [])
+        // Filtrar el producto actual y solo con stock
+        setCatalogProducts(products.filter((p: any) => p.id !== productId && (p.stock > 0 || p.stock === undefined)))
+      } else {
+        console.error('Error loading products:', result.error)
+        setCatalogProducts([])
       }
     } catch (error) {
       console.error('Error loading catalog:', error)
+      setCatalogProducts([])
     } finally {
       setLoadingCatalog(false)
     }
@@ -851,14 +864,37 @@ export default function OrdersPage() {
     await handleViewInvoice(order)
   }
 
+  // Abrir modal de opciones de contacto
   const handleContactSeller = (order: Order, e?: React.MouseEvent) => {
     if (e) e.stopPropagation()
-    // Redirigir al chat con el vendedor
-    if (order.seller?.id) {
-      router.push(`/buyer/chat?seller=${order.seller.id}&order=${order.id}`)
-    } else {
+    if (!order.seller?.id) {
       alert('No se puede contactar al vendedor en este momento')
+      return
     }
+    setContactOrderInfo(order)
+    setShowContactModal(true)
+  }
+
+  // Contactar por chat interno
+  const handleContactViaChat = () => {
+    if (contactOrderInfo?.seller?.id) {
+      router.push(`/buyer/chat?seller=${contactOrderInfo.seller.id}&order=${contactOrderInfo.id}`)
+    }
+    setShowContactModal(false)
+    setContactOrderInfo(null)
+  }
+
+  // Contactar por WhatsApp
+  const handleContactViaWhatsApp = () => {
+    if (contactOrderInfo?.seller?.phone) {
+      const phone = contactOrderInfo.seller.phone.replace(/\D/g, '') // Limpiar caracteres
+      const message = encodeURIComponent(`Hola! Soy ${contactOrderInfo.client?.name || 'tu cliente'}. Tengo una consulta sobre mi orden #${contactOrderInfo.orderNumber}`)
+      window.open(`https://wa.me/${phone}?text=${message}`, '_blank')
+    } else {
+      alert('El vendedor no tiene número de WhatsApp registrado')
+    }
+    setShowContactModal(false)
+    setContactOrderInfo(null)
   }
 
   // ✅ ESTADO DE LOADING
@@ -2879,6 +2915,73 @@ export default function OrdersPage() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      </div>
+    )}
+    
+    {/* Modal de opciones de contacto */}
+    {showContactModal && contactOrderInfo && (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+        <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-3 bg-purple-100 rounded-full">
+                <MessageCircle className="w-6 h-6 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Contactar vendedor</h3>
+                <p className="text-sm text-gray-500">{contactOrderInfo.seller?.name}</p>
+              </div>
+            </div>
+            
+            <p className="text-sm text-gray-600 mb-4">
+              Orden #{contactOrderInfo.orderNumber}
+            </p>
+            
+            <div className="space-y-3">
+              {/* Opción Chat interno */}
+              <button
+                onClick={handleContactViaChat}
+                className="w-full flex items-center gap-3 p-4 border-2 border-purple-200 rounded-xl hover:border-purple-400 hover:bg-purple-50 transition-all"
+              >
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <MessageCircle className="w-5 h-5 text-purple-600" />
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-gray-900">Chat dentro de la app</p>
+                  <p className="text-xs text-gray-500">Mensajes internos con el vendedor</p>
+                </div>
+              </button>
+              
+              {/* Opción WhatsApp */}
+              <button
+                onClick={handleContactViaWhatsApp}
+                className="w-full flex items-center gap-3 p-4 border-2 border-green-200 rounded-xl hover:border-green-400 hover:bg-green-50 transition-all"
+              >
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <svg className="w-5 h-5 text-green-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold text-gray-900">WhatsApp</p>
+                  <p className="text-xs text-gray-500">
+                    {contactOrderInfo.seller?.phone || 'Número no disponible'}
+                  </p>
+                </div>
+              </button>
+            </div>
+            
+            <button
+              onClick={() => {
+                setShowContactModal(false)
+                setContactOrderInfo(null)
+              }}
+              className="w-full mt-4 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              Cancelar
+            </button>
           </div>
         </div>
       </div>
