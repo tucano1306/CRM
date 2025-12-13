@@ -46,19 +46,19 @@ function validateFileBasics(file: File): string | null {
 }
 
 // Helper: Validate file content matches extension
-async function validateFileContent(buffer: Buffer, extension: string): Promise<string | null> {
+async function validateFileContent(buffer: Buffer, extension: string): Promise<{ error: string | null; detectedMime?: string }> {
   const textExtensions = ['txt', 'csv']
-  if (textExtensions.includes(extension)) return null
+  if (textExtensions.includes(extension)) return { error: null }
   
   const detectedType = await fileTypeFromBuffer(buffer)
-  if (!detectedType) return 'No se pudo detectar el tipo de archivo. Posiblemente corrupto'
+  if (!detectedType) return { error: 'No se pudo detectar el tipo de archivo. Posiblemente corrupto' }
   
   const expectedMimes = EXTENSION_TO_MIME[extension] || []
   if (!expectedMimes.includes(detectedType.mime)) {
-    return `El contenido del archivo no coincide con su extensión`
+    return { error: `El contenido del archivo no coincide con su extensión` }
   }
   
-  return null
+  return { error: null, detectedMime: detectedType.mime }
 }
 
 /**
@@ -93,10 +93,11 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
     
-    const contentError = await validateFileContent(buffer, fileExtension)
-    if (contentError) {
-      return NextResponse.json({ error: contentError }, { status: 400 })
+    const contentValidation = await validateFileContent(buffer, fileExtension)
+    if (contentValidation.error) {
+      return NextResponse.json({ error: contentValidation.error }, { status: 400 })
     }
+    const detectedMime = contentValidation.detectedMime
 
     // Generate unique filename and save
     const uniqueFileName = `${uuidv4()}.${fileExtension}`
@@ -133,7 +134,7 @@ export async function POST(request: NextRequest) {
       attachmentType,
       fileName: sanitizedFileName,
       fileSize: file.size,
-      mimeType: detectedType?.mime || file.type
+      mimeType: detectedMime || file.type
     })
 
   } catch (error) {

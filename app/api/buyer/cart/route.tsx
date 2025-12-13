@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { addToCartSchema, validateSchema } from '@/lib/validations'
 import { prisma } from '@/lib/prisma'
+import { sendCartUpdateEvent } from '@/lib/supabase-server'
 
 // GET /api/buyer/cart - Obtener carrito del usuario
 export async function GET() {
@@ -156,6 +157,22 @@ export async function POST(request: Request) {
       },
     })
 
+    // 📡 ENVIAR EVENTO REALTIME de carrito actualizado
+    const itemCount = updatedCart?.items.reduce((sum, item) => sum + item.quantity, 0) || 0
+    const totalAmount = updatedCart?.items.reduce((sum, item) => sum + (item.price * item.quantity), 0) || 0
+    
+    try {
+      await sendCartUpdateEvent(userId, {
+        action: existingItem ? 'update' : 'add',
+        itemCount,
+        totalAmount,
+        productId,
+        productName: product.name
+      })
+    } catch (realtimeError) {
+      console.error('Error sending cart realtime event:', realtimeError)
+    }
+
     return NextResponse.json({
       success: true,
       cart: updatedCart,
@@ -188,6 +205,17 @@ export async function DELETE() {
       await prisma.cartItem.deleteMany({
         where: { cartId: cart.id },
       })
+    }
+
+    // 📡 ENVIAR EVENTO REALTIME de carrito vaciado
+    try {
+      await sendCartUpdateEvent(userId, {
+        action: 'clear',
+        itemCount: 0,
+        totalAmount: 0
+      })
+    } catch (realtimeError) {
+      console.error('Error sending cart realtime event:', realtimeError)
     }
 
     return NextResponse.json({

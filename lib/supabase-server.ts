@@ -72,3 +72,155 @@ export function getBuyerChannel(buyerId: string) {
 export function getOrderChannel(orderId: string) {
   return `order-${orderId}`
 }
+
+/**
+ * Canales para chat
+ */
+export function getChatChannel(userId1: string, userId2: string) {
+  // Ordenar IDs para que el canal sea consistente sin importar quién envía
+  const sorted = [userId1, userId2].sort()
+  return `chat-${sorted[0]}-${sorted[1]}`
+}
+
+export function getUserChatChannel(userId: string) {
+  return `user-chat-${userId}`
+}
+
+/**
+ * Canal para carrito
+ */
+export function getCartChannel(userId: string) {
+  return `cart-${userId}`
+}
+
+/**
+ * Canal para notificaciones
+ */
+export function getNotificationChannel(userId: string) {
+  return `notifications-${userId}`
+}
+
+// ==========================================
+// FUNCIONES HELPER PARA ENVIAR EVENTOS ESPECÍFICOS
+// ==========================================
+
+/**
+ * Enviar evento de nuevo mensaje de chat
+ */
+export async function sendChatMessageEvent(
+  senderId: string,
+  receiverId: string,
+  messageData: {
+    messageId: string
+    message: string
+    senderName?: string
+    attachmentUrl?: string | null
+    attachmentType?: string | null
+    orderId?: string | null
+    createdAt: string
+  }
+) {
+  // Enviar al canal del receptor
+  await sendRealtimeEvent(
+    getUserChatChannel(receiverId),
+    'chat:message-new',
+    {
+      ...messageData,
+      senderId,
+      receiverId
+    }
+  )
+  
+  return true
+}
+
+/**
+ * Enviar evento de mensaje leído
+ */
+export async function sendChatReadEvent(
+  senderId: string,
+  receiverId: string,
+  messageIds: string[]
+) {
+  await sendRealtimeEvent(
+    getUserChatChannel(senderId),
+    'chat:message-read',
+    {
+      messageIds,
+      readBy: receiverId,
+      readAt: new Date().toISOString()
+    }
+  )
+  
+  return true
+}
+
+/**
+ * Enviar evento de typing
+ */
+export async function sendTypingEvent(
+  senderId: string,
+  receiverId: string,
+  isTyping: boolean
+) {
+  await sendRealtimeEvent(
+    getUserChatChannel(receiverId),
+    'chat:typing',
+    {
+      senderId,
+      isTyping,
+      timestamp: new Date().toISOString()
+    }
+  )
+  
+  return true
+}
+
+/**
+ * Enviar evento de actualización de carrito
+ */
+export async function sendCartUpdateEvent(
+  userId: string,
+  cartData: {
+    action: 'add' | 'remove' | 'update' | 'clear'
+    itemCount: number
+    totalAmount?: number
+    productId?: string
+    productName?: string
+  }
+) {
+  await sendRealtimeEvent(
+    getCartChannel(userId),
+    'cart:updated',
+    {
+      ...cartData,
+      timestamp: new Date().toISOString()
+    }
+  )
+  
+  return true
+}
+
+/**
+ * Enviar evento de nueva notificación
+ */
+export async function sendNotificationEvent(
+  userId: string,
+  notification: {
+    id: string
+    type: string
+    title: string
+    message: string
+    createdAt: string
+    relatedId?: string | null
+    orderId?: string | null
+  }
+) {
+  await sendRealtimeEvent(
+    getNotificationChannel(userId),
+    'notification:new',
+    notification
+  )
+  
+  return true
+}

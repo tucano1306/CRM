@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { NotificationType } from '@prisma/client'
+import { useUser } from '@clerk/nextjs'
+import { useRealtimeSubscription, RealtimeEvents } from '@/lib/supabase-realtime'
 
 interface Notification {
   id: string
@@ -23,6 +25,7 @@ interface NotificationContextType {
   loading: boolean
   error: string | null
   newNotification: Notification | null
+  realtimeConnected: boolean
   markAsRead: (id: string) => Promise<void>
   markAllAsRead: () => Promise<void>
   refreshNotifications: () => Promise<void>
@@ -32,6 +35,7 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useUser()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -51,21 +55,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const result = await response.json()
       const notificationsData = result.data?.data?.notifications || result.data?.notifications || result.notifications || []
       
-      // Detectar nuevas notificaciones
+      // Actualizar IDs previos
       const currentIds = new Set<string>(notificationsData.map((n: Notification) => n.id))
-      const newIds = Array.from(currentIds).filter(id => !previousNotificationIdsRef.current.has(id))
-      
-      if (newIds.length > 0 && previousNotificationIdsRef.current.size > 0) {
-        // Hay notificaciones nuevas (y no es la primera carga)
-        const newestNotification = notificationsData.find((n: Notification) => newIds.includes(n.id))
-        if (newestNotification && !newestNotification.isRead) {
-          // ⚠️ LOG COMENTADO PARA REDUCIR RUIDO EN DESARROLLO
-          // console.log('🔔 [NOTIFICATION PROVIDER] Nueva notificación detectada:', newestNotification)
-          setNewNotification(newestNotification)
-        }
-      }
-      
       previousNotificationIdsRef.current = currentIds
+      
       setNotifications(notificationsData)
       setError(null)
     } catch (err: any) {
@@ -74,6 +67,50 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setLoading(false)
     }
   }, [])
+
+  // 📡 REALTIME: Escuchar nuevas notificaciones via Supabase
+  const { isConnected: realtimeConnected } = useRealtimeSubscription(
+    `notifications-${user?.id}`,
+    RealtimeEvents.NOTIFICATION_NEW,
+    useCallback((payload: any) => {
+      console.log('🔔 Realtime: Nueva notificación recibida', payload)
+      
+      // Crear objeto de notificación desde el payload
+      const newNotif: Notification = {
+        id: payload.id,
+        type: payload.type as NotificationType,
+        title: payload.title,
+        message: payload.message,
+        orderId: payload.orderId || null,
+        clientId: null,
+        sellerId: null,
+        isRead: false,
+        createdAt: new Date(payload.createdAt),
+        readAt: null,
+        relatedId: payload.relatedId || null,
+      }
+      
+      // Agregar al principio de la lista
+      setNotifications(prev => {
+        // Evitar duplicados
+        if (prev.some(n => n.id === newNotif.id)) return prev
+        return [newNotif, ...prev]
+      })
+      
+      // Mostrar como nueva notificación
+      setNewNotification(newNotif)
+      
+      // Reproducir sonido
+      try {
+        const audio = new Audio('/notification.mp3')
+        audio.volume = 0.5
+        audio.play().catch(() => {})
+      } catch {
+        // Ignorar si no hay sonido
+      }
+    }, []),
+    !!user?.id
+  )
 
   const markAsRead = useCallback(async (id: string) => {
     try {
@@ -103,9 +140,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     fetchNotifications()
-    const interval = setInterval(fetchNotifications, 30000) // Cada 30 segundos (reducido para evitar rate limiting)
-    return () => clearInterval(interval)
-  }, [fetchNotifications])
+    
+    // 📡 POLLING DE RESPALDO: Solo cada 60 segundos como fallback
+    const backupInterval = setInterval(() => {
+      if (!realtimeConnected) {
+        console.log('🔄 Notifications backup polling (realtime disconnected)')
+        fetchNotifications()
+      }
+    }, 60000)
+    
+    return () => clearInterval(backupInterval)
+  }, [fetchNotifications, realtimeConnected])
 
   const unreadCount = notifications.filter(n => !n.isRead).length
 
@@ -116,6 +161,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       loading, 
       error, 
       newNotification,
+      realtimeConnected,
       markAsRead, 
       markAllAsRead, 
       refreshNotifications: fetchNotifications,

@@ -1,5 +1,6 @@
 import { formatPrice } from './utils'
 import { prisma } from '@/lib/prisma'
+import { sendNotificationEvent, getNotificationChannel } from '@/lib/supabase-server'
 
 // Tipo definido manualmente para coincidir con el schema de Prisma
 export type NotificationType = 
@@ -61,6 +62,41 @@ export async function createNotification(params: CreateNotificationParams) {
       type: notification.type,
       to: params.sellerId ? `Vendedor: ${params.sellerId}` : `Comprador: ${params.clientId}`,
     })
+
+    // 📡 ENVIAR EVENTO REALTIME de nueva notificación
+    try {
+      // Buscar el authId del usuario para el canal
+      let authId: string | null = null
+      
+      if (params.sellerId) {
+        const seller = await prisma.seller.findUnique({
+          where: { id: params.sellerId },
+          include: { authenticated_users: { select: { authId: true }, take: 1 } }
+        })
+        authId = seller?.authenticated_users[0]?.authId || null
+      } else if (params.clientId) {
+        const client = await prisma.client.findUnique({
+          where: { id: params.clientId },
+          include: { authenticated_users: { select: { authId: true }, take: 1 } }
+        })
+        authId = client?.authenticated_users[0]?.authId || null
+      }
+
+      if (authId) {
+        await sendNotificationEvent(authId, {
+          id: notification.id,
+          type: notification.type,
+          title: notification.title,
+          message: notification.message,
+          createdAt: notification.createdAt.toISOString(),
+          relatedId: notification.relatedId,
+          orderId: notification.orderId
+        })
+      }
+    } catch (realtimeError) {
+      // No bloquear si falla realtime
+      console.error('Error sending notification realtime event:', realtimeError)
+    }
 
     return notification
   } catch (error) {

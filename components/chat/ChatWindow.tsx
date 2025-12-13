@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Send, Clock, CheckCheck, Check, AlertCircle, Paperclip, Smile, Search, Phone, Video, MoreVertical, Image as ImageIcon, FileText, X, Download } from 'lucide-react'
 import { v4 as uuidv4 } from 'uuid'
+import { useRealtimeSubscription, RealtimeEvents } from '@/lib/supabase-realtime'
 
 interface Message {
   id: string
@@ -53,18 +54,93 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const fetchIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const isFetchingRef = useRef(false)
   const previousMessageCountRef = useRef(0) // Para detectar nuevos mensajes
   const consecutiveErrorsRef = useRef(0) // Contador de errores consecutivos
   const hasLoadedOnceRef = useRef(false) // Si ya cargó al menos una vez
+
+  // 📡 REALTIME: Escuchar nuevos mensajes via Supabase
+  const { isConnected: realtimeConnected } = useRealtimeSubscription(
+    `user-chat-${user?.id}`,
+    RealtimeEvents.CHAT_MESSAGE_NEW,
+    useCallback((payload: any) => {
+      console.log('📨 Realtime: Nuevo mensaje recibido', payload)
+      
+      // Verificar que es de la conversación actual
+      if (payload.senderId === receiverId) {
+        // Agregar el nuevo mensaje directamente al estado
+        const newMessage: Message = {
+          id: payload.messageId,
+          senderId: payload.senderId,
+          receiverId: payload.receiverId,
+          message: payload.message,
+          isRead: false,
+          createdAt: payload.createdAt,
+          attachmentUrl: payload.attachmentUrl || undefined,
+          attachmentType: payload.attachmentType || undefined,
+        }
+        
+        setMessages(prev => {
+          // Evitar duplicados
+          if (prev.some(m => m.id === newMessage.id)) return prev
+          return [...prev, newMessage]
+        })
+        
+        // Reproducir sonido
+        playNotificationSound()
+        
+        // Auto-marcar como leído si la ventana está activa
+        markAsRead([newMessage.id])
+      }
+    }, [receiverId]),
+    !!user?.id
+  )
+
+  // 📡 REALTIME: Escuchar cuando el otro usuario lee mensajes
+  useRealtimeSubscription(
+    `user-chat-${user?.id}`,
+    RealtimeEvents.CHAT_MESSAGE_READ,
+    useCallback((payload: any) => {
+      console.log('✅ Realtime: Mensajes marcados como leídos', payload)
+      
+      // Actualizar el estado de isRead para los mensajes leídos
+      if (payload.messageIds && Array.isArray(payload.messageIds)) {
+        setMessages(prev => 
+          prev.map(m => 
+            payload.messageIds.includes(m.id) 
+              ? { ...m, isRead: true } 
+              : m
+          )
+        )
+      }
+    }, []),
+    !!user?.id
+  )
+
+  // 📡 REALTIME: Escuchar cuando el otro está escribiendo
+  useRealtimeSubscription(
+    `user-chat-${user?.id}`,
+    RealtimeEvents.CHAT_TYPING,
+    useCallback((payload: any) => {
+      if (payload.senderId === receiverId) {
+        setOtherUserTyping(payload.isTyping)
+        
+        // Auto-limpiar después de 3 segundos
+        if (payload.isTyping) {
+          setTimeout(() => setOtherUserTyping(false), 3000)
+        }
+      }
+    }, [receiverId]),
+    !!user?.id
+  )
 
   // Log inicial para debugging
   console.log('💬 ChatWindow montado con:', {
     receiverId,
     receiverName,
     orderId,
-    currentUserId: user?.id
+    currentUserId: user?.id,
+    realtimeConnected
   })
 
   const markAsRead = async (messageIds: string[]) => {
@@ -167,28 +243,22 @@ export default function ChatWindow({ receiverId, receiverName, orderId }: ChatWi
       return
     }
 
-    // Limpiar intervalo anterior si existe
-    if (fetchIntervalRef.current) {
-      clearInterval(fetchIntervalRef.current)
-      fetchIntervalRef.current = null
-    }
-
     // Cargar mensajes inicialmente
     fetchMessages()
 
-    // Configurar polling cada 15 segundos (reducido para evitar rate limiting)
-    fetchIntervalRef.current = setInterval(() => {
-      fetchMessages()
-    }, 15000)
-
-    // Cleanup al desmontar o cuando cambien las dependencias
-    return () => {
-      if (fetchIntervalRef.current) {
-        clearInterval(fetchIntervalRef.current)
-        fetchIntervalRef.current = null
+    // 📡 POLLING DE RESPALDO: Solo cada 60 segundos como fallback
+    // El sistema principal es realtime via Supabase
+    const backupInterval = setInterval(() => {
+      if (!realtimeConnected) {
+        console.log('🔄 Backup polling (realtime disconnected)')
+        fetchMessages()
       }
+    }, 60000)
+
+    return () => {
+      clearInterval(backupInterval)
     }
-  }, [user?.id, receiverId, orderId, fetchMessages])
+  }, [user?.id, receiverId, orderId, fetchMessages, realtimeConnected])
 
   useEffect(() => {
     scrollToBottom()

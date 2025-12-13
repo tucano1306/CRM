@@ -37,11 +37,31 @@ export function getSupabaseClient() {
  * Eventos de tiempo real
  */
 export const RealtimeEvents = {
+  // Orders
   ORDER_UPDATED: 'order:updated',
   ORDER_STATUS_CHANGED: 'order:status-changed',
+  ORDER_CREATED: 'order:created',
+  
+  // Chat
+  CHAT_MESSAGE_NEW: 'chat:message-new',
+  CHAT_MESSAGE_READ: 'chat:message-read',
+  CHAT_TYPING: 'chat:typing',
+  
+  // Notifications
   NOTIFICATION_NEW: 'notification:new',
-  MESSAGE_NEW: 'message:new',
+  NOTIFICATION_READ: 'notification:read',
+  
+  // Cart
+  CART_UPDATED: 'cart:updated',
+  CART_ITEM_ADDED: 'cart:item-added',
+  CART_ITEM_REMOVED: 'cart:item-removed',
+  
+  // Products
   PRODUCT_UPDATED: 'product:updated',
+  PRODUCT_STOCK_CHANGED: 'product:stock-changed',
+  
+  // Legacy (for backwards compatibility)
+  MESSAGE_NEW: 'message:new',
 } as const
 
 /**

@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { withDbRetry } from '@/lib/db-retry'
 import { eventEmitter } from '@/lib/events/eventEmitter'
 import { EventType } from '@/lib/events/types/event.types'
+import { sendChatMessageEvent, sendChatReadEvent } from '@/lib/supabase-server'
 
 /**
  * GET /api/chat-messages?otherUserId=xxx&orderId=xxx
@@ -366,6 +367,22 @@ Día: ${dayOfWeek}, Hora actual: ${currentTime}`
       console.error('Error emitting CHAT_MESSAGE_SENT event:', eventError)
     }
 
+    // 10. 📡 ENVIAR EVENTO REALTIME al receptor
+    try {
+      await sendChatMessageEvent(userId, receiverId, {
+        messageId: chatMessage.id,
+        message: message,
+        senderName: authenticatedUser.name || 'Usuario',
+        attachmentUrl: body.attachmentUrl || null,
+        attachmentType: body.attachmentType || null,
+        orderId: orderId || null,
+        createdAt: chatMessage.createdAt.toISOString()
+      })
+    } catch (realtimeError) {
+      // No bloquear si falla realtime
+      console.error('Error sending realtime chat event:', realtimeError)
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Mensaje enviado exitosamente',
@@ -446,6 +463,22 @@ export async function PATCH(request: NextRequest) {
     } catch (eventError) {
       // No bloquear la respuesta si falla el evento
       console.error('Error emitting CHAT_MESSAGE_READ event:', eventError)
+    }
+
+    // 📡 ENVIAR EVENTO REALTIME de mensajes leídos
+    // Necesitamos saber quién es el sender para notificarle
+    try {
+      // Obtener el senderId del primer mensaje para notificar
+      const firstMessage = await prisma.chatMessage.findFirst({
+        where: { id: { in: messageIds } },
+        select: { senderId: true }
+      })
+      
+      if (firstMessage && firstMessage.senderId !== userId) {
+        await sendChatReadEvent(firstMessage.senderId, userId, messageIds)
+      }
+    } catch (realtimeError) {
+      console.error('Error sending realtime read event:', realtimeError)
     }
 
     return NextResponse.json({
