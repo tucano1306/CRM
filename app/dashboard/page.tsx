@@ -902,38 +902,6 @@ export default function DashboardPage() {
               <button
                 onClick={() => {
                   setShowQuickActionsModal(false)
-                  router.push('/quotes')
-                }}
-                className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-4 border border-gray-200 rounded-lg hover:bg-orange-50 hover:border-orange-300 transition-colors"
-              >
-                <div className="bg-orange-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
-                  <FileText className="text-orange-600" size={18} />
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-gray-800 text-sm sm:text-base">Cotizaciones</p>
-                  <p className="text-xs sm:text-sm text-gray-600">Ver cotizaciones</p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => {
-                  setShowQuickActionsModal(false)
-                  router.push('/returns')
-                }}
-                className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-4 border border-gray-200 rounded-lg hover:bg-red-50 hover:border-red-300 transition-colors"
-              >
-                <div className="bg-red-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
-                  <RotateCw className="text-red-600" size={18} />
-                </div>
-                <div className="text-left">
-                  <p className="font-semibold text-gray-800 text-sm sm:text-base">Devoluciones</p>
-                  <p className="text-xs sm:text-sm text-gray-600">Ver devoluciones</p>
-                </div>
-              </button>
-
-              <button
-                onClick={() => {
-                  setShowQuickActionsModal(false)
                   router.push('/chat')
                 }}
                 className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-4 border border-gray-200 rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition-colors"

@@ -214,7 +214,7 @@ function SelectModeContent() {
                     </li>
                     <li className="flex items-start">
                       <span className="text-violet-500 mr-2">✓</span>
-                      <span>Crea cotizaciones y facturas</span>
+                      <span>Revisa y confirma órdenes</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-violet-500 mr-2">✓</span>
@@ -283,7 +283,7 @@ function SelectModeContent() {
                     </li>
                     <li className="flex items-start">
                       <span className="text-blue-500 mr-2">✓</span>
-                      <span>Revisa cotizaciones recibidas</span>
+                      <span>Seguimiento de tus órdenes</span>
                     </li>
                     <li className="flex items-start">
                       <span className="text-blue-500 mr-2">✓</span>
