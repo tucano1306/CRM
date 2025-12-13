@@ -598,6 +598,17 @@ export async function GET() {
               },
             },
           },
+          // ← Para mostrar problemas de stock al comprador
+          issues: {
+            select: {
+              id: true,
+              productName: true,
+              issueType: true,
+              requestedQty: true,
+              availableQty: true,
+              status: true,
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',

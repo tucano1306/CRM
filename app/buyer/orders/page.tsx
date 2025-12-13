@@ -19,6 +19,7 @@ import {
   Calendar,
   Loader2,
   AlertCircle,
+  AlertTriangle,
   Truck,
   PackageCheck,
   X,
@@ -36,6 +37,8 @@ import {
   BarChart3,
   RefreshCw,
   Plus,
+  Trash2,
+  RefreshCcw,
 } from 'lucide-react'
 import OrderCountdown from '@/components/buyer/OrderCountdown'
 import { OrderCardSkeleton } from '@/components/skeletons'
@@ -81,6 +84,7 @@ type Order = {
   deliveryInstructions: string | null
   createdAt: string
   confirmationDeadline?: string
+  hasIssues?: boolean
   orderItems: OrderItem[]
   client: {
     name: string
@@ -95,6 +99,14 @@ type Order = {
   }
   rating?: number | null
   ratingComment?: string | null
+  issues?: Array<{
+    id: string
+    productName: string
+    issueType: string
+    requestedQty: number
+    availableQty: number
+    status: string
+  }>
   creditNoteUsages?: Array<{  // ← Agregar créditos usados
     id: string
     amountUsed: number
@@ -115,6 +127,30 @@ const statusConfig = {
     color: 'text-yellow-600',
     bg: 'bg-yellow-50',
     border: 'border-yellow-200',
+  },
+  REVIEWING: {
+    label: 'En Revisión',
+    description: 'El vendedor está revisando tu pedido',
+    icon: Package,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200',
+  },
+  ISSUE_REPORTED: {
+    label: '⚠️ Atención Requerida',
+    description: 'Hay productos con problemas de stock',
+    icon: AlertTriangle,
+    color: 'text-amber-600',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
+  },
+  LOCKED: {
+    label: 'Bloqueada',
+    description: 'Orden bloqueada para procesamiento',
+    icon: Package,
+    color: 'text-gray-600',
+    bg: 'bg-gray-50',
+    border: 'border-gray-200',
   },
   CONFIRMED: {
     label: 'Confirmada',
@@ -264,6 +300,11 @@ export default function OrdersPage() {
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [toastStatus, setToastStatus] = useState('')
+  
+  // Estados para acciones del comprador sobre productos con issues
+  const [removingItem, setRemovingItem] = useState<string | null>(null)
+  const [showSubstituteModal, setShowSubstituteModal] = useState<string | null>(null)
+  const [sendingMessage, setSendingMessage] = useState(false)
   
   // Paginación y filtro por fecha
   const [currentPage, setCurrentPage] = useState(1)
@@ -465,6 +506,101 @@ export default function OrdersPage() {
   const closeOrderModal = () => {
     setShowOrderModal(false)
     setSelectedOrder(null)
+  }
+
+  // Función auxiliar para obtener el issue de un producto
+  const getProductIssue = (productName: string) => {
+    return selectedOrder?.issues?.find(issue => issue.productName === productName)
+  }
+
+  // Eliminar producto de la orden (buyer decide no quererlo)
+  const handleRemoveProduct = async (itemId: string, productName: string) => {
+    if (!selectedOrder) return
+    
+    const confirmed = confirm(`¿Estás seguro de eliminar "${productName}" de tu orden?`)
+    if (!confirmed) return
+    
+    try {
+      setRemovingItem(itemId)
+      
+      const result = await apiCall(`/api/buyer/orders/${selectedOrder.id}/items/${itemId}`, {
+        method: 'DELETE',
+        timeout: 5000,
+      })
+      
+      if (result.success) {
+        setToastMessage(`✅ "${productName}" eliminado de la orden`)
+        setToastStatus('success')
+        setShowToast(true)
+        
+        // Actualizar la orden localmente
+        setSelectedOrder(prev => prev ? {
+          ...prev,
+          orderItems: prev.orderItems.filter(item => item.id !== itemId),
+          totalAmount: result.newTotal || prev.totalAmount
+        } : null)
+        
+        // Refrescar órdenes
+        fetchOrders()
+      } else {
+        alert(result.error || 'Error al eliminar el producto')
+      }
+    } catch (error) {
+      console.error('Error removing product:', error)
+      alert('Error al eliminar el producto')
+    } finally {
+      setRemovingItem(null)
+    }
+  }
+
+  // Aceptar cantidad parcial de un producto
+  const handleAcceptPartial = async (itemId: string, productName: string, newQty: number) => {
+    if (!selectedOrder) return
+    
+    const confirmed = confirm(`¿Aceptar solo ${newQty} unidades de "${productName}"?`)
+    if (!confirmed) return
+    
+    try {
+      setRemovingItem(itemId)
+      
+      const result = await apiCall(`/api/buyer/orders/${selectedOrder.id}/items/${itemId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ quantity: newQty }),
+        timeout: 5000,
+      })
+      
+      if (result.success) {
+        setToastMessage(`✅ Cantidad ajustada a ${newQty} unidades`)
+        setToastStatus('success')
+        setShowToast(true)
+        
+        // Refrescar órdenes
+        fetchOrders()
+        
+        // Actualizar el modal
+        if (result.order) {
+          setSelectedOrder(result.order)
+        }
+      } else {
+        alert(result.error || 'Error al ajustar la cantidad')
+      }
+    } catch (error) {
+      console.error('Error adjusting quantity:', error)
+      alert('Error al ajustar la cantidad')
+    } finally {
+      setRemovingItem(null)
+    }
+  }
+
+  // Contactar al vendedor sobre un producto
+  const handleContactSeller = async (productName: string, issueType: string) => {
+    if (!selectedOrder?.seller?.id) {
+      alert('No se puede contactar al vendedor')
+      return
+    }
+    
+    // Redirigir al chat con contexto
+    router.push(`/chat?sellerId=${selectedOrder.seller.id}&orderId=${selectedOrder.id}&context=stock_issue&product=${encodeURIComponent(productName)}`)
   }
 
   // ✅ confirmOrder CON TIMEOUT
@@ -1033,18 +1169,30 @@ export default function OrdersPage() {
               // Determinar si necesita animación (órdenes no completadas ni canceladas)
               const needsAttention = !['COMPLETED', 'DELIVERED', 'CANCELED', 'CANCELLED'].includes(order.status)
               const isCompleted = order.status === 'COMPLETED' || order.status === 'DELIVERED'
+              const hasStockIssues = order.hasIssues || (order.issues && order.issues.length > 0) || order.status === 'ISSUE_REPORTED'
 
               return viewMode === 'grid' ? (
                 // Vista GRID (Card)
                 <div
                   key={order.id}
-                  className="bg-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all p-6 border-2 border-purple-200 hover:border-purple-300 relative"
+                  className={`bg-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all p-6 border-2 relative ${
+                    hasStockIssues ? 'border-amber-400 bg-amber-50/30' : 'border-purple-200 hover:border-purple-300'
+                  }`}
                   style={needsAttention ? {
                     animation: 'orderPulse 3s ease-in-out infinite',
                   } : {}}
                 >
+                  {/* Banner de Problemas de Stock */}
+                  {hasStockIssues && (
+                    <div className="absolute top-0 left-0 right-0 z-10">
+                      <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-t-xl flex items-center justify-center gap-2">
+                        <AlertTriangle className="h-4 w-4" />
+                        <span className="font-medium text-sm">⚠️ Algunos productos tienen problemas de stock - Revisa los detalles</span>
+                      </div>
+                    </div>
+                  )}
                   {/* Sticker de Recibida */}
-                  {isCompleted && (
+                  {isCompleted && !hasStockIssues && (
                     <div className="absolute top-0 right-0 z-10"
                       style={{
                         animation: 'stickerBounce 0.8s ease-out',
@@ -1057,7 +1205,7 @@ export default function OrdersPage() {
                     </div>
                   )}
                   {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
+                  <div className={`flex items-start justify-between mb-4 ${hasStockIssues ? 'mt-8' : ''}`}>
                     <div>
                       <h3 className="font-bold text-lg text-purple-600">
                         {order.orderNumber || `#${order.id.slice(0, 8)}`}
@@ -1698,37 +1846,141 @@ export default function OrdersPage() {
                 {/* Tab: Productos */}
                 {activeTab === 'productos' && (
                   <div className="space-y-4">
+                    {/* Banner de alerta si hay issues */}
+                    {(selectedOrder.hasIssues || (selectedOrder.issues && selectedOrder.issues.length > 0)) && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className="h-6 w-6 text-amber-600 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <h4 className="font-bold text-amber-800">⚠️ Algunos productos tienen problemas de stock</h4>
+                            <p className="text-sm text-amber-700 mt-1">
+                              El vendedor ha reportado problemas con algunos productos. 
+                              Revisa los productos marcados abajo y elige qué hacer:
+                            </p>
+                            <ul className="text-sm text-amber-700 mt-2 space-y-1">
+                              <li>• <strong>Eliminar:</strong> Quitar el producto de tu orden</li>
+                              <li>• <strong>Aceptar parcial:</strong> Recibir la cantidad disponible</li>
+                              <li>• <strong>Contactar:</strong> Hablar con el vendedor para buscar alternativas</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
                     <h3 className="text-lg font-bold text-gray-900 mb-4">
                       Productos de la orden
                     </h3>
-                    {selectedOrder.orderItems?.map((item) => (
-                      <div 
-                        key={item.id} 
-                        className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <div className="flex-shrink-0 w-16 h-16 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <Package className="w-8 h-8 text-purple-600" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900">
-                            {item.productName}
-                          </h4>
-                          <p className="text-xs text-gray-600">
-                            {item.quantity} {item.product?.unit || 'und'} × {formatPrice(item.pricePerUnit)}
-                          </p>
-                          {item.itemNote && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              Nota: {item.itemNote}
-                            </p>
+                    {selectedOrder.orderItems?.map((item) => {
+                      const issue = getProductIssue(item.productName)
+                      const hasIssue = !!issue
+                      const isOutOfStock = issue?.issueType === 'OUT_OF_STOCK'
+                      const isPartialStock = issue?.issueType === 'PARTIAL_STOCK'
+                      
+                      return (
+                        <div 
+                          key={item.id} 
+                          className={`rounded-xl border transition-all ${
+                            isOutOfStock ? 'bg-red-50 border-red-300' :
+                            isPartialStock ? 'bg-amber-50 border-amber-300' :
+                            'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className="flex items-center gap-4 p-4">
+                            <div className={`flex-shrink-0 w-16 h-16 rounded-lg flex items-center justify-center ${
+                              isOutOfStock ? 'bg-red-100' :
+                              isPartialStock ? 'bg-amber-100' :
+                              'bg-purple-100'
+                            }`}>
+                              {hasIssue ? (
+                                isOutOfStock ? (
+                                  <XCircle className="w-8 h-8 text-red-600" />
+                                ) : (
+                                  <AlertTriangle className="w-8 h-8 text-amber-600" />
+                                )
+                              ) : (
+                                <Package className="w-8 h-8 text-purple-600" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <h4 className={`font-semibold ${hasIssue ? 'text-gray-700' : 'text-gray-900'}`}>
+                                {item.productName}
+                              </h4>
+                              <p className="text-xs text-gray-600">
+                                {item.quantity} {item.product?.unit || 'und'} × {formatPrice(item.pricePerUnit)}
+                              </p>
+                              {item.itemNote && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Nota: {item.itemNote}
+                                </p>
+                              )}
+                              
+                              {/* Mostrar el problema */}
+                              {hasIssue && (
+                                <div className={`mt-2 p-2 rounded-lg text-sm ${
+                                  isOutOfStock ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
+                                }`}>
+                                  {isOutOfStock ? (
+                                    <span>❌ <strong>Sin stock</strong> - Este producto no está disponible</span>
+                                  ) : (
+                                    <span>⚠️ <strong>Stock parcial</strong> - Solo hay {issue?.availableQty} de {issue?.requestedQty} disponibles</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <p className={`font-bold text-sm ${hasIssue ? 'text-gray-400 line-through' : 'text-purple-600'}`}>
+                                {formatPrice(item.subtotal)}
+                              </p>
+                              {!hasIssue && (
+                                <CheckCircle className="w-5 h-5 text-green-500 mt-1 ml-auto" />
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Opciones para productos con problemas */}
+                          {hasIssue && (
+                            <div className="border-t border-gray-200 p-3 bg-white/50 rounded-b-xl">
+                              <p className="text-xs text-gray-600 mb-2 font-medium">¿Qué deseas hacer?</p>
+                              <div className="flex flex-wrap gap-2">
+                                {isPartialStock && (
+                                  <button
+                                    onClick={() => handleAcceptPartial(item.id, item.productName, issue?.availableQty || 0)}
+                                    disabled={removingItem === item.id}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-amber-100 text-amber-800 hover:bg-amber-200 rounded-lg transition-colors disabled:opacity-50"
+                                  >
+                                    {removingItem === item.id ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      <RefreshCcw className="w-3 h-3" />
+                                    )}
+                                    Aceptar {issue?.availableQty} unidades
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleRemoveProduct(item.id, item.productName)}
+                                  disabled={removingItem === item.id}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 rounded-lg transition-colors disabled:opacity-50"
+                                >
+                                  {removingItem === item.id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="w-3 h-3" />
+                                  )}
+                                  Eliminar producto
+                                </button>
+                                <button
+                                  onClick={() => handleContactSeller(item.productName, issue?.issueType || '')}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 rounded-lg transition-colors"
+                                >
+                                  <MessageCircle className="w-3 h-3" />
+                                  Contactar vendedor
+                                </button>
+                              </div>
+                            </div>
                           )}
                         </div>
-                        <div className="text-right">
-                          <p className="font-bold text-purple-600 text-sm">
-                            {formatPrice(item.subtotal)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                     
                     {/* Resumen de totales */}
                     <div className="mt-6 pt-4 border-t space-y-2 text-sm">
