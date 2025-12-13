@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Package, ShoppingCart, Truck, History, FileText, Download, Eye, Loader2 } from 'lucide-react'
+import { X, Package, ShoppingCart, History, Settings, Trash2, RefreshCw, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import OrderStatusHistory from '@/components/orders/OrderStatusHistory'
 import OrderStatusChanger from '@/components/orders/OrderStatusChanger'
@@ -36,7 +36,12 @@ interface OrderItem {
     id?: string
     sku?: string | null
     unit: string
+    stock?: number
   }
+  // Para tracking de issues
+  hasIssue?: boolean
+  issueType?: 'OUT_OF_STOCK' | 'PARTIAL_STOCK'
+  availableQty?: number
 }
 
 interface Order {
@@ -62,15 +67,14 @@ interface Order {
     phone?: string
   }
   orderItems: OrderItem[]
-  creditNoteUsages?: Array<{
+  hasIssues?: boolean
+  orderIssues?: Array<{
     id: string
-    amountUsed: number
-    creditNote: {
-      id: string
-      creditNoteNumber: string
-      amount: number
-      balance: number
-    }
+    productName: string
+    issueType: string
+    requestedQty: number
+    availableQty: number
+    status: string
   }>
 }
 
@@ -80,12 +84,11 @@ interface OrderDetailModalProps {
   onClose: () => void
   userRole?: 'seller' | 'buyer' | 'admin'
   onStatusChange?: (orderId: string, newStatus: OrderStatus, notes?: string) => Promise<void>
-  onDownloadInvoice?: (order: Order) => Promise<void>
-  onViewInvoice?: (order: Order) => Promise<void>
-  isGeneratingInvoice?: boolean
+  onRemoveProduct?: (orderId: string, itemId: string) => Promise<void>
+  onSubstituteProduct?: (orderId: string, itemId: string, newProductId: string, newQty: number) => Promise<void>
 }
 
-type TabType = 'details' | 'products' | 'history' | 'invoice'
+type TabType = 'details' | 'products' | 'history' | 'status'
 
 export default function OrderDetailModal({ 
   order, 
@@ -93,20 +96,47 @@ export default function OrderDetailModal({
   onClose,
   userRole = 'buyer',
   onStatusChange,
-  onDownloadInvoice,
-  onViewInvoice,
-  isGeneratingInvoice = false
+  onRemoveProduct,
+  onSubstituteProduct
 }: OrderDetailModalProps) {
   const [activeTab, setActiveTab] = useState<TabType>('details')
+  const [removingItem, setRemovingItem] = useState<string | null>(null)
+  const [updatingQty, setUpdatingQty] = useState<string | null>(null)
 
   if (!isOpen) return null
 
+  // Tabs disponibles - sin Factura, con Estado (solo para sellers)
   const tabs: Array<{ id: TabType; label: string; icon: any }> = [
     { id: 'details', label: 'Detalles', icon: Package },
     { id: 'products', label: 'Productos', icon: ShoppingCart },
     { id: 'history', label: 'Historial', icon: History },
-    { id: 'invoice', label: 'Factura', icon: FileText },
+    ...(userRole === 'seller' ? [{ id: 'status' as TabType, label: 'Estado', icon: Settings }] : [])
   ]
+
+  // Mapear issues a productos
+  const getProductIssue = (productName: string) => {
+    return order.orderIssues?.find(issue => issue.productName === productName)
+  }
+
+  // Manejar eliminación de producto
+  const handleRemoveProduct = async (itemId: string) => {
+    if (!onRemoveProduct) return
+    try {
+      setRemovingItem(itemId)
+      await onRemoveProduct(order.id, itemId)
+    } catch (error) {
+      console.error('Error removing product:', error)
+      alert('Error al eliminar el producto')
+    } finally {
+      setRemovingItem(null)
+    }
+  }
+
+  // Manejar actualización de cantidad
+  const handleUpdateQuantity = async (itemId: string, newQty: number) => {
+    setUpdatingQty(itemId)
+    setTimeout(() => setUpdatingQty(null), 500)
+  }
 
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ zIndex: 9999999 }}>
@@ -134,6 +164,12 @@ export default function OrderDetailModal({
                   minute: '2-digit'
                 })}
               </p>
+              {order.hasIssues && (
+                <span className="inline-flex items-center gap-1 mt-2 px-2 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium">
+                  <AlertTriangle className="h-3 w-3" />
+                  Tiene problemas de stock
+                </span>
+              )}
             </div>
             <Button
               variant="ghost"
@@ -175,28 +211,6 @@ export default function OrderDetailModal({
             {/* TAB: Detalles */}
             {activeTab === 'details' && (
               <div className="space-y-4">
-                {/* Status Changer - Solo para vendedores */}
-                {userRole === 'seller' && onStatusChange && (
-                  <div className="bg-white rounded-lg p-4 border border-blue-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-semibold text-gray-800 mb-1">
-                          Cambiar Estado de la Orden
-                        </h4>
-                        <p className="text-sm text-gray-600">
-                          Actualiza el estado según el progreso de la orden
-                        </p>
-                      </div>
-                      <OrderStatusChanger
-                        orderId={order.id}
-                        currentStatus={order.status}
-                        onStatusChange={(newStatus, notes) => onStatusChange(order.id, newStatus, notes)}
-                        userRole={userRole}
-                      />
-                    </div>
-                  </div>
-                )}
-
                 {order.client && (
                   <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border overflow-hidden">
                     <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">Información del Cliente</h3>
@@ -246,36 +260,132 @@ export default function OrderDetailModal({
               </div>
             )}
 
-            {/* TAB: Productos */}
+            {/* TAB: Productos - Con lógica para editar/eliminar */}
             {activeTab === 'products' && (
               <div className="space-y-3">
-                {order.orderItems.map((item) => (
-                  <div key={item.id} className="bg-white rounded-lg shadow-sm p-4 border">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-900">{item.productName}</p>
-                        {item.product.sku && (
-                          <p className="text-xs text-gray-500 font-mono">SKU: {item.product.sku}</p>
-                        )}
-                        <p className="text-sm text-gray-600 mt-1">
-                          {item.quantity} {item.product.unit} × {formatPrice(Number(item.pricePerUnit))}
-                        </p>
-                        {item.itemNote && (
-                          <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-200">
-                            <p className="text-xs font-medium text-blue-900">Nota:</p>
-                            <p className="text-sm text-blue-800">{item.itemNote}</p>
+                {/* Instrucciones si hay problemas */}
+                {order.hasIssues && userRole === 'seller' && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                    <h4 className="font-medium text-amber-800 flex items-center gap-2 mb-2">
+                      <AlertTriangle className="h-4 w-4" />
+                      Productos con problemas de stock
+                    </h4>
+                    <p className="text-sm text-amber-700">
+                      Puedes eliminar o ajustar la cantidad de los productos marcados en rojo/amarillo 
+                      una vez que llegues a un acuerdo con el comprador.
+                    </p>
+                  </div>
+                )}
+
+                {order.orderItems.map((item) => {
+                  const issue = getProductIssue(item.productName)
+                  const hasIssue = !!issue
+                  const isOutOfStock = issue?.issueType === 'OUT_OF_STOCK'
+                  const isPartialStock = issue?.issueType === 'PARTIAL_STOCK'
+
+                  return (
+                    <div 
+                      key={item.id} 
+                      className={`bg-white rounded-lg shadow-sm p-4 border transition-all ${
+                        isOutOfStock ? 'border-red-300 bg-red-50' :
+                        isPartialStock ? 'border-amber-300 bg-amber-50' : ''
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            {hasIssue ? (
+                              isOutOfStock ? (
+                                <X className="h-4 w-4 text-red-500" />
+                              ) : (
+                                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                              )
+                            ) : (
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                            )}
+                            <p className="font-semibold text-gray-900">{item.productName}</p>
                           </div>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-gray-900">
-                          {formatPrice(Number(item.subtotal))}
-                        </p>
+                          
+                          {item.product.sku && (
+                            <p className="text-xs text-gray-500 font-mono ml-6">SKU: {item.product.sku}</p>
+                          )}
+                          
+                          <p className="text-sm text-gray-600 mt-1 ml-6">
+                            {item.quantity} {item.product.unit} × {formatPrice(Number(item.pricePerUnit))}
+                          </p>
+
+                          {/* Mostrar issue */}
+                          {hasIssue && (
+                            <div className={`mt-2 ml-6 p-2 rounded text-sm ${
+                              isOutOfStock ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {isOutOfStock ? (
+                                <span>❌ Sin stock disponible</span>
+                              ) : (
+                                <span>⚠️ Solo {issue?.availableQty} de {issue?.requestedQty} disponibles</span>
+                              )}
+                            </div>
+                          )}
+
+                          {item.itemNote && (
+                            <div className="mt-2 ml-6 p-2 bg-blue-50 rounded border border-blue-200">
+                              <p className="text-xs font-medium text-blue-900">Nota:</p>
+                              <p className="text-sm text-blue-800">{item.itemNote}</p>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="text-right flex flex-col items-end gap-2">
+                          <p className={`text-lg font-bold ${hasIssue ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                            {formatPrice(Number(item.subtotal))}
+                          </p>
+
+                          {/* Botones de acción para productos con problemas */}
+                          {hasIssue && userRole === 'seller' && (
+                            <div className="flex gap-2">
+                              {isPartialStock && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleUpdateQuantity(item.id, issue?.availableQty || 0)}
+                                  disabled={updatingQty === item.id}
+                                  className="text-xs h-8 px-2 border-amber-300 text-amber-700 hover:bg-amber-100"
+                                >
+                                  {updatingQty === item.id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <>
+                                      <RefreshCw className="h-3 w-3 mr-1" />
+                                      Ajustar a {issue?.availableQty}
+                                    </>
+                                  )}
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleRemoveProduct(item.id)}
+                                disabled={removingItem === item.id}
+                                className="text-xs h-8 px-2 border-red-300 text-red-700 hover:bg-red-100"
+                              >
+                                {removingItem === item.id ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <>
+                                    <Trash2 className="h-3 w-3 mr-1" />
+                                    Eliminar
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
 
+                {/* Total */}
                 <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200 mt-4">
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-gray-900 text-lg">Total</span>
@@ -283,6 +393,11 @@ export default function OrderDetailModal({
                       {formatPrice(Number(order.totalAmount))}
                     </span>
                   </div>
+                  {order.hasIssues && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      * El total puede cambiar según los ajustes realizados
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -308,141 +423,55 @@ export default function OrderDetailModal({
               </div>
             )}
 
-            {/* TAB: Factura */}
-            {activeTab === 'invoice' && (
+            {/* TAB: Estado (solo vendedores) */}
+            {activeTab === 'status' && userRole === 'seller' && onStatusChange && (
               <div className="space-y-4">
-                {onDownloadInvoice && onViewInvoice ? (
-                  <>
-                    {/* Resumen de la Orden */}
-                    <div className="bg-white rounded-lg shadow-sm p-6 border">
-                      <h3 className="text-lg font-semibold mb-4">Resumen de la Orden</h3>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Subtotal:</span>
-                          <span className="font-semibold">
-                            {formatPrice((Number(order.totalAmount) / 1.1))}
-                          </span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                          <span className="text-gray-600">Impuestos (10%):</span>
-                          <span className="font-semibold">
-                            {formatPrice((Number(order.totalAmount) - Number(order.totalAmount) / 1.1))}
-                          </span>
-                        </div>
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+                  <h3 className="text-lg font-semibold text-blue-900 mb-1 flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    Cambiar Estado de la Orden
+                  </h3>
+                  <p className="text-sm text-blue-700">
+                    Actualiza el estado según el progreso de la orden
+                  </p>
+                </div>
 
-                        {/* Mostrar Notas de Crédito si existen */}
-                        {order.creditNoteUsages && order.creditNoteUsages.length > 0 && (
-                          <>
-                            <div className="border-t pt-2 flex justify-between text-sm">
-                              <span className="font-semibold text-gray-900">Total Orden:</span>
-                              <span className="font-semibold text-gray-900">
-                                {formatPrice(Number(order.totalAmount))}
-                              </span>
-                            </div>
-
-                            {/* Sección de Créditos Aplicados */}
-                            <div className="bg-green-50 rounded-lg p-3 space-y-2 border border-green-200 mt-3">
-                              <div className="font-semibold text-green-800 text-sm flex items-center gap-2">
-                                <FileText className="h-4 w-4" />
-                                Créditos Aplicados:
-                              </div>
-                              {order.creditNoteUsages.map((usage) => (
-                                <div key={usage.id} className="flex justify-between text-sm pl-6">
-                                  <span className="text-green-700">
-                                    {usage.creditNote.creditNoteNumber}:
-                                  </span>
-                                  <span className="text-green-700 font-semibold">
-                                    -{formatPrice(Number(usage.amountUsed))}
-                                  </span>
-                                </div>
-                              ))}
-                              <div className="flex justify-between text-green-800 font-bold pt-2 border-t border-green-300 text-sm">
-                                <span>Total Crédito:</span>
-                                <span>
-                                  -{formatPrice(order.creditNoteUsages.reduce((sum, usage) => sum + Number(usage.amountUsed), 0))}
-                                </span>
-                              </div>
-                            </div>
-
-                            {/* Total Final a Pagar */}
-                            <div className="border-t-2 border-purple-200 pt-2 flex justify-between bg-purple-50 -mx-6 px-6 py-3 -mb-2">
-                              <span className="font-bold text-purple-900 text-base">TOTAL A PAGAR:</span>
-                              <span className="font-bold text-purple-600 text-xl">
-                                {formatPrice((
-                                  Number(order.totalAmount) -
-                                  order.creditNoteUsages.reduce((sum, usage) => sum + Number(usage.amountUsed), 0)
-                                ))}
-                              </span>
-                            </div>
-                          </>
-                        )}
-
-                        {/* Si NO hay créditos, mostrar total normal */}
-                        {(!order.creditNoteUsages || order.creditNoteUsages.length === 0) && (
-                          <div className="border-t pt-2 flex justify-between">
-                            <span className="font-bold text-gray-900">Total:</span>
-                            <span className="font-bold text-green-600 text-lg">
-                              {formatPrice(Number(order.totalAmount))}
-                            </span>
-                          </div>
-                        )}
+                <div className="bg-white rounded-lg shadow-sm p-6 border">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-gray-700">Estado actual:</p>
+                        <p className="text-lg font-bold text-purple-600 capitalize">
+                          {order.status.replace(/_/g, ' ').toLowerCase()}
+                        </p>
                       </div>
                     </div>
-
-                    {/* Invoice Buttons */}
-                    <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
-                      <div className="flex flex-col gap-4">
-                        <div>
-                          <h4 className="font-semibold text-gray-800 flex items-center gap-2 mb-2">
-                            <FileText className="h-5 w-5 text-blue-600" />
-                            Factura Profesional
-                          </h4>
-                          <p className="text-sm text-gray-600">
-                            Genera y descarga la factura en formato PDF
-                          </p>
-                        </div>
-                        <div className="flex gap-3">
-                          <Button
-                            variant="outline"
-                            size="default"
-                            onClick={() => onViewInvoice(order)}
-                            disabled={isGeneratingInvoice}
-                            className="flex-1 gap-2"
-                          >
-                            {isGeneratingInvoice ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Eye className="h-4 w-4" />
-                            )}
-                            Ver Factura
-                          </Button>
-                          <Button
-                            variant="default"
-                            size="default"
-                            onClick={() => onDownloadInvoice(order)}
-                            disabled={isGeneratingInvoice}
-                            className="flex-1 gap-2"
-                          >
-                            {isGeneratingInvoice ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Download className="h-4 w-4" />
-                            )}
-                            Descargar PDF
-                          </Button>
-                        </div>
-                      </div>
+                    
+                    <div className="border-t pt-4">
+                      <p className="text-sm text-gray-600 mb-3">Selecciona el nuevo estado:</p>
+                      <OrderStatusChanger
+                        orderId={order.id}
+                        currentStatus={order.status}
+                        onStatusChange={(newStatus, notes) => onStatusChange(order.id, newStatus, notes)}
+                        userRole={userRole}
+                      />
                     </div>
-                  </>
-                ) : (
-                  <div className="bg-gray-50 rounded-lg p-8 text-center border-2 border-dashed border-gray-300">
-                    <FileText className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <p className="text-gray-600 mb-4">Funcionalidad de factura próximamente</p>
-                    <Button variant="outline" disabled>
-                      Generar Factura
-                    </Button>
                   </div>
-                )}
+                </div>
+
+                {/* Info adicional */}
+                <div className="bg-gray-50 rounded-lg p-4 border">
+                  <h4 className="font-medium text-gray-700 mb-2">Estados disponibles:</h4>
+                  <ul className="text-sm text-gray-600 space-y-1">
+                    <li>• <strong>Revisando</strong> - Verificando disponibilidad de productos</li>
+                    <li>• <strong>Confirmado</strong> - Orden lista para preparar</li>
+                    <li>• <strong>Preparando</strong> - En proceso de preparación</li>
+                    <li>• <strong>Listo</strong> - Listo para recoger/enviar</li>
+                    <li>• <strong>En camino</strong> - En proceso de entrega</li>
+                    <li>• <strong>Entregado</strong> - Entregado al cliente</li>
+                    <li>• <strong>Completado</strong> - Orden finalizada</li>
+                  </ul>
+                </div>
               </div>
             )}
           </div>

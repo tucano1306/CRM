@@ -414,9 +414,6 @@ export default function OrdersPage() {
           orders={orders}
           userRole="seller"
           onStatusChange={handleStatusChange}
-          onDownloadInvoice={(order) => handleDownloadInvoice(order as OrderWithItems)}
-          onViewInvoice={(order) => handleViewInvoice(order as OrderWithItems)}
-          isGeneratingInvoice={generatingInvoice || undefined}
         />
       </div>
     </MainLayout>

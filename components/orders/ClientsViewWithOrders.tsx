@@ -76,18 +76,16 @@ interface ClientsViewWithOrdersProps {
   orders: Order[]
   userRole: 'seller' | 'buyer'
   onStatusChange?: (orderId: string, newStatus: OrderStatus, notes?: string) => Promise<void>
-  onDownloadInvoice?: (order: any) => Promise<void>
-  onViewInvoice?: (order: any) => Promise<void>
-  isGeneratingInvoice?: string
+  onRemoveProduct?: (orderId: string, itemId: string) => Promise<void>
+  onSubstituteProduct?: (orderId: string, itemId: string, newProductId: string, newQty: number) => Promise<void>
 }
 
 export default function ClientsViewWithOrders({ 
   orders, 
   userRole,
   onStatusChange,
-  onDownloadInvoice,
-  onViewInvoice,
-  isGeneratingInvoice
+  onRemoveProduct,
+  onSubstituteProduct
 }: ClientsViewWithOrdersProps) {
   const [selectedClient, setSelectedClient] = useState<ClientWithOrders | null>(null)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
@@ -968,9 +966,8 @@ export default function ClientsViewWithOrders({
           onClose={() => setSelectedOrder(null)}
           userRole={userRole}
           onStatusChange={onStatusChange}
-          onDownloadInvoice={onDownloadInvoice}
-          onViewInvoice={onViewInvoice}
-          isGeneratingInvoice={isGeneratingInvoice === selectedOrder.id}
+          onRemoveProduct={onRemoveProduct}
+          onSubstituteProduct={onSubstituteProduct}
         />
       )}
 
