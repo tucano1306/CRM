@@ -43,7 +43,8 @@ type OrderStatus =
   | 'PAYMENT_PENDING'
   | 'PAID'
 
-type StockIssueType = 'OUT_OF_STOCK' | 'PARTIAL_STOCK' | null
+type StockIssueType = 'OUT_OF_STOCK' | 'PARTIAL_STOCK' | 'ACCEPTED' | null
+type ReportableIssueType = 'OUT_OF_STOCK' | 'PARTIAL_STOCK' | null
 
 interface OrderItem {
   id: string
@@ -83,6 +84,15 @@ interface ProductIssue {
   availableQty: number
 }
 
+// Tipo para los issues que se reportan al API (sin ACCEPTED)
+interface ReportableProductIssue {
+  productId: string
+  productName: string
+  issueType: ReportableIssueType
+  requestedQty: number
+  availableQty: number
+}
+
 interface OrderReviewModalProps {
   isOpen: boolean
   onClose: () => void
@@ -90,7 +100,7 @@ interface OrderReviewModalProps {
   currentStatus: OrderStatus | null
   onConfirm: (newStatus: OrderStatus, notes?: string) => Promise<void>
   selectedOrdersData?: SelectedOrder[]
-  onReportStockIssues?: (orderId: string, issues: ProductIssue[]) => Promise<void>
+  onReportStockIssues?: (orderId: string, issues: ReportableProductIssue[]) => Promise<void>
   onLockOrder?: (orderId: string) => Promise<void>
 }
 
@@ -112,6 +122,12 @@ export default function BulkStatusChangeModal({
   const [productIssues, setProductIssues] = useState<Map<string, ProductIssue>>(new Map())
   const [confirmNotes, setConfirmNotes] = useState('')
   
+  // Estado para productos aceptados (confirmados disponibles)
+  const [acceptedItems, setAcceptedItems] = useState<Set<string>>(new Set())
+  
+  // Estado para selección múltiple con checkboxes
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
+  
   // Estado para eliminación de productos
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteItemInfo, setDeleteItemInfo] = useState<{itemId: string, productName: string} | null>(null)
@@ -129,6 +145,8 @@ export default function BulkStatusChangeModal({
       setDeleteItemInfo(null)
       setDeleteReason('')
       setDeletedItems(new Set())
+      setAcceptedItems(new Set())
+      setSelectedItems(new Set())
     }
   }, [isOpen])
 
@@ -145,6 +163,29 @@ export default function BulkStatusChangeModal({
     
     const existing = newMap.get(key)
     
+    // Si es ACCEPTED, manejarlo diferente
+    if (issueType === 'ACCEPTED') {
+      // Si ya estaba marcado como aceptado, quitarlo
+      if (acceptedItems.has(key)) {
+        const newAccepted = new Set(acceptedItems)
+        newAccepted.delete(key)
+        setAcceptedItems(newAccepted)
+      } else {
+        // Marcar como aceptado y quitar cualquier issue
+        const newAccepted = new Set(acceptedItems)
+        newAccepted.add(key)
+        setAcceptedItems(newAccepted)
+        newMap.delete(key)
+        setProductIssues(newMap)
+      }
+      return
+    }
+    
+    // Si se marca un issue, quitar de aceptados
+    const newAccepted = new Set(acceptedItems)
+    newAccepted.delete(key)
+    setAcceptedItems(newAccepted)
+    
     if (existing?.issueType === issueType) {
       newMap.delete(key)
     } else {
@@ -158,6 +199,45 @@ export default function BulkStatusChangeModal({
     }
     
     setProductIssues(newMap)
+  }
+
+  // Toggle checkbox de selección
+  const toggleItemSelection = (itemId: string) => {
+    const newSelected = new Set(selectedItems)
+    if (newSelected.has(itemId)) {
+      newSelected.delete(itemId)
+    } else {
+      newSelected.add(itemId)
+    }
+    setSelectedItems(newSelected)
+  }
+
+  // Seleccionar/deseleccionar todos
+  const toggleAllSelection = () => {
+    if (selectedItems.size === orderItems.length) {
+      setSelectedItems(new Set())
+    } else {
+      setSelectedItems(new Set(orderItems.map(item => item.id)))
+    }
+  }
+
+  // Marcar todos los seleccionados como aceptados
+  const acceptAllSelected = () => {
+    if (selectedItems.size === 0) {
+      alert('Selecciona al menos un producto')
+      return
+    }
+    const newAccepted = new Set(acceptedItems)
+    const newIssues = new Map(productIssues)
+    
+    selectedItems.forEach(itemId => {
+      newAccepted.add(itemId)
+      newIssues.delete(itemId) // Quitar cualquier issue previo
+    })
+    
+    setAcceptedItems(newAccepted)
+    setProductIssues(newIssues)
+    setSelectedItems(new Set()) // Limpiar selección
   }
 
   const updateAvailableQty = (itemId: string, qty: number) => {
@@ -217,8 +297,10 @@ export default function BulkStatusChangeModal({
     }
   }
 
-  const issuesCount = Array.from(productIssues.values()).filter(i => i.issueType !== null).length
-  const allProductsOk = issuesCount === 0
+  const issuesCount = Array.from(productIssues.values()).filter(i => i.issueType !== null && i.issueType !== 'ACCEPTED').length
+  const allProductsOk = issuesCount === 0 && acceptedItems.size === orderItems.length
+  const someProductsReviewed = acceptedItems.size > 0 || issuesCount > 0
+  const pendingReview = orderItems.length - acceptedItems.size - productIssues.size
 
   // Confirmar orden (Lock) - Todo está disponible
   const handleLockOrder = async () => {
@@ -255,7 +337,13 @@ export default function BulkStatusChangeModal({
 
     try {
       setLoading(true)
-      const issues = Array.from(productIssues.values()).filter(i => i.issueType !== null)
+      // Filtrar solo issues reales (no ACCEPTED ni null)
+      const issues = Array.from(productIssues.values())
+        .filter(i => i.issueType === 'OUT_OF_STOCK' || i.issueType === 'PARTIAL_STOCK')
+        .map(i => ({
+          ...i,
+          issueType: i.issueType as ReportableIssueType
+        }))
       
       // Usar el nuevo endpoint que envía notificaciones multicanal
       const response = await fetch(`/api/orders/${singleOrder.id}/report-stock-issues`, {
@@ -343,13 +431,44 @@ export default function BulkStatusChangeModal({
           {/* Lista de productos */}
           {hasProducts ? (
             <div className="border rounded-lg overflow-hidden mb-6">
-              <div className="bg-gray-100 px-4 py-3 border-b flex items-center justify-between">
-                <h4 className="font-medium text-sm">
-                  📋 Productos Solicitados ({orderItems.length})
-                </h4>
-                <span className="text-sm text-gray-500">
-                  Total: {formatPrice(singleOrder?.totalAmount || 0)}
-                </span>
+              <div className="bg-gray-100 px-4 py-3 border-b">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.size === orderItems.length && orderItems.length > 0}
+                        onChange={toggleAllSelection}
+                        className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Seleccionar todos</span>
+                    </label>
+                    <h4 className="font-medium text-sm">
+                      📋 Productos ({orderItems.length})
+                    </h4>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {selectedItems.size > 0 && (
+                      <button
+                        onClick={acceptAllSelected}
+                        className="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-medium hover:bg-green-200 transition-all flex items-center gap-1"
+                      >
+                        <Check className="w-3 h-3" />
+                        Aceptar seleccionados ({selectedItems.size})
+                      </button>
+                    )}
+                    <span className="text-sm text-gray-500">
+                      Total: {formatPrice(singleOrder?.totalAmount || 0)}
+                    </span>
+                  </div>
+                </div>
+                {/* Resumen de estados */}
+                <div className="mt-2 flex items-center gap-4 text-xs">
+                  <span className="text-green-600">✅ Aceptados: {acceptedItems.size}</span>
+                  <span className="text-red-600">❌ Sin stock: {Array.from(productIssues.values()).filter(i => i.issueType === 'OUT_OF_STOCK').length}</span>
+                  <span className="text-yellow-600">⚠️ Parciales: {Array.from(productIssues.values()).filter(i => i.issueType === 'PARTIAL_STOCK').length}</span>
+                  <span className="text-gray-500">⏳ Pendientes: {orderItems.length - acceptedItems.size - productIssues.size}</span>
+                </div>
               </div>
               
               <div className="divide-y max-h-[300px] overflow-y-auto">
@@ -357,33 +476,64 @@ export default function BulkStatusChangeModal({
                   const issue = productIssues.get(item.id)
                   const isOutOfStock = issue?.issueType === 'OUT_OF_STOCK'
                   const isPartialStock = issue?.issueType === 'PARTIAL_STOCK'
+                  const isAccepted = acceptedItems.has(item.id)
+                  const isSelected = selectedItems.has(item.id)
                   const hasIssue = isOutOfStock || isPartialStock
 
                   return (
                     <div 
                       key={item.id}
                       className={`p-4 transition-colors ${
-                        hasIssue ? 'bg-red-50' : 'hover:bg-gray-50'
+                        isAccepted ? 'bg-green-50' :
+                        hasIssue ? 'bg-red-50' : 
+                        isSelected ? 'bg-purple-50' :
+                        'hover:bg-gray-50'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-4">
+                        {/* Checkbox de selección */}
+                        <div className="flex items-center pt-1">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleItemSelection(item.id)}
+                            className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                          />
+                        </div>
+                        
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            {!hasIssue && <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />}
+                            {isAccepted && <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />}
                             {isOutOfStock && <X className="w-4 h-4 text-red-500 flex-shrink-0" />}
                             {isPartialStock && <AlertTriangle className="w-4 h-4 text-yellow-500 flex-shrink-0" />}
+                            {!isAccepted && !hasIssue && <Package className="w-4 h-4 text-gray-400 flex-shrink-0" />}
                             <p className="font-medium text-gray-900 truncate">{item.productName}</p>
+                            {isAccepted && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Aceptado</span>}
                           </div>
                           <p className="text-sm text-gray-500 ml-6">
                             Cantidad: {item.quantity} {item.product?.unit || 'unid.'} • {formatPrice(item.subtotal)}
                           </p>
                         </div>
 
-                        <div className="flex gap-2 shrink-0">
+                        <div className="flex gap-1 shrink-0 flex-wrap justify-end">
+                          {/* Botón Aceptado */}
+                          <button
+                            type="button"
+                            onClick={() => toggleProductIssue(item, 'ACCEPTED')}
+                            className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+                              isAccepted
+                                ? 'bg-green-600 text-white ring-2 ring-green-300'
+                                : 'bg-gray-100 text-gray-700 hover:bg-green-100 hover:text-green-700'
+                            }`}
+                          >
+                            {isAccepted && <Check className="w-3 h-3" />}
+                            ✅ OK
+                          </button>
+                          
                           <button
                             type="button"
                             onClick={() => toggleProductIssue(item, 'OUT_OF_STOCK')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+                            className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
                               isOutOfStock
                                 ? 'bg-red-600 text-white ring-2 ring-red-300'
                                 : 'bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700'
@@ -396,7 +546,7 @@ export default function BulkStatusChangeModal({
                           <button
                             type="button"
                             onClick={() => toggleProductIssue(item, 'PARTIAL_STOCK')}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+                            className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
                               isPartialStock
                                 ? 'bg-yellow-500 text-white ring-2 ring-yellow-300'
                                 : 'bg-gray-100 text-gray-700 hover:bg-yellow-100 hover:text-yellow-700'
@@ -410,7 +560,7 @@ export default function BulkStatusChangeModal({
                             type="button"
                             onClick={() => openDeleteModal(item)}
                             disabled={deletingItem === item.id || deletedItems.has(item.id)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
+                            className={`px-2 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1 ${
                               deletedItems.has(item.id)
                                 ? 'bg-gray-400 text-white cursor-not-allowed'
                                 : deletingItem === item.id
@@ -530,6 +680,16 @@ export default function BulkStatusChangeModal({
             </div>
           )}
 
+          {/* Aviso de productos pendientes */}
+          {pendingReview > 0 && !allProductsOk && (
+            <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <p className="text-sm text-yellow-800">
+                ⏳ Tienes <strong>{pendingReview}</strong> producto(s) sin revisar. 
+                Marca cada uno como "OK", "No hay" o "Parcial".
+              </p>
+            </div>
+          )}
+
           {/* Botones de acción */}
           <div className="flex gap-3 pt-4 border-t">
             <Button 
@@ -543,7 +703,7 @@ export default function BulkStatusChangeModal({
             </Button>
             
             {allProductsOk ? (
-              /* Todos los productos disponibles - Confirmar orden */
+              /* Todos los productos aceptados - Confirmar orden */
               <Button
                 onClick={handleLockOrder}
                 className="flex-1 bg-green-600 hover:bg-green-700"
@@ -561,12 +721,12 @@ export default function BulkStatusChangeModal({
                   </>
                 )}
               </Button>
-            ) : (
+            ) : issuesCount > 0 ? (
               /* Hay productos faltantes - Notificar al comprador */
               <Button
                 onClick={handleReportIssues}
                 className="flex-1 bg-amber-600 hover:bg-amber-700"
-                disabled={loading || issuesCount === 0}
+                disabled={loading}
               >
                 {loading ? (
                   <>
@@ -579,6 +739,15 @@ export default function BulkStatusChangeModal({
                     📱 Notificar Faltantes ({issuesCount})
                   </>
                 )}
+              </Button>
+            ) : (
+              /* Productos pendientes de revisar */
+              <Button
+                disabled={true}
+                className="flex-1 bg-gray-400 cursor-not-allowed"
+              >
+                <Package className="w-4 h-4 mr-2" />
+                Revisa todos los productos
               </Button>
             )}
           </div>
