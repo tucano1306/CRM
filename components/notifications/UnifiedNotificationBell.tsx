@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Bell, X, ExternalLink, Package } from 'lucide-react'
+import { Bell, X, ExternalLink } from 'lucide-react'
 import { NotificationType } from '@prisma/client'
 import { useNotifications } from '@/components/providers/NotificationProvider'
 import { useRouter } from 'next/navigation'
@@ -355,17 +355,6 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
               <p className="text-gray-700 dark:text-gray-300 text-base sm:text-lg leading-relaxed break-words">
                 {selectedNotification.message}
               </p>
-              {selectedNotification.orderId && (
-                <div className="mt-5 p-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl">
-                  <div className="flex items-center gap-2 text-blue-900 dark:text-blue-300 font-semibold mb-2 text-sm sm:text-base">
-                    <Package size={18} />
-                    <span>Orden relacionada</span>
-                  </div>
-                  <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-400 font-mono break-all bg-white dark:bg-blue-950/30 p-2 rounded">
-                    ID: {selectedNotification.orderId}
-                  </p>
-                </div>
-              )}
             </div>
 
             {/* Actions */}

@@ -67,7 +67,7 @@ function CartPageContent() {
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'quantity'>('name')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
-  const TAX_RATE = 0.10
+
 
   // Mostrar toast
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -278,12 +278,8 @@ function CartPageContent() {
       .reduce((sum, item) => sum + item.price * item.quantity, 0)
   }
 
-  const calculateTax = () => {
-    return calculateSubtotal() * TAX_RATE
-  }
-
   const calculateTotal = () => {
-    return calculateSubtotal() + calculateTax()
+    return calculateSubtotal()
   }
 
   // Create order
@@ -638,16 +634,8 @@ function CartPageContent() {
 
               {/* Totales */}
               <div className="space-y-3 border-t-2 border-purple-100 pt-4">
-                <div className="flex justify-between text-gray-600">
-                  <span>Subtotal ({selectedItems.size} items):</span>
-                  <span className="font-medium">{formatPrice(calculateSubtotal())}</span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>Impuestos (10%):</span>
-                  <span className="font-medium">{formatPrice(calculateTax())}</span>
-                </div>
-                <div className="flex justify-between text-xl font-bold pt-3 border-t-2 border-purple-200">
-                  <span className="text-gray-800">Total:</span>
+                <div className="flex justify-between text-xl font-bold">
+                  <span className="text-gray-800">Total ({selectedItems.size} items):</span>
                   <span className="text-purple-600">{formatPrice(calculateTotal())}</span>
                 </div>
               </div>

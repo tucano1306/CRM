@@ -237,6 +237,55 @@ export default function ClientsViewWithOrders({
     }
   }
 
+  // Función para reportar problemas de stock
+  const handleReportStockIssues = async (orderId: string, issues: Array<{
+    productId: string
+    productName: string
+    issueType: 'OUT_OF_STOCK' | 'PARTIAL_STOCK' | null
+    requestedQty: number
+    availableQty: number
+  }>) => {
+    try {
+      // Reportar cada issue al API
+      for (const issue of issues) {
+        if (!issue.issueType) continue
+
+        await fetch(`/api/orders/${orderId}/issues`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            issueType: issue.issueType,
+            description: issue.issueType === 'OUT_OF_STOCK' 
+              ? `Producto "${issue.productName}" sin stock disponible`
+              : `Producto "${issue.productName}" con stock parcial: ${issue.availableQty} de ${issue.requestedQty} disponibles`,
+            productId: issue.productId,
+            productName: issue.productName,
+            requestedQty: issue.requestedQty,
+            availableQty: issue.availableQty,
+            proposedSolution: issue.issueType === 'OUT_OF_STOCK'
+              ? 'El vendedor te contactará con alternativas'
+              : `Se pueden enviar ${issue.availableQty} unidades ahora`
+          })
+        })
+      }
+
+      // Limpiar selección y cerrar modal
+      setSelectedOrders([])
+      setShowBulkStatusModal(false)
+      
+      alert(`✅ Se notificó al comprador sobre ${issues.length} producto(s) con problemas de stock`)
+    } catch (error) {
+      console.error('Error reportando problemas de stock:', error)
+      alert('Error al reportar los problemas de stock')
+    }
+  }
+
+  // Obtener datos completos de las órdenes seleccionadas
+  const getSelectedOrdersData = () => {
+    if (!selectedClient) return []
+    return selectedClient.orders.filter(o => selectedOrders.includes(o.id))
+  }
+
   // Filtrar órdenes del cliente seleccionado
   const filteredClientOrders = useMemo(() => {
     if (!selectedClient) return []
@@ -925,6 +974,8 @@ export default function ClientsViewWithOrders({
           selectedCount={selectedOrders.length}
           currentStatus={getCommonStatus()}
           onConfirm={handleBulkStatusChange}
+          selectedOrdersData={getSelectedOrdersData()}
+          onReportStockIssues={handleReportStockIssues}
         />
       )}
     </>
