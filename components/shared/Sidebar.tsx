@@ -46,19 +46,14 @@ const menuItems = [
     icon: ShoppingCart
   },
   {
-    title: 'Cotizaciones',
-    href: '/quotes',
-    icon: FileText
+    title: 'Productos',
+    href: '/products',
+    icon: Package
   },
   {
     title: 'Órdenes Recurrentes',
     href: '/recurring-orders',
     icon: RefreshCw
-  },
-  {
-    title: 'Devoluciones',
-    href: '/returns',
-    icon: RotateCcw
   },
   {
     title: 'Chat',

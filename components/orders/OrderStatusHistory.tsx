@@ -14,12 +14,18 @@ import {
   ArrowRight,
   Loader2,
   Truck,
-  Box
+  Box,
+  Eye,
+  Lock,
+  AlertTriangle
 } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 
 type OrderStatus = 
   | 'PENDING' 
+  | 'REVIEWING'
+  | 'ISSUE_REPORTED'
+  | 'LOCKED'
   | 'CONFIRMED' 
   | 'PREPARING' 
   | 'READY_FOR_PICKUP' 
@@ -44,7 +50,10 @@ interface HistoryEntry {
 
 const statusConfig: Record<OrderStatus, { label: string; icon: any; color: string }> = {
   PENDING: { label: 'Pendiente', icon: Clock, color: 'text-yellow-600' },
-  CONFIRMED: { label: 'Confirmada', icon: CheckCircle, color: 'text-blue-600' },
+  REVIEWING: { label: 'En Revisión', icon: Eye, color: 'text-blue-500' },
+  ISSUE_REPORTED: { label: 'Con Problemas', icon: AlertTriangle, color: 'text-red-500' },
+  LOCKED: { label: 'Confirmada', icon: Lock, color: 'text-green-500' },
+  CONFIRMED: { label: 'En Proceso', icon: CheckCircle, color: 'text-blue-600' },
   PREPARING: { label: 'Preparando', icon: Box, color: 'text-indigo-600' },
   READY_FOR_PICKUP: { label: 'Listo para Recoger', icon: Package, color: 'text-cyan-600' },
   IN_DELIVERY: { label: 'En Entrega', icon: Truck, color: 'text-purple-600' },

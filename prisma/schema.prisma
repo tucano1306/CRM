@@ -16,7 +16,9 @@ model Client {
   zipCode                  String?
   phone                    String
   email                    String
-  orderConfirmationMethod  OrderConfirmationMethod @default(MANUAL) // ⬅️ NUEVA LÍNEA
+  whatsappNumber           String?                 // Número de WhatsApp para notificaciones
+  preferredChannel         NotificationChannel     @default(EMAIL) // Canal preferido
+  orderConfirmationMethod  OrderConfirmationMethod @default(MANUAL)
   orderConfirmationEnabled Boolean                 @default(true)
   notificationsEnabled     Boolean                 @default(true)
   sellerId                 String?
@@ -174,7 +176,13 @@ model Order {
   canceledAt              DateTime?
   completedAt             DateTime?
   
-  // Campos nuevos para confirmación y mensajes
+  // Campos para el flujo de revisión/lock
+  lockedAt                DateTime?           // Cuando el vendedor bloqueó el pedido
+  lockedBy                String?             // Clerk userId del vendedor que bloqueó
+  reviewStartedAt         DateTime?           // Cuando empezó la revisión
+  hasIssues               Boolean             @default(false) // Si tiene productos faltantes
+  
+  // Campos existentes para confirmación y mensajes
   confirmationDeadline    DateTime?
   idempotencyKey          String?             @unique
   generalMessage          String?
@@ -194,6 +202,7 @@ model Order {
   convertedFromQuote      Quote?
   returns                 Return[]
   creditNoteUsages        CreditNoteUsage[]
+  issues                  OrderIssue[]        // Problemas con productos
 
   createdAt               DateTime            @default(now())
   updatedAt               DateTime            @updatedAt
@@ -221,8 +230,10 @@ model OrderItem {
   subtotal     Decimal  @db.Decimal(10, 2)
   confirmed    Boolean  @default(false)
   
-  // Campo nuevo
+  // Campos para disponibilidad (flujo de revisión)
   itemNote     String?
+  availableQty Int?            // Cantidad disponible (null = no revisado)
+  issueNote    String?         // Nota del problema con este item
   
   // Relations
   orderId      String
@@ -238,6 +249,63 @@ model OrderItem {
   @@index([orderId])
   @@index([productId])
   @@map("order_items")
+}
+
+// 📋 Modelo para gestionar problemas con pedidos (productos faltantes)
+model OrderIssue {
+  id              String           @id @default(uuid())
+  orderId         String
+  order           Order            @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // Detalles del problema
+  issueType       OrderIssueType
+  description     String
+  
+  // Producto afectado
+  productId       String?
+  productName     String?
+  requestedQty    Int?
+  availableQty    Int?
+  
+  // Solución propuesta por vendedor
+  proposedSolution String?
+  substituteProductId String?
+  substituteProductName String?
+  
+  // Estado de la negociación
+  status          OrderIssueStatus @default(PENDING)
+  
+  // Respuesta del comprador
+  buyerResponse   String?
+  buyerAccepted   Boolean?
+  
+  // Auditoría
+  reportedBy      String           // Clerk userId
+  resolvedBy      String?
+  createdAt       DateTime         @default(now())
+  resolvedAt      DateTime?
+  
+  @@index([orderId])
+  @@index([status])
+  @@index([productId])
+  @@map("order_issues")
+}
+
+enum OrderIssueType {
+  OUT_OF_STOCK      // Sin stock
+  PARTIAL_STOCK     // Stock parcial
+  DISCONTINUED      // Descontinuado
+  PRICE_CHANGE      // Cambio de precio
+  OTHER             // Otro
+}
+
+enum OrderIssueStatus {
+  PENDING           // Esperando respuesta
+  BUYER_NOTIFIED    // Comprador notificado
+  NEGOTIATING       // En negociación
+  ACCEPTED          // Comprador aceptó
+  REJECTED          // Comprador rechazó
+  RESOLVED          // Resuelto
 }
 
 // Modelo para rastrear cambios de estado con idempotencia
@@ -573,8 +641,11 @@ enum ProductUnit {
 }
 
 enum OrderStatus {
-  PENDING              // Pendiente (inicial)
-  CONFIRMED            // Confirmada por el vendedor
+  PENDING              // Pedido creado, esperando revisión
+  REVIEWING            // Vendedor revisando disponibilidad
+  ISSUE_REPORTED       // Hay productos faltantes, en negociación  
+  LOCKED               // Pedido bloqueado/confirmado por vendedor
+  CONFIRMED            // Confirmada (legacy)
   PREPARING            // Preparando el pedido
   READY_FOR_PICKUP     // Listo para recoger
   IN_DELIVERY          // En entrega
@@ -595,6 +666,14 @@ enum PaymentStatus {
 enum OrderConfirmationMethod {
   MANUAL
   AUTOMATIC
+}
+
+enum NotificationChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+  PUSH
+  ALL
 }
 
 enum DayOfWeek {

@@ -11,11 +11,17 @@ import {
   ChevronRight,
   TrendingUp,
   Truck,
-  Check
+  Check,
+  Eye,
+  Lock,
+  AlertTriangle
 } from 'lucide-react'
 
 type OrderStatus = 
   | 'PENDING' 
+  | 'REVIEWING'
+  | 'ISSUE_REPORTED'
+  | 'LOCKED'
   | 'CONFIRMED' 
   | 'PREPARING'
   | 'READY_FOR_PICKUP'
@@ -60,6 +66,27 @@ const statusConfig = {
     bg: 'bg-yellow-50',
     border: 'border-yellow-200'
   },
+  REVIEWING: {
+    label: 'En Revisión',
+    icon: Eye,
+    color: 'text-blue-500',
+    bg: 'bg-blue-50',
+    border: 'border-blue-200'
+  },
+  ISSUE_REPORTED: {
+    label: 'Con Problemas',
+    icon: AlertTriangle,
+    color: 'text-red-500',
+    bg: 'bg-red-50',
+    border: 'border-red-200'
+  },
+  LOCKED: {
+    label: 'Confirmada',
+    icon: Lock,
+    color: 'text-green-500',
+    bg: 'bg-green-50',
+    border: 'border-green-200'
+  },
   PLACED: {
     label: 'Colocada',
     icon: Package,
@@ -68,7 +95,7 @@ const statusConfig = {
     border: 'border-blue-200'
   },
   CONFIRMED: {
-    label: 'Confirmada',
+    label: 'En Proceso',
     icon: CheckCircle,
     color: 'text-green-600',
     bg: 'bg-green-50',

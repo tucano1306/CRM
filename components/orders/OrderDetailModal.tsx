@@ -10,6 +10,9 @@ import OrderStatusChanger from '@/components/orders/OrderStatusChanger'
 
 type OrderStatus = 
   | 'PENDING' 
+  | 'REVIEWING'
+  | 'ISSUE_REPORTED'
+  | 'LOCKED'
   | 'CONFIRMED' 
   | 'PREPARING'
   | 'READY_FOR_PICKUP'

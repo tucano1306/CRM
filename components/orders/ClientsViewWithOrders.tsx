@@ -29,6 +29,9 @@ import { formatPrice } from '@/lib/utils'
 
 type OrderStatus = 
   | 'PENDING' 
+  | 'REVIEWING'
+  | 'ISSUE_REPORTED'
+  | 'LOCKED'
   | 'CONFIRMED' 
   | 'PREPARING'
   | 'READY_FOR_PICKUP'

@@ -12,11 +12,17 @@ import {
   Loader2,
   ChevronDown,
   Truck,
-  Box
+  Box,
+  Eye,
+  Lock,
+  AlertTriangle
 } from 'lucide-react'
 
 type OrderStatus = 
   | 'PENDING' 
+  | 'REVIEWING'
+  | 'ISSUE_REPORTED'
+  | 'LOCKED'
   | 'CONFIRMED' 
   | 'PREPARING' 
   | 'READY_FOR_PICKUP' 
@@ -42,14 +48,35 @@ const statusOptions: { value: OrderStatus; label: string; icon: any; color: stri
     label: 'Pendiente', 
     icon: Clock, 
     color: 'text-yellow-600',
-    description: 'Orden recibida, esperando confirmación'
+    description: 'Orden recibida, esperando revisión'
+  },
+  { 
+    value: 'REVIEWING', 
+    label: 'En Revisión', 
+    icon: Eye, 
+    color: 'text-blue-500',
+    description: 'Vendedor revisando disponibilidad'
+  },
+  { 
+    value: 'ISSUE_REPORTED', 
+    label: 'Con Problemas', 
+    icon: AlertTriangle, 
+    color: 'text-red-500',
+    description: 'Hay productos con problemas'
+  },
+  { 
+    value: 'LOCKED', 
+    label: 'Confirmada', 
+    icon: Lock, 
+    color: 'text-green-500',
+    description: 'Orden bloqueada y confirmada'
   },
   { 
     value: 'CONFIRMED', 
-    label: 'Confirmada', 
+    label: 'En Proceso', 
     icon: CheckCircle, 
     color: 'text-blue-600',
-    description: 'Orden confirmada por el vendedor'
+    description: 'Orden en proceso de preparación'
   },
   { 
     value: 'PREPARING', 

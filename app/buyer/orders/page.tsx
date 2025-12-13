@@ -42,6 +42,9 @@ import { OrderCardSkeleton } from '@/components/skeletons'
 
 type OrderStatus = 
   | 'PENDING' 
+  | 'REVIEWING'
+  | 'ISSUE_REPORTED'
+  | 'LOCKED'
   | 'CONFIRMED' 
   | 'PREPARING'
   | 'PROCESSING'

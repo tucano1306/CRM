@@ -1,11 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { X, CheckCircle, Package, Truck, AlertCircle } from 'lucide-react'
+import { X, CheckCircle, Package, Truck, AlertCircle, Eye, Lock, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 type OrderStatus = 
   | 'PENDING' 
+  | 'REVIEWING'
+  | 'ISSUE_REPORTED'
+  | 'LOCKED'
   | 'CONFIRMED' 
   | 'PREPARING'
   | 'READY_FOR_PICKUP'
@@ -27,6 +30,9 @@ interface BulkStatusChangeModalProps {
 
 const STATUS_OPTIONS: { value: OrderStatus; label: string; icon: any; color: string }[] = [
   { value: 'PENDING', label: 'Pendiente', icon: AlertCircle, color: 'text-yellow-600' },
+  { value: 'REVIEWING', label: 'En Revisión', icon: Eye, color: 'text-blue-500' },
+  { value: 'ISSUE_REPORTED', label: 'Con Problemas', icon: AlertTriangle, color: 'text-red-500' },
+  { value: 'LOCKED', label: 'Bloqueada', icon: Lock, color: 'text-green-500' },
   { value: 'CONFIRMED', label: 'Confirmada', icon: CheckCircle, color: 'text-blue-600' },
   { value: 'PREPARING', label: 'Preparando', icon: Package, color: 'text-indigo-600' },
   { value: 'READY_FOR_PICKUP', label: 'Listo para Recoger', icon: Package, color: 'text-purple-600' },

@@ -6,6 +6,8 @@ import { EventType } from '@/lib/events/types/event.types'
 import { validateOrderTime, getNextAvailableOrderTime } from '@/lib/scheduleValidation'
 import logger, { LogCategory } from '@/lib/logger'
 import { notifyNewOrder, notifyBuyerOrderCreated } from '@/lib/notifications'
+import { notifySeller } from '@/lib/notifications-multicanal'
+import { sendRealtimeEvent, getSellerChannel } from '@/lib/supabase-server'
 import { sanitizeText } from '@/lib/sanitize'
 import { prisma } from '@/lib/prisma'
 
@@ -437,9 +439,48 @@ export async function POST(request: Request) {
         sellerId: order!.sellerId,
         orderId: order!.id,
       })
+      
+      // 📱 NOTIFICACIÓN MULTICANAL AL VENDEDOR (Email/SMS/WhatsApp)
+      await notifySeller(order!.sellerId, 'ORDER_CREATED', {
+        orderNumber: order!.orderNumber,
+        buyerName: order!.client.name,
+        total: Number(order!.totalAmount)
+      })
+      logger.info(LogCategory.API, 'Multichannel notification sent to seller', {
+        sellerId: order!.sellerId,
+        orderId: order!.id,
+      })
     } catch (notifError) {
       // No bloquear la respuesta si falla la notificación
       logger.error(LogCategory.API, 'Error sending notification', notifError instanceof Error ? notifError : new Error(String(notifError)))
+    }
+
+    // 📡 ENVIAR EVENTO REALTIME AL VENDEDOR
+    try {
+      const seller = await prisma.seller.findUnique({
+        where: { id: order!.sellerId },
+        include: { authenticated_users: { select: { authId: true }, take: 1 } }
+      })
+      
+      if (seller?.authenticated_users[0]?.authId) {
+        await sendRealtimeEvent(
+          getSellerChannel(seller.authenticated_users[0].authId),
+          'order:new',
+          {
+            orderId: order!.id,
+            orderNumber: order!.orderNumber,
+            clientName: order!.client.name,
+            totalAmount: Number(order!.totalAmount),
+            status: 'PENDING',
+            createdAt: order!.createdAt
+          }
+        )
+        logger.info(LogCategory.API, 'Realtime event sent for new order', {
+          orderId: order!.id,
+        })
+      }
+    } catch (rtError) {
+      logger.error(LogCategory.API, 'Error sending realtime event', rtError instanceof Error ? rtError : new Error(String(rtError)))
     }
 
     // 🔔 CREAR NOTIFICACIÓN PARA EL COMPRADOR
