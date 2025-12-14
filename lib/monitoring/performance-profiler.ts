@@ -3,10 +3,10 @@
  * Sistema de monitoreo de rendimiento y detección de bloqueos
  */
 
-import { performance, PerformanceObserver } from 'perf_hooks'
-import { EventEmitter } from 'events'
-import v8 from 'v8'
-import process from 'process'
+import { performance, PerformanceObserver } from 'node:perf_hooks'
+import { EventEmitter } from 'node:events'
+import v8 from 'node:v8'
+import process from 'node:process'
 
 export interface PerformanceMetrics {
   eventLoopLag: number

@@ -74,8 +74,8 @@ class WASMManager {
           wasmBytes = await response.arrayBuffer()
         } else {
           // Node.js environment
-          const fs = await import('fs')
-          const path = await import('path')
+          const fs = await import('node:fs')
+          const path = await import('node:path')
           const fullPath = path.resolve(process.cwd(), source)
           wasmBytes = fs.readFileSync(fullPath).buffer
         }

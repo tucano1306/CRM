@@ -4,10 +4,10 @@
  * Integrado con monitoreo de rendimiento y detección de bloqueos
  */
 
-import { Worker, isMainThread } from 'worker_threads'
-import { EventEmitter } from 'events'
-import path from 'path'
-import os from 'os'
+import { Worker, isMainThread } from 'node:worker_threads'
+import { EventEmitter } from 'node:events'
+import path from 'node:path'
+import os from 'node:os'
 import { performanceProfiler, measureAsync } from '../monitoring/performance-profiler'
 
 export interface WorkerTask {

@@ -48,7 +48,7 @@ async function fixAuthIssue() {
     // Step 3: Create correct record if it doesn't exist
     if (!authUser) {
       console.log('Step 3: Creating correct authenticated_users record...')
-      const crypto = require('crypto')
+      const crypto = require('node:crypto')
       const newId = crypto.randomUUID()
 
       const created = await prisma.authenticated_users.create({

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { writeFile } from 'fs/promises'
-import path from 'path'
+import { writeFile } from 'node:fs/promises'
+import path from 'node:path'
 import { v4 as uuidv4 } from 'uuid'
 import { fileTypeFromBuffer } from 'file-type'
 import { sanitizeText } from '@/lib/sanitize'
@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create directory if needed and save file
-    const fs = require('fs')
+    const fs = require('node:fs')
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true })
     }

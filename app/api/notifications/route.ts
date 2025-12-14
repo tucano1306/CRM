@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 import { z } from 'zod'
 import { validateSchema } from '@/lib/validations'
 import { sanitizeText } from '@/lib/sanitize'

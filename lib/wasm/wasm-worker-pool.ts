@@ -5,7 +5,7 @@
  */
 
 import { WorkerPool, WorkerTask, WorkerResult, WorkerPoolOptions } from '../workers/worker-pool'
-import path from 'path'
+import path from 'node:path'
 
 export interface WASMTask extends WorkerTask {
   isWASM?: boolean

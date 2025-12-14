@@ -4,8 +4,8 @@
  * Compatible con el sistema existente sin romper funcionalidad
  */
 
-import { Worker, isMainThread, parentPort } from 'worker_threads'
-import { EventEmitter } from 'events'
+import { Worker, isMainThread, parentPort } from 'node:worker_threads'
+import { EventEmitter } from 'node:events'
 import { WorkerTask, WorkerResult } from '../workers/worker-pool'
 
 export interface WASMWorkerTask extends WorkerTask {

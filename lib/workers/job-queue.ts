@@ -3,7 +3,7 @@
  * Sistema de colas de trabajo para tareas asíncronas
  */
 
-import { EventEmitter } from 'events'
+import { EventEmitter } from 'node:events'
 import { workerPoolManager } from './worker-pool'
 
 export interface JobData {
