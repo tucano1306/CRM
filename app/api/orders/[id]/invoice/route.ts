@@ -64,24 +64,24 @@ export async function POST(
           name: 'Producto de Ejemplo',
           quantity: 2,
           unit: 'pcs',
-          pricePerUnit: 25.00,
-          subtotal: 50.00
+          pricePerUnit: 25,
+          subtotal: 50
         },
         {
           sku: 'PROD002',
           name: 'Otro Producto',
           quantity: 1,
           unit: 'pcs',
-          pricePerUnit: 75.00,
-          subtotal: 75.00
+          pricePerUnit: 75,
+          subtotal: 75
         }
       ],
 
       // Totales
-      subtotal: 125.00,
-      discount: 5.00,
-      tax: 12.00,
-      total: 132.00,
+      subtotal: 125,
+      discount: 5,
+      tax: 12,
+      total: 132,
 
       terms: 'Pago a 30 días. Intereses por mora según la ley.'
     }

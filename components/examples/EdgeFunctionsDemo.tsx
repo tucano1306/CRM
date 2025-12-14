@@ -458,8 +458,8 @@ export default function EdgeFunctionsDemo() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>USD: {formatPrice(19.99)}</div>
               <div>Sample: {formatPrice(99.99)}</div>
-              <div>Small: {formatPrice(5.50)}</div>
-              <div>Large: {formatPrice(150.00)}</div>
+              <div>Small: {formatPrice(5.5)}</div>
+              <div>Large: {formatPrice(150)}</div>
             </div>
           </div>
           

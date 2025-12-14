@@ -126,7 +126,7 @@ class InMemoryDatabase {
         name: 'Mozzarella',
         description: 'Italian mozzarella, ideal for pizza and pasta dishes',
         unit: 'pk',
-        price: 15.50,
+        price: 15.5,
         stock: 50,
         sellerIds: ['user-seller-1']
       },

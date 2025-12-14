@@ -177,7 +177,7 @@ export async function PATCH(
       }, 0)
       
       const discount = ('discount' in validatedData && validatedData.discount) || existingQuote.discount
-      const tax = (subtotal - discount) * 0.10
+      const tax = (subtotal - discount) * 0.1
       const totalAmount = subtotal - discount + tax
 
       updateData.subtotal = subtotal

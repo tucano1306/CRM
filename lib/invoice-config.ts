@@ -22,7 +22,7 @@ export const INVOICE_CONFIG = {
 
   // Configuración de Factura
   invoice: {
-    defaultTaxRate: 0.10,  // 10% IVA
+    defaultTaxRate: 0.1,  // 10% IVA
     defaultPaymentTerms: 30,  // Días para pagar
     currency: 'MXN',  // Moneda
     currencySymbol: '$',

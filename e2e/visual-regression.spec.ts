@@ -119,7 +119,7 @@ test.describe.skip('Visual Regression Tests - Estilos UI', () => {
       )
       
       // H1 debe ser mayor a 20px
-      const size = parseInt(fontSize)
+      const size = Number.parseInt(fontSize)
       expect(size).toBeGreaterThan(20)
     }
   })

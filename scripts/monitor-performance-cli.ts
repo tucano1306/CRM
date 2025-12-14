@@ -235,8 +235,8 @@ const cli = new PerformanceMonitorCLI()
 
 switch (command) {
   case 'monitor':
-    const duration = args.includes('--duration') ? parseInt(args[args.indexOf('--duration') + 1]) : undefined
-    const interval = args.includes('--interval') ? parseInt(args[args.indexOf('--interval') + 1]) : 1000
+    const duration = args.includes('--duration') ? Number.parseInt(args[args.indexOf('--duration') + 1]) : undefined
+    const interval = args.includes('--interval') ? Number.parseInt(args[args.indexOf('--interval') + 1]) : 1000
     const output = args.includes('--output') ? args[args.indexOf('--output') + 1] : undefined
     
     cli.startMonitoring({ duration, interval, output })

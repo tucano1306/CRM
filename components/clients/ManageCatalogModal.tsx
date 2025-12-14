@@ -267,7 +267,7 @@ export default function ManageCatalogModal({
           name: newProduct.name,
           description: newProduct.description || null,
           price: parseFloat(newProduct.price),
-          stock: parseInt(newProduct.stock, 10) || 100,
+          stock: Number.parseInt(newProduct.stock, 10) || 100,
           unit: newProduct.unit,
           category: newProduct.category,
           sku: newProduct.sku || null,

@@ -30,7 +30,7 @@ export default function PWAInstallPrompt() {
     // Verificar si ya se mostró el prompt recientemente (últimas 24 horas)
     const lastPrompt = localStorage.getItem('pwa-prompt-dismissed')
     if (lastPrompt) {
-      const lastPromptTime = parseInt(lastPrompt, 10)
+      const lastPromptTime = Number.parseInt(lastPrompt, 10)
       if (Date.now() - lastPromptTime < 24 * 60 * 60 * 1000) {
         return // No mostrar si se cerró hace menos de 24 horas
       }

@@ -57,8 +57,8 @@ export async function GET(request: Request) {
     const search = searchParams.get('search')
     const lowStock = searchParams.get('lowStock') === 'true'
     const outOfStock = searchParams.get('outOfStock') === 'true'
-    let page = Math.max(parseInt(searchParams.get('page') || '1', 10) || 1, 1)
-    let pageSize = Math.min(Math.max(parseInt(searchParams.get('pageSize') || '20', 10) || 20, 1), 100)
+    let page = Math.max(Number.parseInt(searchParams.get('page') || '1', 10) || 1, 1)
+    let pageSize = Math.min(Math.max(Number.parseInt(searchParams.get('pageSize') || '20', 10) || 20, 1), 100)
 
     // Determine user role
     const seller = await prisma.seller.findFirst({

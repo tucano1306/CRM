@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     const limitParam = searchParams.get('limit')
     const recentParam = searchParams.get('recent')
     
-    const limit = limitParam ? parseInt(limitParam, 10) : undefined
+    const limit = limitParam ? Number.parseInt(limitParam, 10) : undefined
     const isRecent = recentParam === 'true'
 
     console.log('📋 [ORDERS GET] Params:', { role, status, limit, userId })

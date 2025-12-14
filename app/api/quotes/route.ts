@@ -172,7 +172,7 @@ export async function POST(request: Request) {
     }, 0)
     
     const discount = sanitizedData.discount || 0
-    const tax = (subtotal - discount) * 0.10 // 10% de impuesto
+    const tax = (subtotal - discount) * 0.1 // 10% de impuesto
     const totalAmount = subtotal - discount + tax
 
     // Generar número de cotización

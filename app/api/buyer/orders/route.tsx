@@ -97,7 +97,7 @@ export async function POST(request: Request) {
       (sum, item) => sum + item.price * item.quantity,
       0
     )
-    const TAX_RATE = 0.10
+    const TAX_RATE = 0.1
     const tax = subtotal * TAX_RATE
     const totalAmount = subtotal + tax
 

@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const unreadOnly = searchParams.get('unreadOnly') === 'true'
-    const limit = parseInt(searchParams.get('limit') || '20', 10)
+    const limit = Number.parseInt(searchParams.get('limit') || '20', 10)
 
     // Determinar si es vendedor o comprador
     const isSeller = authUser.sellers.length > 0

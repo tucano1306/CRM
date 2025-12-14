@@ -61,7 +61,7 @@ interface RegionalConfig {
 const REGIONAL_CONFIGS: Record<string, Partial<RegionalConfig>> = {
   // North America
   US: {
-    currency: { code: 'USD', symbol: '$', rate: 1.0 },
+    currency: { code: 'USD', symbol: '$', rate: 1 },
     language: { code: 'en', name: 'English', rtl: false },
     features: {
       paymentMethods: ['card', 'paypal', 'apple_pay', 'google_pay'],
@@ -90,7 +90,7 @@ const REGIONAL_CONFIGS: Record<string, Partial<RegionalConfig>> = {
     }
   },
   MX: {
-    currency: { code: 'MXN', symbol: '$', rate: 17.0 },
+    currency: { code: 'MXN', symbol: '$', rate: 17 },
     language: { code: 'es', name: 'Español', rtl: false },
     features: {
       paymentMethods: ['card', 'oxxo', 'spei'],
@@ -150,7 +150,7 @@ const REGIONAL_CONFIGS: Record<string, Partial<RegionalConfig>> = {
 
   // Default fallback
   DEFAULT: {
-    currency: { code: 'USD', symbol: '$', rate: 1.0 },
+    currency: { code: 'USD', symbol: '$', rate: 1 },
     language: { code: 'en', name: 'English', rtl: false },
     features: {
       paymentMethods: ['card', 'paypal'],

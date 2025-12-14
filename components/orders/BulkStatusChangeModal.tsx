@@ -885,7 +885,7 @@ export default function BulkStatusChangeModal({
                             min="0"
                             max={item.quantity - 1}
                             value={issue?.availableQty || 0}
-                            onChange={(e) => updateAvailableQty(item.id, parseInt(e.target.value) || 0)}
+                            onChange={(e) => updateAvailableQty(item.id, Number.parseInt(e.target.value) || 0)}
                             className="w-24 px-3 py-2 border-2 border-yellow-400 rounded-lg text-base font-bold text-center focus:ring-2 focus:ring-yellow-500"
                           />
                           <span className="text-sm sm:text-base text-yellow-700">de {item.quantity}</span>

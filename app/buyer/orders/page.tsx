@@ -491,7 +491,7 @@ function OrdersPageContent() {
 
   const prepareInvoiceData = (order: Order): InvoiceData => {
     const subtotal = order.orderItems.reduce((sum, item) => sum + Number(item.subtotal), 0)
-    const taxRate = 0.10
+    const taxRate = 0.1
     const taxAmount = subtotal * taxRate
     const totalBeforeCredits = subtotal + taxAmount
     

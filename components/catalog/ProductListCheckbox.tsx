@@ -338,7 +338,7 @@ export default function ProductListCheckbox({
                         <input
                           type="number"
                           value={quantity}
-                          onChange={(e) => setQuantity(product.id, parseInt(e.target.value) || 1)}
+                          onChange={(e) => setQuantity(product.id, Number.parseInt(e.target.value) || 1)}
                           className="w-16 text-center border rounded-lg py-1"
                           min={1}
                           max={product.stock}
