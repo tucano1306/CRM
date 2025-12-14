@@ -1466,7 +1466,11 @@ function OrdersPageContent() {
               // Determinar si necesita animación (órdenes no completadas ni canceladas)
               const needsAttention = !['COMPLETED', 'DELIVERED', 'CANCELED', 'CANCELLED'].includes(order.status)
               const isCompleted = order.status === 'COMPLETED' || order.status === 'DELIVERED'
-              const hasStockIssues = order.hasIssues || (order.issues && order.issues.length > 0) || order.status === 'ISSUE_REPORTED'
+              
+              // Solo mostrar warning de stock si la orden está en ISSUE_REPORTED
+              // Una vez CONFIRMED o LOCKED, ya no mostrar el warning
+              const isConfirmedOrLater = ['CONFIRMED', 'LOCKED', 'PREPARING', 'READY_FOR_PICKUP', 'IN_DELIVERY', 'DELIVERED', 'COMPLETED'].includes(order.status)
+              const hasStockIssues = !isConfirmedOrLater && (order.hasIssues || (order.issues && order.issues.length > 0) || order.status === 'ISSUE_REPORTED')
 
               return viewMode === 'grid' ? (
                 // Vista GRID (Card)
@@ -2135,8 +2139,9 @@ function OrdersPageContent() {
                 {/* Tab: Productos */}
                 {activeTab === 'productos' && (
                   <div className="space-y-4">
-                    {/* Banner de alerta si hay issues */}
-                    {(selectedOrder.hasIssues || (selectedOrder.issues && selectedOrder.issues.length > 0)) && (
+                    {/* Banner de alerta si hay issues - Solo mostrar si NO está confirmada/locked */}
+                    {(selectedOrder.hasIssues || (selectedOrder.issues && selectedOrder.issues.length > 0)) && 
+                     !['CONFIRMED', 'LOCKED', 'PREPARING', 'READY_FOR_PICKUP', 'IN_DELIVERY', 'DELIVERED', 'COMPLETED'].includes(selectedOrder.status) && (
                       <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
                         <div className="flex items-start gap-3">
                           <AlertTriangle className="h-6 w-6 text-amber-600 flex-shrink-0 mt-0.5" />
