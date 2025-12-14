@@ -235,7 +235,7 @@ export function useBackgroundJob(options: UseBackgroundJobOptions = {}) {
       const contentDisposition = response.headers.get('Content-Disposition')
       const filename = contentDisposition
         ?.split('filename=')[1]
-        ?.replace(/"/g, '') || `job-${jobId}-result`
+        ?.replaceAll(/"/g, '') || `job-${jobId}-result`
 
       // Crear blob y descargar
       const blob = await response.blob()

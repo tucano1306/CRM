@@ -218,7 +218,7 @@ export default function ManageCatalogModal({
       const a = document.createElement('a')
       a.href = url
       // Limpiar nombre del cliente para el archivo
-      const safeClientName = clientName.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 30)
+      const safeClientName = clientName.replaceAll(/[^a-zA-Z0-9]/g, '_').substring(0, 30)
       a.download = `productos_${safeClientName}_${new Date().toISOString().split('T')[0]}.xlsx`
       document.body.appendChild(a)
       a.click()

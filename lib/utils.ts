@@ -18,7 +18,7 @@ export function formatNumber(value: number | string, decimals: number = 2): stri
   const parts = num.toFixed(decimals).split('.')
   
   // Formatear parte entera con separador de miles (punto)
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+  parts[0] = parts[0].replaceAll(/\B(?=(\d{3})+(?!\d))/g, '.')
   
   // Unir con coma como separador decimal
   return decimals > 0 ? parts.join(',') : parts[0]

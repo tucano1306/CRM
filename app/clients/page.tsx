@@ -322,7 +322,7 @@ export default function ClientsPage() {
     // Para WhatsApp y SMS, abrir directamente la app
     if (invitationMethod === 'whatsapp') {
       // Limpiar el número (solo dígitos)
-      const cleanNumber = invitationValue.replace(/\D/g, '')
+      const cleanNumber = invitationValue.replaceAll(/\D/g, '')
       
       // Mensaje prellenado
       const message = encodeURIComponent(
@@ -344,7 +344,7 @@ export default function ClientsPage() {
 
     if (invitationMethod === 'sms') {
       // Limpiar el número (solo dígitos)
-      const cleanNumber = invitationValue.replace(/\D/g, '')
+      const cleanNumber = invitationValue.replaceAll(/\D/g, '')
       
       // Mensaje prellenado (más corto para SMS)
       const message = encodeURIComponent(

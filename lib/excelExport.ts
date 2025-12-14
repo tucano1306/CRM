@@ -235,6 +235,6 @@ export function exportClientHistory(
         data: productsData.sort((a, b) => b.totalGastado - a.totalGastado)
       }
     ],
-    `historial-${clientName.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.xlsx`
+    `historial-${clientName.toLowerCase().replaceAll(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.xlsx`
   )
 }

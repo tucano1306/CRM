@@ -21,10 +21,10 @@ export function sanitizeText(text: string, maxLength: number = 1000): string {
 
   return text
     .trim()
-    .replace(/<[^>]*>/g, '') // Remove all HTML tags
-    .replace(/[<>'"]/g, '') // Remove dangerous characters
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+\s*=/gi, '') // Remove event handlers (onclick=, onerror=, etc.)
+    .replaceAll(/<[^>]*>/g, '') // Remove all HTML tags
+    .replaceAll(/[<>'"]|/g, '') // Remove dangerous characters
+    .replaceAll(/javascript:/gi, '') // Remove javascript: protocol
+    .replaceAll(/on\w+\s*=/gi, '') // Remove event handlers (onclick=, onerror=, etc.)
     .substring(0, maxLength) // Limit length
 }
 
@@ -43,9 +43,9 @@ export function sanitizeHTML(html: string, maxLength: number = 5000): string {
 
   return html
     .trim()
-    .replace(tagPattern, '') // Remove unsafe HTML tags
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+\s*=/gi, '') // Remove event handlers
+    .replaceAll(tagPattern, '') // Remove unsafe HTML tags
+    .replaceAll(/javascript:/gi, '') // Remove javascript: protocol
+    .replaceAll(/on\w+\s*=/gi, '') // Remove event handlers
     .substring(0, maxLength)
 }
 

@@ -134,7 +134,7 @@ export async function POST(request: NextRequest) {
         let category: ProductCategory
 
         // Limpiar precio (quitar $, comas, etc)
-        const price = parseFloat(priceStr.replace(/[^0-9.-]/g, '')) || 0
+        const price = parseFloat(priceStr.replaceAll(/[^0-9.-]/g, '')) || 0
 
         // Crear descripción completa
         let description = ''

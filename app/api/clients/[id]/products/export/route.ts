@@ -116,7 +116,7 @@ export async function GET(
     worksheet['!cols'] = columnWidths
 
     // Agregar hoja con nombre del cliente
-    const safeClientName = client.name.replace(/[^a-zA-Z0-9 ]/g, '').substring(0, 31)
+    const safeClientName = client.name.replaceAll(/[^a-zA-Z0-9 ]/g, '').substring(0, 31)
     XLSX.utils.book_append_sheet(workbook, worksheet, safeClientName || 'Productos')
 
     // Generar buffer Excel

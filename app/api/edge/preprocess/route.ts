@@ -242,7 +242,7 @@ function transformData(data: any, endpoint: string): any {
     for (const [key, value] of Object.entries(data)) {
       if (typeof value === 'string') {
         // Trim whitespace and remove potential XSS
-        transformed[key] = value.trim().replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+        transformed[key] = value.trim().replaceAll(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
       } else {
         transformed[key] = value
       }
