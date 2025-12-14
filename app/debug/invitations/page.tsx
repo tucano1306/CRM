@@ -63,7 +63,7 @@ export default function DebugInvitationsPage() {
         {instructions?.methods && (
           <div className="space-y-6">
             {instructions.methods.map((method: Method, idx: number) => (
-              <Card key={idx} className="border-2 hover:shadow-lg transition-shadow">
+              <Card key={method.name} className="border-2 hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <CardTitle className="text-xl text-blue-900">
                     {method.name}
@@ -79,7 +79,7 @@ export default function DebugInvitationsPage() {
                         Ejemplos:
                       </p>
                       {method.examples.map((example: string, i: number) => (
-                        <div key={i} className="flex items-start gap-2 mb-1">
+                        <div key={`example-${example}`} className="flex items-start gap-2 mb-1">
                           <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                           <code className="text-sm text-gray-800 break-all">
                             {example}
@@ -96,7 +96,7 @@ export default function DebugInvitationsPage() {
                       <div className="flex flex-wrap gap-2">
                         {method.services.map((service: string, i: number) => (
                           <span 
-                            key={i}
+                            key={service}
                             className="px-3 py-1 bg-white rounded-full text-sm text-blue-700 border border-blue-200"
                           >
                             {service}
@@ -129,7 +129,7 @@ export default function DebugInvitationsPage() {
             <CardContent>
               <ol className="space-y-3">
                 {instructions.howToTest.map((step: string, i: number) => (
-                  <li key={i} className="flex gap-3">
+                  <li key={`step-${i}`} className="flex gap-3">
                     <span className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-600 text-white text-sm flex items-center justify-center font-bold">
                       {i + 1}
                     </span>

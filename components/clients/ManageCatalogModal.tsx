@@ -1046,7 +1046,7 @@ export default function ManageCatalogModal({
                   {importResult.errors.length > 0 && (
                     <div className="text-sm text-red-700 max-h-24 overflow-y-auto">
                       {importResult.errors.map((err, i) => (
-                        <p key={i}>• {err}</p>
+                        <p key={`error-${i}`}>• {err}</p>
                       ))}
                     </div>
                   )}

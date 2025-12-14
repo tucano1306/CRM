@@ -915,7 +915,7 @@ export default function BulkStatusChangeModal({
                 {Array.from(productIssues.values())
                   .filter(i => i.issueType)
                   .map((issue, idx) => (
-                    <li key={idx} className="flex items-center gap-2">
+                    <li key={`issue-${issue.productName}-${idx}`} className="flex items-center gap-2">
                       <span>{issue.issueType === 'OUT_OF_STOCK' ? '❌' : '⚠️'}</span>
                       <span className="font-medium">{issue.productName}</span>
                       <span className="text-amber-600">

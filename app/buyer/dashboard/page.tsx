@@ -415,7 +415,7 @@ export default function BuyerDashboardPage() {
               {/* Gráfico de barras */}
               <div className="flex items-end justify-between gap-2 h-48 px-4">
                 {getMonthlyData().map((month, index) => (
-                  <div key={index} className="flex-1 flex flex-col items-center group">
+                  <div key={month.name} className="flex-1 flex flex-col items-center group">
                     <div className="relative w-full">
                       {/* Tooltip on hover */}
                       <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-3 py-1 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">

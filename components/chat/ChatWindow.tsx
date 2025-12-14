@@ -727,7 +727,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
                 <div className="grid grid-cols-6 md:grid-cols-8 gap-1 md:gap-2 max-h-40 md:max-h-48 overflow-y-auto">
                   {EMOJIS.map((emoji, idx) => (
                     <button
-                      key={idx}
+                      key={emoji}
                       type="button"
                       onClick={() => insertEmoji(emoji)}
                       className="text-xl md:text-2xl hover:bg-purple-50 rounded-lg p-1 md:p-1.5 transition-all"

@@ -406,7 +406,7 @@ export default function DashboardPage() {
 
           return (
             <div
-              key={index}
+              key={card.title}
               className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-3 border-l-4 border-purple-500"
             >
               <div className="flex items-center justify-between mb-2">

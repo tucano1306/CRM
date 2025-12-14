@@ -207,7 +207,7 @@ export default function PerformanceDashboard() {
           <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+              <div key={`skeleton-${i}`} className="h-32 bg-gray-200 rounded"></div>
             ))}
           </div>
         </div>
@@ -257,7 +257,7 @@ export default function PerformanceDashboard() {
           <CardContent>
             <div className="space-y-2">
               {alerts.map((alert, index) => (
-                <div key={index} className={`p-3 rounded-lg border ${getSeverityColor(alert.severity)}`}>
+                <div key={`${alert.type}-${alert.timestamp}`} className={`p-3 rounded-lg border ${getSeverityColor(alert.severity)}`}>
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{alert.message}</span>
                     <span className="text-xs opacity-70">
@@ -435,7 +435,7 @@ export default function PerformanceDashboard() {
               </thead>
               <tbody>
                 {hotspots.slice(0, 5).map((hotspot, index) => (
-                  <tr key={index} className="border-b">
+                  <tr key={hotspot.name} className="border-b">
                     <td className="py-2 font-mono text-xs">
                       {hotspot.name.length > 40 
                         ? hotspot.name.substring(0, 40) + '...' 

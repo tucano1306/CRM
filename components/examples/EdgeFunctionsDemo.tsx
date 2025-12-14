@@ -386,7 +386,7 @@ export default function EdgeFunctionsDemo() {
                     <h4 className="text-sm font-medium text-gray-700 mb-1">Errors:</h4>
                     <ul className="list-disc list-inside space-y-1">
                       {preprocessResult.errors.map((error: string, index: number) => (
-                        <li key={index} className="text-sm text-red-600">{error}</li>
+                        <li key={`error-${index}`} className="text-sm text-red-600">{error}</li>
                       ))}
                     </ul>
                   </div>
