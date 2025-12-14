@@ -97,6 +97,7 @@ export default function OrderStatusHistory({ orderId, refreshTrigger }: OrderSta
         setError(result.error || 'Error al cargar el historial')
       }
     } catch (err) {
+      console.error('Failed to fetch order status history:', err)
       setError('Error de conexión')
     } finally {
       setLoading(false)

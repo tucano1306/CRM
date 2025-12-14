@@ -37,7 +37,7 @@ export function useCartCount() {
         setCartCount(0)
       }
     } catch (error) {
-      console.debug('Cart count fetch temporarily unavailable')
+      console.debug('Cart count fetch temporarily unavailable:', error)
     } finally {
       setLoading(false)
     }

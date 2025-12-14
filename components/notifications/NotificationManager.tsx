@@ -68,7 +68,8 @@ export default function NotificationManager({ userRole }: NotificationManagerPro
 
       lastNotificationCount.current = unreadCount
     } catch (error) {
-      // Silenciar errores de polling
+      // Intentionally silenced: polling errors are non-critical and should not disrupt UX
+      console.debug('Notification polling error:', error)
     }
   }, [user, userRole])
 

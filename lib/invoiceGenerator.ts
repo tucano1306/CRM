@@ -91,6 +91,7 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
     doc.addImage(logoPath, format, 15, 10, 20, 20)
   } catch (error) {
     // Fallback: mostrar placeholder si no hay logo o hay error
+    console.debug('Logo loading failed, using placeholder:', error)
     doc.setFillColor(255, 255, 255)
     doc.circle(25, 20, 10, 'F')
     doc.setFontSize(8)

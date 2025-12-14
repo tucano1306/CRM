@@ -281,6 +281,7 @@ export function useEdgeFunctions(
       
       return await response.json()
     } catch (err) {
+      console.error('Edge preprocessing failed:', err)
       return {
         valid: false,
         errors: ['Preprocessing failed']

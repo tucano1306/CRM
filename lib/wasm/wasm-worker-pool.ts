@@ -191,7 +191,8 @@ class WASMWorkerPool extends WorkerPool {
     try {
       return await Promise.all(promises)
     } catch (error) {
-      // Si alguna falla, devolver resultados parciales
+      // Batch execution partially failed, returning partial results
+      console.debug('WASM batch execution partial failure, collecting settled results:', error)
       const settledResults = await Promise.allSettled(promises)
       return settledResults.map(result => 
         result.status === 'fulfilled' 

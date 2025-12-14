@@ -322,6 +322,7 @@ export async function POST(request: NextRequest) {
         requestData = await request.json()
         checks.push('json-parsing')
       } catch (error) {
+        console.error('Failed to parse JSON request body:', error)
         return NextResponse.json(
           {
             valid: false,

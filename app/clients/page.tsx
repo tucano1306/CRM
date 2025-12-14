@@ -200,6 +200,7 @@ export default function ClientsPage() {
         alert(result.error || 'Error al eliminar cliente')
       }
     } catch (err) {
+      console.error('Failed to delete client:', err)
       alert('Error al eliminar cliente')
     }
   }

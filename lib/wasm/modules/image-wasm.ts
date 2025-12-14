@@ -152,6 +152,8 @@ export class ImageWASM {
       
       return result
     } catch (error) {
+      // WASM execution failed, falling back to JavaScript implementation
+      console.debug('WASM blur operation failed, using JS fallback:', error)
       return this.applyBlurJS(imageData, radius)
     }
   }
@@ -225,6 +227,8 @@ export class ImageWASM {
       
       return result
     } catch (error) {
+      // WASM execution failed, falling back to JavaScript implementation
+      console.debug('WASM resize operation failed, using JS fallback:', error)
       return this.resizeJS(imageData, newWidth, newHeight)
     }
   }
@@ -279,6 +283,8 @@ export class ImageWASM {
       this.exports.deallocate(dataPtr)
       return result
     } catch (error) {
+      // WASM execution failed, falling back to JavaScript implementation
+      console.debug('WASM brightness adjustment failed, using JS fallback:', error)
       return this.adjustBrightnessJS(imageData, factor)
     }
   }
@@ -329,6 +335,8 @@ export class ImageWASM {
       
       return averageColor
     } catch (error) {
+      // WASM execution failed, falling back to JavaScript implementation
+      console.debug('WASM average color calculation failed, using JS fallback:', error)
       return this.calculateAverageColorJS(imageData)
     }
   }

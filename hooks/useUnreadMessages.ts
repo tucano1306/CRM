@@ -28,7 +28,7 @@ export function useUnreadMessages() {
       const data = await response.json()
       setUnreadCount(data.unreadCount || 0)
     } catch (error) {
-      console.debug('Unread messages fetch temporarily unavailable')
+      console.debug('Unread messages fetch temporarily unavailable:', error)
     } finally {
       setLoading(false)
     }

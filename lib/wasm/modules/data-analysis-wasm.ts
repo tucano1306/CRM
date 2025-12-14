@@ -253,6 +253,8 @@ export class DataAnalysisWASM {
       
       return correlation
     } catch (error) {
+      // WASM execution failed, falling back to JavaScript implementation
+      console.debug('WASM correlation calculation failed, using JS fallback:', error)
       return this.calculateCorrelationJS(x, y)
     }
   }
@@ -328,6 +330,8 @@ export class DataAnalysisWASM {
       
       return regression
     } catch (error) {
+      // WASM execution failed, falling back to JavaScript implementation
+      console.debug('WASM linear regression failed, using JS fallback:', error)
       return this.linearRegressionJS(x, y)
     }
   }
@@ -419,6 +423,8 @@ export class DataAnalysisWASM {
       
       return { centroids, assignments, iterations, inertia }
     } catch (error) {
+      // WASM execution failed, falling back to JavaScript implementation
+      console.debug('WASM k-means clustering failed, using JS fallback:', error)
       return this.kMeansClusteringJS(data, k, maxIterations)
     }
   }

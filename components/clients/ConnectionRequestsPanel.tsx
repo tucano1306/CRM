@@ -65,7 +65,8 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
         setPendingCount(0)
       }
     } catch (err) {
-      // Error silencioso - el sistema de solicitudes puede no estar disponible aún
+      // Intentionally silenced: connection requests system may not be available yet
+      console.debug('Connection requests fetch error:', err)
       setRequests([])
       setPendingCount(0)
     } finally {

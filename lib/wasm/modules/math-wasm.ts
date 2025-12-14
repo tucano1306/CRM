@@ -235,6 +235,8 @@ export class MathWASM {
     try {
       return this.exports.compound_interest(principal, rate, time, frequency)
     } catch (error) {
+      // WASM execution failed, falling back to JavaScript implementation
+      console.debug('WASM compound interest calculation failed, using JS fallback:', error)
       return principal * Math.pow(1 + rate / frequency, frequency * time)
     }
   }
@@ -264,6 +266,8 @@ export class MathWASM {
       
       return movingAverages
     } catch (error) {
+      // WASM execution failed, falling back to JavaScript implementation
+      console.debug('WASM moving average calculation failed, using JS fallback:', error)
       return this.calculateMovingAverageJS(values, window)
     }
   }

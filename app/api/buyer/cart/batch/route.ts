@@ -148,6 +148,7 @@ export async function POST(request: Request) {
         })
         successCount++
       } catch (err) {
+        console.error('Failed to add product to cart:', err)
         results.push({
           productId: item.productId,
           success: false,

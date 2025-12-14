@@ -387,7 +387,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
       audio.volume = 0.5
       audio.play().catch(e => console.log('No se pudo reproducir sonido:', e))
     } catch (e) {
-      console.log('Sonido no disponible')
+      console.log('Sonido no disponible:', e)
     }
   }
 

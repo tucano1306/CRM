@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
     // Agregar headers CORS públicos
     return addCorsHeaders(response, request, corsConfigs.public)
   } catch (error) {
+    console.error('CORS custom route error:', error)
     const errorResponse = NextResponse.json(
       { success: false, error: 'Error interno' },
       { status: 500 }

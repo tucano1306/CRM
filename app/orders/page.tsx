@@ -164,6 +164,7 @@ function OrdersPageContent() {
         setError(result.error || 'Error al cargar órdenes')
       }
     } catch (err) {
+      console.error('Failed to fetch orders:', err)
       setError('Error de conexión')
     } finally {
       setLoading(false)

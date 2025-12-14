@@ -702,7 +702,9 @@ class PushNotificationService {
       const audio = new Audio(soundUrl)
       audio.volume = 0.5
       audio.play().catch(() => {})
-    } catch (error) {}
+    } catch (error) {
+      // Intentionally silenced: audio playback is optional and may fail due to browser restrictions
+    }
   }
 }
 
