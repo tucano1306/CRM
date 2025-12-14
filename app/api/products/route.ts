@@ -292,7 +292,7 @@ export async function POST(request: Request) {
     }
 
     // Manejo de errores de Prisma
-    if ((error as any).code === 'P2002') {
+    if (error.code === 'P2002') {
       return NextResponse.json(
         {
           success: false,

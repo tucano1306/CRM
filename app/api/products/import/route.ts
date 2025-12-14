@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     const worksheet = workbook.Sheets[sheetName]
     
     // Convertir a JSON
-    const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[][]
+    const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
 
     // Encontrar la fila de encabezados (buscar "Item #" o "Item" o similar)
     let headerRowIndex = -1

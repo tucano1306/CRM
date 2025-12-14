@@ -272,7 +272,7 @@ export async function POST(request: NextRequest) {
       sessionPerf.push({
         ...performance,
         timestamp: Date.now()
-      } as any)
+      })
 
       // Limit performance entries
       if (sessionPerf.length > 100) {

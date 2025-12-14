@@ -95,7 +95,7 @@ export async function GET(req: Request) {
     )
 
     if (hasConflict) {
-      const roleNames = {
+      const roleNames: Record<string, string> = {
         SELLER: 'Vendedor',
         CLIENT: 'Comprador'
       }
@@ -106,7 +106,7 @@ export async function GET(req: Request) {
         attemptedRole,
         userEmail,
         userName: authUser.name,
-        message: `Tu cuenta (${userEmail}) ya está registrada como ${roleNames[existingRole as keyof typeof roleNames]}. No puedes acceder como ${roleNames[attemptedRole as keyof typeof roleNames]}. Por favor, inicia sesión con tu rol de ${roleNames[existingRole as keyof typeof roleNames]}.`
+        message: `Tu cuenta (${userEmail}) ya está registrada como ${roleNames[existingRole]}. No puedes acceder como ${roleNames[attemptedRole]}. Por favor, inicia sesión con tu rol de ${roleNames[existingRole]}.`
       })
     }
 

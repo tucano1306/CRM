@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
       statistics: {
         transitionCounts: statusCounts,
         mostCommonTransition: Object.entries(statusCounts)
-          .sort(([, a], [, b]) => (b as number) - (a as number))[0],
+          .sort(([, a], [, b]) => b - a)[0],
       },
     })
   } catch (error) {

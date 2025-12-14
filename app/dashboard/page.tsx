@@ -180,7 +180,7 @@ export default function DashboardPage() {
       const result = await apiCall('/api/orders?status=PENDING&limit=10', { timeout: 5000 })
       if (result.success && result.data) {
         // apiCall devuelve { success, data: { success, orders, stats } }
-        const apiData = result.data as any
+        const apiData = result.data
         setPendingOrdersList(apiData.orders || [])
       }
     } catch (err) {

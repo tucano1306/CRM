@@ -236,15 +236,15 @@ export async function POST(request: Request) {
       client = await withPrismaTimeout(
         () => prisma.client.create({
           data: {
-            name: authUser!.name || 'Cliente Nuevo',
-            businessName: authUser!.name || 'Mi Negocio',
+            name: authUser.name || 'Cliente Nuevo',
+            businessName: authUser.name || 'Mi Negocio',
             address: 'Dirección por definir',
             phone: 'Teléfono por definir',
-            email: authUser!.email,
+            email: authUser.email,
             orderConfirmationEnabled: true,
             notificationsEnabled: true,
             authenticated_users: {
-              connect: { id: authUser!.id }
+              connect: { id: authUser.id }
             }
           }
         })
@@ -277,7 +277,7 @@ export async function POST(request: Request) {
       // ✅ Actualizar cliente con seller CON TIMEOUT
       await withPrismaTimeout(
         () => prisma.client.update({
-          where: { id: client!.id },
+          where: { id: client.id },
           data: { sellerId: sellerId }
         })
       )
@@ -331,18 +331,18 @@ export async function POST(request: Request) {
         const newOrder = await tx.order.create({
           data: {
             orderNumber: `ORD-${shortId}`,
-            clientId: client!.id,
-            sellerId: sellerId!,  // Ahora garantizado que existe
+            clientId: client.id,
+            sellerId: sellerId,  // Ahora garantizado que existe
             status: 'PENDING',
             totalAmount: finalTotal, // Usar total con créditos aplicados
             notes: notes,
             idempotencyKey: idempotencyKey || null,
-            confirmationDeadline: client!.orderConfirmationEnabled ? confirmationDeadline : null,
+            confirmationDeadline: client.orderConfirmationEnabled ? confirmationDeadline : null,
           }
         })
 
         // Crear los items de la orden
-        for (const item of cart!.items) {
+        for (const item of cart.items) {
           await tx.orderItem.create({
             data: {
               orderId: newOrder.id,
@@ -400,7 +400,7 @@ export async function POST(request: Request) {
 
         // Vaciar carrito
         await tx.cartItem.deleteMany({
-          where: { cartId: cart!.id },  // CORRECTO
+          where: { cartId: cart.id },
         })
 
         // Retornar orden completa

@@ -10,12 +10,12 @@ export async function GET(request: NextRequest) {
     const orderCount = await prisma.order.count()
     
     // Obtener info de la base de datos
-    const dbInfo = await prisma.$queryRaw`
+    const dbInfo = await prisma.$queryRaw<Array<{ database_name: string; user_name: string; postgres_version: string }>>`
       SELECT 
         current_database() as database_name,
         current_user as user_name,
         version() as postgres_version
-    ` as any[]
+    `
     
     return NextResponse.json({
       status: 'connected',
