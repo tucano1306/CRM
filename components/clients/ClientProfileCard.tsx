@@ -256,7 +256,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
       </div>
 
       {/* Información de contacto - Más compacta */}
-      <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2" onClick={(e) => e.stopPropagation()}>
+      <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
         <div className="bg-gray-50 rounded-lg sm:rounded-xl p-2 sm:p-3 space-y-1 sm:space-y-2">
           {/* Email */}
           <a 

@@ -309,7 +309,10 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
       {mounted && selectedNotification && createPortal(
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-[9999] animate-in fade-in duration-300 flex items-center justify-center p-4 sm:p-6"
+          role="button"
+          tabIndex={0}
           onClick={closeModal}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') closeModal(); }}
         >
           <div 
             ref={modalRef}
@@ -319,6 +322,7 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
             }
             className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-2xl w-full sm:w-[90vw] sm:max-w-md max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-right-4 duration-500 ring-0 sm:ring-4 sm:ring-blue-500/50"
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
           >
             {/* New Badge */}
             {newNotification?.id === selectedNotification.id && (

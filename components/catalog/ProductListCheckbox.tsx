@@ -326,6 +326,7 @@ export default function ProductListCheckbox({
                       <div 
                         className="flex items-center gap-2"
                         onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
                       >
                         <Button
                           variant="outline"
