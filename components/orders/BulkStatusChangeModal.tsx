@@ -604,12 +604,11 @@ export default function BulkStatusChangeModal({
       style={{ zIndex: 9999999 }}
     >
       {/* Overlay */}
-      <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+      <button 
+        type="button"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm border-0 cursor-default"
         onClick={onClose}
-        onKeyDown={(e) => e.key === 'Enter' && onClose()}
-        role="button"
-        tabIndex={0}
+        aria-label="Close modal"
       />
       
       {/* Modal - Más grande y legible */}

@@ -276,7 +276,7 @@ export default function CreateRecurringOrderModal({
   return (
     <>
       {/* Overlay */}
-      <div className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm" onClick={onClose} onKeyDown={(e) => e.key === 'Enter' && onClose()} role="button" tabIndex={0} />
+      <button type="button" className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm border-0 cursor-default" onClick={onClose} aria-label="Close modal" />
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -498,13 +498,12 @@ export default function CreateRecurringOrderModal({
                       {filteredProducts.map(product => {
                         const isSelected = selectedItems.find(item => item.productId === product.id)
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={product.id}
                             onClick={() => !isSelected && addProduct(product)}
-                            onKeyDown={(e) => e.key === 'Enter' && !isSelected && addProduct(product)}
-                            role="button"
-                            tabIndex={0}
-                            className={`p-4 border-2 rounded-xl transition-all cursor-pointer ${
+                            disabled={!!isSelected}
+                            className={`w-full text-left p-4 border-2 rounded-xl transition-all cursor-pointer ${
                               isSelected
                                 ? 'border-green-500 bg-green-50'
                                 : 'border-gray-200 hover:border-purple-400 hover:bg-purple-50'
@@ -523,7 +522,7 @@ export default function CreateRecurringOrderModal({
                             <div className="mt-2 text-xs text-gray-500">
                               Stock: {product.stock} {product.unit}
                             </div>
-                          </div>
+                          </button>
                         )
                       })}
                     </div>

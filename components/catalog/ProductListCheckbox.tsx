@@ -252,17 +252,16 @@ export default function ProductListCheckbox({
             const outOfStock = product.stock === 0
 
             return (
-              <div 
+              <button 
+                type="button"
                 key={product.id}
                 className={`
-                  flex items-center gap-4 p-4 transition-colors cursor-pointer
+                  w-full flex items-center gap-4 p-4 transition-colors cursor-pointer bg-transparent border-0 text-left
                   ${isSelected ? 'bg-purple-50 border-l-4 border-purple-500' : 'hover:bg-gray-50'}
                   ${outOfStock ? 'opacity-50' : ''}
                 `}
                 onClick={() => !outOfStock && toggleProduct(product)}
-                onKeyDown={(e) => e.key === 'Enter' && !outOfStock && toggleProduct(product)}
-                role="button"
-                tabIndex={0}
+                disabled={outOfStock}
               >
                 {/* Checkbox */}
                 <div className="flex-shrink-0">
@@ -327,9 +326,6 @@ export default function ProductListCheckbox({
                       <div 
                         className="flex items-center gap-2"
                         onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => e.stopPropagation()}
-                        role="button"
-                        tabIndex={0}
                       >
                         <Button
                           variant="outline"
@@ -366,7 +362,7 @@ export default function ProductListCheckbox({
                     )}
                   </div>
                 </div>
-              </div>
+              </button>
             )
           })
         )}

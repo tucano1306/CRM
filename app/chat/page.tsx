@@ -133,13 +133,11 @@ function SellerChatContent() {
               ) : (
                 <div className="divide-y max-h-[500px] md:max-h-[600px] overflow-y-auto">
                   {clients.map((client) => (
-                    <div
+                    <button
+                      type="button"
                       key={client.id}
                       onClick={() => setSelectedClient(client)}
-                      onKeyDown={(e) => e.key === 'Enter' && setSelectedClient(client)}
-                      role="button"
-                      tabIndex={0}
-                      className={`p-3 md:p-4 cursor-pointer hover:bg-purple-50 transition-all ${
+                      className={`w-full text-left p-3 md:p-4 cursor-pointer hover:bg-purple-50 transition-all bg-transparent border-0 ${
                         selectedClient?.id === client.id
                           ? 'bg-gradient-to-r from-purple-50 to-indigo-50 border-l-4 border-purple-600 shadow-sm'
                           : ''
@@ -160,7 +158,7 @@ function SellerChatContent() {
                           </div>
                         )}
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}

@@ -37,12 +37,11 @@ export default function BuyerLayout({ children }: BuyerLayoutProps) {
       <div className="flex h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
+        <button 
+          type="button"
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm border-0 cursor-default"
           onClick={() => setSidebarOpen(false)}
-          onKeyDown={(e) => e.key === 'Enter' && setSidebarOpen(false)}
-          role="button"
-          tabIndex={0}
+          aria-label="Close sidebar"
         />
       )}
       

@@ -31,7 +31,7 @@ export default function RecurringOrderDetailModal({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm" onClick={onClose} onKeyDown={(e) => e.key === 'Enter' && onClose()} role="button" tabIndex={0} />
+      <button type="button" className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm border-0 cursor-default" onClick={onClose} aria-label="Close modal" />
       
       <div className="fixed right-0 top-0 h-full w-full md:w-[800px] lg:w-[1000px] bg-white z-50 shadow-2xl overflow-hidden flex flex-col">
         

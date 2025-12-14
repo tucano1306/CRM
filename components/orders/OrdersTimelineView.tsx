@@ -326,20 +326,13 @@ export default function OrdersTimelineView({
                           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                             {/* Checkbox de selección (solo para vendedor) */}
                             {userRole === 'SELLER' && onToggleSelection && (
-                              <div 
+                              <button 
+                                type="button"
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   onToggleSelection(order.id)
                                 }}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.stopPropagation()
-                                    onToggleSelection(order.id)
-                                  }
-                                }}
-                                role="button"
-                                tabIndex={0}
-                                className="flex-shrink-0 cursor-pointer"
+                                className="flex-shrink-0 cursor-pointer bg-transparent border-0 p-0"
                               >
                                 <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
                                   isSelected(order.id)
@@ -350,27 +343,23 @@ export default function OrdersTimelineView({
                                     <Check className="h-3 w-3 text-white" />
                                   )}
                                 </div>
-                              </div>
+                              </button>
                             )}
 
                             {/* Icono de Estado */}
-                            <div 
-                              className={`${config.bg} p-2 sm:p-2.5 rounded-lg flex-shrink-0 cursor-pointer`}
+                            <button 
+                              type="button"
+                              className={`${config.bg} p-2 sm:p-2.5 rounded-lg flex-shrink-0 cursor-pointer border-0`}
                               onClick={() => onOrderClick(order)}
-                              onKeyDown={(e) => e.key === 'Enter' && onOrderClick(order)}
-                              role="button"
-                              tabIndex={0}
                             >
                               <StatusIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${config.color}`} />
-                            </div>
+                            </button>
 
                             {/* Info Principal */}
-                            <div 
-                              className="flex-1 min-w-0 cursor-pointer"
+                            <button 
+                              type="button"
+                              className="flex-1 min-w-0 cursor-pointer bg-transparent border-0 p-0 text-left"
                               onClick={() => onOrderClick(order)}
-                              onKeyDown={(e) => e.key === 'Enter' && onOrderClick(order)}
-                              role="button"
-                              tabIndex={0}
                             >
                               <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
                                 <h4 className="font-semibold text-gray-900 text-sm">
@@ -404,17 +393,17 @@ export default function OrdersTimelineView({
                                   })}
                                 </span>
                               </div>
-                            </div>
+                            </button>
                           </div>
 
                           {/* Segunda fila en móvil: Precio + Flecha */}
                           <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 sm:flex-shrink-0">
                             {/* Precio */}
-                            <div className="text-left sm:text-right cursor-pointer" onClick={() => onOrderClick(order)} onKeyDown={(e) => e.key === 'Enter' && onOrderClick(order)} role="button" tabIndex={0}>
+                            <button type="button" className="text-left sm:text-right cursor-pointer bg-transparent border-0 p-0" onClick={() => onOrderClick(order)}>
                               <p className="text-lg sm:text-xl font-bold text-purple-600">
                                 ${Number(order.totalAmount).toFixed(2)}
                               </p>
-                            </div>
+                            </button>
 
                             {/* Flecha */}
                             <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-purple-600 transition-colors flex-shrink-0" />

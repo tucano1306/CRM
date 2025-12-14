@@ -33,12 +33,10 @@ export default function ProductCard({ product, onEdit, onDelete, onClick }: Prod
   const isOutOfStock = product.stock === 0
 
   return (
-    <div 
+    <button 
+      type="button"
       onClick={() => onClick?.(product)}
-      onKeyDown={(e) => e.key === 'Enter' && onClick?.(product)}
-      role="button"
-      tabIndex={0}
-      className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer group"
+      className="w-full text-left bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer group p-0"
     >
       {/* Header con gradiente */}
       <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-4 text-white">
@@ -172,6 +170,6 @@ export default function ProductCard({ product, onEdit, onDelete, onClick }: Prod
 
       {/* Hover effect overlay */}
       <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-    </div>
+    </button>
   )
 }

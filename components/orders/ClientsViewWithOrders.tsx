@@ -530,17 +530,15 @@ export default function ClientsViewWithOrders({
               const hasPendingOrders = clientData.orders.some(o => o.status === 'PENDING')
               
               return (
-                <div
+                <button
+                  type="button"
                   key={clientData.client.id}
                   data-client-has-pending={hasPendingOrders ? 'true' : 'false'}
                   onClick={() => setSelectedClient(clientData)}
-                  onKeyDown={(e) => e.key === 'Enter' && setSelectedClient(clientData)}
-                  role="button"
-                  tabIndex={0}
                   style={{
                     animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`
                   }}
-                  className={`relative bg-white rounded-2xl shadow-lg ${colorScheme.glow} hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-[1.03] group overflow-hidden`}
+                  className={`w-full text-left relative bg-white rounded-2xl shadow-lg ${colorScheme.glow} hover:shadow-2xl transition-all duration-300 cursor-pointer hover:scale-[1.03] group overflow-hidden border-0 p-0`}
                 >
                   {/* 🌈 Banda superior con gradiente vibrante */}
                   <div className={`h-24 bg-gradient-to-r ${colorScheme.bg} relative overflow-hidden`}>
@@ -667,7 +665,7 @@ export default function ClientsViewWithOrders({
                       </div>
                     </div>
                   </div>
-                </div>
+                </button>
               )
             })
           )}
@@ -698,8 +696,9 @@ export default function ClientsViewWithOrders({
       {selectedClient && isMounted && createPortal(
         <>
           {/* Overlay - MEJORADO PARA BLOQUEAR SCROLL Y CUBRIR TODO */}
-          <div 
-            className="bg-black/60 backdrop-blur-sm transition-all duration-300 overflow-hidden"
+          <button 
+            type="button"
+            className="bg-black/60 backdrop-blur-sm transition-all duration-300 overflow-hidden border-0 cursor-default"
             style={{ 
               position: 'fixed',
               top: 0,
@@ -712,9 +711,7 @@ export default function ClientsViewWithOrders({
               animation: 'fadeIn 0.3s ease-out'
             }}
             onClick={() => setSelectedClient(null)}
-            onKeyDown={(e) => e.key === 'Enter' && setSelectedClient(null)}
-            role="button"
-            tabIndex={0}
+            aria-label="Close modal"
           />
 
           {/* Modal - OVERFLOW CONTROLADO Y Z-INDEX ALTO */}

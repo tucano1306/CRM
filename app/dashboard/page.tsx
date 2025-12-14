@@ -475,13 +475,11 @@ export default function DashboardPage() {
             {/* Vista móvil - Tarjetas */}
             <div className="sm:hidden space-y-3">
               {recentOrders.map((order) => (
-                <div 
+                <button 
+                  type="button"
                   key={order.id} 
-                  className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                  className="w-full text-left bg-gray-50 rounded-lg p-4 border border-gray-200"
                   onClick={() => router.push('/orders')}
-                  onKeyDown={(e) => e.key === 'Enter' && router.push('/orders')}
-                  role="button"
-                  tabIndex={0}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div>
@@ -513,7 +511,7 @@ export default function DashboardPage() {
                       Ver
                     </button>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
 
@@ -692,13 +690,11 @@ export default function DashboardPage() {
             {recentOrders.length > 0 ? (
               <div className="space-y-3">
                 {recentOrders.map((order: any) => (
-                  <div 
+                  <button 
+                    type="button"
                     key={order.id}
                     onClick={() => router.push(`/orders?orderId=${order.id}`)}
-                    onKeyDown={(e) => e.key === 'Enter' && router.push(`/orders?orderId=${order.id}`)}
-                    role="button"
-                    tabIndex={0}
-                    className="flex items-center justify-between p-4 bg-gray-50 hover:bg-purple-50 rounded-lg border border-gray-200 cursor-pointer transition-all hover:border-purple-300"
+                    className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-purple-50 rounded-lg border border-gray-200 cursor-pointer transition-all hover:border-purple-300"
                   >
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -739,7 +735,7 @@ export default function DashboardPage() {
                          order.status}
                       </p>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             ) : (

@@ -147,12 +147,11 @@ export default function OrderDetailModal({
   return (
     <div className="fixed inset-0 overflow-hidden" style={{ zIndex: 9999999 }}>
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+      <button 
+        type="button"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity border-0 cursor-default"
         onClick={onClose}
-        onKeyDown={(e) => e.key === 'Enter' && onClose()}
-        role="button"
-        tabIndex={0}
+        aria-label="Close modal"
       />
 
       {/* Modal Panel */}

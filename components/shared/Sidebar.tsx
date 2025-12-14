@@ -347,12 +347,11 @@ export default function Sidebar() {
 
       {/* Mobile Overlay */}
       {isMobileOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+        <button 
+          type="button"
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40 border-0 cursor-default"
           onClick={() => setIsMobileOpen(false)}
-          onKeyDown={(e) => e.key === 'Enter' && setIsMobileOpen(false)}
-          role="button"
-          tabIndex={0}
+          aria-label="Close sidebar"
         />
       )}
     </>

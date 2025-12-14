@@ -2063,16 +2063,10 @@ function OrdersPageContent() {
           <div 
             className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={closeOrderModal}
-            onKeyDown={(e) => e.key === 'Enter' && closeOrderModal()}
-            role="button"
-            tabIndex={0}
           >
             <div 
               className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
-              role="button"
-              tabIndex={0}
             >
               {/* Header - Compacto */}
               <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-t-2xl sticky top-0 z-10">
