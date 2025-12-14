@@ -3,8 +3,8 @@
 import Sidebar from './Sidebar'
 
 interface MainLayoutProps {
-  children: React.ReactNode
-  userRole?: 'seller' | 'buyer'
+  readonly children: React.ReactNode
+  readonly userRole?: 'seller' | 'buyer'
 }
 
 export default function MainLayout({ children, userRole }: MainLayoutProps) {

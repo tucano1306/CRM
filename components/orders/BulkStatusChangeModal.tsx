@@ -160,6 +160,12 @@ export default function BulkStatusChangeModal({
   // Estado para mostrar/ocultar productos ya confirmados
   const [showConfirmedProducts, setShowConfirmedProducts] = useState(false)
 
+  // Verificar si estamos en el cliente para el portal
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   // Cargar items ya confirmados de la BD al abrir
   useEffect(() => {
     const order = selectedOrdersData.length === 1 ? selectedOrdersData[0] : null
@@ -591,12 +597,6 @@ export default function BulkStatusChangeModal({
       setLoading(false)
     }
   }
-
-  // Verificar si estamos en el cliente para el portal
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const modalContent = (
     <div 
