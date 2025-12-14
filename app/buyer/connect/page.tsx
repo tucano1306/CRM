@@ -426,29 +426,7 @@ function ConnectPageContent() {
             </div>
           )}
 
-          {!userId ? (
-            <div className="space-y-3">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-sm text-blue-800">
-                  📝 Para conectarte necesitas iniciar sesión o crear una cuenta.
-                </p>
-              </div>
-              <Button 
-                onClick={handleConnect} 
-                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
-                size="lg"
-              >
-                Continuar
-              </Button>
-              <Button 
-                onClick={handleCancel} 
-                variant="outline"
-                className="w-full"
-              >
-                No quiero conectarme
-              </Button>
-            </div>
-          ) : (
+          {userId ? (
             <div className="space-y-4">
               {/* Campo de teléfono */}
               <div className="space-y-2">
@@ -498,6 +476,28 @@ function ConnectPageContent() {
                 className="w-full"
               >
                 Cancelar
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-sm text-blue-800">
+                  📝 Para conectarte necesitas iniciar sesión o crear una cuenta.
+                </p>
+              </div>
+              <Button 
+                onClick={handleConnect} 
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                size="lg"
+              >
+                Continuar
+              </Button>
+              <Button 
+                onClick={handleCancel} 
+                variant="outline"
+                className="w-full"
+              >
+                No quiero conectarme
               </Button>
             </div>
           )}

@@ -251,7 +251,7 @@ export default function OrdersListImproved({
                       {order.orderItems && order.orderItems.length > 0 && (
                         <div className="flex items-center gap-1">
                           <Package className="h-4 w-4" />
-                          {order.orderItems.length} producto{order.orderItems.length !== 1 ? 's' : ''}
+                          {order.orderItems.length} producto{order.orderItems.length === 1 ? '' : 's'}
                         </div>
                       )}
                     </div>

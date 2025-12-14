@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
           dayOfWeek: s.dayOfWeek as DayOfWeek,
           startTime: s.startTime,
           endTime: s.endTime,
-          isActive: s.isActive !== undefined ? s.isActive : true
+          isActive: s.isActive === undefined ? true : s.isActive
         }))
       })
 

@@ -133,7 +133,7 @@ export function getStockBarColor(stock: number): string {
  */
 export function formatStock(stock: number, unit?: string): string {
   if (stock === 0) return 'Agotado'
-  return unit ? `${stock} ${unit}${stock !== 1 ? 's' : ''}` : `${stock} unidades`
+  return unit ? `${stock} ${unit}${stock === 1 ? '' : 's'}` : `${stock} unidades`
 }
 
 /**

@@ -606,7 +606,20 @@ export default function ManageCatalogModal({
                           <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3">
                             <div className="flex items-center gap-2">
                               <DollarSign className="w-4 h-4 text-gray-400" />
-                              {editingPrices[product.productId] !== undefined ? (
+                              {editingPrices[product.productId] === undefined ? (
+                                <button
+                                  onClick={() =>
+                                    setEditingPrices(prev => ({
+                                      ...prev,
+                                      [product.productId]: product.customPrice
+                                    }))
+                                  }
+                                  className="text-lg font-bold text-purple-600 hover:text-purple-700 transition-colors flex items-center gap-1"
+                                >
+                                  {formatPrice(product.customPrice)}
+                                  <Edit3 className="w-3 h-3" />
+                                </button>
+                              ) : (
                                 <div className="flex items-center gap-2">
                                   <input
                                     type="number"
@@ -645,19 +658,6 @@ export default function ManageCatalogModal({
                                     <X className="w-4 h-4" />
                                   </button>
                                 </div>
-                              ) : (
-                                <button
-                                  onClick={() =>
-                                    setEditingPrices(prev => ({
-                                      ...prev,
-                                      [product.productId]: product.customPrice
-                                    }))
-                                  }
-                                  className="text-lg font-bold text-purple-600 hover:text-purple-700 transition-colors flex items-center gap-1"
-                                >
-                                  {formatPrice(product.customPrice)}
-                                  <Edit3 className="w-3 h-3" />
-                                </button>
                               )}
                             </div>
                             <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">

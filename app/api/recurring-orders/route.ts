@@ -251,7 +251,7 @@ function getValidDayOfMonth(year: number, month: number, day: number): number {
 const frequencyHandlers: Record<string, (date: Date, opts: {dayOfWeek?: number, dayOfMonth?: number, customDays?: number}) => void> = {
   DAILY: (date) => date.setDate(date.getDate() + 1),
   WEEKLY: (date, {dayOfWeek}) => {
-    const daysToAdd = dayOfWeek !== undefined ? getDaysUntilWeekday(date, dayOfWeek) : 7
+    const daysToAdd = dayOfWeek === undefined ? 7 : getDaysUntilWeekday(date, dayOfWeek)
     date.setDate(date.getDate() + daysToAdd)
   },
   BIWEEKLY: (date) => date.setDate(date.getDate() + 14),

@@ -270,7 +270,7 @@ export default function ProductModal({ product, isOpen, onClose, onTagsUpdate }:
                     <h3 className="font-semibold text-gray-900">Etiquetas del Producto</h3>
                   </div>
                   <span className="text-sm text-gray-600">
-                    {tags.length} etiqueta{tags.length !== 1 ? 's' : ''}
+                    {tags.length} etiqueta{tags.length === 1 ? '' : 's'}
                   </span>
                 </div>
                 

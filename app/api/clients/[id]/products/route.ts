@@ -209,7 +209,7 @@ export async function POST(
             },
             update: {
               customPrice: finalPrice,
-              isVisible: p.isVisible !== undefined ? p.isVisible : true,
+              isVisible: p.isVisible === undefined ? true : p.isVisible,
               notes: p.notes || null,
               updatedAt: new Date()
             },
@@ -217,7 +217,7 @@ export async function POST(
               clientId,
               productId: p.productId,
               customPrice: finalPrice,
-              isVisible: p.isVisible !== undefined ? p.isVisible : true,
+              isVisible: p.isVisible === undefined ? true : p.isVisible,
               notes: p.notes || null,
             }
           })

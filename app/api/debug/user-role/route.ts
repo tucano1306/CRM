@@ -43,9 +43,9 @@ export async function GET() {
         publicMetadata: sessionClaims?.public_metadata || null,
       },
       message: `Your role is detected as: ${userRole} (from ${roleSource})`,
-      recommendation: userRole !== 'CLIENT' 
-        ? '⚠️ Para acceder a rutas de buyer, necesitas rol CLIENT en Clerk public_metadata'
-        : '✅ Tienes el rol correcto para buyer routes'
+      recommendation: userRole === 'CLIENT' 
+        ? '✅ Tienes el rol correcto para buyer routes'
+        : '⚠️ Para acceder a rutas de buyer, necesitas rol CLIENT en Clerk public_metadata'
     })
   } catch (error) {
     return NextResponse.json({

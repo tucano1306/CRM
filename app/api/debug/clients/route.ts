@@ -121,7 +121,7 @@ export async function GET(request: Request) {
         authUsersCount: c.authenticated_users.length,
         hasProblems: !c.sellerId || c.authenticated_users.length === 0,
         problems: [
-          ...(!c.sellerId ? ['SIN_SELLER'] : []),
+          ...(c.sellerId ? [] : ['SIN_SELLER']),
           ...(c.authenticated_users.length === 0 ? ['SIN_AUTH_USER'] : [])
         ]
       }))

@@ -113,7 +113,7 @@ export default function TagManager({ productId, product, currentTags, onTagsUpda
             <div>
               <h2 className="text-2xl font-bold">Gestionar Etiquetas</h2>
               <p className="text-sm opacity-90 mt-1">
-                {currentTags.length} etiqueta{currentTags.length !== 1 ? 's' : ''} asignada{currentTags.length !== 1 ? 's' : ''}
+                {currentTags.length} etiqueta{currentTags.length === 1 ? '' : 's'} asignada{currentTags.length === 1 ? '' : 's'}
               </p>
             </div>
             <button

@@ -251,7 +251,7 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
                     <div
                       key={notification.id}
                       className={`p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer ${
-                        !notification.isRead ? 'bg-blue-50 dark:bg-blue-900/20' : ''
+                        notification.isRead ? '' : 'bg-blue-50 dark:bg-blue-900/20'
                       }`}
                       onClick={() => {
                         if (!notification.isRead) {
@@ -265,7 +265,7 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
                         <span className="text-2xl flex-shrink-0">{getTypeIcon(notification.type)}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
-                            <p className={`text-sm font-medium text-gray-900 dark:text-white ${!notification.isRead ? 'font-bold' : ''}`}>
+                            <p className={`text-sm font-medium text-gray-900 dark:text-white ${notification.isRead ? '' : 'font-bold'}`}>
                               {notification.title}
                             </p>
                             {!notification.isRead && (

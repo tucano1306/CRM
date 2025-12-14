@@ -652,7 +652,7 @@ export default function ClientsPage() {
               ) : (
                 <>
                   Mostrando {filteredClients.length} de {clients.length} cliente
-                  {filteredClients.length !== 1 ? 's' : ''}
+                  {filteredClients.length === 1 ? '' : 's'}
                 </>
               )}
             </span>
@@ -834,12 +834,7 @@ export default function ClientsPage() {
       {showInvitationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8 animate-fadeIn">
-            {!invitationLink ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4" />
-                <p className="text-gray-600 text-lg">Generando link de invitación...</p>
-              </div>
-            ) : (
+            {invitationLink ? (
               <>
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-3">
@@ -990,6 +985,11 @@ export default function ClientsPage() {
                   </div>
                 </div>
               </>
+            ) : (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4" />
+                <p className="text-gray-600 text-lg">Generando link de invitación...</p>
+              </div>
             )}
           </div>
         </div>

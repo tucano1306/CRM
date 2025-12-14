@@ -798,7 +798,7 @@ export default function ClientsViewWithOrders({
                         Historial de Órdenes
                       </h3>
                       <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">
-                        {filteredClientOrders.length} de {selectedClient.totalOrders} orden{selectedClient.totalOrders !== 1 ? 'es' : ''} de <span className="font-semibold text-purple-600">{selectedClient.client.name}</span>
+                        {filteredClientOrders.length} de {selectedClient.totalOrders} orden{selectedClient.totalOrders === 1 ? '' : 'es'} de <span className="font-semibold text-purple-600">{selectedClient.client.name}</span>
                       </p>
                     </div>
                   </div>

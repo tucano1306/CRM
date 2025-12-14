@@ -65,9 +65,9 @@ export async function GET(request: Request) {
       where: { authenticated_users: { some: { authId: userId } } }
     })
 
-    const client = !seller ? await prisma.client.findFirst({
+    const client = seller ? null : await prisma.client.findFirst({
       where: { authenticated_users: { some: { authId: userId } } }
-    }) : null
+    })
 
     // Build where clause based on role
     let whereClause: any

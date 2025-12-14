@@ -118,16 +118,16 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        const sku = columnMap['sku'] !== undefined ? String(row[columnMap['sku']] || '').trim() : ''
-        const name = columnMap['name'] !== undefined ? String(row[columnMap['name']] || '').trim() : ''
-        const brand = columnMap['brand'] !== undefined ? String(row[columnMap['brand']] || '').trim() : ''
-        const pack = columnMap['pack'] !== undefined ? String(row[columnMap['pack']] || '').trim() : ''
-        const size = columnMap['size'] !== undefined ? String(row[columnMap['size']] || '').trim() : ''
-        const priceStr = columnMap['price'] !== undefined ? String(row[columnMap['price']] || '0') : '0'
-        const split = columnMap['split'] !== undefined ? String(row[columnMap['split']] || '').toLowerCase() === 'yes' : false
+        const sku = columnMap['sku'] === undefined ? '' : String(row[columnMap['sku']] || '').trim()
+        const name = columnMap['name'] === undefined ? '' : String(row[columnMap['name']] || '').trim()
+        const brand = columnMap['brand'] === undefined ? '' : String(row[columnMap['brand']] || '').trim()
+        const pack = columnMap['pack'] === undefined ? '' : String(row[columnMap['pack']] || '').trim()
+        const size = columnMap['size'] === undefined ? '' : String(row[columnMap['size']] || '').trim()
+        const priceStr = columnMap['price'] === undefined ? '0' : String(row[columnMap['price']] || '0')
+        const split = columnMap['split'] === undefined ? false : String(row[columnMap['split']] || '').toLowerCase() === 'yes'
         
         // Obtener categoría del Excel o auto-clasificar
-        const categoryFromExcel = columnMap['category'] !== undefined ? String(row[columnMap['category']] || '').trim().toUpperCase() : ''
+        const categoryFromExcel = columnMap['category'] === undefined ? '' : String(row[columnMap['category']] || '').trim().toUpperCase()
         
         // Validar si la categoría del Excel es válida
         const validCategories = Object.values(ProductCategory)

@@ -172,9 +172,9 @@ export async function PATCH(
       updateData.nextExecutionDate = calculateNextExecutionDate(
         body.frequency || existingOrder.frequency,
         undefined,
-        body.dayOfWeek !== undefined ? body.dayOfWeek : existingOrder.dayOfWeek,
-        body.dayOfMonth !== undefined ? body.dayOfMonth : existingOrder.dayOfMonth,
-        body.customDays !== undefined ? body.customDays : existingOrder.customDays
+        body.dayOfWeek === undefined ? existingOrder.dayOfWeek : body.dayOfWeek,
+        body.dayOfMonth === undefined ? existingOrder.dayOfMonth : body.dayOfMonth,
+        body.customDays === undefined ? existingOrder.customDays : body.customDays
       )
     }
 

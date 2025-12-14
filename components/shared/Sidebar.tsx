@@ -107,22 +107,22 @@ export default function Sidebar() {
         <div className="flex flex-col border-b border-gray-200 dark:border-gray-700">
           {/* Logo row */}
           <div className="flex items-center justify-between h-14 px-3">
-            {!isCollapsed ? (
-              <Image 
-                src="/logo.png" 
-                alt="Bargain Logo" 
-                width={100} 
-                height={32}
-                className="object-contain"
-                priority
-              />
-            ) : (
+            {isCollapsed ? (
               <Image 
                 src="/logo.png" 
                 alt="Bargain Logo" 
                 width={32} 
                 height={32}
                 className="object-contain mx-auto"
+                priority
+              />
+            ) : (
+              <Image 
+                src="/logo.png" 
+                alt="Bargain Logo" 
+                width={100} 
+                height={32}
+                className="object-contain"
                 priority
               />
             )}
