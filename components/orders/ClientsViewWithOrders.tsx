@@ -6,7 +6,6 @@ import {
   User, 
   Mail, 
   Phone, 
-  MapPin,
   Package,
   DollarSign,
   ChevronRight,

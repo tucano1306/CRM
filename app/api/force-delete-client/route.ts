@@ -28,8 +28,6 @@ export async function GET(request: Request) {
       );
     }
 
-    console.log(`� Recuperando cliente fantasma: ${email}`);
-
     console.log(`🔧 Recuperando cliente fantasma: ${email}`);
 
     // 1. Obtener el seller del usuario autenticado

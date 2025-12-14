@@ -166,7 +166,8 @@ export default clerkMiddleware(async (auth, req) => {
         )
     
     // Agregar headers de rate limit a la respuesta
-    response.headers.set('X-RateLimit-Limit', limiterType === 'cron' ? '1' : limiterType === 'auth' ? '10' : limiterType === 'public' ? '20' : '100')
+    const rateLimitMap: Record<string, string> = { cron: '1', auth: '10', public: '20' }
+    response.headers.set('X-RateLimit-Limit', rateLimitMap[limiterType] || '100')
     response.headers.set('X-RateLimit-Remaining', String(rateLimitResult.remaining))
     response.headers.set('X-RateLimit-Reset', String(rateLimitResult.resetTime))
     

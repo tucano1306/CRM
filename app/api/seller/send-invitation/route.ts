@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     // Enviar por WhatsApp (simulado - requiere Twilio)
     if (whatsapp) {
       try {
-        console.log(`� WhatsApp simulado a: ${whatsapp}`)
+        console.log(`📱 WhatsApp simulado a: ${whatsapp}`)
         console.log(`Link: ${invitationLink}`)
         
         // TODO: Integrar con Twilio WhatsApp API

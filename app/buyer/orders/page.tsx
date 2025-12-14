@@ -697,7 +697,6 @@ function OrdersPageContent() {
       const result = await apiCall(`/api/sellers/${selectedOrder?.seller?.id}/products`, {
         timeout: 10000,
       })
-      console.log('Catalog API response:', result) // Debug
       if (result.success && result.data) {
         // La API devuelve { success, data: [...products], count }
         // result.data contiene el objeto completo, así que products están en result.data.data o directamente result.data
@@ -1192,7 +1191,8 @@ function OrdersPageContent() {
       if (dateRange !== 'all') {
         const orderDate = new Date(order.createdAt)
         const now = new Date()
-        const daysAgo = dateRange === '7days' ? 7 : dateRange === '30days' ? 30 : 90
+        const daysAgoMap: Record<string, number> = { '7days': 7, '30days': 30, '90days': 90 }
+        const daysAgo = daysAgoMap[dateRange] || 90
         const cutoffDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000))
         if (orderDate < cutoffDate) return false
       }

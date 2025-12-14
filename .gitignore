@@ -100,3 +100,6 @@ logs/
 # Build artifacts de Docker
 .dockerignore.bak
 .vercel
+
+# SonarQube scanner work directory
+.scannerwork/

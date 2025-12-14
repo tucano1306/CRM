@@ -20,8 +20,6 @@ export default function BuyerRecurringOrdersPage() {
       const response = await fetch('/api/buyer/profile')
       const result = await response.json()
       
-      console.log('Buyer profile response:', result) // Debug
-      
       if (result.success && result.data?.id) {
         setClientId(result.data.id)
       } else {

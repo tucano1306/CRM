@@ -172,7 +172,7 @@ export async function PATCH(
       }
     })
 
-    // � TIEMPO REAL: Notificar cambio de estado
+    // 🔔 TIEMPO REAL: Notificar cambio de estado
     try {
       // Obtener authId del vendedor para el canal
       const sellerAuth = await prisma.authenticated_users.findFirst({
