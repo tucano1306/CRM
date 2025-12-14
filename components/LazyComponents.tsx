@@ -18,41 +18,6 @@ function LoadingFallback({ message = 'Cargando...' }: LoadingFallbackProps) {
   )
 }
 
-// Lazy load componentes pesados
-// NOTA: Descomentar cuando los componentes existan
-
-/*
-export const LazyAnalyticsDashboard = dynamic(
-  () => import('@/components/analytics/AnalyticsDashboard'),
-  {
-    loading: () => <LoadingFallback message="Cargando análisis..." />,
-    ssr: false, // No server-side render si tiene gráficos
-  }
-)
-
-export const LazyChartComponent = dynamic(
-  () => import('@/components/charts/ChartComponent'),
-  {
-    loading: () => <LoadingFallback message="Cargando gráfico..." />,
-    ssr: false,
-  }
-)
-
-export const LazyOrderDetailsModal = dynamic(
-  () => import('@/components/orders/OrderDetailsModal'),
-  {
-    loading: () => <LoadingFallback message="Cargando detalles..." />,
-  }
-)
-
-export const LazyProductForm = dynamic(
-  () => import('@/components/products/ProductForm'),
-  {
-    loading: () => <LoadingFallback message="Cargando formulario..." />,
-  }
-)
-*/
-
 // Wrapper con Suspense para lazy components
 interface LazyWrapperProps {
   readonly children: React.ReactNode
@@ -119,43 +84,3 @@ export function LazyLoadOnView({
     </div>
   )
 }
-
-// Ejemplo de uso:
-/*
-// 1. Lazy load componente pesado:
-import { LazyAnalyticsDashboard } from '@/components/LazyComponents'
-
-function DashboardPage() {
-  return (
-    <div>
-      <h1>Dashboard</h1>
-      <LazyAnalyticsDashboard />
-    </div>
-  )
-}
-
-// 2. Lazy load al hacer scroll:
-<LazyLoadOnView>
-  <HeavyChartComponent />
-</LazyLoadOnView>
-
-// 3. Lazy load condicional:
-function MyComponent() {
-  const [showChart, setShowChart] = useState(false)
-  const shouldLoadChart = useLazyLoad(showChart)
-
-  return (
-    <div>
-      <button onClick={() => setShowChart(true)}>
-        Mostrar Gráfico
-      </button>
-      {shouldLoadChart && <LazyChartComponent />}
-    </div>
-  )
-}
-
-// 4. Lazy load con custom fallback:
-<LazyWrapper fallback={<CustomSkeleton />}>
-  <HeavyComponent />
-</LazyWrapper>
-*/

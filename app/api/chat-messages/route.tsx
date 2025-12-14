@@ -238,35 +238,7 @@ export async function POST(request: NextRequest) {
       })
     )
 
-    // 6. ✅ Validar horarios de chat (si el sender es seller) CON TIMEOUT
-    // ⚠️ DESHABILITADO PARA DESARROLLO - Descomentar en producción si se necesita
-    /*
-    if (senderSeller) {
-      const now = new Date()
-      const dayOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'][now.getDay()]
-      const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
-
-      const activeSchedule = await withPrismaTimeout(
-        () => prisma.chatSchedule.findFirst({
-          where: {
-            sellerId: senderSeller.id,
-            dayOfWeek: dayOfWeek as any,
-            isActive: true,
-            startTime: { lte: currentTime },
-            endTime: { gte: currentTime }
-          }
-        })
-      )
-
-      if (!activeSchedule) {
-        return NextResponse.json({
-          success: false,
-          error: `No puedes enviar mensajes fuera del horario de chat configurado. 
-Día: ${dayOfWeek}, Hora actual: ${currentTime}`
-        }, { status: 403 })
-      }
-    }
-    */
+    // 6. (Chat schedule validation disabled for development)
 
     // 7. ✅ Crear mensaje CON TIMEOUT
     const chatMessage = await withPrismaTimeout(
