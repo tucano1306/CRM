@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { Suspense, useEffect, useState, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Loader2, AlertCircle, AlertTriangle, Clock, Bell } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
@@ -94,16 +94,15 @@ interface OrderWithItems {
   }>
 }
 
-export default function OrdersPage() {
+function OrdersPageContent() {
   const { user } = useUser()
+  const searchParams = useSearchParams()
+  const orderIdFromUrl = searchParams.get('orderId') || searchParams.get('id')
+  
   const [orders, setOrders] = useState<OrderWithItems[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null)
-  
-  // Leer parámetros de URL para abrir orden automáticamente
-  const searchParams = useSearchParams()
-  const orderIdFromUrl = searchParams.get('orderId') || searchParams.get('id')
 
   // Calcular órdenes pendientes
   const pendingOrdersStats = useMemo(() => {
@@ -326,7 +325,7 @@ export default function OrdersPage() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 page-transition">
         <PageHeader 
           title="Gestión de Órdenes por Cliente" 
           description="Visualiza y administra órdenes organizadas por cliente"
@@ -452,5 +451,35 @@ export default function OrdersPage() {
         />
       </div>
     </MainLayout>
+  )
+}
+
+// Loading fallback para Suspense
+function OrdersPageLoading() {
+  return (
+    <MainLayout userRole="seller">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg p-4 h-32">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </MainLayout>
+  )
+}
+
+// Export default con Suspense para useSearchParams
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={<OrdersPageLoading />}>
+      <OrdersPageContent />
+    </Suspense>
   )
 }

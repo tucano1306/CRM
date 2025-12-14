@@ -303,7 +303,7 @@ export default function CatalogPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center page-fade">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto mb-4" />
           <p className="text-gray-600 font-medium">Cargando catálogo...</p>
@@ -314,7 +314,7 @@ export default function CatalogPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center p-4 page-fade">
         <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-800 mb-2">Error al cargar</h2>
@@ -331,7 +331,7 @@ export default function CatalogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 page-transition">
       {/* Toast Notifications */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
         {toasts.map(toast => (
@@ -453,7 +453,7 @@ export default function CatalogPage() {
                   <p className="text-gray-500">No se encontraron productos</p>
                 </div>
               ) : (
-                filteredAndSortedProducts.map((product) => {
+                filteredAndSortedProducts.map((product, index) => {
                   const isSelected = selectedProducts.has(product.id)
                   const quantity = selectedProducts.get(product.id) || 0
                   const isOutOfStock = product.stock === 0
@@ -461,7 +461,8 @@ export default function CatalogPage() {
                   return (
                     <div
                       key={product.id}
-                      className={`grid grid-cols-12 gap-4 px-4 py-4 hover:bg-purple-50/50 transition-all ${
+                      style={{ animationDelay: `${Math.min(index * 0.03, 0.3)}s` }}
+                      className={`grid grid-cols-12 gap-4 px-4 py-4 hover:bg-purple-50/50 transition-all stagger-item ${
                         isSelected ? 'bg-purple-100/60 border-l-4 border-purple-500' : ''
                       } ${isOutOfStock ? 'opacity-50' : ''}`}
                     >

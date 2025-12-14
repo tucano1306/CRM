@@ -365,6 +365,7 @@ export default function DashboardPage() {
 
   return (
     <MainLayout>
+      <div className="page-transition">
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
           <TrendingUp className="text-purple-600" size={28} />
@@ -979,6 +980,7 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      </div>
     </MainLayout>
   )
 }

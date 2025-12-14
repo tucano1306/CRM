@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { v4 as uuidv4 } from 'uuid'
@@ -260,8 +260,12 @@ const statusConfig = {
   },
 }
 
-export default function OrdersPage() {
+// Componente que usa useSearchParams - necesita Suspense
+function OrdersPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const orderIdFromUrl = searchParams.get('orderId') || searchParams.get('id')
+  
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [timedOut, setTimedOut] = useState(false)
@@ -367,10 +371,6 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [dateRange, setDateRange] = useState<'7days' | '30days' | '90days' | 'all'>('30days')
   const ordersPerPage = 10
-  
-  // Leer parámetros de URL para abrir orden automáticamente
-  const searchParams = useSearchParams()
-  const orderIdFromUrl = searchParams.get('orderId') || searchParams.get('id')
 
   useEffect(() => {
     fetchOrders()
@@ -1204,7 +1204,7 @@ export default function OrdersPage() {
         </div>
       )}
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6 page-transition">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 mb-6 border-2 border-purple-200">
@@ -3387,5 +3387,36 @@ export default function OrdersPage() {
       </div>
     )}
     </>
+  )
+}
+
+// Loading fallback para Suspense
+function OrdersPageLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50 p-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg p-4 h-48">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Export default con Suspense para useSearchParams
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={<OrdersPageLoading />}>
+      <OrdersPageContent />
+    </Suspense>
   )
 }

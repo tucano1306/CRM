@@ -528,6 +528,7 @@ export default function ClientsPage() {
 
   return (
     <MainLayout>
+      <div className="page-transition">
       <PageHeader
         title="Clientes"
         description={`${clients.length} clientes registrados`}
@@ -1175,6 +1176,7 @@ export default function ClientsPage() {
           }}
         />
       )}
+      </div>
     </MainLayout>
   )
 }
