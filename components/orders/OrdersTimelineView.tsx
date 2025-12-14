@@ -331,6 +331,14 @@ export default function OrdersTimelineView({
                                   e.stopPropagation()
                                   onToggleSelection(order.id)
                                 }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.stopPropagation()
+                                    onToggleSelection(order.id)
+                                  }
+                                }}
+                                role="button"
+                                tabIndex={0}
                                 className="flex-shrink-0 cursor-pointer"
                               >
                                 <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
@@ -349,6 +357,9 @@ export default function OrdersTimelineView({
                             <div 
                               className={`${config.bg} p-2 sm:p-2.5 rounded-lg flex-shrink-0 cursor-pointer`}
                               onClick={() => onOrderClick(order)}
+                              onKeyDown={(e) => e.key === 'Enter' && onOrderClick(order)}
+                              role="button"
+                              tabIndex={0}
                             >
                               <StatusIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${config.color}`} />
                             </div>
@@ -357,6 +368,9 @@ export default function OrdersTimelineView({
                             <div 
                               className="flex-1 min-w-0 cursor-pointer"
                               onClick={() => onOrderClick(order)}
+                              onKeyDown={(e) => e.key === 'Enter' && onOrderClick(order)}
+                              role="button"
+                              tabIndex={0}
                             >
                               <div className="flex items-center gap-1.5 sm:gap-2 mb-1 flex-wrap">
                                 <h4 className="font-semibold text-gray-900 text-sm">
@@ -396,7 +410,7 @@ export default function OrdersTimelineView({
                           {/* Segunda fila en móvil: Precio + Flecha */}
                           <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 sm:flex-shrink-0">
                             {/* Precio */}
-                            <div className="text-left sm:text-right cursor-pointer" onClick={() => onOrderClick(order)}>
+                            <div className="text-left sm:text-right cursor-pointer" onClick={() => onOrderClick(order)} onKeyDown={(e) => e.key === 'Enter' && onOrderClick(order)} role="button" tabIndex={0}>
                               <p className="text-lg sm:text-xl font-bold text-purple-600">
                                 ${Number(order.totalAmount).toFixed(2)}
                               </p>

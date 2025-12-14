@@ -268,6 +268,9 @@ export default function OrderStatusChanger({
             <div 
               className="fixed inset-0 z-10" 
               onClick={() => setShowDropdown(false)}
+              onKeyDown={(e) => e.key === 'Enter' && setShowDropdown(false)}
+              role="button"
+              tabIndex={0}
             />
             
             <div className="absolute top-full left-0 mt-2 w-72 bg-white border rounded-lg shadow-lg z-20 max-h-96 overflow-y-auto">

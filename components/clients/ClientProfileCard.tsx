@@ -256,7 +256,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
       </div>
 
       {/* Información de contacto - Más compacta */}
-      <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2" onClick={(e) => e.stopPropagation()}>
+      <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()} role="button" tabIndex={0}>
         <div className="bg-gray-50 rounded-lg sm:rounded-xl p-2 sm:p-3 space-y-1 sm:space-y-2">
           {/* Email */}
           <a 
@@ -321,6 +321,9 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
         <div 
           className="border-t border-gray-100 px-4 py-2 flex items-center justify-center hover:bg-gray-50 transition-colors cursor-pointer"
           onClick={handleCardClick}
+          onKeyDown={(e) => e.key === 'Enter' && handleCardClick()}
+          role="button"
+          tabIndex={0}
         >
           <span className="text-sm font-medium text-gray-500 flex items-center gap-1">
             Ver detalles

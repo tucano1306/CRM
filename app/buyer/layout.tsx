@@ -40,6 +40,9 @@ export default function BuyerLayout({ children }: BuyerLayoutProps) {
         <div 
           className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
+          onKeyDown={(e) => e.key === 'Enter' && setSidebarOpen(false)}
+          role="button"
+          tabIndex={0}
         />
       )}
       

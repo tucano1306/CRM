@@ -150,6 +150,9 @@ export default function OrderDetailModal({
       <div 
         className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
         onClick={onClose}
+        onKeyDown={(e) => e.key === 'Enter' && onClose()}
+        role="button"
+        tabIndex={0}
       />
 
       {/* Modal Panel */}

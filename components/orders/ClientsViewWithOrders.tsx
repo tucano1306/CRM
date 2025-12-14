@@ -534,6 +534,9 @@ export default function ClientsViewWithOrders({
                   key={clientData.client.id}
                   data-client-has-pending={hasPendingOrders ? 'true' : 'false'}
                   onClick={() => setSelectedClient(clientData)}
+                  onKeyDown={(e) => e.key === 'Enter' && setSelectedClient(clientData)}
+                  role="button"
+                  tabIndex={0}
                   style={{
                     animation: `fadeInUp 0.4s ease-out ${index * 0.05}s both`
                   }}
@@ -709,6 +712,9 @@ export default function ClientsViewWithOrders({
               animation: 'fadeIn 0.3s ease-out'
             }}
             onClick={() => setSelectedClient(null)}
+            onKeyDown={(e) => e.key === 'Enter' && setSelectedClient(null)}
+            role="button"
+            tabIndex={0}
           />
 
           {/* Modal - OVERFLOW CONTROLADO Y Z-INDEX ALTO */}

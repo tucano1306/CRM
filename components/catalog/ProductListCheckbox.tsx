@@ -260,6 +260,9 @@ export default function ProductListCheckbox({
                   ${outOfStock ? 'opacity-50' : ''}
                 `}
                 onClick={() => !outOfStock && toggleProduct(product)}
+                onKeyDown={(e) => e.key === 'Enter' && !outOfStock && toggleProduct(product)}
+                role="button"
+                tabIndex={0}
               >
                 {/* Checkbox */}
                 <div className="flex-shrink-0">
@@ -324,6 +327,9 @@ export default function ProductListCheckbox({
                       <div 
                         className="flex items-center gap-2"
                         onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                        role="button"
+                        tabIndex={0}
                       >
                         <Button
                           variant="outline"

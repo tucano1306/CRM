@@ -276,7 +276,7 @@ export default function CreateRecurringOrderModal({
   return (
     <>
       {/* Overlay */}
-      <div className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm" onClick={onClose} onKeyDown={(e) => e.key === 'Enter' && onClose()} role="button" tabIndex={0} />
 
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -501,6 +501,9 @@ export default function CreateRecurringOrderModal({
                           <div
                             key={product.id}
                             onClick={() => !isSelected && addProduct(product)}
+                            onKeyDown={(e) => e.key === 'Enter' && !isSelected && addProduct(product)}
+                            role="button"
+                            tabIndex={0}
                             className={`p-4 border-2 rounded-xl transition-all cursor-pointer ${
                               isSelected
                                 ? 'border-green-500 bg-green-50'

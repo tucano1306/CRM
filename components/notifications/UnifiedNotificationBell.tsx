@@ -203,6 +203,9 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
           <div
             className="fixed inset-0 bg-transparent z-[9998]"
             onClick={() => setIsOpen(false)}
+            onKeyDown={(e) => e.key === 'Enter' && setIsOpen(false)}
+            role="button"
+            tabIndex={0}
           />
 
           {/* Notifications Panel */}
@@ -260,6 +263,17 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
                         setSelectedNotification(notification)
                         setIsOpen(false)
                       }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          if (!notification.isRead) {
+                            markAsRead(notification.id)
+                          }
+                          setSelectedNotification(notification)
+                          setIsOpen(false)
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
                     >
                       <div className="flex items-start gap-3">
                         <span className="text-2xl flex-shrink-0">{getTypeIcon(notification.type)}</span>
@@ -307,6 +321,9 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-[9999] animate-in fade-in duration-300 flex items-center justify-center p-4 sm:p-6"
           onClick={closeModal}
+          onKeyDown={(e) => e.key === 'Enter' && closeModal()}
+          role="button"
+          tabIndex={0}
         >
           <div 
             ref={modalRef}
@@ -316,6 +333,9 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
             }
             className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-2xl w-full sm:w-[90vw] sm:max-w-md max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-right-4 duration-500 ring-0 sm:ring-4 sm:ring-blue-500/50"
             onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            role="button"
+            tabIndex={0}
           >
             {/* New Badge */}
             {newNotification?.id === selectedNotification.id && (

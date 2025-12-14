@@ -607,6 +607,9 @@ export default function BulkStatusChangeModal({
       <div 
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
+        onKeyDown={(e) => e.key === 'Enter' && onClose()}
+        role="button"
+        tabIndex={0}
       />
       
       {/* Modal - Más grande y legible */}

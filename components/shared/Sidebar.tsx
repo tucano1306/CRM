@@ -350,6 +350,9 @@ export default function Sidebar() {
         <div 
           className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
           onClick={() => setIsMobileOpen(false)}
+          onKeyDown={(e) => e.key === 'Enter' && setIsMobileOpen(false)}
+          role="button"
+          tabIndex={0}
         />
       )}
     </>

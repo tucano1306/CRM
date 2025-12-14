@@ -35,6 +35,9 @@ export default function ProductCard({ product, onEdit, onDelete, onClick }: Prod
   return (
     <div 
       onClick={() => onClick?.(product)}
+      onKeyDown={(e) => e.key === 'Enter' && onClick?.(product)}
+      role="button"
+      tabIndex={0}
       className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 cursor-pointer group"
     >
       {/* Header con gradiente */}

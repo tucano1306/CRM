@@ -192,6 +192,14 @@ export default function OrdersListImproved({
                         e.stopPropagation()
                         onToggleSelection(order.id)
                       }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.stopPropagation()
+                          onToggleSelection(order.id)
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
                       className="flex-shrink-0 cursor-pointer"
                     >
                       <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
@@ -210,6 +218,9 @@ export default function OrdersListImproved({
                   <div 
                     className={`p-3 rounded-lg ${config.bg} cursor-pointer relative`}
                     onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
+                    onKeyDown={(e) => e.key === 'Enter' && setExpandedOrder(isExpanded ? null : order.id)}
+                    role="button"
+                    tabIndex={0}
                     style={needsAttention ? {
                       animation: 'iconPulse 2s ease-in-out infinite',
                     } : {}}
@@ -228,6 +239,9 @@ export default function OrdersListImproved({
                   <div 
                     className="flex-1 cursor-pointer"
                     onClick={() => setExpandedOrder(isExpanded ? null : order.id)}
+                    onKeyDown={(e) => e.key === 'Enter' && setExpandedOrder(isExpanded ? null : order.id)}
+                    role="button"
+                    tabIndex={0}
                   >
                     <div className="flex items-center gap-3 mb-1">
                       <h4 className="font-semibold text-gray-900">

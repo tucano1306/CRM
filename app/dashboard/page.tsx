@@ -479,6 +479,9 @@ export default function DashboardPage() {
                   key={order.id} 
                   className="bg-gray-50 rounded-lg p-4 border border-gray-200"
                   onClick={() => router.push('/orders')}
+                  onKeyDown={(e) => e.key === 'Enter' && router.push('/orders')}
+                  role="button"
+                  tabIndex={0}
                 >
                   <div className="flex justify-between items-start mb-2">
                     <div>
@@ -692,6 +695,9 @@ export default function DashboardPage() {
                   <div 
                     key={order.id}
                     onClick={() => router.push(`/orders?orderId=${order.id}`)}
+                    onKeyDown={(e) => e.key === 'Enter' && router.push(`/orders?orderId=${order.id}`)}
+                    role="button"
+                    tabIndex={0}
                     className="flex items-center justify-between p-4 bg-gray-50 hover:bg-purple-50 rounded-lg border border-gray-200 cursor-pointer transition-all hover:border-purple-300"
                   >
                     <div className="flex items-center gap-4">
