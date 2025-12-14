@@ -1,7 +1,0 @@
-organization=tucano1306-1
-projectKey=tucano1306_CRM
-serverUrl=https://sonarcloud.io
-serverVersion=8.0.0.77381
-dashboardUrl=https://sonarcloud.io/dashboard?id=tucano1306_CRM
-ceTaskId=AZsbPyju7KqRQ60XWqOX
-ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZsbPyju7KqRQ60XWqOX
