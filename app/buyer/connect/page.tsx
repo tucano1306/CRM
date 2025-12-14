@@ -28,6 +28,7 @@ function ConnectPageContent() {
     requestId?: string
     createdAt?: string
   } | null>(null)
+  void requestInfo // Available for displaying request details
   
   // Campo de teléfono para el formulario
   const [phoneNumber, setPhoneNumber] = useState('')

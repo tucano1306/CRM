@@ -11,8 +11,8 @@ import { useWASM, useMathWASM, useDataAnalysisWASM } from '@/hooks/useWASM'
 
 export default function WASMIntegrationExample() {
   const { isSupported, isLoading, error } = useWASM()
-  const { calculatePrimes, calculateStats, isLoading: mathLoading } = useMathWASM()
-  const { analyzeDataset, calculateCorrelation } = useDataAnalysisWASM()
+  const { calculatePrimes, isLoading: mathLoading } = useMathWASM()
+  const { analyzeDataset } = useDataAnalysisWASM()
   
   const [results, setResults] = useState<{
     primes?: number[]

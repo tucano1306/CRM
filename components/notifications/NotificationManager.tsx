@@ -15,7 +15,6 @@ interface NotificationManagerProps {
 export default function NotificationManager({ userRole }: NotificationManagerProps) {
   const { user, isLoaded } = useUser()
   const initialized = useRef(false)
-  const lastOrderCount = useRef<number>(0)
   const lastNotificationCount = useRef<number>(0)
 
   // Inicializar servicio de notificaciones

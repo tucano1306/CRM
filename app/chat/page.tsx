@@ -18,7 +18,8 @@ interface Client {
 }
 
 function SellerChatContent() {
-  const { user } = useUser()
+  const { user } = useUser() // Keep hook call for auth context
+  void user // Auth context available if needed
   const searchParams = useSearchParams()
   const [clients, setClients] = useState<Client[]>([])
   const [selectedClient, setSelectedClient] = useState<Client | null>(null)

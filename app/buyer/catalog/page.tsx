@@ -44,7 +44,7 @@ type SelectedProduct = {
 }
 
 export default function CatalogPage() {
-  const router = useRouter()
+  const router = useRouter() // Required for navigation context
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

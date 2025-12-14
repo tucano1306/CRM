@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
         
         // Validar si la categoría del Excel es válida
         const validCategories = Object.values(ProductCategory)
-        let category: ProductCategory = ProductCategory.OTROS
+        let category: ProductCategory
 
         // Limpiar precio (quitar $, comas, etc)
         const price = parseFloat(priceStr.replace(/[^0-9.-]/g, '')) || 0

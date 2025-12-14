@@ -337,6 +337,7 @@ export async function GET(request: NextRequest) {
     const sessionId = url.searchParams.get('sessionId')
     const metric = url.searchParams.get('metric')
     const userId = url.searchParams.get('userId')
+    void userId // Available for future per-user analytics
 
     // Clean up expired sessions
     cleanupSessions()

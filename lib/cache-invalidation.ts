@@ -143,7 +143,7 @@ export async function purgeVercelCache(paths: string[]) {
       throw new Error(`Vercel Purge API failed: ${response.status}`)
     }
 
-    const result = await response.json()
+    await response.json() // Consume response
     console.log('✅ [CACHE] Vercel cache purged:', paths)
     return true
 

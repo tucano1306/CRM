@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       })
 
       // Crear nuevos horarios
-      const created = await tx.orderSchedule.createMany({
+      await tx.orderSchedule.createMany({
         data: schedules.map((s: any) => ({
           sellerId: seller.id,
           dayOfWeek: s.dayOfWeek as DayOfWeek,

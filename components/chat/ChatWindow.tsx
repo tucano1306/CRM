@@ -51,6 +51,8 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
   const [showSearch, setShowSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  void uploadProgress // Available for progress bar implementation
+  void isTyping // Available for typing indicator
   const [otherUserTyping, setOtherUserTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)

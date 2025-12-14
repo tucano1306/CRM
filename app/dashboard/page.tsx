@@ -402,7 +402,6 @@ export default function DashboardPage() {
           const Icon = card.icon
           const hasTrend = card.trend !== undefined
           const isPositive = hasTrend && card.trend! > 0
-          const isNegative = hasTrend && card.trend! < 0
           const TrendIcon = isPositive ? TrendingUp : TrendingDown
 
           return (

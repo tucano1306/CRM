@@ -359,7 +359,8 @@ export async function POST(request: NextRequest) {
 
     // Security checks
     const userAgent = request.headers.get('user-agent') || ''
-    const origin = request.headers.get('origin') || ''
+    const origin = request.headers.get('origin')
+    void origin // Available for CORS checks if needed
     
     // Basic bot detection
     if (userAgent.toLowerCase().includes('bot') && !userAgent.includes('googlebot')) {

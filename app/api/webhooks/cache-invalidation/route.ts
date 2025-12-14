@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { event, entityType, entityId, data } = body
+    const { event, entityType, entityId } = body
 
     console.log('🔄 [CACHE WEBHOOK] Received:', { event, entityType, entityId })
 
