@@ -159,9 +159,6 @@ export default function BulkStatusChangeModal({
   
   // Estado para mostrar/ocultar productos ya confirmados
   const [showConfirmedProducts, setShowConfirmedProducts] = useState(false)
-  
-  // Estado para guardar confirmaciones pendientes
-  const [savingConfirmation, setSavingConfirmation] = useState<string | null>(null)
 
   // Cargar items ya confirmados de la BD al abrir
   useEffect(() => {
@@ -227,7 +224,6 @@ export default function BulkStatusChangeModal({
   const saveItemConfirmation = async (itemId: string, confirmed: boolean) => {
     if (!singleOrder) return
     
-    setSavingConfirmation(itemId)
     try {
       const response = await fetch(`/api/orders/${singleOrder.id}/items/${itemId}/confirm`, {
         method: 'PATCH',
@@ -240,8 +236,6 @@ export default function BulkStatusChangeModal({
       }
     } catch (error) {
       console.error('Error:', error)
-    } finally {
-      setSavingConfirmation(null)
     }
   }
 
@@ -501,7 +495,6 @@ export default function BulkStatusChangeModal({
   
   const issuesCount = Array.from(productIssues.values()).filter(i => i.issueType !== null && i.issueType !== 'ACCEPTED').length
   const allProductsOk = issuesCount === 0 && acceptedItems.size === activeOrderItems.length
-  const someProductsReviewed = acceptedItems.size > 0 || issuesCount > 0
   const pendingReview = activeOrderItems.length - acceptedItems.size - productIssues.size
   
   // Contar productos que ya estaban confirmados en la BD (no en esta sesión)
@@ -583,7 +576,7 @@ export default function BulkStatusChangeModal({
         throw new Error(error.error || 'Error al reportar problemas')
       }
 
-      const result = await response.json()
+      await response.json()
       
       // Cerrar modal
       onClose()
@@ -949,7 +942,7 @@ export default function BulkStatusChangeModal({
                       </Link>
                       {singleOrder.client?.phone && (
                         <a 
-                          href={`https://wa.me/${singleOrder.client.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Hola ${singleOrder.client.name}, te escribo sobre tu pedido #${singleOrder.orderNumber}`)}`}
+                          href={`https://wa.me/${singleOrder.client.phone.replaceAll(/\D/g, '')}?text=${encodeURIComponent(`Hola ${singleOrder.client.name}, te escribo sobre tu pedido #${singleOrder.orderNumber}`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 transition-colors font-medium"
@@ -1233,7 +1226,7 @@ export default function BulkStatusChangeModal({
                       type="number"
                       min="1"
                       value={addQuantity}
-                      onChange={(e) => setAddQuantity(parseInt(e.target.value) || 1)}
+                      onChange={(e) => setAddQuantity(Number.parseInt(e.target.value) || 1)}
                       className="w-20 px-2 py-1 border rounded text-center"
                     />
                   </div>

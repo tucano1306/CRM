@@ -9,7 +9,6 @@ import PageHeader from '@/components/shared/PageHeader'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { apiCall } from '@/lib/api-client'
-import { downloadInvoice, openInvoiceInNewTab, type InvoiceData } from '@/lib/invoiceGenerator'
 import ClientsViewWithOrders from '@/components/orders/ClientsViewWithOrders'
 import { useRealtimeSubscription, RealtimeEvents } from '@/lib/supabase-realtime'
 
@@ -102,7 +101,6 @@ function OrdersPageContent() {
   const [orders, setOrders] = useState<OrderWithItems[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null)
 
   // Calcular órdenes pendientes
   const pendingOrdersStats = useMemo(() => {
@@ -169,96 +167,6 @@ function OrdersPageContent() {
       setError('Error de conexión')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const prepareInvoiceData = (order: OrderWithItems): InvoiceData => {
-    const subtotal = order.orderItems.reduce((sum, item) => sum + Number(item.subtotal), 0)
-    const taxRate = 0.10
-    const taxAmount = subtotal * taxRate
-    const totalBeforeCredits = subtotal + taxAmount
-    
-    // Calcular créditos aplicados
-    const creditNotesUsed = order.creditNoteUsages?.map(usage => ({
-      creditNoteId: usage.creditNote.id,
-      creditNoteNumber: usage.creditNote.creditNoteNumber,
-      amountUsed: Number(usage.amountUsed),
-      originalAmount: Number(usage.creditNote.amount),
-      remainingAmount: Number(usage.creditNote.balance)  // Cambiado de remainingAmount a balance
-    })) || []
-    
-    const totalCreditApplied = creditNotesUsed.reduce((sum, credit) => sum + credit.amountUsed, 0)
-    const total = totalBeforeCredits - totalCreditApplied
-
-    const invoiceDate = new Date(order.createdAt)
-    const dueDate = new Date(invoiceDate)
-    dueDate.setDate(dueDate.getDate() + 30)
-
-    return {
-      invoiceNumber: order.orderNumber,
-      invoiceDate,
-      dueDate,
-      
-      // ACTUALIZA ESTOS DATOS CON TU EMPRESA
-      sellerName: 'Food Orders CRM',
-      sellerAddress: '123 Main Street, Miami, FL 33139',
-      sellerPhone: '(305) 555-0123',
-      sellerEmail: order.seller.email,
-      sellerTaxId: '12-3456789',
-      
-      clientName: order.client.name,
-      clientBusinessName: order.client.businessName,
-      clientAddress: order.client.address,
-      clientPhone: order.client.phone,
-      clientEmail: order.client.email,
-      
-      items: order.orderItems.map(item => ({
-        sku: item.product.sku,
-        name: item.productName,
-        quantity: item.quantity,
-        unit: item.product.unit,
-        pricePerUnit: item.pricePerUnit,
-        subtotal: item.subtotal
-      })),
-      
-      subtotal,
-      taxRate,
-      taxAmount,
-      totalBeforeCredits,
-      creditNotesUsed: creditNotesUsed.length > 0 ? creditNotesUsed : undefined,
-      totalCreditApplied: totalCreditApplied > 0 ? totalCreditApplied : undefined,
-      total,
-      
-      paymentMethod: 'Transferencia Bancaria',
-      paymentTerms: 'Pago a 30 días. Se aceptan transferencias bancarias, cheques o efectivo.',
-      notes: order.notes || undefined,
-      termsAndConditions: 'Los productos entregados son responsabilidad del comprador una vez firmada la entrega. Las devoluciones deben realizarse dentro de las 24 horas siguientes a la entrega.'
-    }
-  }
-
-  const handleDownloadInvoice = async (order: OrderWithItems) => {
-    try {
-      setGeneratingInvoice(order.id)
-      const invoiceData = prepareInvoiceData(order)
-      downloadInvoice(invoiceData, `Factura-${order.orderNumber}.pdf`)
-    } catch (error) {
-      console.error('Error generando factura:', error)
-      alert('Error al generar la factura')
-    } finally {
-      setGeneratingInvoice(null)
-    }
-  }
-
-  const handleViewInvoice = async (order: OrderWithItems) => {
-    try {
-      setGeneratingInvoice(order.id)
-      const invoiceData = prepareInvoiceData(order)
-      openInvoiceInNewTab(invoiceData)
-    } catch (error) {
-      console.error('Error generando factura:', error)
-      alert('Error al generar la factura')
-    } finally {
-      setGeneratingInvoice(null)
     }
   }
 
@@ -462,7 +370,7 @@ function OrdersPageLoading() {
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
           <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
+            {[...new Array(3)].map((_, i) => (
               <div key={i} className="bg-white rounded-lg p-4 h-32">
                 <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
                 <div className="h-4 bg-gray-200 rounded w-1/2"></div>

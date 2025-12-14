@@ -147,16 +147,6 @@ export async function POST(
 
     const fullMessage = messageLines.join('\n')
     
-    // Mensaje corto para SMS
-    const issuesParts: string[] = []
-    if (outOfStock.length > 0) {
-      issuesParts.push(`${outOfStock.length} producto(s) sin stock`)
-    }
-    if (partialStock.length > 0) {
-      issuesParts.push(`${partialStock.length} con stock parcial`)
-    }
-    const shortMessage = `⚠️ Pedido #${order.orderNumber}: ${issuesParts.join(', ')}. El vendedor te contactará.`
-
     // ===============================================
     // ENVIAR NOTIFICACIONES POR TODOS LOS CANALES
     // ===============================================

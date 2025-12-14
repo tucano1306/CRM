@@ -107,7 +107,7 @@ export async function POST(
 
     // Crear el nuevo item con el producto sustituto
     const newSubtotal = newQuantity * Number(newProduct.price)
-    const newOrderItem = await prisma.orderItem.create({
+    await prisma.orderItem.create({
       data: {
         orderId: orderId,
         productId: newProductId,
@@ -128,7 +128,7 @@ export async function POST(
       }
     })
     const newTotalSubtotal = allItems.reduce((sum, item) => sum + Number(item.subtotal), 0)
-    const newTotal = newTotalSubtotal * 1.10
+    const newTotal = newTotalSubtotal * 1.1
 
     await prisma.order.update({
       where: { id: orderId },

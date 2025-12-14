@@ -118,7 +118,7 @@ export async function POST(
     })
     
     const newSubtotal = allItems.reduce((sum, item) => sum + Number(item.subtotal), 0)
-    const newTotal = newSubtotal * 1.10 // Añadir impuesto
+    const newTotal = newSubtotal * 1.1 // Añadir impuesto
 
     // Actualizar el total de la orden
     await prisma.order.update({

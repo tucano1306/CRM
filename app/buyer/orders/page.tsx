@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
 import { useRealtimeSubscription, RealtimeEvents } from '@/lib/supabase-realtime'
 import { formatPrice, formatNumber } from '@/lib/utils'
-import { downloadInvoice, openInvoiceInNewTab, type InvoiceData } from '@/lib/invoiceGenerator'
+import { openInvoiceInNewTab, type InvoiceData } from '@/lib/invoiceGenerator'
 import {
   Package,
   Clock,
@@ -337,7 +337,6 @@ function OrdersPageContent() {
   )
 
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
-  const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState<'ALL' | OrderStatus>('ALL')
   const [showOrderModal, setShowOrderModal] = useState(false)
   const [activeTab, setActiveTab] = useState<'productos' | 'estado' | 'seguimiento'>('productos')
@@ -353,8 +352,6 @@ function OrdersPageContent() {
   
   // Estados para acciones del comprador sobre productos con issues
   const [removingItem, setRemovingItem] = useState<string | null>(null)
-  const [showSubstituteModal, setShowSubstituteModal] = useState<string | null>(null)
-  const [sendingMessage, setSendingMessage] = useState(false)
   
   // Estado para el historial de la orden
   const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([])
@@ -561,29 +558,13 @@ function OrdersPageContent() {
     }
   }
 
-  const handleDownloadInvoice = async (order: Order) => {
-    try {
-      setGeneratingInvoice(order.id)
-      const invoiceData = prepareInvoiceData(order)
-      downloadInvoice(invoiceData, `Factura-${order.orderNumber}.pdf`)
-    } catch (error) {
-      console.error('Error generando factura:', error)
-      alert('Error al generar la factura')
-    } finally {
-      setGeneratingInvoice(null)
-    }
-  }
-
   const handleViewInvoice = async (order: Order) => {
     try {
-      setGeneratingInvoice(order.id)
       const invoiceData = prepareInvoiceData(order)
       openInvoiceInNewTab(invoiceData)
     } catch (error) {
       console.error('Error generando factura:', error)
       alert('Error al generar la factura')
-    } finally {
-      setGeneratingInvoice(null)
     }
   }
 
@@ -1055,13 +1036,13 @@ function OrdersPageContent() {
     
     if (sellerPhone && sellerPhone.trim() !== '') {
       // Limpiar caracteres no numéricos excepto el +
-      let phone = sellerPhone.replace(/[^\d+]/g, '')
+      let phone = sellerPhone.replaceAll(/[^\d+]/g, '')
       // Si no tiene código de país, agregar uno por defecto (ajustar según país)
       if (!phone.startsWith('+') && !phone.startsWith('1')) {
         phone = '1' + phone // Asume código de USA/Canadá, ajustar según necesidad
       }
       // Remover el + para la URL de WhatsApp
-      phone = phone.replace('+', '')
+      phone = phone.replaceAll('+', '')
       
       const message = encodeURIComponent(
         `Hola! Soy ${contactOrderInfo.client?.name || 'tu cliente'}. Tengo una consulta sobre mi orden #${contactOrderInfo.orderNumber}`
@@ -2735,7 +2716,6 @@ function OrdersPageContent() {
                                   break
                                 default:
                                   Icon = Clock
-                                  bgColor = 'bg-gray-500'
                               }
                             } else if (event.type === 'PRODUCT_DELETED') {
                               Icon = Trash2
@@ -3139,7 +3119,7 @@ function OrdersPageContent() {
                       type="number"
                       value={substituteQuantity}
                       onChange={(e) => {
-                        const val = parseInt(e.target.value) || 1
+                        const val = Number.parseInt(e.target.value) || 1
                         const maxStock = selectedSubstituteProduct.stock || 999
                         setSubstituteQuantity(Math.min(Math.max(1, val), maxStock))
                       }}
@@ -3468,7 +3448,7 @@ function OrdersPageLoading() {
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[...Array(6)].map((_, i) => (
+            {[...new Array(6)].map((_, i) => (
               <div key={i} className="bg-white rounded-lg p-4 h-48">
                 <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
                 <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>

@@ -88,7 +88,7 @@ export async function DELETE(
     // Recalcular el total excluyendo items eliminados
     const activeItems = order.orderItems.filter(item => item.id !== itemId && !item.isDeleted)
     const newSubtotal = activeItems.reduce((sum, item) => sum + Number(item.subtotal), 0)
-    const newTotal = newSubtotal * 1.10 // Añadir impuesto
+    const newTotal = newSubtotal * 1.1 // Añadir impuesto
 
     // Actualizar el total de la orden
     await prisma.order.update({
@@ -255,7 +255,7 @@ export async function PATCH(
     // Recalcular el total de la orden
     const otherItems = order.orderItems.filter(item => item.id !== itemId)
     const otherSubtotal = otherItems.reduce((sum, item) => sum + Number(item.subtotal), 0)
-    const newTotal = (otherSubtotal + newSubtotalItem) * 1.10
+    const newTotal = (otherSubtotal + newSubtotalItem) * 1.1
 
     // Actualizar el total de la orden
     await prisma.order.update({

@@ -218,7 +218,7 @@ export async function PATCH(
       logger.warn(LogCategory.API, 'Realtime broadcast failed', { error: realtimeError })
     }
 
-    // �🔔 ENVIAR NOTIFICACIÓN AL COMPRADOR sobre el cambio de estado
+    // 🔔 ENVIAR NOTIFICACIÓN AL COMPRADOR sobre el cambio de estado
     try {
       // Notificación genérica de cambio de estado
       await notifyOrderStatusChanged(

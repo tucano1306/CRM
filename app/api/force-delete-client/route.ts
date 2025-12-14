@@ -67,7 +67,7 @@ export async function GET(request: Request) {
       });
     }
 
-    console.log(`� Cliente encontrado: ${client.id}`);
+    console.log(`👤 Cliente encontrado: ${client.id}`);
     console.log(`   Seller actual: ${client.sellerId || '❌ SIN SELLER'}`);
 
     // 3. Si ya tiene seller, informar

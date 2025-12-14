@@ -482,7 +482,7 @@ export default function OrderDetailModal({
                   <div className="flex items-center justify-between mb-3">
                     <p className="font-medium text-gray-700">Estado actual:</p>
                     <p className="text-base font-bold text-purple-600 capitalize">
-                      {order.status.replace(/_/g, ' ').toLowerCase()}
+                      {order.status.replaceAll('_', ' ').toLowerCase()}
                     </p>
                   </div>
                   

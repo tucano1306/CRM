@@ -19,11 +19,9 @@ export async function DELETE(
     
     // Obtener el motivo de eliminación del body
     let reason = ''
-    let bySeller = false
     try {
       const body = await request.json()
       reason = body.reason || 'Sin motivo especificado'
-      bySeller = body.bySeller || false
     } catch {
       reason = 'Sin motivo especificado'
     }
@@ -90,7 +88,7 @@ export async function DELETE(
     // Recalcular el total excluyendo items eliminados
     const activeItems = order.orderItems.filter(item => item.id !== itemId && !item.isDeleted)
     const newSubtotal = activeItems.reduce((sum, item) => sum + Number(item.subtotal), 0)
-    const newTotal = newSubtotal * 1.10 // Añadir impuesto
+    const newTotal = newSubtotal * 1.1 // Añadir impuesto
 
     // Actualizar el total de la orden
     await prisma.order.update({
