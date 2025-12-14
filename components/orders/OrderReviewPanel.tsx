@@ -361,7 +361,7 @@ export default function OrderReviewPanel({
                   min="0"
                   max={selectedItem.quantity}
                   value={issueForm.availableQty}
-                  onChange={(e) => setIssueForm({ ...issueForm, availableQty: parseInt(e.target.value) || 0 })}
+                  onChange={(e) => setIssueForm({ ...issueForm, availableQty: Number.parseInt(e.target.value, 10) || 0 })}
                   className="w-full border rounded-md px-3 py-2"
                 />
                 <p className="text-xs text-gray-500 mt-1">

@@ -134,8 +134,8 @@ function validateField(value: any, rule: ValidationRule): string[] {
       break
 
     case 'number':
-      const numValue = typeof value === 'string' ? parseFloat(value) : value
-      if (typeof numValue !== 'number' || isNaN(numValue)) {
+      const numValue = typeof value === 'string' ? Number.parseFloat(value) : value
+      if (typeof numValue !== 'number' || Number.isNaN(numValue)) {
         errors.push(`Field ${rule.field} must be a valid number`)
       }
       break
@@ -252,7 +252,7 @@ function transformData(data: any, endpoint: string): any {
     switch (endpoint) {
       case '/api/products':
         if (transformed.price) {
-          transformed.price = parseFloat(transformed.price)
+          transformed.price = Number.parseFloat(transformed.price)
         }
         break
       
@@ -265,7 +265,7 @@ function transformData(data: any, endpoint: string): any {
           }
         }
         if (transformed.totalAmount) {
-          transformed.totalAmount = parseFloat(transformed.totalAmount)
+          transformed.totalAmount = Number.parseFloat(transformed.totalAmount)
         }
         break
     }

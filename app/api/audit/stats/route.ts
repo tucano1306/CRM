@@ -37,8 +37,8 @@ export async function GET(request: NextRequest) {
     }
 
     const searchParams = request.nextUrl.searchParams
-    const days = parseInt(searchParams.get('days') || '7', 10)
-    const stuckMinutes = parseInt(searchParams.get('stuckMinutes') || '120', 10)
+    const days = Number.parseInt(searchParams.get('days') || '7', 10)
+    const stuckMinutes = Number.parseInt(searchParams.get('stuckMinutes') || '120', 10)
 
     // Obtener resumen de actividad
     const activitySummary = await getStatusChangeActivitySummary(days)

@@ -125,7 +125,7 @@ export async function PUT(
     // Convertir tipos si es necesario
     const updateData: any = { ...body }
     if (commission !== undefined) {
-      updateData.commission = parseFloat(commission.toString())
+      updateData.commission = Number.parseFloat(commission.toString())
     }
 
     const updatedSeller = await prisma.seller.update({

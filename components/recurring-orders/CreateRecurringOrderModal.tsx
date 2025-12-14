@@ -175,7 +175,7 @@ export default function CreateRecurringOrderModal({
         nameLength: name.length,
         frequency,
         itemsCount: selectedItems.length,
-        startDateValid: !isNaN(new Date(startDate).getTime()),
+        startDateValid: !Number.isNaN(new Date(startDate).getTime()),
         hasProducts: selectedItems.length > 0
       })
       

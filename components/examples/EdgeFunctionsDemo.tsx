@@ -66,7 +66,7 @@ export default function EdgeFunctionsDemo() {
         type: 'conversion',
         action: 'form_valid',
         category: 'demo',
-        value: parseFloat(formData.price) || 0
+        value: Number.parseFloat(formData.price) || 0
       })
     } else {
       await trackEvent({
@@ -325,7 +325,7 @@ export default function EdgeFunctionsDemo() {
               />
               {formData.price && location && (
                 <p className="text-xs text-gray-500 mt-1">
-                  Display: {formatPrice(parseFloat(formData.price) || 0)}
+                  Display: {formatPrice(Number.parseFloat(formData.price) || 0)}
                 </p>
               )}
             </div>

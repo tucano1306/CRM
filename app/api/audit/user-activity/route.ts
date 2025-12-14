@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const targetUserId = searchParams.get('userId') || currentUserId
     const limit = Math.min(
-      parseInt(searchParams.get('limit') || '50', 10),
+      Number.parseInt(searchParams.get('limit') || '50', 10),
       200
     )
     const includeOrder = searchParams.get('includeOrder') !== 'false'

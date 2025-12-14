@@ -152,7 +152,7 @@ export async function PATCH(
       // Si es null, usar precio base del producto
       updateData.customPrice = body.customPrice === null
         ? existing.product.price
-        : parseFloat(body.customPrice)
+        : Number.parseFloat(body.customPrice)
     }
 
     if (body.isVisible !== undefined) {

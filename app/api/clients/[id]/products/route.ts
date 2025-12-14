@@ -196,7 +196,7 @@ export async function POST(
         // Si no se especifica customPrice, usar precio base
         const basePrice = basePriceMap.get(p.productId) ?? 0
         const finalPrice = p.customPrice !== undefined && p.customPrice !== null
-          ? parseFloat(p.customPrice)
+          ? Number.parseFloat(p.customPrice)
           : basePrice
 
         return withDbRetry(() =>

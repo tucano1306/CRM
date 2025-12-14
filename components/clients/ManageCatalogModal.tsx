@@ -161,7 +161,7 @@ export default function ManageCatalogModal({
       }
 
       // Actualizar precio personalizado del cliente
-      const newPrice = parseFloat(editForm.price) || editingProduct.customPrice
+      const newPrice = Number.parseFloat(editForm.price) || editingProduct.customPrice
       if (newPrice !== editingProduct.customPrice) {
         await fetch(`/api/clients/${clientId}/products`, {
           method: 'PUT',
@@ -266,7 +266,7 @@ export default function ManageCatalogModal({
         body: JSON.stringify({
           name: newProduct.name,
           description: newProduct.description || null,
-          price: parseFloat(newProduct.price),
+          price: Number.parseFloat(newProduct.price),
           stock: Number.parseInt(newProduct.stock, 10) || 100,
           unit: newProduct.unit,
           category: newProduct.category,
@@ -291,7 +291,7 @@ export default function ManageCatalogModal({
         body: JSON.stringify({
           products: [{
             productId,
-            customPrice: parseFloat(newProduct.price),
+            customPrice: Number.parseFloat(newProduct.price),
             isVisible: true,
           }]
         })
@@ -628,7 +628,7 @@ export default function ManageCatalogModal({
                                     onChange={(e) =>
                                       setEditingPrices(prev => ({
                                         ...prev,
-                                        [product.productId]: parseFloat(e.target.value) || 0
+                                        [product.productId]: Number.parseFloat(e.target.value) || 0
                                       }))
                                     }
                                     className="w-20 sm:w-24 px-2 py-1 border-2 border-purple-300 rounded-lg text-sm"

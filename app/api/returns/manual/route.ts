@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const returnAmount = parseFloat(amount)
-    if (isNaN(returnAmount) || returnAmount <= 0) {
+    const returnAmount = Number.parseFloat(amount)
+    if (Number.isNaN(returnAmount) || returnAmount <= 0) {
       return NextResponse.json(
         { success: false, error: 'Monto inválido' },
         { status: 400 }

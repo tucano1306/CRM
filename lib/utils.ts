@@ -10,9 +10,9 @@ export function cn(...inputs: ClassValue[]) {
  * Ejemplo: 2345 -> "2.345" | 2345.90 -> "2.345,90"
  */
 export function formatNumber(value: number | string, decimals: number = 2): string {
-  const num = typeof value === 'string' ? parseFloat(value) : value
+  const num = typeof value === 'string' ? Number.parseFloat(value) : value
   
-  if (isNaN(num)) return '0'
+  if (Number.isNaN(num)) return '0'
   
   // Separar parte entera y decimal
   const parts = num.toFixed(decimals).split('.')
@@ -44,7 +44,7 @@ export function formatDate(
 ): string {
   if (!date) return '-'
   const dateObj = typeof date === 'string' ? new Date(date) : date
-  if (isNaN(dateObj.getTime())) return '-'
+  if (Number.isNaN(dateObj.getTime())) return '-'
   return dateObj.toLocaleDateString('es-ES', options)
 }
 
@@ -55,7 +55,7 @@ export function formatDate(
 export function formatDateTime(date: Date | string | null | undefined): string {
   if (!date) return '-'
   const dateObj = typeof date === 'string' ? new Date(date) : date
-  if (isNaN(dateObj.getTime())) return '-'
+  if (Number.isNaN(dateObj.getTime())) return '-'
   return dateObj.toLocaleString('es-ES', {
     day: '2-digit',
     month: '2-digit', 
@@ -72,7 +72,7 @@ export function formatDateTime(date: Date | string | null | undefined): string {
 export function getRelativeTime(date: Date | string | null | undefined): string {
   if (!date) return '-'
   const dateObj = typeof date === 'string' ? new Date(date) : date
-  if (isNaN(dateObj.getTime())) return '-'
+  if (Number.isNaN(dateObj.getTime())) return '-'
   
   const now = new Date()
   const diffMs = now.getTime() - dateObj.getTime()

@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const limit = parseInt(searchParams.get('limit') || '10', 10);
+    const limit = Number.parseInt(searchParams.get('limit') || '10', 10);
 
     // Top clientes por gasto total
     const topClientsBySpending = await prisma.order.groupBy({

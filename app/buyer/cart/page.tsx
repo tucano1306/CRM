@@ -574,7 +574,7 @@ function CartPageContent() {
                         type="number"
                         value={item.quantity}
                         onChange={(e) => {
-                          const val = parseInt(e.target.value) || 1
+                          const val = Number.parseInt(e.target.value, 10) || 1
                           updateQuantity(item.id, val)
                         }}
                         className="w-14 text-center border-2 border-purple-200 rounded-lg py-1 font-semibold focus:ring-2 focus:ring-purple-500"

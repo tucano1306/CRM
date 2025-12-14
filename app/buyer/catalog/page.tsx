@@ -559,7 +559,7 @@ export default function CatalogPage() {
                             <input
                               type="number"
                               value={quantity}
-                              onChange={(e) => updateQuantity(product.id, parseInt(e.target.value) || 0)}
+                              onChange={(e) => updateQuantity(product.id, Number.parseInt(e.target.value, 10) || 0)}
                               className="w-16 text-center border-2 border-purple-200 rounded-lg py-1 font-semibold focus:ring-2 focus:ring-purple-500"
                               min="1"
                               max={product.stock}
