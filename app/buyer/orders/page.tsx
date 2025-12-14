@@ -83,6 +83,19 @@ type OrderItem = {
   }
 }
 
+type OrderHistoryItem = {
+  id: string
+  type: 'STATUS_CHANGE' | 'PRODUCT_DELETED' | 'PRODUCT_ADDED' | 'ORDER_CREATED'
+  previousStatus: string | null
+  newStatus: string | null
+  changedBy: string
+  changedByName: string
+  changedByRole: string
+  notes: string | null
+  createdAt: string
+  description: string
+}
+
 type Order = {
   id: string
   orderNumber: string
@@ -343,6 +356,10 @@ function OrdersPageContent() {
   const [showSubstituteModal, setShowSubstituteModal] = useState<string | null>(null)
   const [sendingMessage, setSendingMessage] = useState(false)
   
+  // Estado para el historial de la orden
+  const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
+  
   // Modal de eliminación con motivo
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteItemInfo, setDeleteItemInfo] = useState<{itemId: string, productName: string} | null>(null)
@@ -570,15 +587,37 @@ function OrdersPageContent() {
     }
   }
 
+  // Función para cargar el historial de una orden
+  const fetchOrderHistory = async (orderId: string) => {
+    try {
+      setLoadingHistory(true)
+      const result = await apiCall(`/api/orders/${orderId}/history`, {
+        timeout: 5000
+      })
+      if (result.success && result.data?.history) {
+        setOrderHistory(result.data.history)
+      } else {
+        setOrderHistory([])
+      }
+    } catch (error) {
+      console.error('Error cargando historial:', error)
+      setOrderHistory([])
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
   const openOrderModal = (order: Order) => {
     setSelectedOrder(order)
     setShowOrderModal(true)
     setActiveTab('productos')
+    setOrderHistory([]) // Limpiar historial anterior
   }
 
   const closeOrderModal = () => {
     setShowOrderModal(false)
     setSelectedOrder(null)
+    setOrderHistory([])
   }
 
   // Función auxiliar para obtener el issue de un producto
@@ -2123,7 +2162,12 @@ function OrdersPageContent() {
                   Estado
                 </button>
                 <button 
-                  onClick={() => setActiveTab('seguimiento')}
+                  onClick={() => {
+                    setActiveTab('seguimiento')
+                    if (selectedOrder && orderHistory.length === 0) {
+                      fetchOrderHistory(selectedOrder.id)
+                    }
+                  }}
                   className={`px-6 py-3 font-medium transition-colors ${
                     activeTab === 'seguimiento' 
                       ? 'border-b-2 border-purple-600 text-purple-600' 
@@ -2609,130 +2653,151 @@ function OrdersPageContent() {
                 {/* Tab: Seguimiento */}
                 {activeTab === 'seguimiento' && (
                   <div className="space-y-6">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4">
-                      Historial de la orden
-                    </h3>
-                    
-                    {/* Timeline visual mejorado */}
-                    <div className="space-y-4">
-                      {/* Estado: Orden Confirmada */}
-                      {(selectedOrder.status === 'CONFIRMED' || 
-                        selectedOrder.status === 'PREPARING' || 
-                        selectedOrder.status === 'PROCESSING' ||
-                        selectedOrder.status === 'READY_FOR_PICKUP' ||
-                        selectedOrder.status === 'IN_DELIVERY' ||
-                        selectedOrder.status === 'DELIVERED' ||
-                        selectedOrder.status === 'COMPLETED') && (
-                        <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
-                            <CheckCircle className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-900">Orden Confirmada</p>
-                            <p className="text-sm text-gray-500">
-                              {new Date(selectedOrder.createdAt).toLocaleString('es-ES', {
-                                day: 'numeric',
-                                month: 'short',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Estado: En Preparación */}
-                      {(selectedOrder.status === 'PREPARING' || 
-                        selectedOrder.status === 'PROCESSING' ||
-                        selectedOrder.status === 'READY_FOR_PICKUP' ||
-                        selectedOrder.status === 'IN_DELIVERY' ||
-                        selectedOrder.status === 'DELIVERED' ||
-                        selectedOrder.status === 'COMPLETED') && (
-                        <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
-                            <Package className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-900">En Preparación</p>
-                            <p className="text-sm text-gray-500">Tu pedido está siendo preparado</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Estado: En Camino */}
-                      {(selectedOrder.status === 'IN_DELIVERY' ||
-                        selectedOrder.status === 'DELIVERED' ||
-                        selectedOrder.status === 'COMPLETED') ? (
-                        <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
-                            <Truck className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-900">En Camino</p>
-                            <p className="text-sm text-gray-500">Tu pedido está siendo entregado</p>
-                          </div>
-                        </div>
-                      ) : selectedOrder.status !== 'PENDING' && selectedOrder.status !== 'CANCELED' && selectedOrder.status !== 'CANCELLED' && (
-                        <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                            <Truck className="w-6 h-6 text-gray-500" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-400">En Camino</p>
-                            <p className="text-sm text-gray-400">Estimado: Próximamente</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Estado: Entregado */}
-                      {(selectedOrder.status === 'DELIVERED' || selectedOrder.status === 'COMPLETED') ? (
-                        <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white flex-shrink-0">
-                            <PackageCheck className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-900">Entregado</p>
-                            <p className="text-sm text-gray-500">Tu pedido fue entregado con éxito</p>
-                          </div>
-                        </div>
-                      ) : selectedOrder.status !== 'PENDING' && selectedOrder.status !== 'CANCELED' && selectedOrder.status !== 'CANCELLED' && (
-                        <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                            <PackageCheck className="w-6 h-6 text-gray-500" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-400">Entregado</p>
-                            <p className="text-sm text-gray-400">Pendiente de entrega</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Estado: Pendiente */}
-                      {selectedOrder.status === 'PENDING' && (
-                        <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-white flex-shrink-0 animate-pulse">
-                            <Clock className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-900">Esperando Confirmación</p>
-                            <p className="text-sm text-gray-500">El vendedor revisará tu orden pronto</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Estado: Cancelado */}
-                      {(selectedOrder.status === 'CANCELED' || selectedOrder.status === 'CANCELLED') && (
-                        <div className="flex items-start gap-4">
-                          <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
-                            <XCircle className="w-6 h-6" />
-                          </div>
-                          <div>
-                            <p className="font-bold text-gray-900">Orden Cancelada</p>
-                            <p className="text-sm text-gray-500">Esta orden fue cancelada</p>
-                          </div>
-                        </div>
-                      )}
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bold text-gray-900">
+                        Historial de la orden
+                      </h3>
+                      <button
+                        onClick={() => fetchOrderHistory(selectedOrder.id)}
+                        className="text-sm text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                        disabled={loadingHistory}
+                      >
+                        <RefreshCw className={`w-4 h-4 ${loadingHistory ? 'animate-spin' : ''}`} />
+                        Actualizar
+                      </button>
                     </div>
+                    
+                    {/* Loading state */}
+                    {loadingHistory && (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+                        <span className="ml-2 text-gray-500">Cargando historial...</span>
+                      </div>
+                    )}
+
+                    {/* Historial real de la base de datos */}
+                    {!loadingHistory && orderHistory.length > 0 && (
+                      <div className="relative">
+                        {/* Línea vertical conectora */}
+                        <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                        
+                        <div className="space-y-4">
+                          {orderHistory.map((event, index) => {
+                            // Determinar icono y color según el tipo de evento
+                            let Icon = Clock
+                            let bgColor = 'bg-gray-500'
+                            let label = event.description
+                            
+                            if (event.type === 'STATUS_CHANGE') {
+                              switch (event.newStatus) {
+                                case 'PENDING':
+                                  Icon = Clock
+                                  bgColor = 'bg-yellow-500'
+                                  break
+                                case 'REVIEWING':
+                                  Icon = Package
+                                  bgColor = 'bg-blue-500'
+                                  break
+                                case 'ISSUE_REPORTED':
+                                  Icon = AlertTriangle
+                                  bgColor = 'bg-amber-500'
+                                  break
+                                case 'LOCKED':
+                                  Icon = Package
+                                  bgColor = 'bg-gray-600'
+                                  break
+                                case 'CONFIRMED':
+                                  Icon = CheckCircle
+                                  bgColor = 'bg-green-500'
+                                  break
+                                case 'PREPARING':
+                                case 'PROCESSING':
+                                  Icon = Package
+                                  bgColor = 'bg-indigo-500'
+                                  break
+                                case 'READY_FOR_PICKUP':
+                                  Icon = ShoppingBag
+                                  bgColor = 'bg-cyan-500'
+                                  break
+                                case 'IN_DELIVERY':
+                                  Icon = Truck
+                                  bgColor = 'bg-purple-500'
+                                  break
+                                case 'DELIVERED':
+                                case 'COMPLETED':
+                                  Icon = PackageCheck
+                                  bgColor = 'bg-green-600'
+                                  break
+                                case 'CANCELED':
+                                case 'CANCELLED':
+                                  Icon = XCircle
+                                  bgColor = 'bg-red-500'
+                                  break
+                                default:
+                                  Icon = Clock
+                                  bgColor = 'bg-gray-500'
+                              }
+                            } else if (event.type === 'PRODUCT_DELETED') {
+                              Icon = Trash2
+                              bgColor = 'bg-red-400'
+                            } else if (event.type === 'PRODUCT_ADDED') {
+                              Icon = Plus
+                              bgColor = 'bg-green-400'
+                            } else if (event.type === 'ORDER_CREATED') {
+                              Icon = ShoppingBag
+                              bgColor = 'bg-purple-500'
+                            }
+
+                            return (
+                              <div key={event.id} className="flex items-start gap-4 relative">
+                                <div className={`w-10 h-10 ${bgColor} rounded-full flex items-center justify-center text-white flex-shrink-0 z-10 shadow-md`}>
+                                  <Icon className="w-5 h-5" />
+                                </div>
+                                <div className="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                                  <p className="font-semibold text-gray-900">{label}</p>
+                                  {event.notes && (
+                                    <p className="text-sm text-gray-600 mt-1 italic">"{event.notes}"</p>
+                                  )}
+                                  <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                                    <span>
+                                      {new Date(event.createdAt).toLocaleString('es-ES', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      })}
+                                    </span>
+                                    <span>•</span>
+                                    <span className={`px-2 py-0.5 rounded-full text-xs ${
+                                      event.changedByRole === 'SELLER' ? 'bg-blue-100 text-blue-700' :
+                                      event.changedByRole === 'CLIENT' || event.changedByRole === 'BUYER' ? 'bg-purple-100 text-purple-700' :
+                                      'bg-gray-100 text-gray-700'
+                                    }`}>
+                                      {event.changedByRole === 'SELLER' ? '👤 Vendedor' :
+                                       event.changedByRole === 'CLIENT' || event.changedByRole === 'BUYER' ? '🛒 Comprador' :
+                                       '⚙️ Sistema'}
+                                    </span>
+                                    {event.changedByName && (
+                                      <span className="text-gray-400">({event.changedByName})</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sin historial */}
+                    {!loadingHistory && orderHistory.length === 0 && (
+                      <div className="text-center py-8">
+                        <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500">No hay actualizaciones registradas aún</p>
+                        <p className="text-sm text-gray-400 mt-1">Las actualizaciones aparecerán aquí cuando el vendedor o tú realicen cambios</p>
+                      </div>
+                    )}
 
                     {/* Información de entrega */}
                     <div className="mt-6 bg-blue-50 rounded-xl p-4 border border-blue-200">
