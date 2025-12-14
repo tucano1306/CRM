@@ -686,10 +686,11 @@ export default function ManageCatalogModal({
               <div className="space-y-4">
                 {/* Nombre */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label htmlFor="new-product-name-input" className="block text-sm font-semibold text-gray-700 mb-1">
                     Nombre del Producto *
                   </label>
                   <input
+                    id="new-product-name-input"
                     type="text"
                     value={newProduct.name}
                     onChange={(e) => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
@@ -700,10 +701,11 @@ export default function ManageCatalogModal({
 
                 {/* Descripción */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label htmlFor="new-product-description-input" className="block text-sm font-semibold text-gray-700 mb-1">
                     Descripción
                   </label>
                   <textarea
+                    id="new-product-description-input"
                     value={newProduct.description}
                     onChange={(e) => setNewProduct(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Descripción del producto..."
@@ -715,12 +717,13 @@ export default function ManageCatalogModal({
                 {/* Precio y Stock */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    <label htmlFor="new-product-price-input" className="block text-sm font-semibold text-gray-700 mb-1">
                       Precio *
                     </label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                       <input
+                        id="new-product-price-input"
                         type="number"
                         step="0.01"
                         value={newProduct.price}
@@ -731,10 +734,11 @@ export default function ManageCatalogModal({
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    <label htmlFor="new-product-stock-input" className="block text-sm font-semibold text-gray-700 mb-1">
                       Stock Inicial
                     </label>
                     <input
+                      id="new-product-stock-input"
                       type="number"
                       value={newProduct.stock}
                       onChange={(e) => setNewProduct(prev => ({ ...prev, stock: e.target.value }))}
@@ -747,10 +751,11 @@ export default function ManageCatalogModal({
                 {/* Categoría y Unidad */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    <label htmlFor="new-product-category-select" className="block text-sm font-semibold text-gray-700 mb-1">
                       Categoría
                     </label>
                     <select
+                      id="new-product-category-select"
                       value={newProduct.category}
                       onChange={(e) => setNewProduct(prev => ({ ...prev, category: e.target.value }))}
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
@@ -761,10 +766,11 @@ export default function ManageCatalogModal({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    <label htmlFor="new-product-unit-select" className="block text-sm font-semibold text-gray-700 mb-1">
                       Unidad
                     </label>
                     <select
+                      id="new-product-unit-select"
                       value={newProduct.unit}
                       onChange={(e) => setNewProduct(prev => ({ ...prev, unit: e.target.value }))}
                       className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
@@ -779,10 +785,11 @@ export default function ManageCatalogModal({
                 {/* SKU e Imagen */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    <label htmlFor="new-product-sku-input" className="block text-sm font-semibold text-gray-700 mb-1">
                       SKU (Opcional)
                     </label>
                     <input
+                      id="new-product-sku-input"
                       type="text"
                       value={newProduct.sku}
                       onChange={(e) => setNewProduct(prev => ({ ...prev, sku: e.target.value }))}
@@ -791,12 +798,13 @@ export default function ManageCatalogModal({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    <label htmlFor="new-product-image-url-input" className="block text-sm font-semibold text-gray-700 mb-1">
                       URL de Imagen (Opcional)
                     </label>
                     <div className="relative">
                       <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                       <input
+                        id="new-product-image-url-input"
                         type="url"
                         value={newProduct.imageUrl}
                         onChange={(e) => setNewProduct(prev => ({ ...prev, imageUrl: e.target.value }))}
@@ -1107,10 +1115,11 @@ export default function ManageCatalogModal({
             <div className="p-4 sm:p-6 space-y-4">
               {/* Nombre */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label htmlFor="edit-product-name-input" className="block text-sm font-semibold text-gray-700 mb-1">
                   Nombre del Producto *
                 </label>
                 <input
+                  id="edit-product-name-input"
                   type="text"
                   value={editForm.name}
                   onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
@@ -1121,10 +1130,11 @@ export default function ManageCatalogModal({
 
               {/* SKU */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label htmlFor="edit-product-sku-input" className="block text-sm font-semibold text-gray-700 mb-1">
                   SKU / Código
                 </label>
                 <input
+                  id="edit-product-sku-input"
                   type="text"
                   value={editForm.sku}
                   onChange={(e) => setEditForm(prev => ({ ...prev, sku: e.target.value }))}
@@ -1135,10 +1145,11 @@ export default function ManageCatalogModal({
 
               {/* Descripción */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label htmlFor="edit-product-description-input" className="block text-sm font-semibold text-gray-700 mb-1">
                   Descripción
                 </label>
                 <textarea
+                  id="edit-product-description-input"
                   value={editForm.description}
                   onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
@@ -1149,12 +1160,13 @@ export default function ManageCatalogModal({
 
               {/* Precio */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">
+                <label htmlFor="edit-product-price-input" className="block text-sm font-semibold text-gray-700 mb-1">
                   Precio para {clientName} *
                 </label>
                 <div className="relative">
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
+                    id="edit-product-price-input"
                     type="number"
                     step="0.01"
                     value={editForm.price}
@@ -1168,10 +1180,11 @@ export default function ManageCatalogModal({
               {/* Categoría y Unidad */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label htmlFor="edit-product-category-select" className="block text-sm font-semibold text-gray-700 mb-1">
                     Categoría
                   </label>
                   <select
+                    id="edit-product-category-select"
                     value={editForm.category}
                     onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value }))}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -1182,10 +1195,11 @@ export default function ManageCatalogModal({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                  <label htmlFor="edit-product-unit-select" className="block text-sm font-semibold text-gray-700 mb-1">
                     Unidad
                   </label>
                   <select
+                    id="edit-product-unit-select"
                     value={editForm.unit}
                     onChange={(e) => setEditForm(prev => ({ ...prev, unit: e.target.value }))}
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

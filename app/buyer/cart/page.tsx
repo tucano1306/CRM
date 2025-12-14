@@ -619,10 +619,11 @@ function CartPageContent() {
 
               {/* Notas */}
               <div className="mb-4">
-                <label className="text-sm font-medium text-gray-600 mb-2 block">
+                <label htmlFor="order-notes-textarea" className="text-sm font-medium text-gray-600 mb-2 block">
                   Notas del pedido (opcional):
                 </label>
                 <textarea
+                  id="order-notes-textarea"
                   value={orderNotes}
                   onChange={(e) => setOrderNotes(e.target.value)}
                   placeholder="Instrucciones especiales..."

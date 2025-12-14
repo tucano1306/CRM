@@ -343,10 +343,11 @@ export default function OrderStatusChanger({
             )}
             
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="order-status-notes-input" className="block text-sm font-medium text-gray-700 mb-2">
                 Notas (opcional)
               </label>
               <textarea
+                id="order-status-notes-input"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Ej: Cliente confirmó por teléfono, entrega programada para mañana..."

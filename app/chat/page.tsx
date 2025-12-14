@@ -88,10 +88,11 @@ function SellerChatContent() {
       <div className="md:hidden mb-4">
         <Card>
           <CardContent className="p-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="mobile-client-selector" className="block text-sm font-medium text-gray-700 mb-2">
               Seleccionar cliente
             </label>
             <select
+              id="mobile-client-selector"
               className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={selectedClient?.id || ''}
               onChange={(e) => {

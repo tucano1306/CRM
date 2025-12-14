@@ -235,10 +235,11 @@ export default function TagManager({ productId, product, currentTags, onTagsUpda
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="tag-custom-label-input" className="block text-sm font-medium text-gray-700 mb-2">
                   Nombre de la etiqueta
                 </label>
                 <input
+                  id="tag-custom-label-input"
                   type="text"
                   value={customLabel}
                   onChange={(e) => setCustomLabel(e.target.value)}
@@ -252,11 +253,12 @@ export default function TagManager({ productId, product, currentTags, onTagsUpda
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="tag-custom-color-input" className="block text-sm font-medium text-gray-700 mb-2">
                   Color
                 </label>
                 <div className="flex items-center gap-4">
                   <input
+                    id="tag-custom-color-input"
                     type="color"
                     value={customColor}
                     onChange={(e) => setCustomColor(e.target.value)}

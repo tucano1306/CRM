@@ -336,10 +336,11 @@ export default function OrderReviewPanel({
             
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="issue-type-select" className="block text-sm font-medium text-gray-700 mb-1">
                   Tipo de problema
                 </label>
                 <select
+                  id="issue-type-select"
                   value={issueForm.issueType}
                   onChange={(e) => setIssueForm({ ...issueForm, issueType: e.target.value })}
                   className="w-full border rounded-md px-3 py-2"
@@ -353,10 +354,11 @@ export default function OrderReviewPanel({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="issue-available-qty-input" className="block text-sm font-medium text-gray-700 mb-1">
                   Cantidad disponible
                 </label>
                 <input
+                  id="issue-available-qty-input"
                   type="number"
                   min="0"
                   max={selectedItem.quantity}
@@ -370,10 +372,11 @@ export default function OrderReviewPanel({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="issue-description-input" className="block text-sm font-medium text-gray-700 mb-1">
                   Descripción del problema
                 </label>
                 <textarea
+                  id="issue-description-input"
                   value={issueForm.description}
                   onChange={(e) => setIssueForm({ ...issueForm, description: e.target.value })}
                   className="w-full border rounded-md px-3 py-2"
@@ -382,10 +385,11 @@ export default function OrderReviewPanel({
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="issue-proposed-solution-input" className="block text-sm font-medium text-gray-700 mb-1">
                   Solución propuesta (opcional)
                 </label>
                 <textarea
+                  id="issue-proposed-solution-input"
                   value={issueForm.proposedSolution}
                   onChange={(e) => setIssueForm({ ...issueForm, proposedSolution: e.target.value })}
                   placeholder="Ej: Podemos enviar 5 unidades ahora y el resto mañana"

@@ -881,8 +881,9 @@ export default function BulkStatusChangeModal({
                       {/* Input de cantidad parcial */}
                       {isPartialStock && (
                         <div className="mt-4 flex items-center gap-3 ml-8 sm:ml-9 p-3 bg-yellow-100 rounded-lg border-2 border-yellow-300">
-                          <label className="text-sm sm:text-base font-medium text-yellow-800">Disponibles:</label>
+                          <label htmlFor={`partial-qty-${item.id}`} className="text-sm sm:text-base font-medium text-yellow-800">Disponibles:</label>
                           <input
+                            id={`partial-qty-${item.id}`}
                             type="number"
                             min="0"
                             max={item.quantity - 1}
@@ -972,10 +973,11 @@ export default function BulkStatusChangeModal({
           {/* Notas de confirmación */}
           {allProductsOk && (
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="confirm-notes-input" className="block text-sm font-medium text-gray-700 mb-2">
                 Notas de confirmación (opcional)
               </label>
               <textarea
+                id="confirm-notes-input"
                 value={confirmNotes}
                 onChange={(e) => setConfirmNotes(e.target.value)}
                 placeholder="Ej: Pedido preparado, se entregará mañana a las 10am"
@@ -1223,8 +1225,9 @@ export default function BulkStatusChangeModal({
                     <p className="text-sm text-purple-600">{formatPrice(selectedProduct.price)} / {selectedProduct.unit || 'unid.'}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <label className="text-sm text-gray-600">Cantidad:</label>
+                    <label htmlFor="add-product-quantity-input" className="text-sm text-gray-600">Cantidad:</label>
                     <input
+                      id="add-product-quantity-input"
                       type="number"
                       min="1"
                       value={addQuantity}

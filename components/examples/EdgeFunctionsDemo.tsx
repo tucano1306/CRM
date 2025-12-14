@@ -300,10 +300,11 @@ export default function EdgeFunctionsDemo() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="edge-demo-product-name" className="block text-sm font-medium text-gray-700 mb-1">
                 Product Name
               </label>
               <input
+                id="edge-demo-product-name"
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
@@ -313,10 +314,11 @@ export default function EdgeFunctionsDemo() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="edge-demo-product-price" className="block text-sm font-medium text-gray-700 mb-1">
                 Price {location && `(${location.currency.code})`}
               </label>
               <input
+                id="edge-demo-product-price"
                 type="text"
                 value={formData.price}
                 onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
@@ -331,10 +333,11 @@ export default function EdgeFunctionsDemo() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="edge-demo-product-category" className="block text-sm font-medium text-gray-700 mb-1">
                 Category
               </label>
               <select
+                id="edge-demo-product-category"
                 value={formData.category}
                 onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"

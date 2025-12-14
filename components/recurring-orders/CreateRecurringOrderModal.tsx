@@ -321,10 +321,11 @@ export default function CreateRecurringOrderModal({
             {step === 1 && (
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="recurring-order-name-input" className="block text-sm font-medium text-gray-700 mb-2">
                     Nombre de la orden recurrente *
                   </label>
                   <input
+                    id="recurring-order-name-input"
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -334,10 +335,11 @@ export default function CreateRecurringOrderModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="recurring-order-frequency-select" className="block text-sm font-medium text-gray-700 mb-2">
                     Frecuencia *
                   </label>
                   <select
+                    id="recurring-order-frequency-select"
                     value={frequency}
                     onChange={(e) => setFrequency(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -352,10 +354,11 @@ export default function CreateRecurringOrderModal({
 
                 {frequency === 'WEEKLY' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="recurring-order-day-of-week-select" className="block text-sm font-medium text-gray-700 mb-2">
                       Día de la semana
                     </label>
                     <select
+                      id="recurring-order-day-of-week-select"
                       value={dayOfWeek}
                       onChange={(e) => setDayOfWeek(Number(e.target.value))}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
@@ -369,10 +372,11 @@ export default function CreateRecurringOrderModal({
 
                 {frequency === 'MONTHLY' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="recurring-order-day-of-month-input" className="block text-sm font-medium text-gray-700 mb-2">
                       Día del mes
                     </label>
                     <input
+                      id="recurring-order-day-of-month-input"
                       type="number"
                       min="1"
                       max="31"
@@ -385,10 +389,11 @@ export default function CreateRecurringOrderModal({
 
                 {frequency === 'CUSTOM' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="recurring-order-custom-days-input" className="block text-sm font-medium text-gray-700 mb-2">
                       Cada cuántos días
                     </label>
                     <input
+                      id="recurring-order-custom-days-input"
                       type="number"
                       min="1"
                       value={customDays}
@@ -399,10 +404,11 @@ export default function CreateRecurringOrderModal({
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="recurring-order-start-date-input" className="block text-sm font-medium text-gray-700 mb-2">
                     Fecha de inicio
                   </label>
                   <input
+                    id="recurring-order-start-date-input"
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
@@ -411,10 +417,11 @@ export default function CreateRecurringOrderModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="recurring-order-delivery-instructions-input" className="block text-sm font-medium text-gray-700 mb-2">
                     Instrucciones de entrega
                   </label>
                   <textarea
+                    id="recurring-order-delivery-instructions-input"
                     value={deliveryInstructions}
                     onChange={(e) => setDeliveryInstructions(e.target.value)}
                     placeholder="Información adicional para la entrega..."
@@ -424,10 +431,11 @@ export default function CreateRecurringOrderModal({
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="recurring-order-notes-input" className="block text-sm font-medium text-gray-700 mb-2">
                     Notas
                   </label>
                   <textarea
+                    id="recurring-order-notes-input"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder="Notas adicionales..."
@@ -560,8 +568,9 @@ export default function CreateRecurringOrderModal({
                             <p className="text-sm text-purple-600">${item.pricePerUnit.toFixed(2)} / {item.unit}</p>
                           </div>
                           <div className="flex items-center gap-2">
-                            <label className="text-sm text-gray-600">Cant:</label>
+                            <label htmlFor={`recurring-item-qty-${item.productId}`} className="text-sm text-gray-600">Cant:</label>
                             <input
+                              id={`recurring-item-qty-${item.productId}`}
                               type="number"
                               min="1"
                               value={item.quantity}

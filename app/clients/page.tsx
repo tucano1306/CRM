@@ -686,8 +686,9 @@ export default function ClientsPage() {
             </div>
             <div className="grid md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nombre completo</label>
+                <label htmlFor="client-name-input" className="block text-sm font-medium text-gray-700 mb-2">Nombre completo</label>
                 <input
+                  id="client-name-input"
                   type="text"
                   placeholder="Ej: Juan Pérez"
                   value={formData.name}
@@ -698,8 +699,9 @@ export default function ClientsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <label htmlFor="client-email-input" className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                 <input
+                  id="client-email-input"
                   type="email"
                   placeholder="ejemplo@correo.com"
                   value={formData.email}
@@ -710,8 +712,9 @@ export default function ClientsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
+                <label htmlFor="client-phone-input" className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
                 <input
+                  id="client-phone-input"
                   type="tel"
                   placeholder="123-456-7890"
                   value={formData.phone}
@@ -722,8 +725,9 @@ export default function ClientsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Código Postal</label>
+                <label htmlFor="client-zipcode-input" className="block text-sm font-medium text-gray-700 mb-2">Código Postal</label>
                 <input
+                  id="client-zipcode-input"
                   type="text"
                   placeholder="12345"
                   value={formData.zipCode}
@@ -735,8 +739,9 @@ export default function ClientsPage() {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Dirección completa</label>
+                <label htmlFor="client-address-input" className="block text-sm font-medium text-gray-700 mb-2">Dirección completa</label>
                 <input
+                  id="client-address-input"
                   type="text"
                   placeholder="Calle, número, colonia, ciudad"
                   value={formData.address}
@@ -865,10 +870,11 @@ export default function ClientsPage() {
                 <div className="space-y-4">
                   {/* Dropdown para seleccionar método */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label htmlFor="invitation-method-select" className="block text-sm font-medium text-gray-700 mb-2">
                       Selecciona el método de envío
                     </label>
                     <select
+                      id="invitation-method-select"
                       value={invitationMethod}
                       onChange={(e) => {
                         setInvitationMethod(e.target.value as 'email' | 'whatsapp' | 'sms')
