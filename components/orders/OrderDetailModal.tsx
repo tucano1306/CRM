@@ -187,9 +187,9 @@ export default function OrderDetailModal({
             </Button>
           </div>
 
-          {/* Tabs */}
-          <div className="border-b bg-gray-50">
-            <div className="flex overflow-x-auto">
+          {/* Tabs - Grid para móvil */}
+          <div className="border-b bg-gray-50 px-2 py-2">
+            <div className="grid grid-cols-4 gap-1">
               {tabs.map((tab) => {
                 const Icon = tab.icon
                 return (
@@ -197,15 +197,15 @@ export default function OrderDetailModal({
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`
-                      flex items-center gap-2 px-6 py-4 font-medium transition-colors whitespace-nowrap
+                      flex flex-col items-center gap-1 px-2 py-2 font-medium transition-colors rounded-lg text-xs
                       ${activeTab === tab.id
-                        ? 'text-purple-600 border-b-2 border-purple-600 bg-white'
+                        ? 'text-purple-600 bg-purple-100'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                       }
                     `}
                   >
-                    <Icon className="h-4 w-4" />
-                    {tab.label}
+                    <Icon className="h-5 w-5" />
+                    <span className="truncate">{tab.label}</span>
                   </button>
                 )
               })}
@@ -266,23 +266,9 @@ export default function OrderDetailModal({
               </div>
             )}
 
-            {/* TAB: Productos - Con lógica para editar/eliminar */}
+            {/* TAB: Productos */}
             {activeTab === 'products' && (
               <div className="space-y-3">
-                {/* Instrucciones si hay problemas */}
-                {order.hasIssues && userRole === 'seller' && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
-                    <h4 className="font-medium text-amber-800 flex items-center gap-2 mb-2">
-                      <AlertTriangle className="h-4 w-4" />
-                      Productos con problemas de stock
-                    </h4>
-                    <p className="text-sm text-amber-700">
-                      Puedes eliminar o ajustar la cantidad de los productos marcados en rojo/amarillo 
-                      una vez que llegues a un acuerdo con el comprador.
-                    </p>
-                  </div>
-                )}
-
                 {order.orderItems.map((item) => {
                   const issue = getProductIssue(item.productName)
                   const hasIssue = !!issue
@@ -489,47 +475,21 @@ export default function OrderDetailModal({
             {/* TAB: Estado (solo vendedores) */}
             {activeTab === 'status' && userRole === 'seller' && onStatusChange && (
               <div className="space-y-4">
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
-                  <h3 className="text-lg font-semibold text-blue-900 mb-1 flex items-center gap-2">
-                    <Settings className="h-5 w-5" />
-                    Cambiar Estado de la Orden
-                  </h3>
-                  <p className="text-sm text-blue-700">
-                    Actualiza el estado según el progreso de la orden
-                  </p>
-                </div>
-
-                <div className="bg-white rounded-lg shadow-sm p-6 border">
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium text-gray-700">Estado actual:</p>
-                        <p className="text-lg font-bold text-purple-600 capitalize">
-                          {order.status.replace(/_/g, ' ').toLowerCase()}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="border-t pt-4">
-                      <p className="text-sm text-gray-600 mb-3">Selecciona el nuevo estado:</p>
-                      <OrderStatusChanger
-                        orderId={order.id}
-                        currentStatus={order.status}
-                        onStatusChange={(newStatus, notes) => onStatusChange(order.id, newStatus, notes)}
-                        userRole={userRole}
-                      />
-                    </div>
+                {/* Estado actual */}
+                <div className="bg-white rounded-lg shadow-sm p-4 border">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="font-medium text-gray-700">Estado actual:</p>
+                    <p className="text-base font-bold text-purple-600 capitalize">
+                      {order.status.replace(/_/g, ' ').toLowerCase()}
+                    </p>
                   </div>
-                </div>
-
-                {/* Info adicional */}
-                <div className="bg-gray-50 rounded-lg p-4 border">
-                  <h4 className="font-medium text-gray-700 mb-2">Estados disponibles:</h4>
-                  <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• <strong>Revisando</strong> - Verificando disponibilidad de productos</li>
-                    <li>• <strong>Confirmada</strong> - Orden confirmada y lista para procesar</li>
-                    <li>• <strong>Completada</strong> - Orden finalizada en el sistema</li>
-                  </ul>
+                  
+                  <OrderStatusChanger
+                    orderId={order.id}
+                    currentStatus={order.status}
+                    onStatusChange={(newStatus, notes) => onStatusChange(order.id, newStatus, notes)}
+                    userRole={userRole}
+                  />
                 </div>
               </div>
             )}

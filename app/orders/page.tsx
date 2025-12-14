@@ -58,7 +58,10 @@ interface OrderWithItems {
     quantity: number
     pricePerUnit: number
     subtotal: number
+    confirmed?: boolean
     itemNote?: string | null
+    availableQty?: number | null
+    issueNote?: string | null
     isDeleted?: boolean
     deletedReason?: string | null
     deletedAt?: string | null

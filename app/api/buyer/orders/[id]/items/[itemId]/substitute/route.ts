@@ -17,7 +17,7 @@ export async function POST(
 
     const { id: orderId, itemId } = await params
     const body = await request.json()
-    const { newProductId, newProductName, reason } = body
+    const { newProductId, newProductName, reason, quantity } = body
 
     if (!newProductId || !newProductName) {
       return NextResponse.json({ error: 'Producto de sustitución requerido' }, { status: 400 })
@@ -82,6 +82,16 @@ export async function POST(
       return NextResponse.json({ error: 'Producto de sustitución no encontrado' }, { status: 404 })
     }
 
+    // Determinar la cantidad a usar (la proporcionada o la original del item)
+    const newQuantity = quantity && quantity > 0 ? quantity : itemToSubstitute.quantity
+
+    // Verificar que haya suficiente stock
+    if (newProduct.stock !== null && newProduct.stock < newQuantity) {
+      return NextResponse.json({ 
+        error: `Stock insuficiente. Disponible: ${newProduct.stock} ${newProduct.unit || 'unidades'}` 
+      }, { status: 400 })
+    }
+
     // Marcar el item original como eliminado/sustituido
     await prisma.orderItem.update({
       where: { id: itemId },
@@ -96,17 +106,17 @@ export async function POST(
     })
 
     // Crear el nuevo item con el producto sustituto
-    const newSubtotal = itemToSubstitute.quantity * Number(newProduct.price)
+    const newSubtotal = newQuantity * Number(newProduct.price)
     const newOrderItem = await prisma.orderItem.create({
       data: {
         orderId: orderId,
         productId: newProductId,
         productName: newProduct.name,
-        quantity: itemToSubstitute.quantity,
+        quantity: newQuantity,
         pricePerUnit: newProduct.price,
         subtotal: newSubtotal,
         confirmed: false,
-        itemNote: `Sustitución de: ${itemToSubstitute.productName}`
+        itemNote: `Sustitución de: ${itemToSubstitute.productName} (${itemToSubstitute.quantity} → ${newQuantity})`
       }
     })
 

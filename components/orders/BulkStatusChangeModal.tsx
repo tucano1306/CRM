@@ -56,6 +56,9 @@ interface OrderItem {
   quantity: number
   pricePerUnit: number
   subtotal: number
+  confirmed?: boolean
+  issueNote?: string | null
+  availableQty?: number | null
   product?: {
     id?: string
     sku?: string | null
@@ -148,6 +151,43 @@ export default function BulkStatusChangeModal({
   const [addNote, setAddNote] = useState('')
   const [addingProduct, setAddingProduct] = useState(false)
   const [addedProducts, setAddedProducts] = useState<Set<string>>(new Set())
+  
+  // Estado para mostrar/ocultar productos ya confirmados
+  const [showConfirmedProducts, setShowConfirmedProducts] = useState(false)
+  
+  // Estado para guardar confirmaciones pendientes
+  const [savingConfirmation, setSavingConfirmation] = useState<string | null>(null)
+
+  // Cargar items ya confirmados de la BD al abrir
+  useEffect(() => {
+    const order = selectedOrdersData.length === 1 ? selectedOrdersData[0] : null
+    if (isOpen && order) {
+      // Inicializar acceptedItems con los items que ya tienen confirmed=true
+      const confirmedItems = new Set<string>()
+      order.orderItems.forEach(item => {
+        if (item.confirmed) {
+          confirmedItems.add(item.id)
+        }
+      })
+      setAcceptedItems(confirmedItems)
+      
+      // Inicializar issues de items que tienen issueNote
+      const initialIssues = new Map<string, ProductIssue>()
+      order.orderItems.forEach(item => {
+        if (item.issueNote && item.availableQty !== null && item.availableQty !== undefined) {
+          const issueType: StockIssueType = item.availableQty === 0 ? 'OUT_OF_STOCK' : 'PARTIAL_STOCK'
+          initialIssues.set(item.id, {
+            productId: item.productId || item.id,
+            productName: item.productName,
+            issueType,
+            requestedQty: item.quantity,
+            availableQty: item.availableQty
+          })
+        }
+      })
+      setProductIssues(initialIssues)
+    }
+  }, [isOpen, selectedOrdersData])
 
   // Reset al cerrar
   useEffect(() => {
@@ -178,6 +218,28 @@ export default function BulkStatusChangeModal({
   const orderItems = singleOrder?.orderItems || []
   const hasProducts = orderItems.length > 0
 
+  // Guardar confirmación de un item en la BD
+  const saveItemConfirmation = async (itemId: string, confirmed: boolean) => {
+    if (!singleOrder) return
+    
+    setSavingConfirmation(itemId)
+    try {
+      const response = await fetch(`/api/orders/${singleOrder.id}/items/${itemId}/confirm`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmed })
+      })
+      
+      if (!response.ok) {
+        console.error('Error guardando confirmación')
+      }
+    } catch (error) {
+      console.error('Error:', error)
+    } finally {
+      setSavingConfirmation(null)
+    }
+  }
+
   const toggleProductIssue = (item: OrderItem, issueType: StockIssueType) => {
     const key = item.id
     const newMap = new Map(productIssues)
@@ -191,6 +253,8 @@ export default function BulkStatusChangeModal({
         const newAccepted = new Set(acceptedItems)
         newAccepted.delete(key)
         setAcceptedItems(newAccepted)
+        // Guardar en BD: quitar confirmación
+        saveItemConfirmation(key, false)
       } else {
         // Marcar como aceptado y quitar cualquier issue
         const newAccepted = new Set(acceptedItems)
@@ -198,6 +262,8 @@ export default function BulkStatusChangeModal({
         setAcceptedItems(newAccepted)
         newMap.delete(key)
         setProductIssues(newMap)
+        // Guardar en BD: confirmar item
+        saveItemConfirmation(key, true)
       }
       return
     }
@@ -206,6 +272,10 @@ export default function BulkStatusChangeModal({
     const newAccepted = new Set(acceptedItems)
     newAccepted.delete(key)
     setAcceptedItems(newAccepted)
+    // Si tenía confirmación, quitarla
+    if (acceptedItems.has(key)) {
+      saveItemConfirmation(key, false)
+    }
     
     if (existing?.issueType === issueType) {
       newMap.delete(key)
@@ -235,30 +305,53 @@ export default function BulkStatusChangeModal({
 
   // Seleccionar/deseleccionar todos
   const toggleAllSelection = () => {
-    if (selectedItems.size === orderItems.length) {
+    // Filtrar items visibles (no confirmados previamente de BD, a menos que showConfirmedProducts=true)
+    const visibleItems = orderItems.filter(item => 
+      showConfirmedProducts || !item.confirmed || acceptedItems.has(item.id) || productIssues.has(item.id)
+    )
+    if (selectedItems.size === visibleItems.length) {
       setSelectedItems(new Set())
     } else {
-      setSelectedItems(new Set(orderItems.map(item => item.id)))
+      setSelectedItems(new Set(visibleItems.map(item => item.id)))
     }
   }
 
   // Marcar todos los seleccionados como aceptados
-  const acceptAllSelected = () => {
+  const acceptAllSelected = async () => {
     if (selectedItems.size === 0) {
       alert('Selecciona al menos un producto')
       return
     }
+    
     const newAccepted = new Set(acceptedItems)
     const newIssues = new Map(productIssues)
+    const itemsToConfirm: string[] = []
     
     selectedItems.forEach(itemId => {
       newAccepted.add(itemId)
       newIssues.delete(itemId) // Quitar cualquier issue previo
+      itemsToConfirm.push(itemId)
     })
     
     setAcceptedItems(newAccepted)
     setProductIssues(newIssues)
     setSelectedItems(new Set()) // Limpiar selección
+    
+    // Guardar en BD en lote
+    if (singleOrder && itemsToConfirm.length > 0) {
+      try {
+        const response = await fetch(`/api/orders/${singleOrder.id}/items/bulk/confirm`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ itemIds: itemsToConfirm, confirmed: true })
+        })
+        if (!response.ok) {
+          console.error('Error guardando confirmaciones en lote')
+        }
+      } catch (error) {
+        console.error('Error:', error)
+      }
+    }
   }
 
   const updateAvailableQty = (itemId: string, qty: number) => {
@@ -401,6 +494,30 @@ export default function BulkStatusChangeModal({
   const allProductsOk = issuesCount === 0 && acceptedItems.size === orderItems.length
   const someProductsReviewed = acceptedItems.size > 0 || issuesCount > 0
   const pendingReview = orderItems.length - acceptedItems.size - productIssues.size
+  
+  // Contar productos que ya estaban confirmados en la BD (no en esta sesión)
+  const confirmedInDbCount = orderItems.filter(item => 
+    item.confirmed && !acceptedItems.has(item.id) && !productIssues.has(item.id)
+  ).length
+  
+  // Filtrar items: mostrar solo los que no están confirmados en BD, a menos que showConfirmedProducts=true
+  // o que tengan un issue reportado, o que fueron aceptados en esta sesión
+  const filteredOrderItems = orderItems.filter(item => {
+    // Si showConfirmedProducts está activo, mostrar todos
+    if (showConfirmedProducts) return true
+    
+    // Si tiene un issue, siempre mostrar
+    if (productIssues.has(item.id)) return true
+    
+    // Si fue aceptado en esta sesión, mostrar
+    if (acceptedItems.has(item.id)) return true
+    
+    // Si NO estaba confirmado previamente en la BD, mostrar
+    if (!item.confirmed) return true
+    
+    // Si estaba confirmado en BD pero no está en acceptedItems (fue cargado del BD), ocultar
+    return false
+  })
 
   // Confirmar orden (Lock) - Todo está disponible
   const handleLockOrder = async () => {
@@ -492,28 +609,22 @@ export default function BulkStatusChangeModal({
       
       {/* Modal - Más grande y legible */}
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-hidden relative flex flex-col">
-        {/* Header - Más prominente */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b-2 border-gray-100 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2">
-              📦 Revisar Pedido
-            </h2>
+        {/* Header - Compacto */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="text-xl">📦</span>
             {singleOrder && (
-              <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
-                <p className="text-base sm:text-lg font-semibold text-blue-100">
-                  #{singleOrder.orderNumber}
-                </p>
-                <p className="text-sm sm:text-base text-blue-200">
-                  👤 {singleOrder.client?.name || 'Cliente'}
-                </p>
+              <div className="min-w-0">
+                <p className="text-sm font-bold">#{singleOrder.orderNumber}</p>
+                <p className="text-xs text-blue-200 truncate">{singleOrder.client?.name || 'Cliente'}</p>
               </div>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-white/20 rounded-full transition-colors"
+            className="p-1.5 hover:bg-white/20 rounded-full transition-colors"
           >
-            <X size={28} />
+            <X size={22} />
           </button>
         </div>
 
@@ -549,14 +660,14 @@ export default function BulkStatusChangeModal({
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={selectedItems.size === orderItems.length && orderItems.length > 0}
+                        checked={selectedItems.size === filteredOrderItems.length && filteredOrderItems.length > 0}
                         onChange={toggleAllSelection}
                         className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                       />
                       <span className="text-sm sm:text-base font-medium text-gray-700">Todos</span>
                     </label>
                     <h4 className="font-bold text-base sm:text-lg text-gray-800">
-                      📋 {orderItems.length} Productos
+                      📋 {filteredOrderItems.length} de {orderItems.length} Productos
                     </h4>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -582,6 +693,23 @@ export default function BulkStatusChangeModal({
                   </div>
                 </div>
                 
+                {/* Toggle para mostrar productos ya confirmados */}
+                {confirmedInDbCount > 0 && (
+                  <div className="mt-3 flex items-center gap-2">
+                    <label className="flex items-center gap-2 cursor-pointer text-sm">
+                      <input
+                        type="checkbox"
+                        checked={showConfirmedProducts}
+                        onChange={() => setShowConfirmedProducts(!showConfirmedProducts)}
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-gray-600">
+                        Mostrar {confirmedInDbCount} productos ya confirmados anteriormente
+                      </span>
+                    </label>
+                  </div>
+                )}
+                
                 {/* Resumen de estados - Más grande */}
                 <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div className="bg-green-100 rounded-lg px-3 py-2 text-center">
@@ -597,14 +725,14 @@ export default function BulkStatusChangeModal({
                     <p className="text-xs sm:text-sm text-yellow-600">⚠️ Parciales</p>
                   </div>
                   <div className="bg-gray-100 rounded-lg px-3 py-2 text-center">
-                    <span className="text-lg sm:text-xl font-bold text-gray-700">{orderItems.length - acceptedItems.size - productIssues.size}</span>
+                    <span className="text-lg sm:text-xl font-bold text-gray-700">{pendingReview}</span>
                     <p className="text-xs sm:text-sm text-gray-600">⏳ Pendientes</p>
                   </div>
                 </div>
               </div>
               
               <div className="divide-y-2 divide-gray-100 max-h-[40vh] sm:max-h-[50vh] overflow-y-auto">
-                {orderItems.map((item) => {
+                {filteredOrderItems.map((item) => {
                   const issue = productIssues.get(item.id)
                   const isOutOfStock = issue?.issueType === 'OUT_OF_STOCK'
                   const isPartialStock = issue?.issueType === 'PARTIAL_STOCK'

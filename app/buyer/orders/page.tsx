@@ -37,8 +37,10 @@ import {
   BarChart3,
   RefreshCw,
   Plus,
+  Minus,
   Trash2,
   RefreshCcw,
+  Check,
 } from 'lucide-react'
 import OrderCountdown from '@/components/buyer/OrderCountdown'
 import { OrderCardSkeleton } from '@/components/skeletons'
@@ -344,10 +346,12 @@ export default function OrdersPage() {
   
   // Modal de sustitución de producto
   const [showSubstituteSelector, setShowSubstituteSelector] = useState(false)
-  const [substituteItemInfo, setSubstituteItemInfo] = useState<{itemId: string, productName: string, productId: string} | null>(null)
+  const [substituteItemInfo, setSubstituteItemInfo] = useState<{itemId: string, productName: string, productId: string, originalQty?: number} | null>(null)
   const [catalogProducts, setCatalogProducts] = useState<any[]>([])
   const [loadingCatalog, setLoadingCatalog] = useState(false)
   const [catalogSearch, setCatalogSearch] = useState('')
+  const [selectedSubstituteProduct, setSelectedSubstituteProduct] = useState<any | null>(null)
+  const [substituteQuantity, setSubstituteQuantity] = useState(1)
   
   // Modal de opciones de contacto
   const [showContactModal, setShowContactModal] = useState(false)
@@ -625,10 +629,12 @@ export default function OrdersPage() {
   }
 
   // Abrir selector de sustitución
-  const openSubstituteSelector = async (itemId: string, productName: string, productId: string) => {
-    setSubstituteItemInfo({ itemId, productName, productId })
+  const openSubstituteSelector = async (itemId: string, productName: string, productId: string, originalQty: number = 1) => {
+    setSubstituteItemInfo({ itemId, productName, productId, originalQty })
     setShowSubstituteSelector(true)
     setCatalogSearch('')
+    setSelectedSubstituteProduct(null)
+    setSubstituteQuantity(originalQty)
     
     // Cargar productos del catálogo del vendedor
     try {
@@ -655,9 +661,16 @@ export default function OrdersPage() {
     }
   }
 
-  // Confirmar sustitución
-  const handleConfirmSubstitute = async (newProduct: any) => {
-    if (!selectedOrder || !substituteItemInfo) return
+  // Seleccionar producto para sustitución (muestra control de cantidad)
+  const handleSelectSubstituteProduct = (product: any) => {
+    setSelectedSubstituteProduct(product)
+    // Usar la cantidad original del item como valor inicial
+    setSubstituteQuantity(substituteItemInfo?.originalQty || 1)
+  }
+
+  // Confirmar sustitución con cantidad
+  const handleConfirmSubstitute = async () => {
+    if (!selectedOrder || !substituteItemInfo || !selectedSubstituteProduct) return
     
     try {
       setRemovingItem(substituteItemInfo.itemId)
@@ -665,21 +678,24 @@ export default function OrdersPage() {
       const result = await apiCall(`/api/buyer/orders/${selectedOrder.id}/items/${substituteItemInfo.itemId}/substitute`, {
         method: 'POST',
         body: JSON.stringify({ 
-          newProductId: newProduct.id,
-          newProductName: newProduct.name,
-          reason: `Sustituido por: ${newProduct.name}`
+          newProductId: selectedSubstituteProduct.id,
+          newProductName: selectedSubstituteProduct.name,
+          quantity: substituteQuantity,
+          reason: `Sustituido por: ${selectedSubstituteProduct.name} (${substituteQuantity} ${selectedSubstituteProduct.unit || 'und'})`
         }),
         timeout: 5000,
       })
       
       if (result.success) {
-        setToastMessage(`✅ "${substituteItemInfo.productName}" sustituido por "${newProduct.name}"`)
+        setToastMessage(`✅ "${substituteItemInfo.productName}" sustituido por "${selectedSubstituteProduct.name}" (${substituteQuantity} ${selectedSubstituteProduct.unit || 'und'})`)
         setToastStatus('success')
         setShowToast(true)
         
-        // Cerrar modal
+        // Cerrar modal y limpiar estados
         setShowSubstituteSelector(false)
         setSubstituteItemInfo(null)
+        setSelectedSubstituteProduct(null)
+        setSubstituteQuantity(1)
         
         // Refrescar órdenes
         fetchOrders()
@@ -2257,7 +2273,7 @@ export default function OrdersPage() {
                                   </button>
                                 )}
                                 <button
-                                  onClick={() => openSubstituteSelector(item.id, item.productName, item.productId)}
+                                  onClick={() => openSubstituteSelector(item.id, item.productName, item.productId, item.quantity)}
                                   disabled={removingItem === item.id}
                                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 rounded-lg transition-colors disabled:opacity-50"
                                 >
@@ -2962,12 +2978,30 @@ export default function OrdersPage() {
           <div className="p-6 border-b">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <RefreshCw className="w-6 h-6 text-blue-600" />
-                </div>
+                {selectedSubstituteProduct ? (
+                  <button
+                    onClick={() => {
+                      setSelectedSubstituteProduct(null)
+                      setSubstituteQuantity(substituteItemInfo.originalQty || 1)
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-full"
+                  >
+                    <ChevronLeft className="w-6 h-6 text-gray-600" />
+                  </button>
+                ) : (
+                  <div className="p-3 bg-blue-100 rounded-full">
+                    <RefreshCw className="w-6 h-6 text-blue-600" />
+                  </div>
+                )}
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">Sustituir producto</h3>
-                  <p className="text-sm text-gray-500">Reemplazar "{substituteItemInfo.productName}"</p>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    {selectedSubstituteProduct ? 'Seleccionar cantidad' : 'Sustituir producto'}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {selectedSubstituteProduct 
+                      ? `${selectedSubstituteProduct.name}` 
+                      : `Reemplazar "${substituteItemInfo.productName}"`}
+                  </p>
                 </div>
               </div>
               <button
@@ -2975,6 +3009,8 @@ export default function OrdersPage() {
                   setShowSubstituteSelector(false)
                   setSubstituteItemInfo(null)
                   setCatalogSearch('')
+                  setSelectedSubstituteProduct(null)
+                  setSubstituteQuantity(1)
                 }}
                 className="p-2 hover:bg-gray-100 rounded-full"
               >
@@ -2982,57 +3018,152 @@ export default function OrdersPage() {
               </button>
             </div>
             
-            {/* Buscador */}
-            <div className="mt-4 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <input
-                type="text"
-                value={catalogSearch}
-                onChange={(e) => setCatalogSearch(e.target.value)}
-                placeholder="Buscar producto alternativo..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-          </div>
-          
-          {/* Lista de productos */}
-          <div className="flex-1 overflow-y-auto p-4">
-            {loadingCatalog ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-              </div>
-            ) : filteredCatalogProducts.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Package className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                <p>No se encontraron productos disponibles</p>
-              </div>
-            ) : (
-              <div className="grid gap-3">
-                {filteredCatalogProducts.map((product) => (
-                  <button
-                    key={product.id}
-                    onClick={() => handleConfirmSubstitute(product)}
-                    disabled={removingItem === substituteItemInfo.itemId}
-                    className="flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all text-left disabled:opacity-50"
-                  >
-                    <div className="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                      <Package className="w-7 h-7 text-blue-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-gray-900 truncate">{product.name}</h4>
-                      <p className="text-xs text-gray-500">
-                        SKU: {product.sku || 'N/A'} • Stock: {product.stock} {product.unit || 'und'}
-                      </p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="font-bold text-blue-600">{formatPrice(product.price)}</p>
-                      <p className="text-xs text-gray-500">/{product.unit || 'und'}</p>
-                    </div>
-                  </button>
-                ))}
+            {/* Buscador - solo visible si no hay producto seleccionado */}
+            {!selectedSubstituteProduct && (
+              <div className="mt-4 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="text"
+                  value={catalogSearch}
+                  onChange={(e) => setCatalogSearch(e.target.value)}
+                  placeholder="Buscar producto alternativo..."
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
               </div>
             )}
           </div>
+          
+          {/* Contenido del modal */}
+          <div className="flex-1 overflow-y-auto p-4">
+            {selectedSubstituteProduct ? (
+              /* Vista de selección de cantidad */
+              <div className="space-y-6">
+                {/* Info del producto seleccionado */}
+                <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                  <div className="w-16 h-16 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Package className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-gray-900">{selectedSubstituteProduct.name}</h4>
+                    <p className="text-sm text-gray-500">
+                      SKU: {selectedSubstituteProduct.sku || 'N/A'} • Stock disponible: {selectedSubstituteProduct.stock} {selectedSubstituteProduct.unit || 'und'}
+                    </p>
+                    <p className="text-lg font-bold text-blue-600 mt-1">
+                      {formatPrice(selectedSubstituteProduct.price)} <span className="text-sm font-normal text-gray-500">/{selectedSubstituteProduct.unit || 'und'}</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Control de cantidad */}
+                <div className="bg-gray-50 rounded-xl p-6">
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    ¿Cuántas unidades deseas?
+                  </label>
+                  <div className="flex items-center justify-center gap-4">
+                    <button
+                      onClick={() => setSubstituteQuantity(Math.max(1, substituteQuantity - 1))}
+                      disabled={substituteQuantity <= 1}
+                      className="w-12 h-12 rounded-xl bg-white border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Minus className="w-5 h-5 text-gray-600" />
+                    </button>
+                    <input
+                      type="number"
+                      value={substituteQuantity}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value) || 1
+                        const maxStock = selectedSubstituteProduct.stock || 999
+                        setSubstituteQuantity(Math.min(Math.max(1, val), maxStock))
+                      }}
+                      className="w-24 h-12 text-center text-xl font-bold border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      min="1"
+                      max={selectedSubstituteProduct.stock || 999}
+                    />
+                    <button
+                      onClick={() => setSubstituteQuantity(Math.min(substituteQuantity + 1, selectedSubstituteProduct.stock || 999))}
+                      disabled={substituteQuantity >= (selectedSubstituteProduct.stock || 999)}
+                      className="w-12 h-12 rounded-xl bg-white border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 flex items-center justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Plus className="w-5 h-5 text-gray-600" />
+                    </button>
+                  </div>
+                  <p className="text-center text-sm text-gray-500 mt-2">
+                    {selectedSubstituteProduct.unit || 'unidades'}
+                  </p>
+                </div>
+
+                {/* Resumen */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">Subtotal:</span>
+                    <span className="text-xl font-bold text-blue-600">
+                      {formatPrice(selectedSubstituteProduct.price * substituteQuantity)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {substituteQuantity} × {formatPrice(selectedSubstituteProduct.price)}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              /* Vista de lista de productos */
+              <>
+                {loadingCatalog ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                  </div>
+                ) : filteredCatalogProducts.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Package className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                    <p>No se encontraron productos disponibles</p>
+                  </div>
+                ) : (
+                  <div className="grid gap-3">
+                    {filteredCatalogProducts.map((product) => (
+                      <button
+                        key={product.id}
+                        onClick={() => handleSelectSubstituteProduct(product)}
+                        disabled={removingItem === substituteItemInfo.itemId}
+                        className="flex items-center gap-4 p-4 border border-gray-200 rounded-xl hover:border-blue-400 hover:bg-blue-50 transition-all text-left disabled:opacity-50"
+                      >
+                        <div className="w-14 h-14 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <Package className="w-7 h-7 text-blue-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-gray-900 truncate">{product.name}</h4>
+                          <p className="text-xs text-gray-500">
+                            SKU: {product.sku || 'N/A'} • Stock: {product.stock} {product.unit || 'und'}
+                          </p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className="font-bold text-blue-600">{formatPrice(product.price)}</p>
+                          <p className="text-xs text-gray-500">/{product.unit || 'und'}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Footer con botón de confirmar - solo visible cuando hay producto seleccionado */}
+          {selectedSubstituteProduct && (
+            <div className="p-4 border-t bg-gray-50">
+              <button
+                onClick={handleConfirmSubstitute}
+                disabled={removingItem === substituteItemInfo.itemId || substituteQuantity < 1}
+                className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {removingItem === substituteItemInfo.itemId ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Check className="w-5 h-5" />
+                )}
+                Confirmar sustitución
+              </button>
+            </div>
+          )}
         </div>
       </div>
     )}

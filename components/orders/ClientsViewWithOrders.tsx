@@ -707,27 +707,22 @@ export default function ClientsViewWithOrders({
             }}
           >
             
-            {/* Header del Cliente - MEJORADO Y RESPONSIVO */}
+            {/* Header del Cliente - COMPACTO */}
             <div className="bg-gradient-to-r from-purple-600 via-purple-700 to-indigo-700 text-white">
               {/* Barra superior con botones */}
-              <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-white/20">
+              <div className="px-3 py-2 border-b border-white/20">
                 <div className="flex items-center justify-between gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setSelectedClient(null)}
-                    className="text-white hover:bg-white/20 gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4"
+                    className="text-white hover:bg-white/20 gap-1 text-xs px-2 h-8"
                   >
-                    <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
-                    <span className="hidden sm:inline">Volver a clientes</span>
-                    <span className="sm:hidden">Volver</span>
+                    <ArrowLeft className="h-4 w-4" />
+                    <span>Volver</span>
                   </Button>
                   
                   <div className="flex items-center gap-2">
-                    <div className="hidden md:flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-full">
-                      <User className="h-4 w-4" />
-                      <span className="text-sm font-medium">Vista de Cliente</span>
-                    </div>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -740,71 +735,31 @@ export default function ClientsViewWithOrders({
                 </div>
               </div>
 
-              {/* Info del cliente - RESPONSIVO */}
-              <div className="px-3 sm:px-6 py-4 sm:py-6">
-                <div className="flex items-start gap-3 sm:gap-5 mb-4 sm:mb-6">
-                  <div className="w-14 h-14 sm:w-20 sm:h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-2xl sm:text-3xl font-bold shadow-lg ring-2 sm:ring-4 ring-white/30 flex-shrink-0">
+              {/* Info del cliente - COMPACTA */}
+              <div className="px-3 py-3">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-lg font-bold flex-shrink-0">
                     {selectedClient.client.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
-                      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold truncate">
-                        {selectedClient.client.name}
-                      </h2>
-                      <span className="px-2 sm:px-3 py-0.5 sm:py-1 bg-white/20 backdrop-blur-sm rounded-full text-[10px] sm:text-xs font-semibold w-fit">
-                        Cliente Activo
-                      </span>
-                    </div>
-                    <div className="grid grid-cols-1 gap-1.5 sm:gap-2 text-xs sm:text-sm">
-                      <p className="text-purple-100 flex items-center gap-2 truncate">
-                        <Mail className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">{selectedClient.client.email}</span>
-                      </p>
-                      {selectedClient.client.phone && (
-                        <p className="text-purple-100 flex items-center gap-2">
-                          <Phone className="h-4 w-4 flex-shrink-0" />
-                          {selectedClient.client.phone}
-                        </p>
-                      )}
-                      {selectedClient.client.address && (
-                        <p className="text-purple-100 flex items-center gap-2 sm:col-span-2">
-                          <MapPin className="h-4 w-4 flex-shrink-0" />
-                          <span className="truncate">{selectedClient.client.address}</span>
-                        </p>
-                      )}
-                    </div>
+                    <h2 className="text-base font-bold truncate">{selectedClient.client.name}</h2>
+                    <p className="text-xs text-purple-200 truncate">{selectedClient.client.email}</p>
                   </div>
                 </div>
 
-                {/* Stats mejorados */}
-                <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                  <div className="bg-white/15 backdrop-blur-sm rounded-xl p-2 sm:p-4 hover:bg-white/20 transition-all">
-                    <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                      <Package className="h-4 w-4 sm:h-5 sm:w-5 text-purple-200 flex-shrink-0" />
-                      <p className="text-purple-100 text-[10px] sm:text-xs font-medium uppercase tracking-wide">Órdenes</p>
-                    </div>
-                    <p className="text-xl sm:text-2xl md:text-3xl font-bold break-words">{selectedClient.totalOrders}</p>
-                    <p className="text-[10px] sm:text-xs text-purple-200 mt-0.5 sm:mt-1">
-                      {selectedClient.orders.filter(o => o.status === 'COMPLETED').length} completas
-                    </p>
+                {/* Stats compactos */}
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-white/15 rounded-lg p-2 text-center">
+                    <p className="text-lg font-bold">{selectedClient.totalOrders}</p>
+                    <p className="text-[10px] text-purple-200">Órdenes</p>
                   </div>
-                  <div className="bg-white/15 backdrop-blur-sm rounded-xl p-2 sm:p-4 hover:bg-white/20 transition-all">
-                    <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                      <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-purple-200 flex-shrink-0" />
-                      <p className="text-purple-100 text-[10px] sm:text-xs font-medium uppercase tracking-wide">Total</p>
-                    </div>
-                    <p className="text-base sm:text-xl md:text-2xl lg:text-3xl font-bold break-words">{formatPrice(selectedClient.totalSpent)}</p>
-                    <p className="text-[10px] sm:text-xs text-purple-200 mt-0.5 sm:mt-1">Ventas</p>
+                  <div className="bg-white/15 rounded-lg p-2 text-center">
+                    <p className="text-sm font-bold">{formatPrice(selectedClient.totalSpent)}</p>
+                    <p className="text-[10px] text-purple-200">Total</p>
                   </div>
-                  <div className="bg-white/15 backdrop-blur-sm rounded-xl p-2 sm:p-4 hover:bg-white/20 transition-all">
-                    <div className="flex items-center gap-1 sm:gap-2 mb-1 sm:mb-2">
-                      <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-purple-200 flex-shrink-0" />
-                      <p className="text-purple-100 text-[10px] sm:text-xs font-medium uppercase tracking-wide">Promedio</p>
-                    </div>
-                    <p className="text-base sm:text-xl md:text-2xl lg:text-3xl font-bold break-words">
-                      {formatPrice(selectedClient.totalSpent / selectedClient.totalOrders)}
-                    </p>
-                    <p className="text-[10px] sm:text-xs text-purple-200 mt-0.5 sm:mt-1">Por orden</p>
+                  <div className="bg-white/15 rounded-lg p-2 text-center">
+                    <p className="text-sm font-bold">{formatPrice(selectedClient.totalSpent / selectedClient.totalOrders)}</p>
+                    <p className="text-[10px] text-purple-200">Promedio</p>
                   </div>
                 </div>
               </div>
