@@ -115,8 +115,8 @@ export async function POST(request: NextRequest) {
     const chatScheduleSchema = z.object({
       schedules: z.array(z.object({
         dayOfWeek: z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']),
-        startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de tiempo inválido. Use HH:MM'),
-        endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de tiempo inválido. Use HH:MM'),
+        startTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/, 'Formato de tiempo inválido. Use HH:MM'),
+        endTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/, 'Formato de tiempo inválido. Use HH:MM'),
         isActive: z.boolean().optional()
       })).min(1, 'Debe proporcionar al menos un horario')
     })

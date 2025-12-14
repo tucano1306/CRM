@@ -9,38 +9,38 @@ import { validateSchema } from '@/lib/validations'
 // Schema de validación para horarios de chat
 const chatScheduleSchema = z.object({
   MONDAY: z.object({
-    startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
-    endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+    startTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/),
+    endTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/),
     isActive: z.boolean()
   }).optional(),
   TUESDAY: z.object({
-    startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
-    endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+    startTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/),
+    endTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/),
     isActive: z.boolean()
   }).optional(),
   WEDNESDAY: z.object({
-    startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
-    endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+    startTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/),
+    endTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/),
     isActive: z.boolean()
   }).optional(),
   THURSDAY: z.object({
-    startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
-    endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+    startTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/),
+    endTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/),
     isActive: z.boolean()
   }).optional(),
   FRIDAY: z.object({
-    startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
-    endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+    startTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/),
+    endTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/),
     isActive: z.boolean()
   }).optional(),
   SATURDAY: z.object({
-    startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
-    endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+    startTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/),
+    endTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/),
     isActive: z.boolean()
   }).optional(),
   SUNDAY: z.object({
-    startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
-    endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
+    startTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/),
+    endTime: z.string().regex(/^([0-1]?\d|2[0-3]):[0-5]\d$/),
     isActive: z.boolean()
   }).optional()
 })

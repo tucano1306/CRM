@@ -157,9 +157,9 @@ export const createChatScheduleSchema = z.object({
     message: 'Día de la semana inválido'
   }),
   startTime: z.string()
-    .regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Hora de inicio debe tener formato HH:MM (24h)'),
+    .regex(/^([0-1]\d|2[0-3]):[0-5]\d$/, 'Hora de inicio debe tener formato HH:MM (24h)'),
   endTime: z.string()
-    .regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Hora de fin debe tener formato HH:MM (24h)'),
+    .regex(/^([0-1]\d|2[0-3]):[0-5]\d$/, 'Hora de fin debe tener formato HH:MM (24h)'),
   isActive: z.boolean().default(true),
 }).refine(
   (data) => data.startTime < data.endTime,
@@ -174,9 +174,9 @@ export const createOrderScheduleSchema = z.object({
     message: 'Día de la semana inválido'
   }),
   startTime: z.string()
-    .regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Hora de inicio debe tener formato HH:MM (24h)'),
+    .regex(/^([0-1]\d|2[0-3]):[0-5]\d$/, 'Hora de inicio debe tener formato HH:MM (24h)'),
   endTime: z.string()
-    .regex(/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/, 'Hora de fin debe tener formato HH:MM (24h)'),
+    .regex(/^([0-1]\d|2[0-3]):[0-5]\d$/, 'Hora de fin debe tener formato HH:MM (24h)'),
   isActive: z.boolean().default(true),
 }).refine(
   (data) => data.startTime < data.endTime,
