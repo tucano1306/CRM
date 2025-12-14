@@ -36,8 +36,8 @@ export interface ProfilerConfig {
 
 class EventLoopMonitor {
   private lagSamples: number[] = []
-  private maxSamples = 100
-  private lastCheck = performance.now()
+  private readonly maxSamples = 100
+  private readonly lastCheck = performance.now()
 
   public measureLag(): number {
     const start = performance.now()
@@ -76,12 +76,12 @@ class EventLoopMonitor {
 }
 
 export class PerformanceProfiler extends EventEmitter {
-  private config: ProfilerConfig
-  private eventLoopMonitor: EventLoopMonitor
+  private readonly config: ProfilerConfig
+  private readonly eventLoopMonitor: EventLoopMonitor
   private performanceObserver: PerformanceObserver | null = null
   private monitoringInterval: NodeJS.Timeout | null = null
   private metricsHistory: PerformanceMetrics[] = []
-  private hotspots: Map<string, { count: number, totalTime: number, avgTime: number }> = new Map()
+  private readonly hotspots: Map<string, { count: number, totalTime: number, avgTime: number }> = new Map()
   private gcMetrics = { collections: 0, totalTime: 0, totalFreed: 0 }
   private lastCpuUsage = process.cpuUsage()
   private isMonitoring = false

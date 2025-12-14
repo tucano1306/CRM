@@ -41,8 +41,8 @@ export interface WASMPerformanceStats {
 }
 
 class WASMManager {
-  private modules = new Map<string, WASMModule>()
-  private executionStats = new Map<string, number[]>()
+  private readonly modules = new Map<string, WASMModule>()
+  private readonly executionStats = new Map<string, number[]>()
   private performanceStats: WASMPerformanceStats = {
     totalExecutions: 0,
     averageExecutionTime: 0,

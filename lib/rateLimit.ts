@@ -17,8 +17,8 @@ interface RateLimitConfig {
 }
 
 class RateLimiter {
-  private store: Map<string, RateLimitEntry>
-  private config: RateLimitConfig
+  private readonly store: Map<string, RateLimitEntry>
+  private readonly config: RateLimitConfig
 
   constructor(config: RateLimitConfig) {
     this.store = new Map()

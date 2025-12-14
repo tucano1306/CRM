@@ -4,7 +4,7 @@ type EventHandler<T extends BaseEvent = BaseEvent> = (event: T) => void | Promis
 
 export class EventEmitter {
   private static instance: EventEmitter;
-  private handlers: Map<EventType, Set<EventHandler>>;
+  private readonly handlers: Map<EventType, Set<EventHandler>>;
 
   private constructor() {
     this.handlers = new Map();

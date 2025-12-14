@@ -143,16 +143,16 @@ class WorkerInstance extends EventEmitter {
 }
 
 export class WorkerPool {
-  private workers: WorkerInstance[] = []
-  private taskQueue: WorkerTask[] = []
-  private pendingTasks = new Map<string, { resolve: Function, reject: Function, queueTime: number }>()
-  private options: Required<WorkerPoolOptions>
+  private readonly workers: WorkerInstance[] = []
+  private readonly taskQueue: WorkerTask[] = []
+  private readonly pendingTasks = new Map<string, { resolve: Function, reject: Function, queueTime: number }>()
+  private readonly options: Required<WorkerPoolOptions>
   private totalTasksExecuted = 0
   private totalExecutionTime = 0
   private totalQueueTime = 0
 
   constructor(
-    private scriptPath: string,
+    private readonly scriptPath: string,
     options: WorkerPoolOptions = {}
   ) {
     this.options = {
@@ -400,7 +400,7 @@ Generated at: ${new Date().toISOString()}
 
 // Singleton instance manager
 class WorkerPoolManager {
-  private pools = new Map<string, WorkerPool>()
+  private readonly pools = new Map<string, WorkerPool>()
 
   public getPool(name: string, scriptPath: string, options?: WorkerPoolOptions): WorkerPool {
     if (!this.pools.has(name)) {

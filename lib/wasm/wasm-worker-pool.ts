@@ -22,8 +22,8 @@ export interface WASMResult extends WorkerResult {
 }
 
 class WASMWorkerPool extends WorkerPool {
-  private wasmCapableWorkers = new Set<string>()
-  private loadedModules = new Set<string>()
+  private readonly wasmCapableWorkers = new Set<string>()
+  private readonly loadedModules = new Set<string>()
   private initPromise: Promise<void> | null = null
 
   constructor(scriptPath: string, options: WorkerPoolOptions = {}) {
@@ -211,7 +211,7 @@ class WASMWorkerPool extends WorkerPool {
  * Manager para pools WASM
  */
 class WASMPoolManager {
-  private wasmPools = new Map<string, WASMWorkerPool>()
+  private readonly wasmPools = new Map<string, WASMWorkerPool>()
 
   public getWASMPool(
     name: string, 

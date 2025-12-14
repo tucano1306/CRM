@@ -34,11 +34,11 @@ export interface JobOptions {
 }
 
 class JobQueue extends EventEmitter {
-  private jobs = new Map<string, JobData>()
+  private readonly jobs = new Map<string, JobData>()
   private processing = false
-  private maxConcurrentJobs = 5
+  private readonly maxConcurrentJobs = 5
   private currentJobs = 0
-  private initialized = false
+  private readonly initialized = false
 
   constructor() {
     super()
