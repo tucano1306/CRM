@@ -68,7 +68,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   
   // Estados para funcionalidades nuevas
-  const [activeTab, setActiveTab] = useState<'resumen' | 'ventas' | 'inventario' | 'actividad'>('resumen')
+  const [activeTab, setActiveTab] = useState<'resumen' | 'ventas' | 'actividad'>('resumen')
   const [showLowStockModal, setShowLowStockModal] = useState(false)
   const [showOutOfStockModal, setShowOutOfStockModal] = useState(false)
   const [showPendingOrdersModal, setShowPendingOrdersModal] = useState(false)
@@ -359,7 +359,6 @@ export default function DashboardPage() {
   const tabs = [
     { id: 'resumen' as const, label: 'Resumen', icon: BarChart3 },
     { id: 'ventas' as const, label: 'Ventas', icon: DollarSign },
-    { id: 'inventario' as const, label: 'Inventario', icon: Package },
     { id: 'actividad' as const, label: 'Actividad', icon: Activity },
   ]
 
@@ -672,27 +671,191 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Contenido de la tab Inventario */}
-      {activeTab === 'inventario' && (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            📦 Gestión de Inventario
-          </h2>
-          <p className="text-gray-600">
-            Vista de inventario y movimientos (próximamente)
-          </p>
-        </div>
-      )}
-
       {/* Contenido de la tab Actividad */}
       {activeTab === 'actividad' && (
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            🔄 Actividad Reciente
-          </h2>
-          <p className="text-gray-600">
-            Registro de actividades (próximamente)
-          </p>
+        <div className="space-y-6">
+          {/* Órdenes Recientes */}
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <ShoppingCart className="text-purple-600" size={24} />
+                Órdenes Recientes
+              </h2>
+              <button
+                onClick={fetchRecentOrders}
+                className="text-sm text-purple-600 hover:text-purple-700 flex items-center gap-1"
+              >
+                <RotateCcw size={16} />
+                Actualizar
+              </button>
+            </div>
+            
+            {recentOrders.length > 0 ? (
+              <div className="space-y-3">
+                {recentOrders.map((order: any) => (
+                  <div 
+                    key={order.id}
+                    onClick={() => router.push(`/orders?orderId=${order.id}`)}
+                    className="flex items-center justify-between p-4 bg-gray-50 hover:bg-purple-50 rounded-lg border border-gray-200 cursor-pointer transition-all hover:border-purple-300"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-600' :
+                        order.status === 'CONFIRMED' ? 'bg-green-100 text-green-600' :
+                        order.status === 'IN_DELIVERY' ? 'bg-purple-100 text-purple-600' :
+                        order.status === 'DELIVERED' || order.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-600' :
+                        order.status === 'CANCELED' || order.status === 'CANCELLED' ? 'bg-red-100 text-red-600' :
+                        'bg-blue-100 text-blue-600'
+                      }`}>
+                        <ShoppingCart size={18} />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">
+                          #{order.orderNumber?.replace('ORD-', '').slice(-6) || order.id.slice(0, 6)}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {order.client?.name || 'Cliente'} • {order.itemCount || order.orderItems?.length || 0} productos
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-gray-900">${Number(order.totalAmount || 0).toFixed(2)}</p>
+                      <p className={`text-xs font-medium px-2 py-1 rounded-full ${
+                        order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                        order.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
+                        order.status === 'IN_DELIVERY' ? 'bg-purple-100 text-purple-700' :
+                        order.status === 'DELIVERED' || order.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' :
+                        order.status === 'CANCELED' || order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        {order.status === 'PENDING' ? 'Pendiente' :
+                         order.status === 'CONFIRMED' ? 'Confirmada' :
+                         order.status === 'IN_DELIVERY' ? 'En Entrega' :
+                         order.status === 'DELIVERED' ? 'Entregada' :
+                         order.status === 'COMPLETED' ? 'Completada' :
+                         order.status === 'CANCELED' || order.status === 'CANCELLED' ? 'Cancelada' :
+                         order.status}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <ShoppingCart className="mx-auto text-gray-300 mb-3" size={48} />
+                <p className="text-gray-500">No hay órdenes recientes</p>
+              </div>
+            )}
+          </div>
+
+          {/* Resumen de Actividad del Día */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg p-5 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-purple-100 text-sm">Órdenes Hoy</p>
+                  <p className="text-3xl font-bold mt-1">
+                    {recentOrders.filter((o: any) => {
+                      const orderDate = new Date(o.createdAt).toDateString()
+                      const today = new Date().toDateString()
+                      return orderDate === today
+                    }).length}
+                  </p>
+                </div>
+                <ShoppingCart className="text-purple-200" size={40} />
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg p-5 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-green-100 text-sm">Completadas Hoy</p>
+                  <p className="text-3xl font-bold mt-1">
+                    {recentOrders.filter((o: any) => {
+                      const orderDate = new Date(o.createdAt).toDateString()
+                      const today = new Date().toDateString()
+                      return orderDate === today && (o.status === 'DELIVERED' || o.status === 'COMPLETED')
+                    }).length}
+                  </p>
+                </div>
+                <CheckCircle className="text-green-200" size={40} />
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-yellow-500 to-orange-600 rounded-lg p-5 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-yellow-100 text-sm">Pendientes</p>
+                  <p className="text-3xl font-bold mt-1">
+                    {recentOrders.filter((o: any) => o.status === 'PENDING').length}
+                  </p>
+                </div>
+                <Clock className="text-yellow-200" size={40} />
+              </div>
+            </div>
+          </div>
+
+          {/* Línea de tiempo de actividad */}
+          <div className="bg-white rounded-lg shadow-lg p-6">
+            <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <Activity className="text-purple-600" size={24} />
+              Línea de Tiempo
+            </h2>
+            
+            {recentOrders.length > 0 ? (
+              <div className="relative">
+                <div className="absolute left-5 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+                <div className="space-y-4">
+                  {recentOrders.slice(0, 8).map((order: any, index: number) => (
+                    <div key={order.id} className="flex items-start gap-4 relative">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-md ${
+                        order.status === 'PENDING' ? 'bg-yellow-500 text-white' :
+                        order.status === 'CONFIRMED' ? 'bg-green-500 text-white' :
+                        order.status === 'IN_DELIVERY' ? 'bg-purple-500 text-white' :
+                        order.status === 'DELIVERED' || order.status === 'COMPLETED' ? 'bg-emerald-500 text-white' :
+                        order.status === 'CANCELED' || order.status === 'CANCELLED' ? 'bg-red-500 text-white' :
+                        'bg-blue-500 text-white'
+                      }`}>
+                        <ShoppingCart size={18} />
+                      </div>
+                      <div className="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-100">
+                        <div className="flex items-center justify-between">
+                          <p className="font-semibold text-gray-900">
+                            Orden #{order.orderNumber?.replace('ORD-', '').slice(-6) || order.id.slice(0, 6)}
+                          </p>
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                            order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                            order.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {order.status === 'PENDING' ? 'Nueva' :
+                             order.status === 'CONFIRMED' ? 'Confirmada' :
+                             order.status}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {order.client?.name || 'Cliente'} • ${Number(order.totalAmount || 0).toFixed(2)}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(order.createdAt).toLocaleString('es-ES', {
+                            day: 'numeric',
+                            month: 'short',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Activity className="mx-auto text-gray-300 mb-3" size={48} />
+                <p className="text-gray-500">No hay actividad reciente</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
