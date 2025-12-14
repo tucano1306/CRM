@@ -6,10 +6,10 @@ import { X, Calendar, Package, History, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface RecurringOrderDetailModalProps {
-  order: any
-  isOpen: boolean
-  onClose: () => void
-  userRole: 'SELLER' | 'CLIENT'
+  readonly order: any
+  readonly isOpen: boolean
+  readonly onClose: () => void
+  readonly userRole: 'SELLER' | 'CLIENT'
 }
 
 export default function RecurringOrderDetailModal({

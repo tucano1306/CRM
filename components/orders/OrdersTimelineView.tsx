@@ -51,11 +51,11 @@ interface Order {
 }
 
 interface OrdersTimelineViewProps {
-  orders: Order[]
-  onOrderClick: (order: Order) => void
-  selectedOrders?: string[]
-  onToggleSelection?: (orderId: string) => void
-  userRole?: 'SELLER' | 'CLIENT'
+  readonly orders: Order[]
+  readonly onOrderClick: (order: Order) => void
+  readonly selectedOrders?: string[]
+  readonly onToggleSelection?: (orderId: string) => void
+  readonly userRole?: 'SELLER' | 'CLIENT'
 }
 
 const statusConfig = {

@@ -11,10 +11,10 @@ interface Product {
 }
 
 interface TagSuggestionsProps {
-  product: Product
-  currentTags: string[]
-  onAddTag: (label: string, color: string) => void
-  loading?: boolean
+  readonly product: Product
+  readonly currentTags: string[]
+  readonly onAddTag: (label: string, color: string) => void
+  readonly loading?: boolean
 }
 
 export default function TagSuggestions({ product, currentTags, onAddTag, loading }: TagSuggestionsProps) {

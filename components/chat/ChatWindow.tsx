@@ -29,10 +29,10 @@ interface Message {
 }
 
 interface ChatWindowProps {
-  receiverId: string
-  receiverName: string
-  orderId?: string
-  orderContext?: string | null // ID de orden cuando se abre desde revisión de problemas
+  readonly receiverId: string
+  readonly receiverName: string
+  readonly orderId?: string
+  readonly orderContext?: string | null // ID de orden cuando se abre desde revisión de problemas
 }
 
 // Emojis populares

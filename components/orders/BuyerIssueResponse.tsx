@@ -42,10 +42,10 @@ interface Order {
 }
 
 interface BuyerIssueResponseProps {
-  order: Order
-  issues: OrderIssue[]
-  onRespond: (issueId: string, accepted: boolean, response: string) => Promise<void>
-  isLoading?: boolean
+  readonly order: Order
+  readonly issues: OrderIssue[]
+  readonly onRespond: (issueId: string, accepted: boolean, response: string) => Promise<void>
+  readonly isLoading?: boolean
 }
 
 const ISSUE_TYPE_LABELS: Record<string, { label: string; icon: string }> = {

@@ -9,8 +9,8 @@ type RevenueData = {
 }
 
 type RevenueChartProps = {
-  data: RevenueData[]
-  period: '7d' | '30d'
+  readonly data: RevenueData[]
+  readonly period: '7d' | '30d'
 }
 
 export default function RevenueChart({ data, period }: RevenueChartProps) {

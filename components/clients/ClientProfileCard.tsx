@@ -27,7 +27,7 @@ interface ClientStats {
 }
 
 interface ClientProfileCardProps {
-  client: {
+  readonly client: {
     id: string
     name: string
     email: string
@@ -38,12 +38,12 @@ interface ClientProfileCardProps {
     createdAt: string
     stats?: ClientStats
   }
-  onEdit: (client: any) => void
-  onDelete: (id: string) => void
-  onSelect?: (clientId: string) => void
-  onManageCatalog?: () => void
-  colorIndex: number
-  isExpanded?: boolean
+  readonly onEdit: (client: any) => void
+  readonly onDelete: (id: string) => void
+  readonly onSelect?: (clientId: string) => void
+  readonly onManageCatalog?: () => void
+  readonly colorIndex: number
+  readonly isExpanded?: boolean
 }
 
 export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, onManageCatalog, colorIndex, isExpanded = false }: ClientProfileCardProps) {

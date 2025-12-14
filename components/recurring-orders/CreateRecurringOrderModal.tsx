@@ -6,8 +6,8 @@ import { X, Calendar, Package, CheckCircle, ArrowRight, ArrowLeft, Search } from
 import { Button } from '@/components/ui/button'
 
 interface CreateRecurringOrderModalProps {
-  isOpen: boolean
-  onClose: () => void
+  readonly isOpen: boolean
+  readonly onClose: () => void
 }
 
 interface Product {

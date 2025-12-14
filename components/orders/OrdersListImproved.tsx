@@ -38,12 +38,12 @@ interface Order {
 }
 
 interface OrdersListImprovedProps {
-  orders: Order[]
-  userRole: 'SELLER' | 'CLIENT'
-  onOrderClick?: (order: Order) => void
-  selectedOrders?: string[]
-  onToggleSelection?: (orderId: string) => void
-  onBulkStatusChange?: () => void
+  readonly orders: Order[]
+  readonly userRole: 'SELLER' | 'CLIENT'
+  readonly onOrderClick?: (order: Order) => void
+  readonly selectedOrders?: string[]
+  readonly onToggleSelection?: (orderId: string) => void
+  readonly onBulkStatusChange?: () => void
 }
 
 const statusConfig: Record<string, { label: string; color: string; bg: string; icon: any }> = {

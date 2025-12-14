@@ -14,9 +14,9 @@ import { usePDFGeneration } from '@/hooks/useBackgroundJob'
 import { Download, FileText, Loader2, X, CheckCircle, AlertCircle } from 'lucide-react'
 
 interface InvoiceGeneratorProps {
-  orderId: string
-  orderNumber?: string
-  clientName?: string
+  readonly orderId: string
+  readonly orderNumber?: string
+  readonly clientName?: string
 }
 
 export function InvoiceGeneratorExample({ 

@@ -22,10 +22,10 @@ interface Product {
 }
 
 interface ProductCardProps {
-  product: Product
-  onEdit: (product: Product) => void
-  onDelete: (product: Product) => void
-  onClick?: (product: Product) => void
+  readonly product: Product
+  readonly onEdit: (product: Product) => void
+  readonly onDelete: (product: Product) => void
+  readonly onClick?: (product: Product) => void
 }
 
 export default function ProductCard({ product, onEdit, onDelete, onClick }: ProductCardProps) {

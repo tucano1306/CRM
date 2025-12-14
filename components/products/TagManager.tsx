@@ -20,10 +20,10 @@ interface Product {
 }
 
 interface TagManagerProps {
-  productId: string
-  product?: Product
-  currentTags: ProductTag[]
-  onTagsUpdate: (tags: ProductTag[]) => void
+  readonly productId: string
+  readonly product?: Product
+  readonly currentTags: ProductTag[]
+  readonly onTagsUpdate: (tags: ProductTag[]) => void
 }
 
 export default function TagManager({ productId, product, currentTags, onTagsUpdate }: TagManagerProps) {

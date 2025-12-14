@@ -29,7 +29,7 @@ interface ConnectionRequest {
 }
 
 interface ConnectionRequestsPanelProps {
-  onRequestAccepted?: (clientId: string, clientName: string) => void
+  readonly onRequestAccepted?: (clientId: string, clientName: string) => void
 }
 
 export default function ConnectionRequestsPanel({ onRequestAccepted }: ConnectionRequestsPanelProps) {

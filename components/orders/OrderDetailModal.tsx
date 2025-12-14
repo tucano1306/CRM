@@ -85,13 +85,13 @@ interface Order {
 }
 
 interface OrderDetailModalProps {
-  order: Order
-  isOpen: boolean
-  onClose: () => void
-  userRole?: 'seller' | 'buyer' | 'admin'
-  onStatusChange?: (orderId: string, newStatus: OrderStatus, notes?: string) => Promise<void>
-  onRemoveProduct?: (orderId: string, itemId: string) => Promise<void>
-  onSubstituteProduct?: (orderId: string, itemId: string, newProductId: string, newQty: number) => Promise<void>
+  readonly order: Order
+  readonly isOpen: boolean
+  readonly onClose: () => void
+  readonly userRole?: 'seller' | 'buyer' | 'admin'
+  readonly onStatusChange?: (orderId: string, newStatus: OrderStatus, notes?: string) => Promise<void>
+  readonly onRemoveProduct?: (orderId: string, itemId: string) => Promise<void>
+  readonly onSubstituteProduct?: (orderId: string, itemId: string, newProductId: string, newQty: number) => Promise<void>
 }
 
 type TabType = 'details' | 'products' | 'history' | 'status'

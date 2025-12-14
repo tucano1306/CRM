@@ -8,8 +8,8 @@ import CreateRecurringOrderModal from './CreateRecurringOrderModal'
 import RecurringOrderDetailModal from './RecurringOrderDetailModal'
 
 interface RecurringOrdersManagerProps {
-  userRole: 'SELLER' | 'CLIENT'
-  clientId?: string
+  readonly userRole: 'SELLER' | 'CLIENT'
+  readonly clientId?: string
 }
 
 export default function RecurringOrdersManager({ userRole, clientId }: RecurringOrdersManagerProps) {

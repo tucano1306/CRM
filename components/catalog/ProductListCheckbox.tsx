@@ -37,13 +37,13 @@ interface SelectedProduct {
 }
 
 interface ProductListCheckboxProps {
-  products: Product[]
-  selectedProducts: Map<string, number>  // productId -> quantity
-  onSelectionChange: (productId: string, quantity: number) => void
-  onRemoveProduct: (productId: string) => void
-  loading?: boolean
-  showQuantityInput?: boolean
-  maxSelections?: number
+  readonly products: Product[]
+  readonly selectedProducts: Map<string, number>  // productId -> quantity
+  readonly onSelectionChange: (productId: string, quantity: number) => void
+  readonly onRemoveProduct: (productId: string) => void
+  readonly loading?: boolean
+  readonly showQuantityInput?: boolean
+  readonly maxSelections?: number
 }
 
 export default function ProductListCheckbox({

@@ -26,10 +26,10 @@ interface Product {
 }
 
 interface ProductModalProps {
-  product: Product
-  isOpen: boolean
-  onClose: () => void
-  onTagsUpdate?: (tags: ProductTag[]) => void
+  readonly product: Product
+  readonly isOpen: boolean
+  readonly onClose: () => void
+  readonly onTagsUpdate?: (tags: ProductTag[]) => void
 }
 
 type TabType = 'details' | 'stock' | 'sales' | 'promotions'

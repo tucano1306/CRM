@@ -35,11 +35,11 @@ type OrderStatus =
   | 'PAID'
 
 interface OrderStatusChangerProps {
-  orderId: string
-  currentStatus: OrderStatus
-  onStatusChange?: (newStatus: OrderStatus, notes?: string) => Promise<void>
-  disabled?: boolean
-  userRole?: 'seller' | 'buyer' | 'admin'
+  readonly orderId: string
+  readonly currentStatus: OrderStatus
+  readonly onStatusChange?: (newStatus: OrderStatus, notes?: string) => Promise<void>
+  readonly disabled?: boolean
+  readonly userRole?: 'seller' | 'buyer' | 'admin'
 }
 
 const statusOptions: { value: OrderStatus; label: string; icon: any; color: string; description: string }[] = [

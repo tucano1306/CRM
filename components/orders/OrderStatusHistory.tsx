@@ -74,8 +74,8 @@ const statusConfig: Record<OrderStatus, { label: string; icon: any; color: strin
 }
 
 interface OrderStatusHistoryProps {
-  orderId: string
-  refreshTrigger?: number // Prop para forzar refresco desde fuera
+  readonly orderId: string
+  readonly refreshTrigger?: number // Prop para forzar refresco desde fuera
 }
 
 export default function OrderStatusHistory({ orderId, refreshTrigger }: OrderStatusHistoryProps) {

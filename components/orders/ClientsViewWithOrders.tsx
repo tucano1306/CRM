@@ -81,12 +81,12 @@ interface ClientWithOrders {
 }
 
 interface ClientsViewWithOrdersProps {
-  orders: Order[]
-  userRole: 'seller' | 'buyer'
-  onStatusChange?: (orderId: string, newStatus: OrderStatus, notes?: string) => Promise<void>
-  onRemoveProduct?: (orderId: string, itemId: string) => Promise<void>
-  onSubstituteProduct?: (orderId: string, itemId: string, newProductId: string, newQty: number) => Promise<void>
-  initialOrderId?: string  // Para abrir una orden específica automáticamente
+  readonly orders: Order[]
+  readonly userRole: 'seller' | 'buyer'
+  readonly onStatusChange?: (orderId: string, newStatus: OrderStatus, notes?: string) => Promise<void>
+  readonly onRemoveProduct?: (orderId: string, itemId: string) => Promise<void>
+  readonly onSubstituteProduct?: (orderId: string, itemId: string, newProductId: string, newQty: number) => Promise<void>
+  readonly initialOrderId?: string  // Para abrir una orden específica automáticamente
 }
 
 export default function ClientsViewWithOrders({ 

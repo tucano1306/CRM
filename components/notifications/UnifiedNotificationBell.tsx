@@ -22,9 +22,9 @@ type Notification = {
 
 interface NotificationBellProps {
   /** Role determines notification routes and styling */
-  role?: 'buyer' | 'seller'
+  readonly role?: 'buyer' | 'seller'
   /** Custom class for the bell button */
-  className?: string
+  readonly className?: string
 }
 
 // Notification type icons

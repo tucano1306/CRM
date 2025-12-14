@@ -66,10 +66,10 @@ interface OrderIssue {
 }
 
 interface OrderReviewPanelProps {
-  order: Order
-  onStartReview: () => Promise<void>
-  onLockOrder: () => Promise<void>
-  onReportIssue: (issue: {
+  readonly order: Order
+  readonly onStartReview: () => Promise<void>
+  readonly onLockOrder: () => Promise<void>
+  readonly onReportIssue: (issue: {
     issueType: string
     description: string
     productId?: string
@@ -78,9 +78,9 @@ interface OrderReviewPanelProps {
     availableQty?: number
     proposedSolution?: string
   }) => Promise<void>
-  issues?: OrderIssue[]
-  isLoading?: boolean
-  onClose?: () => void
+  readonly issues?: OrderIssue[]
+  readonly isLoading?: boolean
+  readonly onClose?: () => void
 }
 
 const ISSUE_TYPES = [

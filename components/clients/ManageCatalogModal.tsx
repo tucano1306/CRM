@@ -24,11 +24,11 @@ interface ClientProduct {
 }
 
 interface ManageCatalogModalProps {
-  isOpen: boolean
-  onClose: () => void
-  clientId: string
-  clientName: string
-  onSuccess?: () => void
+  readonly isOpen: boolean
+  readonly onClose: () => void
+  readonly clientId: string
+  readonly clientName: string
+  readonly onSuccess?: () => void
 }
 
 const CATEGORIES = [
