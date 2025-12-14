@@ -80,9 +80,7 @@ export default async function AnalyticsSSRPage() {
   // Procesar datos para visualización
   const totalOrders = dailyStats.reduce((sum: number, day: any) => sum + day.orders, 0)
   const totalRevenue = dailyStats.reduce((sum: number, day: any) => sum + Number(day.revenue), 0)
-  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
-  // avgOrderValue available for future dashboard enhancements
-  void avgOrderValue
+  const _avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
   // Encontrar horas pico
   const peakHours = hourlyStats

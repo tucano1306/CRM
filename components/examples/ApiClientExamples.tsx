@@ -10,8 +10,7 @@ import { Loader2, AlertCircle, Clock } from 'lucide-react'
  * EJEMPLO 1: Uso básico con fetchWithTimeout
  */
 export function ExampleBasicFetch() {
-  const [data, setData] = useState(null)
-  void data // Data available for display after loading
+  const [_data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -111,8 +110,7 @@ export function ExampleApiCall() {
  * EJEMPLO 3: Uso con retry logic
  */
 export function ExampleWithRetry() {
-  const [data, setData] = useState(null)
-  void data // Data available for display after loading
+  const [_data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [retries, setRetries] = useState(0)
   const [error, setError] = useState<string | null>(null)

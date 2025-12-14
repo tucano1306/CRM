@@ -52,8 +52,7 @@ class WASMWorkerPool extends WorkerPool {
   private async checkWorkersWASMCapability() {
     try {
       // WASMTask ID generated for capability check
-      const taskId = `wasm-capability-test-${Date.now()}`
-      void taskId // Task ID available for debugging
+      const _taskId = `wasm-capability-test-${Date.now()}`
 
       const result = await super.executeTask('wasm-capability-check', {})
       if (result.success) {

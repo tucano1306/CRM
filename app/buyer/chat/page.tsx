@@ -9,8 +9,7 @@ import { MessageCircle, User, Package, ShoppingBag } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 
 function BuyerChatContent() {
-  const { user } = useUser() // Keep hook call for auth context
-  void user // Auth context available if needed
+  const { user: _user } = useUser() // Keep hook call for auth context
   const searchParams = useSearchParams()
   const orderId = searchParams.get('order')
   

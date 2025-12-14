@@ -24,11 +24,10 @@ function ConnectPageContent() {
     email: string
     phone?: string
   } | null>(null)
-  const [requestInfo, setRequestInfo] = useState<{
+  const [_requestInfo, setRequestInfo] = useState<{
     requestId?: string
     createdAt?: string
   } | null>(null)
-  void requestInfo // Available for displaying request details
   
   // Campo de teléfono para el formulario
   const [phoneNumber, setPhoneNumber] = useState('')

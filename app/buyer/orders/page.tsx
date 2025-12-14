@@ -343,9 +343,7 @@ function OrdersPageContent() {
   const [dateTo, setDateTo] = useState('')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [hoveredRating, setHoveredRating] = useState<number | null>(null)
-  void hoveredRating // Available for rating feature
-  void setHoveredRating
+  const [_hoveredRating, _setHoveredRating] = useState<number | null>(null)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [toastStatus, setToastStatus] = useState('')
