@@ -629,27 +629,6 @@ export default function BulkStatusChangeModal({
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-          {/* Instrucciones - Más grandes */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4 sm:p-5 mb-6">
-            <h3 className="font-bold text-blue-800 mb-3 text-base sm:text-lg flex items-center gap-2">
-              📋 ¿Qué debes hacer?
-            </h3>
-            <ol className="text-sm sm:text-base text-blue-700 space-y-2">
-              <li className="flex items-start gap-2">
-                <span className="font-bold bg-blue-200 px-2 py-0.5 rounded text-xs">1</span>
-                <span>Revisa cada producto de la lista</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold bg-blue-200 px-2 py-0.5 rounded text-xs">2</span>
-                <span><strong>Disponible</strong> → Marca "✅ OK"</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="font-bold bg-blue-200 px-2 py-0.5 rounded text-xs">3</span>
-                <span><strong>Sin stock</strong> → Marca "❌ No hay" y notifica</span>
-              </li>
-            </ol>
-          </div>
-
           {/* Lista de productos - Más grande y legible */}
           {hasProducts ? (
             <div className="border-2 border-gray-200 rounded-xl overflow-hidden mb-6">

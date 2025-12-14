@@ -326,9 +326,11 @@ export async function POST(request: Request) {
     // ✅ Crear orden con transacción CON TIMEOUT
     const order = await withPrismaTimeout(
       () => prisma.$transaction(async (tx) => {
+        // Generar número de orden corto: últimos 5 dígitos del timestamp + 2 aleatorios
+        const shortId = String(Date.now()).slice(-5) + String(Math.floor(Math.random() * 100)).padStart(2, '0')
         const newOrder = await tx.order.create({
           data: {
-            orderNumber: `ORD-${Date.now()}`,
+            orderNumber: `ORD-${shortId}`,
             clientId: client!.id,
             sellerId: sellerId!,  // Ahora garantizado que existe
             status: 'PENDING',

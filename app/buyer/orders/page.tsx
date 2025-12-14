@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { v4 as uuidv4 } from 'uuid'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
@@ -367,10 +367,26 @@ export default function OrdersPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [dateRange, setDateRange] = useState<'7days' | '30days' | '90days' | 'all'>('30days')
   const ordersPerPage = 10
+  
+  // Leer parámetros de URL para abrir orden automáticamente
+  const searchParams = useSearchParams()
+  const orderIdFromUrl = searchParams.get('orderId') || searchParams.get('id')
 
   useEffect(() => {
     fetchOrders()
   }, [])
+
+  // Abrir orden automáticamente si viene en la URL
+  useEffect(() => {
+    if (orderIdFromUrl && orders.length > 0 && !selectedOrder) {
+      const orderToOpen = orders.find(o => o.id === orderIdFromUrl)
+      if (orderToOpen) {
+        openOrderModal(orderToOpen)
+        // Limpiar el parámetro de la URL sin recargar
+        window.history.replaceState({}, '', '/buyer/orders')
+      }
+    }
+  }, [orderIdFromUrl, orders, selectedOrder])
 
   // Auto-hide toast after 5 seconds
   useEffect(() => {
@@ -697,8 +713,16 @@ export default function OrdersPage() {
         setSelectedSubstituteProduct(null)
         setSubstituteQuantity(1)
         
-        // Refrescar órdenes
-        fetchOrders()
+        // Refrescar órdenes y actualizar la orden seleccionada
+        const ordersResult = await apiCall('/api/buyer/orders', { timeout: 10000 })
+        if (ordersResult.success && ordersResult.data?.orders) {
+          setOrders(ordersResult.data.orders)
+          // Actualizar el modal con la orden actualizada
+          const updatedOrder = ordersResult.data.orders.find((o: Order) => o.id === selectedOrder.id)
+          if (updatedOrder) {
+            setSelectedOrder(updatedOrder)
+          }
+        }
       } else {
         alert(result.error || 'Error al sustituir el producto')
       }
@@ -1908,16 +1932,6 @@ export default function OrdersPage() {
                           <MapPin className="w-5 h-5" />
                         </button>
                       )}
-                      
-                      {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && (
-                        <button 
-                          onClick={(e) => handleQuickInvoice(order, e)}
-                          className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 text-purple-600 p-2 rounded-lg hover:border-purple-300 hover:shadow-lg transition-all"
-                          title="Ver factura"
-                        >
-                          <FileText className="w-5 h-5" />
-                        </button>
-                      )}
 
                       <button 
                         onClick={() => openOrderModal(order)}
@@ -2032,28 +2046,30 @@ export default function OrdersPage() {
               className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
-              <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6 rounded-t-2xl sticky top-0 z-10">
+              {/* Header - Compacto */}
+              <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-t-2xl sticky top-0 z-10">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold">
-                      {selectedOrder.orderNumber || `#${selectedOrder.id.slice(0, 8)}`}
-                    </h2>
-                    <p className="text-purple-100">
-                      {new Date(selectedOrder.createdAt).toLocaleDateString('es-ES', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xl">📦</span>
+                    <div>
+                      <h2 className="text-base font-bold">
+                        #{selectedOrder.orderNumber?.replace('ORD-', '').slice(-6) || selectedOrder.id.slice(0, 6)}
+                      </h2>
+                      <p className="text-xs text-purple-200">
+                        {new Date(selectedOrder.createdAt).toLocaleDateString('es-ES', {
+                          day: '2-digit',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                    </div>
                   </div>
                   <button 
                     onClick={closeOrderModal} 
-                    className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+                    className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
                   >
-                    <X className="w-6 h-6" />
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
               </div>
@@ -2581,24 +2597,6 @@ export default function OrdersPage() {
                       </div>
                       <p className="text-gray-700">{selectedOrder.seller?.name}</p>
                       <p className="text-sm text-gray-600">{selectedOrder.seller?.email}</p>
-                    </div>
-
-                    {/* Acciones */}
-                    <div className="flex gap-3">
-                      <button
-                        onClick={() => handleViewInvoice(selectedOrder)}
-                        disabled={generatingInvoice === selectedOrder.id}
-                        className="flex-1 bg-purple-600 text-white px-4 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold disabled:opacity-50"
-                      >
-                        {generatingInvoice === selectedOrder.id ? 'Generando...' : 'Ver Factura'}
-                      </button>
-                      <button
-                        onClick={() => handleDownloadInvoice(selectedOrder)}
-                        disabled={generatingInvoice === selectedOrder.id}
-                        className="flex-1 bg-gray-600 text-white px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors font-semibold disabled:opacity-50"
-                      >
-                        Descargar PDF
-                      </button>
                     </div>
                   </div>
                 )}

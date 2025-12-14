@@ -151,7 +151,7 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
       case 'ORDER_COMPLETED':
       case 'ORDER_CANCELLED':
       default:
-        return orderId ? `${routes.orders}?id=${orderId}` : routes.orders
+        return orderId ? `${routes.orders}?orderId=${orderId}` : routes.orders
     }
   }, [role])
 

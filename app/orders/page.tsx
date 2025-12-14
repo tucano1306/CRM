@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Loader2, AlertCircle, AlertTriangle, Clock, Bell } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
 import MainLayout from '@/components/shared/MainLayout'
@@ -99,6 +100,10 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [generatingInvoice, setGeneratingInvoice] = useState<string | null>(null)
+  
+  // Leer parámetros de URL para abrir orden automáticamente
+  const searchParams = useSearchParams()
+  const orderIdFromUrl = searchParams.get('orderId') || searchParams.get('id')
 
   // Calcular órdenes pendientes
   const pendingOrdersStats = useMemo(() => {
@@ -443,6 +448,7 @@ export default function OrdersPage() {
           orders={orders}
           userRole="seller"
           onStatusChange={handleStatusChange}
+          initialOrderId={orderIdFromUrl || undefined}
         />
       </div>
     </MainLayout>

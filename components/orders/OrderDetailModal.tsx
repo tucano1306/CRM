@@ -155,25 +155,27 @@ export default function OrderDetailModal({
       {/* Modal Panel */}
       <div className="absolute right-0 top-0 h-full w-full max-w-2xl">
         <Card className="h-full rounded-none shadow-2xl">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b p-6 bg-gradient-to-r from-purple-50 to-blue-50">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Orden #{order.orderNumber}
-              </h2>
-              <p className="text-sm text-gray-600 mt-1">
-                {new Date(order.createdAt).toLocaleDateString('es-ES', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </p>
+          {/* Header - Compacto */}
+          <div className="flex items-center justify-between border-b px-4 py-3 bg-gradient-to-r from-purple-50 to-blue-50">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">📦</span>
+              <div>
+                <h2 className="text-base font-bold text-gray-900">
+                  #{order.orderNumber?.replace('ORD-', '').slice(-6) || order.id.slice(0, 6)}
+                </h2>
+                <p className="text-xs text-gray-600">
+                  {new Date(order.createdAt).toLocaleDateString('es-ES', {
+                    day: '2-digit',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </p>
+              </div>
               {order.hasIssues && (
-                <span className="inline-flex items-center gap-1 mt-2 px-2 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full text-xs font-medium">
                   <AlertTriangle className="h-3 w-3" />
-                  Tiene problemas de stock
+                  Issues
                 </span>
               )}
             </div>

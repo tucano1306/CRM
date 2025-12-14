@@ -87,6 +87,7 @@ interface ClientsViewWithOrdersProps {
   onStatusChange?: (orderId: string, newStatus: OrderStatus, notes?: string) => Promise<void>
   onRemoveProduct?: (orderId: string, itemId: string) => Promise<void>
   onSubstituteProduct?: (orderId: string, itemId: string, newProductId: string, newQty: number) => Promise<void>
+  initialOrderId?: string  // Para abrir una orden específica automáticamente
 }
 
 export default function ClientsViewWithOrders({ 
@@ -94,7 +95,8 @@ export default function ClientsViewWithOrders({
   userRole,
   onStatusChange,
   onRemoveProduct,
-  onSubstituteProduct
+  onSubstituteProduct,
+  initialOrderId
 }: ClientsViewWithOrdersProps) {
   const [selectedClient, setSelectedClient] = useState<ClientWithOrders | null>(null)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
@@ -183,6 +185,25 @@ export default function ClientsViewWithOrders({
       new Date(b.lastOrderDate).getTime() - new Date(a.lastOrderDate).getTime()
     )
   }, [orders])
+
+  // Abrir orden automáticamente si viene initialOrderId
+  useEffect(() => {
+    if (initialOrderId && clientsWithOrders.length > 0 && !selectedClient) {
+      // Buscar la orden y su cliente
+      for (const clientData of clientsWithOrders) {
+        const order = clientData.orders.find(o => o.id === initialOrderId)
+        if (order) {
+          // Abrir el cliente que tiene esa orden
+          setSelectedClient(clientData)
+          // Seleccionar la orden para que se muestre destacada
+          setSelectedOrders([initialOrderId])
+          // Limpiar el parámetro de la URL sin recargar
+          window.history.replaceState({}, '', '/orders')
+          break
+        }
+      }
+    }
+  }, [initialOrderId, clientsWithOrders, selectedClient])
 
   // Filtrar clientes por búsqueda
   const filteredClients = clientsWithOrders.filter(clientData =>
