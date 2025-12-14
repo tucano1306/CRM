@@ -12,7 +12,11 @@ import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 import { useCartCount } from '@/hooks/useCartCount'
 import ThemeToggle from '@/components/shared/ThemeToggle'
 
-export default function BuyerLayout({ children }: { children: React.ReactNode }) {
+interface BuyerLayoutProps {
+  readonly children: React.ReactNode
+}
+
+export default function BuyerLayout({ children }: BuyerLayoutProps) {
   const { user } = useUser()
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)

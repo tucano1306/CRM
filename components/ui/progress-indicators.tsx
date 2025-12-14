@@ -4,7 +4,11 @@ import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 
 // Spinner con delay - Solo aparece si tarda más de 500ms
-export function DelayedSpinner({ delay = 500 }: { delay?: number }) {
+interface DelayedSpinnerProps {
+  readonly delay?: number
+}
+
+export function DelayedSpinner({ delay = 500 }: DelayedSpinnerProps) {
   const [show, setShow] = useState(false)
 
   useEffect(() => {
@@ -22,7 +26,11 @@ export function DelayedSpinner({ delay = 500 }: { delay?: number }) {
 }
 
 // Progress bar con porcentaje
-export function ProgressBar({ progress }: { progress: number }) {
+interface ProgressBarProps {
+  readonly progress: number
+}
+
+export function ProgressBar({ progress }: ProgressBarProps) {
   return (
     <div className="w-full bg-gray-200 rounded-full h-2.5">
       <div
@@ -41,7 +49,11 @@ export function ButtonSpinner() {
 }
 
 // Loading overlay con mensaje
-export function LoadingOverlay({ message }: { message?: string }) {
+interface LoadingOverlayProps {
+  readonly message?: string
+}
+
+export function LoadingOverlay({ message }: LoadingOverlayProps) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 shadow-xl">
@@ -83,10 +95,10 @@ export function useDelayedLoading(isLoading: boolean, delay = 500) {
 
 // Componente de acción con loading automático
 interface ActionButtonProps {
-  onClick: () => Promise<void>
-  children: React.ReactNode
-  className?: string
-  loadingText?: string
+  readonly onClick: () => Promise<void>
+  readonly children: React.ReactNode
+  readonly className?: string
+  readonly loadingText?: string
 }
 
 export function ActionButton({ 

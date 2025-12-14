@@ -1,6 +1,10 @@
 import { Skeleton } from '@/components/ui/skeleton'
 
-export function TableSkeleton({ rows = 5 }: { rows?: number }) {
+interface TableSkeletonProps {
+  readonly rows?: number
+}
+
+export function TableSkeleton({ rows = 5 }: TableSkeletonProps) {
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <div className="p-4 border-b">

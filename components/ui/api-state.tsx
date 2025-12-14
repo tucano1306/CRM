@@ -7,13 +7,13 @@ import { Alert } from '@/components/ui/alert'
  * Componente para mostrar estados de API (loading, timeout, error)
  */
 interface ApiStateProps {
-  loading?: boolean
-  error?: string | null
-  timedOut?: boolean
-  loadingText?: string
-  timeoutText?: string
-  children?: ReactNode
-  onRetry?: () => void
+  readonly loading?: boolean
+  readonly error?: string | null
+  readonly timedOut?: boolean
+  readonly loadingText?: string
+  readonly timeoutText?: string
+  readonly children?: ReactNode
+  readonly onRetry?: () => void
 }
 
 export function ApiState({
@@ -73,16 +73,16 @@ export function ApiState({
  * Wrapper para datos con estados de API
  */
 interface ApiDataWrapperProps<T> {
-  loading: boolean
-  error: string | null
-  timedOut: boolean
-  data: T | null
-  loadingComponent?: ReactNode
-  errorComponent?: (error: string, onRetry?: () => void) => ReactNode
-  timeoutComponent?: ReactNode
-  emptyComponent?: ReactNode
-  onRetry?: () => void
-  children: (data: T) => ReactNode
+  readonly loading: boolean
+  readonly error: string | null
+  readonly timedOut: boolean
+  readonly data: T | null
+  readonly loadingComponent?: ReactNode
+  readonly errorComponent?: (error: string, onRetry?: () => void) => ReactNode
+  readonly timeoutComponent?: ReactNode
+  readonly emptyComponent?: ReactNode
+  readonly onRetry?: () => void
+  readonly children: (data: T) => ReactNode
 }
 
 export function ApiDataWrapper<T>({

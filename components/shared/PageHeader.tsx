@@ -1,9 +1,9 @@
 import { ReactNode } from 'react'
 
 interface PageHeaderProps {
-  title: string
-  description?: string
-  action?: ReactNode
+  readonly title: string
+  readonly description?: string
+  readonly action?: ReactNode
 }
 
 export default function PageHeader({ title, description, action }: PageHeaderProps) {

@@ -5,11 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Edit2, Save, X, FileText } from 'lucide-react'
 
 interface OrderItemNotesProps {
-  itemId: string
-  productName: string
-  currentNote: string | null
-  onSave: (itemId: string, note: string) => Promise<void>
-  editable?: boolean
+  readonly itemId: string
+  readonly productName: string
+  readonly currentNote: string | null
+  readonly onSave: (itemId: string, note: string) => Promise<void>
+  readonly editable?: boolean
 }
 
 export default function OrderItemNotes({ 

@@ -4,10 +4,10 @@
 import { useRouter } from 'next/navigation'
 
 interface PrefetchLinkProps {
-  href: string
-  children: React.ReactNode
-  className?: string
-  onMouseEnter?: () => void
+  readonly href: string
+  readonly children: React.ReactNode
+  readonly className?: string
+  readonly onMouseEnter?: () => void
 }
 
 export function PrefetchLink({ 

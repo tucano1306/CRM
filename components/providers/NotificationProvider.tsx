@@ -34,7 +34,11 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
 
-export function NotificationProvider({ children }: { children: React.ReactNode }) {
+interface NotificationProviderProps {
+  readonly children: React.ReactNode
+}
+
+export function NotificationProvider({ children }: NotificationProviderProps) {
   const { user } = useUser()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)

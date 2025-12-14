@@ -47,9 +47,9 @@ interface OrderData {
 }
 
 interface InvoiceButtonProps {
-  order: OrderData
-  variant?: 'download' | 'view' | 'both'
-  size?: 'sm' | 'default' | 'lg'
+  readonly order: OrderData
+  readonly variant?: 'download' | 'view' | 'both'
+  readonly size?: 'sm' | 'default' | 'lg'
 }
 
 export default function InvoiceButton({ 

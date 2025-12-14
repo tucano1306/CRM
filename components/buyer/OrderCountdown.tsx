@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Clock, XCircle, AlertCircle } from 'lucide-react'
 
 interface OrderCountdownProps {
-  orderId: string
-  deadline: string
-  onCancel: (orderId: string) => Promise<void>
-  onExpired?: () => void
+  readonly orderId: string
+  readonly deadline: string
+  readonly onCancel: (orderId: string) => Promise<void>
+  readonly onExpired?: () => void
 }
 
 export default function OrderCountdown({ 

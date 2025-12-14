@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button'
 import { Edit2, Save, X, MapPin, Truck } from 'lucide-react'
 
 interface DeliveryInstructionsProps {
-  orderId: string
-  currentInstructions: string | null
-  onSave: (orderId: string, instructions: string) => Promise<void>
-  editable?: boolean
+  readonly orderId: string
+  readonly currentInstructions: string | null
+  readonly onSave: (orderId: string, instructions: string) => Promise<void>
+  readonly editable?: boolean
 }
 
 export default function DeliveryInstructions({ 

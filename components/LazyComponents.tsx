@@ -6,7 +6,11 @@ import { Suspense, useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 
 // Loading fallback genérico
-function LoadingFallback({ message = 'Cargando...' }: { message?: string }) {
+interface LoadingFallbackProps {
+  readonly message?: string
+}
+
+function LoadingFallback({ message = 'Cargando...' }: LoadingFallbackProps) {
   return (
     <div className="flex items-center justify-center p-8">
       <Loader2 className="animate-spin h-8 w-8 text-blue-600 mr-3" />
@@ -52,8 +56,8 @@ export const LazyProductForm = dynamic(
 
 // Wrapper con Suspense para lazy components
 interface LazyWrapperProps {
-  children: React.ReactNode
-  fallback?: React.ReactNode
+  readonly children: React.ReactNode
+  readonly fallback?: React.ReactNode
 }
 
 export function LazyWrapper({ children, fallback }: LazyWrapperProps) {
@@ -79,9 +83,9 @@ export function useLazyLoad(shouldLoad: boolean) {
 
 // Componente para lazy load con Intersection Observer
 interface LazyLoadOnViewProps {
-  children: React.ReactNode
-  threshold?: number
-  fallback?: React.ReactNode
+  readonly children: React.ReactNode
+  readonly threshold?: number
+  readonly fallback?: React.ReactNode
 }
 
 export function LazyLoadOnView({ 
