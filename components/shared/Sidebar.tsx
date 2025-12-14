@@ -108,44 +108,56 @@ export default function Sidebar() {
         shadow-lg transition-all duration-300 ease-in-out z-40
         ${isCollapsed ? 'lg:w-16' : 'lg:w-64'}
       `}>
-        {/* Desktop Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700 min-w-full">
-          {!isCollapsed ? (
-            <div className="flex items-center space-x-3">
+        {/* Desktop Header - Clean design */}
+        <div className="flex flex-col border-b border-gray-200 dark:border-gray-700">
+          {/* Logo row */}
+          <div className="flex items-center justify-between h-14 px-3">
+            {!isCollapsed ? (
               <Image 
                 src="/logo.png" 
                 alt="Bargain Logo" 
-                width={120} 
-                height={40}
+                width={100} 
+                height={32}
                 className="object-contain"
                 priority
               />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center w-full">
+            ) : (
               <Image 
                 src="/logo.png" 
                 alt="Bargain Logo" 
-                width={40} 
-                height={40}
-                className="object-contain"
+                width={32} 
+                height={32}
+                className="object-contain mx-auto"
                 priority
               />
+            )}
+            {!isCollapsed && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all"
+                title="Contraer menú"
+              >
+                <PanelLeftClose className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          
+          {/* Expand button when collapsed */}
+          {isCollapsed && (
+            <div className="flex justify-center py-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all"
+                title="Expandir menú"
+              >
+                <PanelLeftOpen className="h-4 w-4" />
+              </Button>
             </div>
           )}
-          <div className="flex items-center gap-2">
-            {!isCollapsed && <UnifiedNotificationBell role="seller" />}
-            {!isCollapsed && <ThemeToggle />}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all hover:scale-110 shadow-lg border-0"
-              title={isCollapsed ? "Expandir menú" : "Contraer menú"}
-            >
-              {isCollapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
-            </Button>
-          </div>
         </div>
 
         {/* Desktop Navigation */}
@@ -192,34 +204,54 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {/* Desktop Footer - User Profile */}
+        {/* Desktop Footer - User Profile + Actions */}
         {!isCollapsed && (
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-center">
+          <div className="border-t border-gray-200 dark:border-gray-700">
+            {/* Notifications & Theme row */}
+            <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
+              <div className="flex items-center gap-1">
+                <UnifiedNotificationBell role="seller" />
+                <ThemeToggle />
+              </div>
+              <span className="text-xs text-gray-400">Ajustes</span>
+            </div>
+            {/* User profile row */}
+            <div className="flex items-center gap-3 px-4 py-3">
               <UserButton 
                 afterSignOutUrl="/"
                 appearance={{
                   elements: {
-                    avatarBox: "w-10 h-10",
+                    avatarBox: "w-9 h-9",
                     userButtonPopoverCard: "shadow-lg"
                   }
                 }}
               />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-500 truncate">Mi cuenta</p>
+              </div>
             </div>
           </div>
         )}
         
-        {/* Collapsed Footer - User Profile Icon Only */}
+        {/* Collapsed Footer - Icons only */}
         {isCollapsed && (
-          <div className="p-2 border-t border-gray-200 dark:border-gray-700 flex justify-center">
-            <UserButton 
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: "w-8 h-8"
-                }
-              }}
-            />
+          <div className="border-t border-gray-200 dark:border-gray-700 py-2 space-y-1">
+            <div className="flex justify-center">
+              <UnifiedNotificationBell role="seller" />
+            </div>
+            <div className="flex justify-center">
+              <ThemeToggle />
+            </div>
+            <div className="flex justify-center pt-1">
+              <UserButton 
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: "w-8 h-8"
+                  }
+                }}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -228,41 +260,27 @@ export default function Sidebar() {
       <div className={`
         lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 
         border-r border-gray-200 dark:border-gray-700 shadow-xl
-        transform transition-transform duration-300 ease-in-out
+        transform transition-transform duration-300 ease-in-out flex flex-col
         ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        {/* Mobile Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center space-x-3">
-            <Image 
-              src="/logo.png" 
-              alt="Bargain Logo" 
-              width={120} 
-              height={40}
-              className="object-contain"
-              priority
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            <UnifiedNotificationBell role="seller" />
-            <ThemeToggle />
-            <UserButton 
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: "w-8 h-8"
-                }
-              }}
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMobileOpen(false)}
-              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
+        {/* Mobile Header - Clean */}
+        <div className="flex items-center justify-between h-14 px-4 border-b border-gray-200 dark:border-gray-700">
+          <Image 
+            src="/logo.png" 
+            alt="Bargain Logo" 
+            width={100} 
+            height={32}
+            className="object-contain"
+            priority
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsMobileOpen(false)}
+            className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
 
         {/* Mobile Navigation */}
@@ -306,6 +324,30 @@ export default function Sidebar() {
             )
           })}
         </nav>
+        
+        {/* Mobile Footer - User + Actions */}
+        <div className="border-t border-gray-200 dark:border-gray-700 mt-auto">
+          {/* Actions row */}
+          <div className="flex items-center justify-around px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
+            <UnifiedNotificationBell role="seller" />
+            <ThemeToggle />
+          </div>
+          {/* User profile row */}
+          <div className="flex items-center gap-3 px-4 py-3">
+            <UserButton 
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: "w-9 h-9",
+                  userButtonPopoverCard: "shadow-lg"
+                }
+              }}
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-gray-500">Mi cuenta</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Mobile Overlay */}
