@@ -585,6 +585,11 @@ export async function GET() {
             include: {
               product: true,
             },
+            // Ordenar para que los items eliminados aparezcan al final
+            orderBy: [
+              { isDeleted: 'asc' },
+              { createdAt: 'asc' }
+            ]
           },
           client: true,
           seller: true,

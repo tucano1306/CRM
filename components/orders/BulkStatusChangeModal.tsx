@@ -59,6 +59,12 @@ interface OrderItem {
   confirmed?: boolean
   issueNote?: string | null
   availableQty?: number | null
+  // Campos de eliminación/sustitución por el comprador
+  isDeleted?: boolean
+  deletedReason?: string | null
+  deletedAt?: string | null
+  substitutedWith?: string | null
+  substituteName?: string | null
   product?: {
     id?: string
     sku?: string | null
@@ -490,13 +496,17 @@ export default function BulkStatusChangeModal({
     product.sku?.toLowerCase().includes(productSearch.toLowerCase())
   )
 
+  // Filtrar items activos (no eliminados por el comprador)
+  const activeOrderItems = orderItems.filter(item => !item.isDeleted)
+  const deletedByBuyerCount = orderItems.filter(item => item.isDeleted).length
+  
   const issuesCount = Array.from(productIssues.values()).filter(i => i.issueType !== null && i.issueType !== 'ACCEPTED').length
-  const allProductsOk = issuesCount === 0 && acceptedItems.size === orderItems.length
+  const allProductsOk = issuesCount === 0 && acceptedItems.size === activeOrderItems.length
   const someProductsReviewed = acceptedItems.size > 0 || issuesCount > 0
-  const pendingReview = orderItems.length - acceptedItems.size - productIssues.size
+  const pendingReview = activeOrderItems.length - acceptedItems.size - productIssues.size
   
   // Contar productos que ya estaban confirmados en la BD (no en esta sesión)
-  const confirmedInDbCount = orderItems.filter(item => 
+  const confirmedInDbCount = activeOrderItems.filter(item => 
     item.confirmed && !acceptedItems.has(item.id) && !productIssues.has(item.id)
   ).length
   
@@ -689,6 +699,18 @@ export default function BulkStatusChangeModal({
                   </div>
                 )}
                 
+                {/* Alerta de productos eliminados por el comprador */}
+                {deletedByBuyerCount > 0 && (
+                  <div className="mt-3 bg-gray-100 border border-gray-300 rounded-lg p-3">
+                    <p className="text-sm text-gray-700 flex items-center gap-2">
+                      <Trash2 className="w-4 h-4 text-gray-500" />
+                      <span>
+                        <strong>{deletedByBuyerCount}</strong> producto(s) eliminado(s)/sustituido(s) por el comprador
+                      </span>
+                    </p>
+                  </div>
+                )}
+                
                 {/* Resumen de estados - Más grande */}
                 <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div className="bg-green-100 rounded-lg px-3 py-2 text-center">
@@ -718,6 +740,49 @@ export default function BulkStatusChangeModal({
                   const isAccepted = acceptedItems.has(item.id)
                   const isSelected = selectedItems.has(item.id)
                   const hasIssue = isOutOfStock || isPartialStock
+                  
+                  // Verificar si el producto fue eliminado/sustituido por el comprador
+                  const isDeletedByBuyer = item.isDeleted === true
+                  const hasSubstitute = !!item.substitutedWith
+
+                  // Si fue eliminado por el comprador, mostrar de forma especial
+                  if (isDeletedByBuyer) {
+                    return (
+                      <div 
+                        key={item.id}
+                        className="p-4 sm:p-5 bg-gray-100 border-l-4 border-gray-400 opacity-75"
+                      >
+                        <div className="flex items-start gap-3 sm:gap-4">
+                          <div className="pt-1">
+                            <Trash2 className="w-5 h-5 text-gray-500" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="font-bold text-base sm:text-lg text-gray-500 line-through">{item.productName}</p>
+                              <span className="text-xs bg-gray-300 text-gray-700 px-2 py-0.5 rounded-full font-semibold">
+                                🗑️ Eliminado por comprador
+                              </span>
+                            </div>
+                            <div className="mt-1 text-sm text-gray-500">
+                              <span className="line-through">{item.quantity} {item.product?.unit || 'unid.'} × {formatPrice(item.pricePerUnit)}</span>
+                            </div>
+                            {item.deletedReason && (
+                              <div className="mt-2 bg-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <span className="font-medium text-gray-700">📝 Motivo:</span>
+                                <span className="text-gray-600 ml-1">{item.deletedReason}</span>
+                              </div>
+                            )}
+                            {hasSubstitute && (
+                              <div className="mt-2 bg-blue-100 rounded-lg px-3 py-2 text-sm border border-blue-200">
+                                <span className="font-medium text-blue-700">🔄 Sustituido por:</span>
+                                <span className="text-blue-800 ml-1 font-semibold">{item.substituteName || 'Producto sustituto'}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
 
                   return (
                     <div 

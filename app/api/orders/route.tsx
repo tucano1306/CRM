@@ -102,6 +102,11 @@ export async function GET(request: Request) {
                 },
               },
             },
+            // Ordenar para que los items eliminados aparezcan al final
+            orderBy: [
+              { isDeleted: 'asc' },
+              { createdAt: 'asc' }
+            ]
           },
           client: {
             select: {
