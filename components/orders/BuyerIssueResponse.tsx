@@ -7,11 +7,9 @@ import {
   XCircle,
   Loader2, 
   MessageSquare,
-  Package
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatPrice } from '@/lib/utils'
 
 interface OrderIssue {
   id: string

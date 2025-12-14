@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Download, X, Smartphone, Monitor } from 'lucide-react'
+import { Download, X, Smartphone } from 'lucide-react'
 import Image from 'next/image'
 
 interface BeforeInstallPromptEvent extends Event {

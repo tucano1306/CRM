@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
-import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
+import { handleTimeoutError, TimeoutError } from '@/lib/timeout'
 import { withResilientDb } from '@/lib/db-retry'
 
 // GET /api/orders - Obtener todas las órdenes (para vendedor o cliente)

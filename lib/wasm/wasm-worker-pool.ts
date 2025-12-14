@@ -4,8 +4,7 @@
  * Compatible con el sistema existente - NO rompe funcionalidad
  */
 
-import { WorkerPool, WorkerTask, WorkerResult, WorkerPoolOptions, workerPoolManager } from '../workers/worker-pool'
-import { wasmManager } from './wasm-manager'
+import { WorkerPool, WorkerTask, WorkerResult, WorkerPoolOptions } from '../workers/worker-pool'
 import path from 'path'
 
 export interface WASMTask extends WorkerTask {

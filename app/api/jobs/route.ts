@@ -6,7 +6,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { jobQueue, queuePDFGeneration } from '@/lib/workers/job-queue'
-import { withApiTimeout } from '@/lib/timeout'
 import { RateLimiter } from '@/lib/rateLimit'
 
 /**

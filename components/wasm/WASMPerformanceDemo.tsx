@@ -5,7 +5,7 @@
  * Demostración de WebAssembly optimizada sin dependencias de UI
  */
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useWASM, useMathWASM, useDataAnalysisWASM, useImageWASM } from '@/hooks/useWASM'
 
 interface DemoResults {

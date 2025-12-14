@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { v4 as uuidv4 } from 'uuid'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
 import { useRealtimeSubscription, RealtimeEvents } from '@/lib/supabase-realtime'
-import { formatPrice, formatNumber } from '@/lib/utils'
+import { formatPrice } from '@/lib/utils'
 import { openInvoiceInNewTab, type InvoiceData } from '@/lib/invoiceGenerator'
 import {
   Package,
@@ -16,7 +16,6 @@ import {
   Loader,
   ShoppingBag,
   DollarSign,
-  Calendar,
   Loader2,
   AlertCircle,
   AlertTriangle,
@@ -30,7 +29,6 @@ import {
   RotateCcw,
   MapPin,
   MessageCircle,
-  Star,
   ChevronLeft,
   ChevronRight,
   TrendingUp,

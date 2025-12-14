@@ -1,5 +1,3 @@
-import bcrypt from 'bcryptjs';
-
 // Interfaces
 interface User {
   id: string;

@@ -1,6 +1,6 @@
 import { formatPrice } from './utils'
 import { prisma } from '@/lib/prisma'
-import { sendNotificationEvent, getNotificationChannel } from '@/lib/supabase-server'
+import { sendNotificationEvent } from '@/lib/supabase-server'
 
 // Tipo definido manualmente para coincidir con el schema de Prisma
 export type NotificationType = 

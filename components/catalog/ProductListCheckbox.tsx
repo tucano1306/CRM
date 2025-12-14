@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { 
   Search, 
@@ -14,7 +14,6 @@ import {
   Filter,
   ArrowUpDown,
   X,
-  Check
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatPrice } from '@/lib/utils'

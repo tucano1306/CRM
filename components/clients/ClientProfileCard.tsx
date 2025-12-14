@@ -10,11 +10,9 @@ import {
   Calendar,
   DollarSign,
   ShoppingBag,
-  User,
   Award,
   TrendingUp,
   ChevronDown,
-  ChevronUp,
   Package,
   Sparkles,
   ExternalLink

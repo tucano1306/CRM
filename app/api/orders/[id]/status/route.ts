@@ -15,7 +15,6 @@ import logger, { LogCategory } from '@/lib/logger'
 import { sendRealtimeEvent, getSellerChannel, getBuyerChannel } from '@/lib/supabase-server'
 import { eventEmitter } from '@/lib/events/eventEmitter'
 import { EventType } from '@/lib/events/types/event.types'
-import { executeInBackground } from '@/lib/background-tasks'
 
 const VALID_STATUSES = [
   'PENDING',

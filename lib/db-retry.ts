@@ -1,4 +1,3 @@
-import { Prisma } from '@prisma/client'
 import logger, { LogCategory } from './logger'
 
 // Error classifiers

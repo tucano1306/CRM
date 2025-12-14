@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { BarChart3, TrendingUp, Users, Package, ShoppingCart, DollarSign, Calendar, Download } from 'lucide-react'
+import { BarChart3, TrendingUp, Package, ShoppingCart, DollarSign, Calendar, Download } from 'lucide-react'
 import MainLayout from '@/components/shared/MainLayout'
 import PageHeader from '@/components/shared/PageHeader'
 import { 

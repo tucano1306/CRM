@@ -4,10 +4,9 @@
  * Compatible con el sistema existente sin romper funcionalidad
  */
 
-import { Worker, isMainThread, parentPort, workerData } from 'worker_threads'
+import { Worker, isMainThread, parentPort } from 'worker_threads'
 import { EventEmitter } from 'events'
 import { WorkerTask, WorkerResult } from '../workers/worker-pool'
-import { wasmManager, WASMTask, WASMResult } from './wasm-manager'
 
 export interface WASMWorkerTask extends WorkerTask {
   isWASM?: boolean

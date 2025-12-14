@@ -2,7 +2,7 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import { INVOICE_CONFIG } from './invoice-config'
-import { formatPrice, formatNumber } from './utils'
+import { formatPrice } from './utils'
 
 interface InvoiceItem {
   sku: string | null

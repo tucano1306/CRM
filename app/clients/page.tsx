@@ -25,7 +25,7 @@ import {
   History,
   Download
 } from 'lucide-react'
-import { exportClientsReport, exportClientHistory } from '@/lib/excelExport'
+import { exportClientHistory } from '@/lib/excelExport'
 
 interface ClientWithStats {
   id: string

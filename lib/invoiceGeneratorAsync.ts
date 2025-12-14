@@ -4,7 +4,6 @@
  */
 
 import { queuePDFGeneration, jobQueue } from '@/lib/workers/job-queue'
-import type { JobData } from '@/lib/workers/job-queue'
 
 // Re-exportar tipos existentes para compatibilidad
 export interface InvoiceItem {

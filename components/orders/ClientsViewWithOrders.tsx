@@ -20,7 +20,6 @@ import {
   ArrowLeft
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import OrdersListImproved from './OrdersListImproved'
 import OrdersTimelineView from './OrdersTimelineView'
 import OrderDetailModal from './OrderDetailModal'
 import BulkStatusChangeModal from './BulkStatusChangeModal'

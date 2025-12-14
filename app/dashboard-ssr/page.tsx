@@ -5,7 +5,6 @@ import { formatPrice, formatNumber } from '@/lib/utils'
 import {
   ShoppingCart,
   Package,
-  Users,
   DollarSign,
   TrendingUp,
   Clock,

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
-import { formatPrice, formatNumber } from '@/lib/utils'
+import { formatPrice } from '@/lib/utils'
 import {
   ShoppingCart,
   Package,
@@ -10,7 +10,6 @@ import {
   DollarSign,
   TrendingUp,
   TrendingDown,
-  Loader2,
   Clock,
   AlertCircle,
   Plus,
@@ -21,8 +20,6 @@ import {
   Activity,
   RotateCcw,
   MessageSquare,
-  FileText,
-  RotateCw,
 } from 'lucide-react'
 import MainLayout from '@/components/shared/MainLayout'
 import { DashboardStatsSkeleton } from '@/components/skeletons'

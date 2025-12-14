@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { withPrismaTimeout, handleTimeoutError, TimeoutError } from '@/lib/timeout'
 import { createProductSchema, validateSchema } from '@/lib/validations'
 import { sanitizeText } from '@/lib/sanitize'
-import { withCache, CACHE_CONFIGS, getAdaptiveCache } from '@/lib/apiCache'
+import { withCache, getAdaptiveCache } from '@/lib/apiCache'
 import { invalidateProductsCache } from '@/lib/cache-invalidation'
 import { autoClassifyCategory } from '@/lib/autoClassifyCategory'
 

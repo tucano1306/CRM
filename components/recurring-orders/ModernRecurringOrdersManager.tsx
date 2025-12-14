@@ -5,18 +5,15 @@ import { formatPrice } from '@/lib/utils'
 import { 
   Plus, 
   RefreshCw, 
-  Calendar, 
   Pause, 
   Play, 
   Trash2,
   Clock,
   DollarSign,
   Package,
-  Edit,
   Eye,
   Zap,
   TrendingUp,
-  AlertCircle,
   CheckCircle2,
   CalendarCheck,
   Repeat

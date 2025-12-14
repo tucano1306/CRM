@@ -1,6 +1,6 @@
 import { OrderEvent, EventType } from '../types/event.types';
 import { eventEmitter } from '../eventEmitter';
-import logger, { LogCategory } from '@/lib/logger';
+import logger from '@/lib/logger';
 
 export class OrderEventHandler {
   static initialize(): void {

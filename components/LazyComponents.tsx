@@ -1,7 +1,6 @@
 // components/LazyComponents.tsx
 'use client'
 
-import dynamic from 'next/dynamic'
 import { Suspense, useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 

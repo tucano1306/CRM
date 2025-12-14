@@ -12,14 +12,9 @@ import {
   BarChart3,
   PanelLeftClose,
   PanelLeftOpen,
-  Settings,
   X,
   MessageCircle,
   RefreshCw,
-  FileText,
-  RotateCcw,
-  DollarSign,
-  LogOut
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import ThemeToggle from './ThemeToggle'

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { v4 as uuidv4 } from 'uuid'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
@@ -15,7 +15,6 @@ import {
   ArrowRight,
   Loader2,
   AlertCircle,
-  X,
   Check,
   CheckCircle,
   ArrowUpDown,

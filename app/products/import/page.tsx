@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
-import { Loader2, Users } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 /**
  * Página de importación de productos deshabilitada
