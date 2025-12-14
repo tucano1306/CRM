@@ -77,7 +77,7 @@ export interface LoggerConfig {
 const DEFAULT_CONFIG: LoggerConfig = {
   minLevel: process.env.NODE_ENV === 'production' ? LogLevel.INFO : LogLevel.DEBUG,
   enableConsole: true,
-  enableFile: false, // TODO: Implementar file logging
+  enableFile: false, // NOTE: File logging can be implemented if needed
   enableExternal: process.env.NODE_ENV === 'production', // Activar en producción
   prettyPrint: process.env.NODE_ENV !== 'production',
   includeStackTrace: true,
@@ -275,7 +275,7 @@ class Logger {
    * Envía todos los logs del buffer (implementación futura)
    */
   private flushBuffer(): void {
-    // TODO: Implementar flush a servicio externo o archivo
+    // NOTE: Placeholder - can be extended to flush to external service or file
     if (this.logBuffer.length > 0) {
       console.log(`[Logger] Flushing ${this.logBuffer.length} buffered logs`)
       this.logBuffer = []
@@ -286,7 +286,7 @@ class Logger {
    * Envía log a Sentry (implementación placeholder)
    */
   private async sendToSentry(entry: LogEntry): Promise<void> {
-    // TODO: Implementar integración con Sentry
+    // NOTE: Sentry integration placeholder - uncomment and configure below
     // import * as Sentry from "@sentry/nextjs"
     // if (entry.error) {
     //   Sentry.captureException(entry.error, {
@@ -308,7 +308,7 @@ class Logger {
    * Envía log a Logtail (implementación placeholder)
    */
   private async sendToLogtail(entry: LogEntry): Promise<void> {
-    // TODO: Implementar integración con Logtail
+    // NOTE: Logtail integration placeholder - uncomment and configure below
     // import { Logtail } from "@logtail/node"
     // const logtail = new Logtail(process.env.LOGTAIL_SOURCE_TOKEN!)
     // await logtail[entry.level](entry.message, {
@@ -323,7 +323,7 @@ class Logger {
    * Envía log a Datadog (implementación placeholder)
    */
   private async sendToDatadog(entry: LogEntry): Promise<void> {
-    // TODO: Implementar integración con Datadog
+    // NOTE: Datadog integration placeholder
     this.addToBuffer(entry)
   }
 

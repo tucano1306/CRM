@@ -70,7 +70,7 @@ export async function POST(
       console.log('⚠️ [QUOTE SEND] No hay clientId en la cotización')
     }
 
-    // TODO: Aquí puedes agregar envío de email al cliente
+    // NOTE: Optional - email notification can be added here
     // sendQuoteEmail(updatedQuote)
 
     return NextResponse.json({

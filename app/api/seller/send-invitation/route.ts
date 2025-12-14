@@ -69,8 +69,8 @@ export async function POST(req: NextRequest) {
         console.log(`📱 WhatsApp simulado a: ${whatsapp}`)
         console.log(`Link: ${invitationLink}`)
         
-        // TODO: Integrar con Twilio WhatsApp API
-        results.whatsappSent = true // Simulado por ahora
+        // NOTE: Future integration point for Twilio WhatsApp API
+        results.whatsappSent = true // Simulated for now
       } catch (err) {
         console.error('Error enviando WhatsApp:', err)
       }
@@ -82,8 +82,8 @@ export async function POST(req: NextRequest) {
         console.log(`📱 SMS simulado a: ${sms}`)
         console.log(`Link: ${invitationLink}`)
         
-        // TODO: Integrar con Twilio SMS
-        results.smsSent = true // Simulado por ahora
+        // NOTE: Future integration point for Twilio SMS
+        results.smsSent = true // Simulated for now
       } catch (err) {
         console.error('Error enviando SMS:', err)
       }

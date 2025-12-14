@@ -105,8 +105,8 @@ export async function PATCH(
       }, { status: 400 })
     }
 
-    // TODO: Verificar que el método de confirmación es MANUAL
-    // (requiere campo en Client model: orderConfirmationMethod)
+    // NOTE: Optional - verify confirmation method is MANUAL
+    // (requires field in Client model: orderConfirmationMethod)
 
     // Actualizar orden a PLACED
     const updatedOrder = await withPrismaTimeout(

@@ -95,7 +95,7 @@ export default function DashboardPage() {
       if (result.success) {
         const baseStats = result.data.data.overview
         
-        // Agregar trends simulados (TODO: calcular desde el backend con datos reales)
+        // NOTE: Trends are simulated; backend calculation with real data can be added later
         const statsWithTrends = {
           ...baseStats,
           ordersGrowth: Math.floor(Math.random() * 30) - 10, // -10% a +20%
