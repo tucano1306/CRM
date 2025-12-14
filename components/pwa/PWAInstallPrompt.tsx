@@ -18,13 +18,13 @@ export default function PWAInstallPrompt() {
 
   useEffect(() => {
     // Verificar si ya está instalada
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    if (globalThis.matchMedia('(display-mode: standalone)').matches) {
       setIsInstalled(true)
       return
     }
 
     // Detectar iOS
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(globalThis as any).MSStream
     setIsIOS(isIOSDevice)
 
     // Verificar si ya se mostró el prompt recientemente (últimas 24 horas)
@@ -44,7 +44,7 @@ export default function PWAInstallPrompt() {
       setTimeout(() => setShowPrompt(true), 3000)
     }
 
-    window.addEventListener('beforeinstallprompt', handler)
+    globalThis.addEventListener('beforeinstallprompt', handler)
 
     // Para iOS, mostrar instrucciones después de un tiempo
     if (isIOSDevice && !localStorage.getItem('pwa-ios-shown')) {
@@ -52,7 +52,7 @@ export default function PWAInstallPrompt() {
     }
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handler)
+      globalThis.removeEventListener('beforeinstallprompt', handler)
     }
   }, [])
 

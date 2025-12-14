@@ -332,7 +332,7 @@ export function useEdgeFunctions(
         if (enableAnalytics) {
           trackEvent({
             type: 'pageview',
-            page: window.location.pathname,
+            page: globalThis.location.pathname,
             category: 'navigation'
           })
         }
@@ -366,15 +366,15 @@ export function useEdgeFunctions(
     const handleRouteChange = () => {
       trackEvent({
         type: 'pageview',
-        page: window.location.pathname,
+        page: globalThis.location.pathname,
         category: 'navigation'
       })
     }
     
     // Listen for route changes (Next.js)
-    if (typeof window !== 'undefined') {
-      window.addEventListener('popstate', handleRouteChange)
-      return () => window.removeEventListener('popstate', handleRouteChange)
+    if (typeof globalThis.window !== 'undefined') {
+      globalThis.addEventListener('popstate', handleRouteChange)
+      return () => globalThis.removeEventListener('popstate', handleRouteChange)
     }
   }, [enableAnalytics, trackEvent])
 

@@ -42,7 +42,7 @@ export function useRoleSwitch() {
       await new Promise(resolve => setTimeout(resolve, 300))
 
       // 5. Redireccionar con recarga completa
-      window.location.href = data.redirect
+      globalThis.location.href = data.redirect
 
       return true
 

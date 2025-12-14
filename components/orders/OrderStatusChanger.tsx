@@ -220,7 +220,7 @@ export default function OrderStatusChanger({
           throw new Error(data.error || 'Error al cambiar el estado')
         }
 
-        window.location.reload()
+        globalThis.location.reload()
       }
 
       setShowNotesModal(false)

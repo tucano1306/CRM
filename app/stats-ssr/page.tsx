@@ -104,7 +104,7 @@ export default async function StatsSSRPage() {
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => window.location.reload()}
+              onClick={() => globalThis.location.reload()}
             >
               Actualizar
             </Button>

@@ -59,7 +59,7 @@ export default function BuyerRecurringOrdersPage() {
               No se pudo cargar tu información de cliente. Por favor, contacta al vendedor para que configure tu cuenta.
             </p>
             <button 
-              onClick={() => window.location.href = '/buyer/dashboard'}
+              onClick={() => globalThis.location.href = '/buyer/dashboard'}
               className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
             >
               Volver al Dashboard

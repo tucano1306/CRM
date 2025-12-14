@@ -198,7 +198,7 @@ export default function CreateRecurringOrderModal({
         console.log('✅ Orden recurrente creada exitosamente')
         onClose()
         resetForm()
-        window.location.reload() // Recargar para ver la nueva orden
+        globalThis.location.reload() // Recargar para ver la nueva orden
       } else {
         console.error('❌ Error del servidor completo:', {
           status: response.status,

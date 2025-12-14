@@ -84,7 +84,7 @@ function SelectModeContent() {
               {checkError || 'No se pudieron verificar tus permisos'}
             </p>
             <Button 
-              onClick={() => window.location.reload()} 
+              onClick={() => globalThis.location.reload()} 
               className="w-full"
             >
               Reintentar

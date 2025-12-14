@@ -239,7 +239,7 @@ export function useBackgroundJob(options: UseBackgroundJobOptions = {}) {
 
       // Crear blob y descargar
       const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
+      const url = globalThis.URL.createObjectURL(blob)
       
       const link = document.createElement('a')
       link.href = url
@@ -248,7 +248,7 @@ export function useBackgroundJob(options: UseBackgroundJobOptions = {}) {
       link.click()
       document.body.removeChild(link)
       
-      window.URL.revokeObjectURL(url)
+      globalThis.URL.revokeObjectURL(url)
 
     } catch (error) {
       console.error(`❌ Error downloading job result ${jobId}:`, error)

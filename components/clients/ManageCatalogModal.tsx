@@ -214,7 +214,7 @@ export default function ManageCatalogModal({
       }
       
       const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
+      const url = globalThis.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
       // Limpiar nombre del cliente para el archivo
@@ -223,7 +223,7 @@ export default function ManageCatalogModal({
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
-      window.URL.revokeObjectURL(url)
+      globalThis.URL.revokeObjectURL(url)
       console.log('✅ Productos exportados exitosamente')
     } catch (error) {
       console.error('Error exportando productos:', error)
@@ -848,12 +848,12 @@ export default function ManageCatalogModal({
                     try {
                       const response = await fetch('/api/products/import')
                       const blob = await response.blob()
-                      const url = window.URL.createObjectURL(blob)
+                      const url = globalThis.URL.createObjectURL(blob)
                       const a = document.createElement('a')
                       a.href = url
                       a.download = 'plantilla_productos.xlsx'
                       a.click()
-                      window.URL.revokeObjectURL(url)
+                      globalThis.URL.revokeObjectURL(url)
                     } catch (err) {
                       console.error('Error descargando plantilla:', err)
                     }

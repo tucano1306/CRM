@@ -196,7 +196,7 @@ export default function ClientsViewWithOrders({
           // Seleccionar la orden para que se muestre destacada
           setSelectedOrders([initialOrderId])
           // Limpiar el parámetro de la URL sin recargar
-          window.history.replaceState({}, '', '/orders')
+          globalThis.history.replaceState({}, '', '/orders')
           break
         }
       }

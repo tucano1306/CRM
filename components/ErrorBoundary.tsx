@@ -75,7 +75,7 @@ class ErrorBoundary extends Component<Props, State> {
                 Reintentar
               </button>
               <button
-                onClick={() => window.location.href = '/'}
+                onClick={() => globalThis.location.href = '/'}
                 className="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 flex items-center justify-center gap-2"
               >
                 <Home size={16} />

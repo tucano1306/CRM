@@ -395,7 +395,7 @@ function OrdersPageContent() {
       if (orderToOpen) {
         openOrderModal(orderToOpen)
         // Limpiar el parámetro de la URL sin recargar
-        window.history.replaceState({}, '', '/buyer/orders')
+        globalThis.history.replaceState({}, '', '/buyer/orders')
       }
     }
   }, [orderIdFromUrl, orders, selectedOrder])
@@ -1061,7 +1061,7 @@ function OrdersPageContent() {
       // Fallback si el popup fue bloqueado
       if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
         // Intentar con location.href como alternativa
-        window.location.href = whatsappUrl
+        globalThis.location.href = whatsappUrl
       }
     } else {
       console.warn('No phone found for seller:', contactOrderInfo.seller)

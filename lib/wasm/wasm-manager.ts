@@ -65,7 +65,7 @@ class WASMManager {
       let wasmBytes: ArrayBuffer
 
       if (typeof source === 'string') {
-        if (typeof window !== 'undefined') {
+        if (typeof globalThis.window !== 'undefined') {
           // Browser environment
           const response = await fetch(source)
           if (!response.ok) {

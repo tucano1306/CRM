@@ -607,9 +607,9 @@ class PushNotificationService {
 
   // Inicializar el servicio (llamar al cargar la app)
   async init(): Promise<boolean> {
-    if (typeof window === 'undefined') return false
+    if (typeof globalThis.window === 'undefined') return false
     
-    if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+    if (!('serviceWorker' in navigator) || !('Notification' in globalThis)) {
       console.warn('⚠️ Notificaciones no soportadas')
       return false
     }
@@ -664,7 +664,7 @@ class PushNotificationService {
 
   // Actualizar badge del ícono de la app (número en el ícono)
   async setBadge(count: number): Promise<void> {
-    if (typeof window === 'undefined') return
+    if (typeof globalThis.window === 'undefined') return
 
     if ('setAppBadge' in navigator) {
       try {
@@ -690,14 +690,14 @@ class PushNotificationService {
 
   // Vibrar el dispositivo
   vibrate(pattern: number | number[] = [200, 100, 200]): void {
-    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+    if (typeof globalThis.window !== 'undefined' && 'vibrate' in navigator) {
       navigator.vibrate(pattern)
     }
   }
 
   // Reproducir sonido
   playSound(soundUrl: string = '/notification.mp3'): void {
-    if (typeof window === 'undefined') return
+    if (typeof globalThis.window === 'undefined') return
     try {
       const audio = new Audio(soundUrl)
       audio.volume = 0.5

@@ -606,7 +606,7 @@ export default function ClientsPage() {
       </div>
 
       {/* 🔔 Panel de Solicitudes de Conexión Pendientes */}
-      {typeof window !== 'undefined' && (
+      {typeof globalThis.window !== 'undefined' && (
         <div className="mb-6">
           <Suspense fallback={null}>
             <ConnectionRequestsPanel
