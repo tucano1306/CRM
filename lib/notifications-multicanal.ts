@@ -341,6 +341,7 @@ export async function sendMultichannelNotification(
   params: SendNotificationParams
 ): Promise<NotificationResult[]> {
   const {
+    clientId,
     clientName,
     clientEmail,
     clientPhone,
