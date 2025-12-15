@@ -47,10 +47,12 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
   const [error, setError] = useState<string | null>(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [uploadingFile, setUploadingFile] = useState(false)
-  const [_uploadProgress, setUploadProgress] = useState(0)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [showSearch, setShowSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [_isTyping, setIsTyping] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [isTyping, setIsTyping] = useState(false)
   const [otherUserTyping, setOtherUserTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)

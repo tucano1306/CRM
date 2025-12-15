@@ -471,7 +471,7 @@ export default function OrderReviewPanel({
           </div>
         )}
 
-        {/* Botón para confirmar cuando ya está en revisión y todo OK */}
+        {/* Botón para confirmar cuando ya está en revisión y está OK */}
         {isLocked && (
           <div className="bg-green-100 border-green-300 border rounded-lg p-4 text-center">
             <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />

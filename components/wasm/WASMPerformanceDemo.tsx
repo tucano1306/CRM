@@ -34,7 +34,6 @@ export default function WASMPerformanceDemo() {
   
   const [results, setResults] = useState<DemoResults>({})
   const [isRunning, setIsRunning] = useState(false)
-  const [_selectedDemo, setSelectedDemo] = useState('math')
 
   // Generar datos de ejemplo para órdenes
   const generateSampleOrderData = (): number[] => {

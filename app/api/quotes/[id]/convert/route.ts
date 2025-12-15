@@ -58,7 +58,7 @@ export async function POST(
     }
 
     // Generar número de orden
-    const orderNumber = `ORD-${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+    const orderNumber = `ORD-${Date.now()}${Math.random().toString(36).substring(2, 11).toUpperCase()}`
 
     // Crear orden
     const order = await prisma.order.create({

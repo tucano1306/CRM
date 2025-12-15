@@ -274,7 +274,7 @@ export async function DELETE(
      * Formato del body:
      * { productIds: ["...", "..."] }
      * 
-     * Si no se envía productIds, se elimina TODO el catálogo
+     * Si no se envía productIds, se elimina el catálogo completo
      */
     const { productIds } = body
 
@@ -297,7 +297,7 @@ export async function DELETE(
         deleted: result.count
       })
     } else {
-      // Eliminar TODO el catálogo
+      // Eliminar el catálogo completo
       const result = await withDbRetry(() =>
         prisma.clientProduct.deleteMany({
           where: { clientId }

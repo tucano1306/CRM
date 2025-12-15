@@ -846,8 +846,8 @@ export default function ManageCatalogModal({
                   Importar productos desde Excel
                 </h4>
                 <p className="text-sm text-gray-600 mb-3">
-                  Sube un archivo Excel con los productos. El sistema detectará automáticamente las columnas:
-                  <strong> Item #, Description, Brand, Pack, Size, Price</strong>
+                  Sube un archivo Excel con los productos. El sistema detectará automáticamente las columnas:{' '}
+                  <strong>Item #, Description, Brand, Pack, Size, Price</strong>
                 </p>
                 <Button
                   variant="outline"

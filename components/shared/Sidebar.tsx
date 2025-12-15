@@ -213,7 +213,6 @@ export default function Sidebar() {
             {/* User profile row */}
             <div className="flex items-center gap-3 px-4 py-3">
               <UserButton 
-                afterSignOutUrl="/"
                 appearance={{
                   elements: {
                     avatarBox: "w-9 h-9",
@@ -239,7 +238,6 @@ export default function Sidebar() {
             </div>
             <div className="flex justify-center pt-1">
               <UserButton 
-                afterSignOutUrl="/"
                 appearance={{
                   elements: {
                     avatarBox: "w-8 h-8"
@@ -330,7 +328,6 @@ export default function Sidebar() {
           {/* User profile row */}
           <div className="flex items-center gap-3 px-4 py-3">
             <UserButton 
-              afterSignOutUrl="/"
               appearance={{
                 elements: {
                   avatarBox: "w-9 h-9",

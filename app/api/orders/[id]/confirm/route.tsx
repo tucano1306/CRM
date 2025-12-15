@@ -7,9 +7,12 @@ import { z } from 'zod'
 
 // Usar singleton de Prisma
 
+// UUID regex pattern for validation
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 // ✅ SCHEMA DE VALIDACIÓN
 const confirmOrderSchema = z.object({
-  idempotencyKey: z.string().uuid('Idempotency key debe ser UUID válido').optional(),
+  idempotencyKey: z.string().regex(uuidRegex, 'Idempotency key debe ser UUID válido').optional(),
   notes: z.string().max(500, 'Notas no pueden exceder 500 caracteres').optional()
 })
 

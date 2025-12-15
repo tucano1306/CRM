@@ -695,7 +695,7 @@ export default function ClientsViewWithOrders({
       {/* Modal con órdenes del cliente seleccionado - RENDERIZADO CON PORTAL */}
       {selectedClient && isMounted && createPortal(
         <>
-          {/* Overlay - MEJORADO PARA BLOQUEAR SCROLL Y CUBRIR TODO */}
+          {/* Overlay - MEJORADO PARA BLOQUEAR SCROLL Y CUBRIR TODA LA PANTALLA */}
           <button 
             type="button"
             className="bg-black/60 backdrop-blur-sm transition-all duration-300 overflow-hidden border-0 cursor-default"

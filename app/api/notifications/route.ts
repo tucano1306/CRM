@@ -171,14 +171,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     // ✅ Validar schema
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     const createNotificationSchema = z.object({
-      sellerId: z.string().uuid().optional(),
-      clientId: z.string().uuid().optional(),
+      sellerId: z.string().regex(uuidRegex, 'Invalid UUID').optional(),
+      clientId: z.string().regex(uuidRegex, 'Invalid UUID').optional(),
       type: z.string().min(1).max(50),
       title: z.string().min(1).max(200),
       message: z.string().min(1).max(1000),
-      orderId: z.string().uuid().optional(),
-      relatedId: z.string().uuid().optional(),
+      orderId: z.string().regex(uuidRegex, 'Invalid UUID').optional(),
+      relatedId: z.string().regex(uuidRegex, 'Invalid UUID').optional(),
       metadata: z.any().optional() // JSON field
     }).refine(data => data.sellerId || data.clientId, {
       message: 'Debe especificar sellerId o clientId'

@@ -84,9 +84,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
 
     // ✅ Validar schema
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     const createSellerSchema = z.object({
       name: z.string().min(1).max(200),
-      email: z.string().email(),
+      email: z.string().regex(emailRegex, 'Invalid email'),
       phone: z.string().max(50).optional(),
       territory: z.string().max(100).optional(),
       commission: z.number().min(0).max(100).optional()

@@ -79,11 +79,12 @@ export async function POST(
     const body = await request.json()
 
     // ✅ Validar schema
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     const createHistorySchema = z.object({
       changeType: z.string().min(1).max(100),
       oldValue: z.string().max(500).optional(),
       newValue: z.string().min(1).max(500),
-      changedBy: z.string().uuid().optional()
+      changedBy: z.string().regex(uuidRegex, 'Invalid UUID').optional()
     })
 
     const validation = validateSchema(createHistorySchema, body)

@@ -92,7 +92,7 @@ export async function GET(
     })
     const senderMap = new Map(senders.map(s => [s.id, s]))
 
-    // Combinar todo en un historial unificado
+    // Combinar en un historial unificado
     const unifiedHistory = [
       // Cambios de estado
       ...statusHistory.map(h => ({

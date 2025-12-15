@@ -343,7 +343,6 @@ function OrdersPageContent() {
   const [dateTo, setDateTo] = useState('')
   const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [_hoveredRating, _setHoveredRating] = useState<number | null>(null)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [toastStatus, setToastStatus] = useState('')
@@ -1185,7 +1184,7 @@ function OrdersPageContent() {
       if (dateTo) {
         const orderDate = new Date(order.createdAt)
         const toDate = new Date(dateTo)
-        toDate.setHours(23, 59, 59, 999) // Incluir todo el día
+        toDate.setHours(23, 59, 59, 999) // Incluir el día completo
         if (orderDate > toDate) return false
       }
 

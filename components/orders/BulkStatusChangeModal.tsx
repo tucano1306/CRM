@@ -127,7 +127,8 @@ export default function BulkStatusChangeModal({
 }: OrderReviewModalProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [_step, setStep] = useState<'review' | 'issues' | 'confirm'>('review')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [step, setStep] = useState<'review' | 'issues' | 'confirm'>('review')
   
   // Estado para problemas de stock
   const [productIssues, setProductIssues] = useState<Map<string, ProductIssue>>(new Map())
@@ -527,7 +528,7 @@ export default function BulkStatusChangeModal({
     return false
   })
 
-  // Confirmar orden (Lock) - Todo está disponible
+  // Confirmar orden (Lock) - Todos los productos están disponibles
   const handleLockOrder = async () => {
     if (!singleOrder) return
 
@@ -1288,7 +1289,7 @@ export default function BulkStatusChangeModal({
     </div>
   )
 
-  // Usar portal para renderizar encima de todo
+  // Usar portal para renderizar encima de todos los elementos
   if (!mounted) return null
   
   return createPortal(modalContent, document.body)

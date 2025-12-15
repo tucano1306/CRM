@@ -254,7 +254,7 @@ class JobQueue extends EventEmitter {
    * Generar ID único para trabajo
    */
   private generateJobId(): string {
-    return `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    return `job_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
   }
 
   /**

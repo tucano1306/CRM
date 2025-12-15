@@ -6,9 +6,12 @@ import logger, { LogCategory } from '@/lib/logger'
 import { z } from 'zod'
 import { validateSchema } from '@/lib/validations'
 
+// UUID regex pattern for validation
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
 // Schema de validación
 const confirmationSettingsSchema = z.object({
-  clientId: z.string().uuid(),
+  clientId: z.string().regex(uuidRegex, 'Invalid UUID'),
   method: z.enum(['MANUAL', 'AUTOMATIC']),
   deadlineMinutes: z.number().min(1).max(60).optional() // Para AUTOMATIC, cuántos minutos dar
 })

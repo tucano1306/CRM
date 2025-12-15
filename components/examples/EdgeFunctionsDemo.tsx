@@ -127,7 +127,7 @@ export default function EdgeFunctionsDemo() {
       {/* Authentication Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          🔐 Authentication
+          🔐 Authentication{' '}
           <span className="ml-2 text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
             ~15ms
           </span>
@@ -166,7 +166,7 @@ export default function EdgeFunctionsDemo() {
       {/* Geolocation Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          🌍 Geolocation & Regional Settings
+          🌍 Geolocation & Regional Settings{' '}
           <span className="ml-2 text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
             ~20ms
           </span>
@@ -229,7 +229,7 @@ export default function EdgeFunctionsDemo() {
       {/* Feature Flags & A/B Testing Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          🚩 Feature Flags & A/B Testing
+          🚩 Feature Flags & A/B Testing{' '}
           <span className="ml-2 text-sm bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
             ~25ms
           </span>
@@ -291,7 +291,7 @@ export default function EdgeFunctionsDemo() {
       {/* Request Preprocessing Demo */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          ⚡ Request Preprocessing
+          ⚡ Request Preprocessing{' '}
           <span className="ml-2 text-sm bg-orange-100 text-orange-800 px-2 py-1 rounded-full">
             ~12ms
           </span>
@@ -407,7 +407,7 @@ export default function EdgeFunctionsDemo() {
       {/* Analytics Tracking Demo */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-          📊 Analytics Tracking
+          📊 Analytics Tracking{' '}
           <span className="ml-2 text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
             ~35ms
           </span>

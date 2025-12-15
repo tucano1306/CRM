@@ -114,7 +114,7 @@ export async function POST(
         creditNote = existingCreditNote
       } else {
         console.log('💳 [RETURNS COMPLETE] Creating new credit note for return:', id)
-        const creditNoteNumber = `CN-${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+        const creditNoteNumber = `CN-${Date.now()}${Math.random().toString(36).substring(2, 11).toUpperCase()}`
         
         // Expira en 1 año
         const expiresAt = new Date()

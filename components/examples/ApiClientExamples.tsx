@@ -10,7 +10,8 @@ import { Loader2, AlertCircle, Clock } from 'lucide-react'
  * EJEMPLO 1: Uso básico con fetchWithTimeout
  */
 export function ExampleBasicFetch() {
-  const [_data, setData] = useState(null)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -110,7 +111,8 @@ export function ExampleApiCall() {
  * EJEMPLO 3: Uso con retry logic
  */
 export function ExampleWithRetry() {
-  const [_data, setData] = useState(null)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [retries, setRetries] = useState(0)
   const [error, setError] = useState<string | null>(null)

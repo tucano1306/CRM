@@ -248,7 +248,7 @@ export async function POST(request: Request) {
     console.log('✅ [RETURNS] Validación exitosa. Creando devolución por $' + totalReturnAmount + ' (final: $' + finalRefundAmount + ')')
 
     // Generar número de devolución
-    const returnNumber = `RET-${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+    const returnNumber = `RET-${Date.now()}${Math.random().toString(36).substring(2, 11).toUpperCase()}`
 
     // Crear devolución con items
     const newReturn = await withPrismaTimeout(() => prisma.return.create({

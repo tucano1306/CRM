@@ -64,7 +64,8 @@ export default function ClientsPage() {
   
   // Estados para modal de historial
   const [showHistoryModal, setShowHistoryModal] = useState(false)
-  const [_historyClientId, setHistoryClientId] = useState<string | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [historyClientId, setHistoryClientId] = useState<string | null>(null)
   const [historyClientName, setHistoryClientName] = useState<string>('')
   const [clientOrders, setClientOrders] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)

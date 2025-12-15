@@ -176,7 +176,7 @@ export async function POST(request: Request) {
     const totalAmount = subtotal - discount + tax
 
     // Generar número de cotización
-    const quoteNumber = `QUO-${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+    const quoteNumber = `QUO-${Date.now()}${Math.random().toString(36).substring(2, 11).toUpperCase()}`
 
     // Crear cotización
     const quote = await prisma.quote.create({

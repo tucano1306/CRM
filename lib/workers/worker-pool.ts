@@ -277,7 +277,7 @@ export class WorkerPool {
       }
 
       const task: WorkerTask = {
-        id: `${type}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `${type}-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
         type,
         data,
         priority: options.priority || 0,

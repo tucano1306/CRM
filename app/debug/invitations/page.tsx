@@ -150,7 +150,7 @@ export default function DebugInvitationsPage() {
                 💡 Consejo Pro
               </p>
               <p className="text-sm text-yellow-800">
-                Si usas Gmail, puedes crear infinitos emails agregando <code className="bg-white px-1 rounded">+cualquiercosa</code> antes del @. 
+                Si usas Gmail, puedes crear infinitos emails agregando{' '}<code className="bg-white px-1 rounded">+cualquiercosa</code> antes del @. 
                 Ejemplo: si tu email es <code className="bg-white px-1 rounded">juan@gmail.com</code>, 
                 puedes usar <code className="bg-white px-1 rounded">juan+cliente1@gmail.com</code>, 
                 <code className="bg-white px-1 rounded">juan+cliente2@gmail.com</code>, etc. 

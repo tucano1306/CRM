@@ -60,7 +60,7 @@ export async function GET(request: Request) {
           data: {
             clientId: recurringOrder.clientId,
             sellerId: recurringOrder.client.sellerId,
-            orderNumber: `REC-${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+            orderNumber: `REC-${Date.now()}${Math.random().toString(36).substring(2, 11).toUpperCase()}`,
             status: 'PENDING',
             totalAmount: subtotal,
             notes: (() => {

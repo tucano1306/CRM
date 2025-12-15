@@ -84,7 +84,7 @@ const MAX_STORED_EVENTS = 10000
  * Generate unique event ID
  */
 function generateEventId(): string {
-  return `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+  return `evt_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
 }
 
 /**

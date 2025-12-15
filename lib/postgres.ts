@@ -595,7 +595,7 @@ export async function testConnection(): Promise<boolean> {
 }
 
 // ============================================
-// EXPORTAR TODO
+// EXPORTACIONES
 // ============================================
 
 const db = {

@@ -78,7 +78,7 @@ class WASMWorkerPool extends WorkerPool {
     } = {}
   ): Promise<WASMResult> {
     const wasmTask: WASMTask = {
-      id: `wasm-${moduleName}-${functionName}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `wasm-${moduleName}-${functionName}-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       type: 'wasm-execution',
       data: {
         moduleName,

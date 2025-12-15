@@ -172,7 +172,7 @@ class RateLimiter {
   }
 
   /**
-   * Limpiar todo el store (para testing)
+   * Limpiar el store completo (para testing)
    */
   clear(): void {
     this.store.clear()
