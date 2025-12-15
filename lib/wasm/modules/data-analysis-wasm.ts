@@ -429,6 +429,35 @@ export class DataAnalysisWASM {
     }
   }
 
+  // Helper: find nearest centroid for a data point
+  private findNearestCentroid(value: number, centroids: number[]): number {
+    let bestCluster = 0
+    let bestDistance = Math.abs(value - centroids[0])
+    for (let j = 1; j < centroids.length; j++) {
+      const distance = Math.abs(value - centroids[j])
+      if (distance < bestDistance) {
+        bestDistance = distance
+        bestCluster = j
+      }
+    }
+    return bestCluster
+  }
+
+  // Helper: update centroids based on assignments
+  private updateCentroids(data: number[], assignments: number[], centroids: number[]): void {
+    for (let j = 0; j < centroids.length; j++) {
+      const clusterPoints = data.filter((_, i) => assignments[i] === j)
+      if (clusterPoints.length > 0) {
+        centroids[j] = clusterPoints.reduce((sum, val) => sum + val, 0) / clusterPoints.length
+      }
+    }
+  }
+
+  // Helper: calculate inertia
+  private calculateInertia(data: number[], assignments: number[], centroids: number[]): number {
+    return data.reduce((sum, val, i) => sum + Math.pow(val - centroids[assignments[i]], 2), 0)
+  }
+
   /**
    * Fallback JavaScript para K-means clustering
    */
@@ -442,7 +471,6 @@ export class DataAnalysisWASM {
     iterations: number
     inertia: number
   } {
-    // Initialize centroids randomly
     const centroids = Array(k).fill(0).map(() => 
       data[Math.floor(Math.random() * data.length)]
     )
@@ -454,42 +482,19 @@ export class DataAnalysisWASM {
       iterations = iter + 1
       let changed = false
       
-      // Assign points to nearest centroid
       for (let i = 0; i < data.length; i++) {
-        let bestCluster = 0
-        let bestDistance = Math.abs(data[i] - centroids[0])
-        
-        for (let j = 1; j < k; j++) {
-          const distance = Math.abs(data[i] - centroids[j])
-          if (distance < bestDistance) {
-            bestDistance = distance
-            bestCluster = j
-          }
-        }
-        
+        const bestCluster = this.findNearestCentroid(data[i], centroids)
         if (assignments[i] !== bestCluster) {
           assignments[i] = bestCluster
           changed = true
         }
       }
       
-      // Update centroids
-      for (let j = 0; j < k; j++) {
-        const clusterPoints = data.filter((_, i) => assignments[i] === j)
-        if (clusterPoints.length > 0) {
-          centroids[j] = clusterPoints.reduce((sum, val) => sum + val, 0) / clusterPoints.length
-        }
-      }
-      
+      this.updateCentroids(data, assignments, centroids)
       if (!changed) break
     }
     
-    // Calculate inertia
-    let inertia = 0
-    for (let i = 0; i < data.length; i++) {
-      inertia += Math.pow(data[i] - centroids[assignments[i]], 2)
-    }
-    
+    const inertia = this.calculateInertia(data, assignments, centroids)
     return { centroids, assignments, iterations, inertia }
   }
 

@@ -158,6 +158,33 @@ export class ImageWASM {
     }
   }
 
+  // Helper: compute blur kernel sum for a pixel
+  private computeBlurKernel(
+    data: Uint8ClampedArray,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radius: number
+  ): { r: number; g: number; b: number; a: number; count: number } {
+    let r = 0, g = 0, b = 0, a = 0, count = 0
+    for (let dy = -radius; dy <= radius; dy++) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        const nx = x + dx
+        const ny = y + dy
+        if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+          const idx = (ny * width + nx) * 4
+          r += data[idx]
+          g += data[idx + 1]
+          b += data[idx + 2]
+          a += data[idx + 3]
+          count++
+        }
+      }
+    }
+    return { r, g, b, a, count }
+  }
+
   /**
    * Fallback JavaScript para desenfoque (box blur simple)
    */
@@ -167,24 +194,7 @@ export class ImageWASM {
     
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
-        let r = 0, g = 0, b = 0, a = 0, count = 0
-        
-        for (let dy = -radius; dy <= radius; dy++) {
-          for (let dx = -radius; dx <= radius; dx++) {
-            const nx = x + dx
-            const ny = y + dy
-            
-            if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-              const idx = (ny * width + nx) * 4
-              r += data[idx]
-              g += data[idx + 1]
-              b += data[idx + 2]
-              a += data[idx + 3]
-              count++
-            }
-          }
-        }
-        
+        const { r, g, b, a, count } = this.computeBlurKernel(data, x, y, width, height, radius)
         const idx = (y * width + x) * 4
         output[idx] = r / count
         output[idx + 1] = g / count

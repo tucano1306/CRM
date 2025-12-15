@@ -290,6 +290,50 @@ async function sendWhatsApp(
   }
 }
 
+// Helper function to send via all available channels
+async function sendViaAllChannels(
+  clientEmail: string | null | undefined,
+  clientPhone: string | null | undefined,
+  clientWhatsapp: string | null | undefined,
+  subject: string,
+  htmlBody: string,
+  whatsappMessage: string
+): Promise<NotificationResult[]> {
+  const results: NotificationResult[] = []
+  if (clientEmail) {
+    results.push(await sendEmailNotification(clientEmail, subject, htmlBody))
+  }
+  if (clientWhatsapp || clientPhone) {
+    results.push(await sendWhatsApp(clientWhatsapp || clientPhone!, whatsappMessage))
+  }
+  return results
+}
+
+// Helper function to send via specific channel
+async function sendViaChannel(
+  channel: string,
+  clientEmail: string | null | undefined,
+  clientPhone: string | null | undefined,
+  clientWhatsapp: string | null | undefined,
+  subject: string,
+  htmlBody: string,
+  shortMessage: string,
+  whatsappMessage: string
+): Promise<NotificationResult[]> {
+  const results: NotificationResult[] = []
+  if (channel === 'EMAIL' && clientEmail) {
+    results.push(await sendEmailNotification(clientEmail, subject, htmlBody))
+  } else if (channel === 'SMS' && clientPhone) {
+    results.push(await sendSMS(clientPhone, shortMessage.substring(0, 160)))
+  } else if (channel === 'WHATSAPP' && (clientWhatsapp || clientPhone)) {
+    results.push(await sendWhatsApp(clientWhatsapp || clientPhone!, whatsappMessage))
+  } else if (clientEmail) {
+    // Fallback to email if preferred channel not available
+    results.push(await sendEmailNotification(clientEmail, subject, htmlBody))
+  }
+  return results
+}
+
 /**
  * Función principal para enviar notificación multicanal
  */
@@ -297,7 +341,6 @@ export async function sendMultichannelNotification(
   params: SendNotificationParams
 ): Promise<NotificationResult[]> {
   const {
-    clientId,
     clientName,
     clientEmail,
     clientPhone,
@@ -308,10 +351,8 @@ export async function sendMultichannelNotification(
     forceChannel
   } = params
 
-  const results: NotificationResult[] = []
   const template = MESSAGE_TEMPLATES[type]
   
-  // Agregar nombre del cliente a los datos
   const enrichedData: NotificationData = {
     ...data,
     buyerName: clientName || 'Cliente'
@@ -320,42 +361,14 @@ export async function sendMultichannelNotification(
   const subject = template.subject
   const htmlBody = template.body(enrichedData)
   const shortMessage = template.shortBody(enrichedData)
-
-  // Determinar qué canales usar
   const channel = forceChannel || preferredChannel || 'EMAIL'
-
-  // Para mensajes CUSTOM, usar el mensaje completo en WhatsApp/SMS si existe
   const whatsappMessage = type === 'CUSTOM' && data.customMessage 
     ? data.customMessage 
     : shortMessage
   
-  // Enviar según el canal preferido o todos
-  if (channel === 'ALL') {
-    // Enviar por todos los canales disponibles
-    if (clientEmail) {
-      results.push(await sendEmailNotification(clientEmail, subject, htmlBody))
-    }
-    // NOTA: SMS desactivado - el número Twilio sandbox es solo para WhatsApp
-    // Para activar SMS necesitas comprar un número de teléfono en Twilio
-    // if (clientPhone) {
-    //   results.push(await sendSMS(clientPhone, shortMessage.substring(0, 160)))
-    // }
-    if (clientWhatsapp || clientPhone) {
-      // WhatsApp usa mensaje completo para CUSTOM
-      results.push(await sendWhatsApp(clientWhatsapp || clientPhone!, whatsappMessage))
-    }
-  } else if (channel === 'EMAIL' && clientEmail) {
-    results.push(await sendEmailNotification(clientEmail, subject, htmlBody))
-  } else if (channel === 'SMS' && clientPhone) {
-    results.push(await sendSMS(clientPhone, shortMessage.substring(0, 160)))
-  } else if (channel === 'WHATSAPP' && (clientWhatsapp || clientPhone)) {
-    results.push(await sendWhatsApp(clientWhatsapp || clientPhone!, whatsappMessage))
-  } else {
-    // Fallback a email si el canal preferido no está disponible
-    if (clientEmail) {
-      results.push(await sendEmailNotification(clientEmail, subject, htmlBody))
-    }
-  }
+  const results = channel === 'ALL'
+    ? await sendViaAllChannels(clientEmail, clientPhone, clientWhatsapp, subject, htmlBody, whatsappMessage)
+    : await sendViaChannel(channel, clientEmail, clientPhone, clientWhatsapp, subject, htmlBody, shortMessage, whatsappMessage)
 
   // Log para auditoría
   console.log(`[MULTICANAL] Notificación ${type} enviada a cliente ${clientId}:`, 

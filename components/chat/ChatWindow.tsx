@@ -158,88 +158,63 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
     }
   }
 
-  const fetchMessages = useCallback(async () => {
-    if (!user?.id || !receiverId) {
-      return
+  // Helper: process successful message fetch
+  const handleFetchSuccess = useCallback((newMessages: Message[], currentUserId: string) => {
+    consecutiveErrorsRef.current = 0
+    hasLoadedOnceRef.current = true
+    setError(null)
+    
+    if (previousMessageCountRef.current > 0) {
+      const hasNewFromReceiver = newMessages.some((m: Message) => 
+        m.senderId === receiverId && !messages.find(oldMsg => oldMsg.id === m.id)
+      )
+      if (hasNewFromReceiver) playNotificationSound()
     }
+    
+    previousMessageCountRef.current = newMessages.length
+    setMessages(newMessages)
+    
+    const unreadIds = newMessages
+      .filter((m: Message) => !m.isRead && m.receiverId === currentUserId)
+      .map((m: Message) => m.id)
+    if (unreadIds.length > 0) markAsRead(unreadIds)
+  }, [receiverId, messages])
 
-    // Evitar múltiples llamadas simultáneas
-    if (isFetchingRef.current) {
-      return
+  // Helper: handle fetch errors
+  const handleFetchError = useCallback((errorMsg?: string) => {
+    consecutiveErrorsRef.current++
+    if (consecutiveErrorsRef.current >= 3 && !hasLoadedOnceRef.current) {
+      setError(errorMsg || 'Error de conexión. Reintentando...')
     }
+  }, [])
+
+  const fetchMessages = useCallback(async () => {
+    if (!user?.id || !receiverId || isFetchingRef.current) return
 
     isFetchingRef.current = true
+    setError(null)
 
     try {
-      setError(null)
-
-      const params = new URLSearchParams({
-        otherUserId: receiverId
-      })
-      
-      if (orderId) {
-        params.append('orderId', orderId)
-      }
+      const params = new URLSearchParams({ otherUserId: receiverId })
+      if (orderId) params.append('orderId', orderId)
 
       const response = await fetch(`/api/chat-messages?${params}`)
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
       
       const data = await response.json()
-
       if (data.success) {
-        const newMessages = data.messages
-        
-        // Reset contador de errores cuando hay éxito
-        consecutiveErrorsRef.current = 0
-        hasLoadedOnceRef.current = true
-        setError(null)
-        
-        // Detectar si hay mensajes nuevos del otro usuario
-        if (previousMessageCountRef.current > 0) {
-          const newIncomingMessages = newMessages.filter((m: Message) => 
-            m.senderId === receiverId && 
-            !messages.find(oldMsg => oldMsg.id === m.id)
-          )
-          
-          if (newIncomingMessages.length > 0) {
-            // Reproducir sonido de notificación
-            playNotificationSound()
-          }
-        }
-        
-        previousMessageCountRef.current = newMessages.length
-        setMessages(newMessages)
-        
-        // Marcar mensajes no leídos como leídos
-        const unreadIds = newMessages
-          .filter((m: Message) => !m.isRead && m.receiverId === user?.id)
-          .map((m: Message) => m.id)
-
-        if (unreadIds.length > 0) {
-          markAsRead(unreadIds)
-        }
+        handleFetchSuccess(data.messages, user.id)
       } else {
-        consecutiveErrorsRef.current++
-        // Solo mostrar error si falló varias veces seguidas y nunca cargó
-        if (consecutiveErrorsRef.current >= 3 && !hasLoadedOnceRef.current) {
-          setError(data.error || 'Error cargando mensajes')
-        }
+        handleFetchError(data.error || 'Error cargando mensajes')
       }
     } catch (error) {
       console.error('Error fetching messages:', error)
-      consecutiveErrorsRef.current++
-      // Solo mostrar error si falló varias veces seguidas y nunca cargó
-      if (consecutiveErrorsRef.current >= 3 && !hasLoadedOnceRef.current) {
-        setError('Error de conexión. Reintentando...')
-      }
+      handleFetchError()
     } finally {
       isFetchingRef.current = false
       setLoading(false)
     }
-  }, [user?.id, receiverId, orderId, messages])
+  }, [user?.id, receiverId, orderId, handleFetchSuccess, handleFetchError])
 
   useEffect(() => {
     if (!user?.id || !receiverId) {
