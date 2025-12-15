@@ -187,7 +187,7 @@ function RoleCard({
           <CardContent className="space-y-3">
             <ul className="space-y-2 text-gray-700">
               {features.map((feature, idx) => (
-                <li key={idx} className="flex items-start">
+                <li key={`feature-${idx}`} className="flex items-start">
                   <span className={`text-${checkColor}-500 mr-2`}>✓</span>
                   <span>{feature}</span>
                 </li>

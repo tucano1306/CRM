@@ -294,7 +294,7 @@ export async function POST(request: NextRequest) {
           country
         })
 
-      default:
+      default: {
         // Return full config
         const location: GeoLocation = {
           country,
@@ -308,6 +308,7 @@ export async function POST(request: NextRequest) {
           ...regionalConfig,
           timestamp: Date.now()
         })
+      }
     }
 
   } catch (error) {

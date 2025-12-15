@@ -236,7 +236,7 @@ export function QuickActionsModal({ show, onClose, router }: QuickActionsModalPr
       <div className="bg-gradient-to-br from-white to-purple-50 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border-2 border-purple-200">
         <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 sm:p-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
-            <span className="text-xl">+</span>
+            <span className="text-xl">+</span>{' '}
             Acciones Rápidas
           </h3>
           <button onClick={onClose} className="text-white hover:bg-white/20 rounded-full p-1 transition-colors">

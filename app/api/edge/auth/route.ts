@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
 
     // Handle different validation actions
     switch (action) {
-      case 'validate':
+      case 'validate': {
         const geo = (request as any).geo
         return NextResponse.json({
           valid: true,
@@ -145,6 +145,7 @@ export async function POST(request: NextRequest) {
           validatedAt: Date.now(),
           region: geo?.country || 'unknown'
         })
+      }
 
       case 'refresh':
         // For token refresh, we might need to redirect to full server
