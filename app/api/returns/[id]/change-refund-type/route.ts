@@ -10,6 +10,71 @@ const changeRefundTypeSchema = z.object({
   })
 })
 
+// Helper: Get authenticated client ID
+async function getAuthenticatedClientId(userId: string): Promise<string | null> {
+  const authUser = await prisma.authenticated_users.findUnique({
+    where: { authId: userId },
+    include: { clients: true }
+  })
+
+  console.log('🔍 [CHANGE-REFUND-TYPE] Auth user:', authUser?.id, 'Clients:', authUser?.clients.length)
+
+  if (!authUser || authUser.clients.length === 0) {
+    console.log('❌ [CHANGE-REFUND-TYPE] User not authorized - no client found')
+    return null
+  }
+
+  return authUser.clients[0].id
+}
+
+// Helper: Handle credit note deletion when switching to REFUND
+async function handleCreditNoteDeletion(creditNote: { id: string; balance: any; amount: any }): Promise<{ success: boolean; error?: string }> {
+  const creditUsed = Number(creditNote.balance) < Number(creditNote.amount)
+  if (creditUsed) {
+    return { success: false, error: 'No se puede cambiar a reembolso porque el crédito ya fue usado parcialmente' }
+  }
+
+  await prisma.creditNote.delete({ where: { id: creditNote.id } })
+  return { success: true }
+}
+
+// Helper: Create credit note for return
+async function createCreditNoteForReturn(returnRecord: {
+  id: string
+  returnNumber: string
+  clientId: string
+  sellerId: string
+  finalRefundAmount: any
+}) {
+  const randomString = Math.random().toString(36).substring(2, 9).toUpperCase()
+  const creditNoteNumber = `CN-${Date.now()}-${randomString}`
+
+  await prisma.creditNote.create({
+    data: {
+      creditNoteNumber,
+      returnId: returnRecord.id,
+      clientId: returnRecord.clientId,
+      sellerId: returnRecord.sellerId,
+      amount: Number(returnRecord.finalRefundAmount),
+      balance: Number(returnRecord.finalRefundAmount),
+      usedAmount: 0,
+      expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      isActive: true
+    }
+  })
+
+  await prisma.notification.create({
+    data: {
+      type: 'CREDIT_NOTE_ISSUED',
+      title: '💳 Crédito Generado',
+      message: `Has cambiado tu devolución ${returnRecord.returnNumber} a crédito. El crédito de $${Number(returnRecord.finalRefundAmount).toFixed(2)} está disponible para tus próximas compras.`,
+      clientId: returnRecord.clientId,
+      relatedId: returnRecord.id,
+      isRead: false
+    }
+  })
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -19,16 +84,12 @@ export async function POST(
     console.log('🔍 [CHANGE-REFUND-TYPE] User ID:', userId)
     
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'No autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 })
     }
 
     const { id } = await params
     const body = await request.json()
 
-    // ✅ VALIDACIÓN
     const validation = changeRefundTypeSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json({ 
@@ -41,35 +102,15 @@ export async function POST(
     const { refundType } = validation.data
     console.log('🔍 [CHANGE-REFUND-TYPE] Return ID:', id, 'New Type:', refundType)
 
-    // Verificar que el usuario sea el cliente
-    const authUser = await prisma.authenticated_users.findUnique({
-      where: { authId: userId },
-      include: { clients: true }
-    })
-
-    console.log('🔍 [CHANGE-REFUND-TYPE] Auth user:', authUser?.id, 'Clients:', authUser?.clients.length)
-
-    if (!authUser || authUser.clients.length === 0) {
-      console.log('❌ [CHANGE-REFUND-TYPE] User not authorized - no client found')
-      return NextResponse.json(
-        { success: false, error: 'Usuario no autorizado' },
-        { status: 403 }
-      )
+    const clientId = await getAuthenticatedClientId(userId)
+    if (!clientId) {
+      return NextResponse.json({ success: false, error: 'Usuario no autorizado' }, { status: 403 })
     }
-
-    const clientId = authUser.clients[0].id
     console.log('🔍 [CHANGE-REFUND-TYPE] Client ID:', clientId)
 
-    // Buscar la devolución aprobada del cliente
     const returnRecord = await prisma.return.findFirst({
-      where: {
-        id: id,
-        clientId: clientId,
-        status: 'APPROVED'
-      },
-      include: {
-        creditNote: true
-      }
+      where: { id, clientId, status: 'APPROVED' },
+      include: { creditNote: true }
     })
 
     console.log('🔍 [CHANGE-REFUND-TYPE] Return found:', returnRecord ? 'YES' : 'NO')
@@ -86,13 +127,10 @@ export async function POST(
 
     if (!returnRecord) {
       console.log('❌ [CHANGE-REFUND-TYPE] Return not found or not approved')
-      return NextResponse.json(
-        { success: false, error: 'Devolución no encontrada o no se puede modificar' },
-        { status: 404 }
-      )
+      return NextResponse.json({ success: false, error: 'Devolución no encontrada o no se puede modificar' }, { status: 404 })
     }
 
-    // Si ya existe una nota de crédito y el cambio es a CREDIT, no hacer nada
+    // Handle no-op case
     if (refundType === 'CREDIT' && returnRecord.creditNote) {
       return NextResponse.json({
         success: true,
@@ -101,51 +139,17 @@ export async function POST(
       })
     }
 
-    // Si cambia de CREDIT a REFUND y existe nota de crédito, eliminarla si no se ha usado
+    // Handle CREDIT -> REFUND transition
     if (refundType === 'REFUND' && returnRecord.creditNote) {
-      if (returnRecord.creditNote.balance < returnRecord.creditNote.amount) {
-        return NextResponse.json(
-          { success: false, error: 'No se puede cambiar a reembolso porque el crédito ya fue usado parcialmente' },
-          { status: 400 }
-        )
+      const result = await handleCreditNoteDeletion(returnRecord.creditNote)
+      if (!result.success) {
+        return NextResponse.json({ success: false, error: result.error }, { status: 400 })
       }
-
-      // Eliminar la nota de crédito
-      await prisma.creditNote.delete({
-        where: { id: returnRecord.creditNote.id }
-      })
     }
 
-    // Si cambia de REFUND a CREDIT, crear nota de crédito
+    // Handle REFUND -> CREDIT transition
     if (refundType === 'CREDIT' && !returnRecord.creditNote) {
-      const randomString = Math.random().toString(36).substring(2, 9).toUpperCase()
-      const creditNoteNumber = `CN-${Date.now()}-${randomString}`
-
-      await prisma.creditNote.create({
-        data: {
-          creditNoteNumber: creditNoteNumber,
-          returnId: returnRecord.id,
-          clientId: returnRecord.clientId,
-          sellerId: returnRecord.sellerId,
-          amount: Number(returnRecord.finalRefundAmount),
-          balance: Number(returnRecord.finalRefundAmount),
-          usedAmount: 0,
-          expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 año
-          isActive: true
-        }
-      })
-
-      // Notificar al cliente
-      await prisma.notification.create({
-        data: {
-          type: 'CREDIT_NOTE_ISSUED',
-          title: '💳 Crédito Generado',
-          message: `Has cambiado tu devolución ${returnRecord.returnNumber} a crédito. El crédito de $${returnRecord.finalRefundAmount.toFixed(2)} está disponible para tus próximas compras.`,
-          clientId: returnRecord.clientId,
-          relatedId: returnRecord.id,
-          isRead: false
-        }
-      })
+      await createCreditNoteForReturn(returnRecord)
     }
 
     // Actualizar el tipo de reembolso en la devolución

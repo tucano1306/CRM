@@ -2,6 +2,59 @@ import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 
+/**
+ * Extract user role from session claims
+ */
+function extractUserRole(sessionClaims: any): { role: string; source: string } {
+  if (sessionClaims?.role) {
+    return { role: sessionClaims.role, source: 'sessionClaims.role' }
+  }
+  
+  if (sessionClaims?.public_metadata?.role) {
+    return { role: sessionClaims.public_metadata.role, source: 'sessionClaims.public_metadata.role' }
+  }
+  
+  return { role: 'CLIENT', source: 'default (CLIENT)' }
+}
+
+/**
+ * Build debug role response
+ */
+function buildDebugResponse(userId: string, sessionClaims: any) {
+  const { role: userRole, source: roleSource } = extractUserRole(sessionClaims)
+  
+  const recommendation = userRole === 'CLIENT'
+    ? '✅ Tienes el rol correcto para buyer routes'
+    : '⚠️ Para acceder a rutas de buyer, necesitas rol CLIENT en Clerk public_metadata'
+
+  return NextResponse.json({
+    authenticated: true,
+    userId,
+    detectedRole: userRole,
+    roleSource,
+    sessionClaims: {
+      hasRole: !!sessionClaims?.role,
+      hasPublicMetadata: !!sessionClaims?.public_metadata,
+      publicMetadata: sessionClaims?.public_metadata || null,
+    },
+    message: `Your role is detected as: ${userRole} (from ${roleSource})`,
+    recommendation
+  })
+}
+
+/**
+ * Find the best seller auth record from authenticated_users list
+ */
+function findBestSellerAuth(authenticatedUsers: any[]): any {
+  // Prioritize real Clerk users (starting with 'user_')
+  let sellerAuth = authenticatedUsers.find(auth => auth.authId.startsWith('user_'))
+  // Fallback to SELLER role
+  sellerAuth ??= authenticatedUsers.find(auth => auth.role === 'SELLER')
+  // Fallback to first available
+  sellerAuth ??= authenticatedUsers[0]
+  return sellerAuth
+}
+
 export async function GET(request: Request) {
   try {
     const { userId, sessionClaims } = await auth()
@@ -13,37 +66,7 @@ export async function GET(request: Request) {
     // Si se pide diagnóstico de rol, retornar info de autenticación
     const url = new URL(request.url)
     if (url.searchParams.get('debug') === 'role') {
-      let userRole = 'CLIENT'
-      let roleSource = 'default'
-      
-      try {
-        if ((sessionClaims as any)?.role) {
-          userRole = (sessionClaims as any).role
-          roleSource = 'sessionClaims.role'
-        } else if (sessionClaims?.public_metadata) {
-          const metadata = sessionClaims.public_metadata as any
-          userRole = metadata?.role || 'CLIENT'
-          roleSource = metadata?.role ? 'sessionClaims.public_metadata.role' : 'default (CLIENT)'
-        }
-      } catch (error) {
-        console.error('Error getting role:', error)
-      }
-
-      return NextResponse.json({
-        authenticated: true,
-        userId,
-        detectedRole: userRole,
-        roleSource,
-        sessionClaims: {
-          hasRole: !!(sessionClaims as any)?.role,
-          hasPublicMetadata: !!sessionClaims?.public_metadata,
-          publicMetadata: sessionClaims?.public_metadata || null,
-        },
-        message: `Your role is detected as: ${userRole} (from ${roleSource})`,
-        recommendation: userRole === 'CLIENT' 
-          ? '✅ Tienes el rol correcto para buyer routes'
-          : '⚠️ Para acceder a rutas de buyer, necesitas rol CLIENT en Clerk public_metadata'
-      })
+      return buildDebugResponse(userId, sessionClaims)
     }
 
     console.log('🔍 Buscando cliente para userId:', userId)
@@ -106,20 +129,8 @@ export async function GET(request: Request) {
       })
     }
 
-    // Buscar el authenticated_user con role SELLER (no el de seed)
-    // Priorizar los que NO empiezan con "auth_" (que son de Clerk real)
-    let sellerAuth = client.seller.authenticated_users.find(
-      auth => auth.authId.startsWith('user_')
-    )
-    
-    // Si no hay ninguno con user_, tomar el primero con role SELLER
-    sellerAuth ??= client.seller.authenticated_users.find(
-      auth => auth.role === 'SELLER'
-    )
-    
-    // Si aún no hay, tomar el primero
-    sellerAuth ??= client.seller.authenticated_users[0]
-
+    // Find best seller auth using helper function
+    const sellerAuth = findBestSellerAuth(client.seller.authenticated_users)
     console.log('✅ Seller authId seleccionado:', sellerAuth.authId)
     console.log('   De un total de:', client.seller.authenticated_users.length, 'opciones')
 

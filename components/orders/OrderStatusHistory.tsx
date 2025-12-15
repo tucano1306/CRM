@@ -73,6 +73,132 @@ const statusConfig: Record<OrderStatus, { label: string; icon: any; color: strin
   PAID: { label: 'Pagado', icon: DollarSign, color: 'text-emerald-600' },
 }
 
+// Helper functions extracted to reduce cognitive complexity
+function getEntryIcon(entry: HistoryEntry, isProductDeleted: boolean, isProductAction: boolean, isStatusChange: boolean) {
+  if (isProductDeleted) return Trash2
+  if (isProductAction) {
+    const hasAddOrUpdate = entry.notes?.includes('agregado') || entry.notes?.includes('actualizado')
+    return hasAddOrUpdate ? Plus : MessageCircle
+  }
+  if (isStatusChange && entry.newStatus) {
+    return statusConfig[entry.newStatus]?.icon || Clock
+  }
+  return Clock
+}
+
+function getEntryColor(entry: HistoryEntry, isProductDeleted: boolean, isProductAction: boolean, isStatusChange: boolean): string {
+  if (isProductDeleted) return 'text-red-500'
+  if (isProductAction) {
+    const hasAddOrUpdate = entry.notes?.includes('agregado') || entry.notes?.includes('actualizado')
+    return hasAddOrUpdate ? 'text-green-500' : 'text-blue-500'
+  }
+  if (isStatusChange && entry.newStatus) {
+    return statusConfig[entry.newStatus]?.color || 'text-gray-500'
+  }
+  return 'text-gray-500'
+}
+
+function getEntryBgColor(isProductDeleted: boolean, isProductAction: boolean, isStatusChange: boolean, isFirst: boolean): string {
+  if (isProductDeleted) return 'bg-red-50 border-red-200'
+  if (isProductAction) return 'bg-green-50 border-green-200'
+  if (isFirst && isStatusChange) return 'bg-blue-50 border-blue-300'
+  return 'bg-white border-gray-200'
+}
+
+function getIconBgClass(isProductDeleted: boolean, isProductAction: boolean, isFirst: boolean): string {
+  if (isProductDeleted) return 'bg-red-100'
+  if (isProductAction) return 'bg-green-100'
+  if (isFirst) return 'bg-blue-100'
+  return 'bg-gray-100'
+}
+
+function getRoleBadge(role: string) {
+  const roleMap: Record<string, { label: string; color: string }> = {
+    SELLER: { label: 'Vendedor', color: 'bg-purple-100 text-purple-800' },
+    ADMIN: { label: 'Admin', color: 'bg-red-100 text-red-800' },
+    CLIENT: { label: 'Cliente', color: 'bg-blue-100 text-blue-800' },
+    BUYER: { label: 'Comprador', color: 'bg-green-100 text-green-800' },
+  }
+  const config = roleMap[role] || { label: role, color: 'bg-gray-100 text-gray-800' }
+  return (
+    <span className={`text-xs px-2 py-0.5 rounded-full ${config.color}`}>
+      {config.label}
+    </span>
+  )
+}
+
+// Extracted component to reduce cognitive complexity
+function HistoryEntryTitle({ 
+  entry, 
+  isStatusChange, 
+  isProductDeleted, 
+  isProductAction,
+  isFirst 
+}: { 
+  entry: HistoryEntry
+  isStatusChange: boolean
+  isProductDeleted: boolean
+  isProductAction: boolean
+  isFirst: boolean
+}) {
+  if (isStatusChange && entry.newStatus) {
+    return (
+      <div className="flex items-center gap-2 mb-2 flex-wrap">
+        {entry.previousStatus ? (
+          <>
+            <span className={`font-medium text-sm sm:text-base ${
+              statusConfig[entry.previousStatus]?.color || 'text-gray-500'
+            }`}>
+              {statusConfig[entry.previousStatus]?.label || entry.previousStatus}
+            </span>
+            <ArrowRight className="h-4 w-4 text-gray-400" />
+          </>
+        ) : (
+          <span className="text-xs sm:text-sm text-gray-500">Estado inicial:</span>
+        )}
+        <span className={`font-bold text-sm sm:text-base ${
+          statusConfig[entry.newStatus]?.color || 'text-gray-600'
+        }`}>
+          {statusConfig[entry.newStatus]?.label || entry.newStatus}
+        </span>
+        {isFirst && (
+          <span className="ml-2 px-2 py-0.5 bg-blue-200 text-blue-800 text-xs rounded-full font-bold">
+            Actual
+          </span>
+        )}
+      </div>
+    )
+  }
+
+  if (isProductDeleted) {
+    return (
+      <div className="mb-2">
+        <span className="font-bold text-red-700 text-sm sm:text-base flex items-center gap-2">
+          <Trash2 className="h-4 w-4" />
+          Producto Eliminado
+        </span>
+        {entry.description && (
+          <p className="text-sm text-gray-700 mt-1">{entry.description}</p>
+        )}
+      </div>
+    )
+  }
+
+  if (isProductAction) {
+    const isAdded = entry.notes?.includes('agregado')
+    return (
+      <div className="mb-2">
+        <span className="font-bold text-green-700 text-sm sm:text-base flex items-center gap-2">
+          {isAdded ? <Plus className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
+          {isAdded ? 'Producto Agregado' : 'Acción en Producto'}
+        </span>
+      </div>
+    )
+  }
+
+  return null
+}
+
 interface OrderStatusHistoryProps {
   readonly orderId: string
   readonly refreshTrigger?: number // Prop para forzar refresco desde fuera
@@ -107,23 +233,6 @@ export default function OrderStatusHistory({ orderId, refreshTrigger }: OrderSta
   useEffect(() => {
     fetchHistory()
   }, [orderId, refreshTrigger, fetchHistory]) // Refresca cuando cambia refreshTrigger
-
-  const getRoleBadge = (role: string) => {
-    const roleConfig: Record<string, { label: string; color: string }> = {
-      ADMIN: { label: 'Admin', color: 'bg-purple-100 text-purple-700' },
-      SELLER: { label: 'Vendedor', color: 'bg-blue-100 text-blue-700' },
-      CLIENT: { label: 'Cliente', color: 'bg-green-100 text-green-700' },
-      SYSTEM: { label: 'Sistema', color: 'bg-gray-100 text-gray-700' },
-    }
-
-    const config = roleConfig[role] || { label: role, color: 'bg-gray-100 text-gray-700' }
-
-    return (
-      <span className={`px-2 py-1 rounded text-xs font-medium ${config.color}`}>
-        {config.label}
-      </span>
-    )
-  }
 
   if (loading) {
     return (
@@ -175,115 +284,40 @@ export default function OrderStatusHistory({ orderId, refreshTrigger }: OrderSta
           {history.map((entry, index) => {
             // Determinar el tipo de entrada
             const entryType = entry.type || 'STATUS_CHANGE'
-            const isStatusChange = entryType === 'STATUS_CHANGE' && entry.newStatus
+            const isStatusChange = entryType === 'STATUS_CHANGE' && !!entry.newStatus
             const isProductDeleted = entryType === 'PRODUCT_DELETED'
             const isProductAction = entryType === 'PRODUCT_ACTION'
+            const isFirst = index === 0
             
-            // Iconos según el tipo
-            const getEntryIcon = () => {
-              if (isProductDeleted) return Trash2
-              if (isProductAction) {
-                if (entry.notes?.includes('agregado') || entry.notes?.includes('actualizado')) return Plus
-                return MessageCircle
-              }
-              if (isStatusChange && entry.newStatus) return statusConfig[entry.newStatus]?.icon || Clock
-              return Clock
-            }
-            
-            const getEntryColor = () => {
-              if (isProductDeleted) return 'text-red-500'
-              if (isProductAction) {
-                if (entry.notes?.includes('agregado') || entry.notes?.includes('actualizado')) return 'text-green-500'
-                return 'text-blue-500'
-              }
-              if (isStatusChange && entry.newStatus) return statusConfig[entry.newStatus]?.color || 'text-gray-500'
-              return 'text-gray-500'
-            }
-
-            const getEntryBgColor = () => {
-              if (isProductDeleted) return 'bg-red-50 border-red-200'
-              if (isProductAction) return 'bg-green-50 border-green-200'
-              if (index === 0 && isStatusChange) return 'bg-blue-50 border-blue-300'
-              return 'bg-white border-gray-200'
-            }
-
-            const EntryIcon = getEntryIcon()
+            // Use extracted helper functions
+            const EntryIcon = getEntryIcon(entry, isProductDeleted, isProductAction, isStatusChange)
+            const entryColor = getEntryColor(entry, isProductDeleted, isProductAction, isStatusChange)
+            const entryBgColor = getEntryBgColor(isProductDeleted, isProductAction, isStatusChange, isFirst)
+            const iconBgClass = getIconBgClass(isProductDeleted, isProductAction, isFirst)
 
             return (
               <div 
                 key={entry.id}
-                className={`relative border-2 rounded-xl p-4 sm:p-5 ${getEntryBgColor()} transition-all`}
+                className={`relative border-2 rounded-xl p-4 sm:p-5 ${entryBgColor} transition-all`}
               >
                 <div className="flex items-start gap-3 sm:gap-4">
                   {/* Icono */}
                   <div className="flex-shrink-0">
-                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center ${(() => {
-                      if (isProductDeleted) return 'bg-red-100';
-                      if (isProductAction) return 'bg-green-100';
-                      if (index === 0) return 'bg-blue-100';
-                      return 'bg-gray-100';
-                    })()}`}>
-                      <EntryIcon className={`h-5 w-5 sm:h-6 sm:w-6 ${getEntryColor()}`} />
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center ${iconBgClass}`}>
+                      <EntryIcon className={`h-5 w-5 sm:h-6 sm:w-6 ${entryColor}`} />
                     </div>
                   </div>
 
                   {/* Contenido */}
                   <div className="flex-1 min-w-0">
                     {/* Título según tipo */}
-                    {(() => {
-                      if (isStatusChange && entry.newStatus) {
-                        return (
-                          <div className="flex items-center gap-2 mb-2 flex-wrap">
-                            {entry.previousStatus ? (
-                              <>
-                                <span className={`font-medium text-sm sm:text-base ${
-                                  statusConfig[entry.previousStatus]?.color || 'text-gray-500'
-                                }`}>
-                                  {statusConfig[entry.previousStatus]?.label || entry.previousStatus}
-                                </span>
-                                <ArrowRight className="h-4 w-4 text-gray-400" />
-                              </>
-                            ) : (
-                              <span className="text-xs sm:text-sm text-gray-500">Estado inicial:</span>
-                            )}
-                            <span className={`font-bold text-sm sm:text-base ${
-                              statusConfig[entry.newStatus]?.color || 'text-gray-600'
-                            }`}>
-                              {statusConfig[entry.newStatus]?.label || entry.newStatus}
-                            </span>
-                            {index === 0 && (
-                              <span className="ml-2 px-2 py-0.5 bg-blue-200 text-blue-800 text-xs rounded-full font-bold">
-                                Actual
-                              </span>
-                            )}
-                          </div>
-                        );
-                      }
-                      if (isProductDeleted) {
-                        return (
-                          <div className="mb-2">
-                            <span className="font-bold text-red-700 text-sm sm:text-base flex items-center gap-2">
-                              <Trash2 className="h-4 w-4" />
-                              Producto Eliminado
-                            </span>
-                            {entry.description && (
-                              <p className="text-sm text-gray-700 mt-1">{entry.description}</p>
-                            )}
-                          </div>
-                        );
-                      }
-                      if (isProductAction) {
-                        return (
-                          <div className="mb-2">
-                            <span className="font-bold text-green-700 text-sm sm:text-base flex items-center gap-2">
-                              {entry.notes?.includes('agregado') ? <Plus className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
-                              {entry.notes?.includes('agregado') ? 'Producto Agregado' : 'Acción en Producto'}
-                            </span>
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()}
+                    <HistoryEntryTitle 
+                      entry={entry}
+                      isStatusChange={isStatusChange}
+                      isProductDeleted={isProductDeleted}
+                      isProductAction={isProductAction}
+                      isFirst={isFirst}
+                    />
 
                     {/* Usuario y rol */}
                     <div className="flex items-center gap-2 mb-2 flex-wrap">

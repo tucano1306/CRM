@@ -57,6 +57,93 @@ type RecentOrder = {
   itemCount: number
 }
 
+// ============ Status Helper Functions ============
+
+function getStatusIconBgClass(status: string): string {
+  const statusMap: Record<string, string> = {
+    'PENDING': 'bg-yellow-100 text-yellow-600',
+    'CONFIRMED': 'bg-green-100 text-green-600',
+    'IN_DELIVERY': 'bg-purple-100 text-purple-600',
+    'DELIVERED': 'bg-emerald-100 text-emerald-600',
+    'COMPLETED': 'bg-emerald-100 text-emerald-600',
+    'CANCELED': 'bg-red-100 text-red-600',
+    'CANCELLED': 'bg-red-100 text-red-600',
+  }
+  return statusMap[status] || 'bg-blue-100 text-blue-600'
+}
+
+function getStatusBadgeClass(status: string): string {
+  const statusMap: Record<string, string> = {
+    'PENDING': 'bg-yellow-100 text-yellow-700',
+    'CONFIRMED': 'bg-green-100 text-green-700',
+    'IN_DELIVERY': 'bg-purple-100 text-purple-700',
+    'DELIVERED': 'bg-emerald-100 text-emerald-700',
+    'COMPLETED': 'bg-emerald-100 text-emerald-700',
+    'CANCELED': 'bg-red-100 text-red-700',
+    'CANCELLED': 'bg-red-100 text-red-700',
+  }
+  return statusMap[status] || 'bg-blue-100 text-blue-700'
+}
+
+function getStatusLabel(status: string): string {
+  const statusMap: Record<string, string> = {
+    'PENDING': 'Pendiente',
+    'CONFIRMED': 'Confirmada',
+    'IN_DELIVERY': 'En Entrega',
+    'DELIVERED': 'Entregada',
+    'COMPLETED': 'Completada',
+    'CANCELED': 'Cancelada',
+    'CANCELLED': 'Cancelada',
+  }
+  return statusMap[status] || status
+}
+
+function getTimelineIconClass(status: string): string {
+  const statusMap: Record<string, string> = {
+    'PENDING': 'bg-yellow-500 text-white',
+    'CONFIRMED': 'bg-green-500 text-white',
+    'IN_DELIVERY': 'bg-purple-500 text-white',
+    'DELIVERED': 'bg-emerald-500 text-white',
+    'COMPLETED': 'bg-emerald-500 text-white',
+    'CANCELED': 'bg-red-500 text-white',
+    'CANCELLED': 'bg-red-500 text-white',
+  }
+  return statusMap[status] || 'bg-blue-500 text-white'
+}
+
+function getTimelineBadgeClass(status: string): string {
+  const statusMap: Record<string, string> = {
+    'PENDING': 'bg-yellow-100 text-yellow-700',
+    'CONFIRMED': 'bg-green-100 text-green-700',
+  }
+  return statusMap[status] || 'bg-gray-100 text-gray-700'
+}
+
+function getTimelineLabel(status: string): string {
+  const statusMap: Record<string, string> = {
+    'PENDING': 'Nueva',
+    'CONFIRMED': 'Confirmada',
+  }
+  return statusMap[status] || status
+}
+
+function getTableStatusClass(status: string): string {
+  const statusMap: Record<string, string> = {
+    'PENDING': 'bg-yellow-100 text-yellow-800',
+    'IN_PROGRESS': 'bg-blue-100 text-blue-800',
+    'COMPLETED': 'bg-green-100 text-green-800',
+  }
+  return statusMap[status] || 'bg-gray-100 text-gray-800'
+}
+
+function isOrderFromToday(orderDate: string): boolean {
+  return new Date(orderDate).toDateString() === new Date().toDateString()
+}
+
+function isCompletedStatus(status: string): boolean {
+  return status === 'DELIVERED' || status === 'COMPLETED'
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [stats, setStats] = useState<Stats | null>(null)
@@ -487,12 +574,7 @@ export default function DashboardPage() {
                       <p className="text-sm text-gray-600">{order.clientName}</p>
                     </div>
                     <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${(() => {
-                        if (order.status === 'PENDING') return 'bg-yellow-100 text-yellow-800';
-                        if (order.status === 'IN_PROGRESS') return 'bg-blue-100 text-blue-800';
-                        if (order.status === 'COMPLETED') return 'bg-green-100 text-green-800';
-                        return 'bg-gray-100 text-gray-800';
-                      })()}`}
+                      className={`px-2 py-1 text-xs font-semibold rounded-full ${getTableStatusClass(order.status)}`}
                     >
                       {order.status}
                     </span>
@@ -548,12 +630,7 @@ export default function DashboardPage() {
                       </td>
                       <td className="py-3 px-4">
                         <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full ${(() => {
-                            if (order.status === 'PENDING') return 'bg-yellow-100 text-yellow-800';
-                            if (order.status === 'IN_PROGRESS') return 'bg-blue-100 text-blue-800';
-                            if (order.status === 'COMPLETED') return 'bg-green-100 text-green-800';
-                            return 'bg-gray-100 text-gray-800';
-                          })()}`}
+                          className={`px-2 py-1 text-xs font-semibold rounded-full ${getTableStatusClass(order.status)}`}
                         >
                           {order.status}
                         </span>
@@ -691,14 +768,7 @@ export default function DashboardPage() {
                     className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-purple-50 rounded-lg border border-gray-200 cursor-pointer transition-all hover:border-purple-300"
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${(() => {
-                        if (order.status === 'PENDING') return 'bg-yellow-100 text-yellow-600';
-                        if (order.status === 'CONFIRMED') return 'bg-green-100 text-green-600';
-                        if (order.status === 'IN_DELIVERY') return 'bg-purple-100 text-purple-600';
-                        if (order.status === 'DELIVERED' || order.status === 'COMPLETED') return 'bg-emerald-100 text-emerald-600';
-                        if (order.status === 'CANCELED' || order.status === 'CANCELLED') return 'bg-red-100 text-red-600';
-                        return 'bg-blue-100 text-blue-600';
-                      })()}`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getStatusIconBgClass(order.status)}`}>
                         <ShoppingCart size={18} />
                       </div>
                       <div>
@@ -712,23 +782,8 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-gray-900">${Number(order.totalAmount || 0).toFixed(2)}</p>
-                      <p className={`text-xs font-medium px-2 py-1 rounded-full ${(() => {
-                        if (order.status === 'PENDING') return 'bg-yellow-100 text-yellow-700';
-                        if (order.status === 'CONFIRMED') return 'bg-green-100 text-green-700';
-                        if (order.status === 'IN_DELIVERY') return 'bg-purple-100 text-purple-700';
-                        if (order.status === 'DELIVERED' || order.status === 'COMPLETED') return 'bg-emerald-100 text-emerald-700';
-                        if (order.status === 'CANCELED' || order.status === 'CANCELLED') return 'bg-red-100 text-red-700';
-                        return 'bg-blue-100 text-blue-700';
-                      })()}`}>
-                        {(() => {
-                          if (order.status === 'PENDING') return 'Pendiente';
-                          if (order.status === 'CONFIRMED') return 'Confirmada';
-                          if (order.status === 'IN_DELIVERY') return 'En Entrega';
-                          if (order.status === 'DELIVERED') return 'Entregada';
-                          if (order.status === 'COMPLETED') return 'Completada';
-                          if (order.status === 'CANCELED' || order.status === 'CANCELLED') return 'Cancelada';
-                          return order.status;
-                        })()}
+                      <p className={`text-xs font-medium px-2 py-1 rounded-full ${getStatusBadgeClass(order.status)}`}>
+                        {getStatusLabel(order.status)}
                       </p>
                     </div>
                   </button>
@@ -749,11 +804,7 @@ export default function DashboardPage() {
                 <div>
                   <p className="text-purple-100 text-sm">Órdenes Hoy</p>
                   <p className="text-3xl font-bold mt-1">
-                    {recentOrders.filter((o: any) => {
-                      const orderDate = new Date(o.createdAt).toDateString()
-                      const today = new Date().toDateString()
-                      return orderDate === today
-                    }).length}
+                    {recentOrders.filter((o: any) => isOrderFromToday(o.createdAt)).length}
                   </p>
                 </div>
                 <ShoppingCart className="text-purple-200" size={40} />
@@ -765,11 +816,7 @@ export default function DashboardPage() {
                 <div>
                   <p className="text-green-100 text-sm">Completadas Hoy</p>
                   <p className="text-3xl font-bold mt-1">
-                    {recentOrders.filter((o: any) => {
-                      const orderDate = new Date(o.createdAt).toDateString()
-                      const today = new Date().toDateString()
-                      return orderDate === today && (o.status === 'DELIVERED' || o.status === 'COMPLETED')
-                    }).length}
+                    {recentOrders.filter((o: any) => isOrderFromToday(o.createdAt) && isCompletedStatus(o.status)).length}
                   </p>
                 </div>
                 <CheckCircle className="text-green-200" size={40} />
@@ -802,14 +849,7 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   {recentOrders.slice(0, 8).map((order: any, index: number) => (
                     <div key={order.id} className="flex items-start gap-4 relative">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-md ${(() => {
-                        if (order.status === 'PENDING') return 'bg-yellow-500 text-white';
-                        if (order.status === 'CONFIRMED') return 'bg-green-500 text-white';
-                        if (order.status === 'IN_DELIVERY') return 'bg-purple-500 text-white';
-                        if (order.status === 'DELIVERED' || order.status === 'COMPLETED') return 'bg-emerald-500 text-white';
-                        if (order.status === 'CANCELED' || order.status === 'CANCELLED') return 'bg-red-500 text-white';
-                        return 'bg-blue-500 text-white';
-                      })()}`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-md ${getTimelineIconClass(order.status)}`}>
                         <ShoppingCart size={18} />
                       </div>
                       <div className="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-100">
@@ -817,16 +857,8 @@ export default function DashboardPage() {
                           <p className="font-semibold text-gray-900">
                             Orden #{order.orderNumber?.replace('ORD-', '').slice(-6) || order.id.slice(0, 6)}
                           </p>
-                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${(() => {
-                            if (order.status === 'PENDING') return 'bg-yellow-100 text-yellow-700';
-                            if (order.status === 'CONFIRMED') return 'bg-green-100 text-green-700';
-                            return 'bg-gray-100 text-gray-700';
-                          })()}`}>
-                            {(() => {
-                              if (order.status === 'PENDING') return 'Nueva';
-                              if (order.status === 'CONFIRMED') return 'Confirmada';
-                              return order.status;
-                            })()}
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${getTimelineBadgeClass(order.status)}`}>
+                            {getTimelineLabel(order.status)}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600 mt-1">

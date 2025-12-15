@@ -4,6 +4,59 @@ import { prisma } from '@/lib/prisma'
 import { handleTimeoutError, TimeoutError } from '@/lib/timeout'
 import { withResilientDb } from '@/lib/db-retry'
 
+// Helper: Determine effective role from params or user data
+function determineEffectiveRole(
+  role: string | null,
+  isClient: boolean,
+  isSeller: boolean
+): string | null {
+  if (role) return role
+  if (isClient) return 'client'
+  if (isSeller) return 'seller'
+  return null
+}
+
+// Helper: Build where clause based on role
+function buildOrderWhereClause(
+  effectiveRole: string | null,
+  isClient: boolean,
+  isSeller: boolean,
+  authUser: { clients: { id: string }[]; sellers: { id: string }[] },
+  status: string | null
+): { whereClause: Record<string, unknown>; error?: string } {
+  const whereClause: Record<string, unknown> = {}
+
+  if (effectiveRole === 'client' && isClient) {
+    const clientId = authUser.clients[0].id
+    whereClause.clientId = clientId
+    console.log('👤 [ORDERS GET] Filtering by clientId:', clientId)
+  } else if (effectiveRole === 'seller' && isSeller) {
+    const sellerId = authUser.sellers[0].id
+    whereClause.sellerId = sellerId
+    console.log('👔 [ORDERS GET] Filtering by sellerId:', sellerId)
+  } else {
+    return { whereClause, error: 'No tienes permisos para ver órdenes.' }
+  }
+
+  if (status && status !== 'all') {
+    const statuses = status.split(',').map(s => s.trim())
+    whereClause.status = statuses.length > 1 ? { in: statuses } : status
+  }
+
+  return { whereClause }
+}
+
+// Helper: Calculate order statistics
+function calculateOrderStats(orders: { status: string }[]) {
+  return {
+    total: orders.length,
+    pending: orders.filter(o => o.status === 'PENDING').length,
+    processing: orders.filter(o => o.status === 'CONFIRMED').length,
+    completed: orders.filter(o => o.status === 'COMPLETED').length,
+    cancelled: orders.filter(o => o.status === 'CANCELED').length,
+  }
+}
+
 // GET /api/orders - Obtener todas las órdenes (para vendedor o cliente)
 // ✅ CON TIMEOUT DE 5 SEGUNDOS
 // Soporta: ?status=PENDING&limit=10&recent=true&role=seller|client
@@ -43,48 +96,17 @@ export async function GET(request: Request) {
     // Determinar el rol del usuario si no se especifica
     const isClient = authUser.clients.length > 0
     const isSeller = authUser.sellers.length > 0
-    
-    // Determine effective role - extracted to avoid nested ternary
-    let effectiveRole = role
-    if (!effectiveRole) {
-      if (isClient) {
-        effectiveRole = 'client'
-      } else if (isSeller) {
-        effectiveRole = 'seller'
-      } else {
-        effectiveRole = null
-      }
-    }
+    const effectiveRole = determineEffectiveRole(role, isClient, isSeller)
 
     console.log('🎭 [ORDERS GET] Effective role:', effectiveRole, { isClient, isSeller })
 
     // 🔒 SEGURIDAD: Construir filtro según el rol
-    const whereClause: any = {}
-
-    if (effectiveRole === 'client' && isClient) {
-      // Cliente: ver sus propias órdenes
-      const clientId = authUser.clients[0].id
-      whereClause.clientId = clientId
-      console.log('👤 [ORDERS GET] Filtering by clientId:', clientId)
-    } else if (effectiveRole === 'seller' && isSeller) {
-      // Vendedor: ver órdenes de sus clientes
-      const sellerId = authUser.sellers[0].id
-      whereClause.sellerId = sellerId
-      console.log('👔 [ORDERS GET] Filtering by sellerId:', sellerId)
-    } else {
-      return NextResponse.json({ 
-        error: 'No tienes permisos para ver órdenes.' 
-      }, { status: 403 })
-    }
+    const { whereClause, error: whereError } = buildOrderWhereClause(
+      effectiveRole, isClient, isSeller, authUser, status
+    )
     
-    if (status && status !== 'all') {
-      // Soportar múltiples estados separados por coma (ej: "DELIVERED,COMPLETED")
-      const statuses = status.split(',').map(s => s.trim())
-      if (statuses.length > 1) {
-        whereClause.status = { in: statuses }
-      } else {
-        whereClause.status = status
-      }
+    if (whereError) {
+      return NextResponse.json({ error: whereError }, { status: 403 })
     }
 
     console.log('🔎 [ORDERS GET] Where clause:', JSON.stringify(whereClause, null, 2))
@@ -190,13 +212,7 @@ export async function GET(request: Request) {
     }
 
     // Estadísticas rápidas
-    const stats = {
-      total: orders.length,
-      pending: orders.filter(o => o.status === 'PENDING').length,
-      processing: orders.filter(o => o.status === 'CONFIRMED').length,
-      completed: orders.filter(o => o.status === 'COMPLETED').length,
-      cancelled: orders.filter(o => o.status === 'CANCELED').length,
-    }
+    const stats = calculateOrderStats(orders)
 
     return NextResponse.json({
       success: true,

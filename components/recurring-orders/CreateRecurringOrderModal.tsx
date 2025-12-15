@@ -49,6 +49,63 @@ const CATEGORIES = [
   { value: 'OTROS', label: '📦 Otros', icon: '📦' }
 ]
 
+// ============ Helper Functions for Error Handling ============
+
+function formatValidationDetail(detail: any): string {
+  if (typeof detail === 'string') {
+    return `  • ${detail}\n`
+  }
+  if (detail.path && detail.message) {
+    const path = Array.isArray(detail.path) ? detail.path.join('.') : detail.path
+    return `  • ${path}: ${detail.message}\n`
+  }
+  return `  • ${JSON.stringify(detail)}\n`
+}
+
+function formatErrorDetails(details: any): string {
+  if (!Array.isArray(details)) {
+    return JSON.stringify(details, null, 2)
+  }
+  return details.map((detail, index) => {
+    console.log(`🔍 Detail ${index}:`, detail, typeof detail)
+    return formatValidationDetail(detail)
+  }).join('')
+}
+
+function buildErrorMessage(status: number, result: any): string {
+  let errorMessage = `❌ Error ${status}: ${result.error || 'No se pudo crear la orden'}\n`
+  
+  if (result.message && result.message !== result.error) {
+    errorMessage += `\n💬 Mensaje: ${result.message}\n`
+  }
+  
+  if (result.details) {
+    errorMessage += '\n📋 Detalles de validación:\n'
+    errorMessage += formatErrorDetails(result.details)
+  }
+  
+  const hasNoUsefulInfo = !result.details && !result.error && !result.message
+  if (hasNoUsefulInfo) {
+    errorMessage += '\n📋 Info del error:\n' + JSON.stringify(result, null, 2)
+  }
+  
+  return errorMessage
+}
+
+function handleConnectionError(error: unknown): void {
+  console.error('❌ Error creando orden recurrente:', error)
+  console.error('❌ Error type:', typeof error)
+  console.error('❌ Error instanceof:', error instanceof Error)
+  
+  if (error instanceof Error) {
+    console.error('❌ Error message:', error.message)
+    console.error('❌ Error stack:', error.stack)
+    alert(`Error de conexión: ${error.message}`)
+  } else {
+    alert('Error de conexión al crear la orden: ' + JSON.stringify(error))
+  }
+}
+
 export default function CreateRecurringOrderModal({
   isOpen,
   onClose
@@ -199,64 +256,26 @@ export default function CreateRecurringOrderModal({
         onClose()
         resetForm()
         globalThis.location.reload() // Recargar para ver la nueva orden
-      } else {
-        console.error('❌ Error del servidor completo:', {
-          status: response.status,
-          statusText: response.statusText,
-          result
-        })
-        
-        // Log cada propiedad del result
-        console.log('🔍 Propiedades del error:')
-        for (const key in result) {
-          console.log(`  ${key}:`, result[key])
-        }
-        
-        // Mostrar error detallado
-        let errorMessage = `❌ Error ${response.status}: ${result.error || 'No se pudo crear la orden'}\n`
-        if (result.message && result.message !== result.error) {
-          errorMessage += `\n💬 Mensaje: ${result.message}\n`
-        }
-        
-        if (result.details) {
-          errorMessage += '\n📋 Detalles de validación:\n'
-          if (Array.isArray(result.details)) {
-            // Los detalles son strings del formato "campo: mensaje"
-            result.details.forEach((detail: any, index: number) => {
-              console.log(`🔍 Detail ${index}:`, detail, typeof detail)
-              if (typeof detail === 'string') {
-                errorMessage += `  • ${detail}\n`
-              } else if (detail.path && detail.message) {
-                const path = Array.isArray(detail.path) ? detail.path.join('.') : detail.path
-                errorMessage += `  • ${path}: ${detail.message}\n`
-              } else {
-                errorMessage += `  • ${JSON.stringify(detail)}\n`
-              }
-            })
-          } else {
-            errorMessage += JSON.stringify(result.details, null, 2)
-          }
-        }
-        
-        // Si no hay detalles pero hay otras propiedades
-        if (!result.details && !result.error && !result.message) {
-          errorMessage += '\n📋 Info del error:\n' + JSON.stringify(result, null, 2)
-        }
-        
-        alert(errorMessage)
-        console.error('❌ Error del servidor:', errorMessage)
+        return
       }
+
+      console.error('❌ Error del servidor completo:', {
+        status: response.status,
+        statusText: response.statusText,
+        result
+      })
+      
+      // Log cada propiedad del result
+      console.log('🔍 Propiedades del error:')
+      for (const key in result) {
+        console.log(`  ${key}:`, result[key])
+      }
+      
+      const errorMessage = buildErrorMessage(response.status, result)
+      alert(errorMessage)
+      console.error('❌ Error del servidor:', errorMessage)
     } catch (error) {
-      console.error('❌ Error creando orden recurrente:', error)
-      console.error('❌ Error type:', typeof error)
-      console.error('❌ Error instanceof:', error instanceof Error)
-      if (error instanceof Error) {
-        console.error('❌ Error message:', error.message)
-        console.error('❌ Error stack:', error.stack)
-        alert(`Error de conexión: ${error.message}`)
-      } else {
-        alert('Error de conexión al crear la orden: ' + JSON.stringify(error))
-      }
+      handleConnectionError(error)
     } finally {
       setLoading(false)
     }

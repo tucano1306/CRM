@@ -30,6 +30,105 @@ interface RecentOrder {
   createdAt: string
 }
 
+// ============ Helper Constants ============
+
+const STATUS_COLORS: Record<string, string> = {
+  PENDING: 'bg-yellow-100 text-yellow-800',
+  CONFIRMED: 'bg-blue-100 text-blue-800',
+  PREPARING: 'bg-indigo-100 text-indigo-800',
+  READY_FOR_PICKUP: 'bg-cyan-100 text-cyan-800',
+  IN_DELIVERY: 'bg-purple-100 text-purple-800',
+  DELIVERED: 'bg-teal-100 text-teal-800',
+  PARTIALLY_DELIVERED: 'bg-orange-100 text-orange-800',
+  COMPLETED: 'bg-emerald-100 text-emerald-800',
+  CANCELED: 'bg-red-100 text-red-800',
+  PAYMENT_PENDING: 'bg-amber-100 text-amber-800',
+  PAID: 'bg-green-100 text-green-800',
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Pendiente',
+  CONFIRMED: 'Confirmada',
+  PREPARING: 'Preparando',
+  READY_FOR_PICKUP: 'Listo para Recoger',
+  IN_DELIVERY: 'En Entrega',
+  DELIVERED: 'Entregado',
+  PARTIALLY_DELIVERED: 'Entrega Parcial',
+  COMPLETED: 'Completada',
+  CANCELED: 'Cancelada',
+  PAYMENT_PENDING: 'Pago Pendiente',
+  PAID: 'Pagado',
+}
+
+const ORDER_PROGRESS_MAP: Record<string, number> = {
+  PENDING: 0,
+  PAYMENT_PENDING: 10,
+  CONFIRMED: 25,
+  PREPARING: 50,
+  READY_FOR_PICKUP: 65,
+  IN_DELIVERY: 75,
+  DELIVERED: 90,
+  COMPLETED: 100,
+  CANCELED: 0,
+  PAID: 20,
+}
+
+// ============ Helper Functions ============
+
+function getOrderProgress(status: string): number {
+  return ORDER_PROGRESS_MAP[status] ?? 0
+}
+
+function getStatusColor(status: string): string {
+  return STATUS_COLORS[status] ?? 'bg-gray-100 text-gray-800'
+}
+
+function getMonthCount(chartPeriod: '6months' | 'year' | 'all'): number {
+  if (chartPeriod === '6months') return 6
+  if (chartPeriod === 'year') return 12
+  return 24
+}
+
+function calculateMonthlyData(
+  recentOrders: RecentOrder[],
+  chartPeriod: '6months' | 'year' | 'all'
+) {
+  const monthsData = []
+  const now = new Date()
+  const monthCount = getMonthCount(chartPeriod)
+
+  for (let i = monthCount - 1; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    const monthOrders = recentOrders.filter(order => {
+      const orderDate = new Date(order.createdAt)
+      return orderDate.getMonth() === date.getMonth() && 
+             orderDate.getFullYear() === date.getFullYear()
+    })
+
+    const totalAmount = monthOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0)
+    
+    monthsData.push({
+      name: date.toLocaleDateString('es-ES', { month: 'short' }),
+      amount: totalAmount,
+      count: monthOrders.length
+    })
+  }
+
+  const maxAmount = Math.max(...monthsData.map(m => m.amount), 1)
+  return monthsData.map(month => ({
+    ...month,
+    percentage: (month.amount / maxAmount) * 100
+  }))
+}
+
+function getCartLabel(cartCount: number): string {
+  if (cartCount === 0) return 'Ver productos en carrito'
+  const label = cartCount === 1 ? 'producto' : 'productos'
+  return `${cartCount} ${label}`
+}
+
+// ============ Main Component ============
+
 export default function BuyerDashboardPage() {
   const { user } = useUser()
   const { cartCount } = useCartCount()
@@ -42,42 +141,7 @@ export default function BuyerDashboardPage() {
   const [frequentProducts, setFrequentProducts] = useState<any[]>([])
   const [addingToCart, setAddingToCart] = useState<string | null>(null)
 
-
-  // Calcular datos mensuales para el gráfico
-  const getMonthlyData = () => {
-    const monthsData = []
-    const now = new Date()
-    const getMonthCount = () => {
-      if (chartPeriod === '6months') return 6;
-      if (chartPeriod === 'year') return 12;
-      return 24;
-    };
-    const monthCount = getMonthCount()
-
-    for (let i = monthCount - 1; i >= 0; i--) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const monthOrders = recentOrders.filter(order => {
-        const orderDate = new Date(order.createdAt)
-        return orderDate.getMonth() === date.getMonth() && 
-               orderDate.getFullYear() === date.getFullYear()
-      })
-
-      const totalAmount = monthOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0)
-      
-      monthsData.push({
-        name: date.toLocaleDateString('es-ES', { month: 'short' }),
-        amount: totalAmount,
-        count: monthOrders.length
-      })
-    }
-
-    // Calcular porcentajes para la altura de las barras
-    const maxAmount = Math.max(...monthsData.map(m => m.amount), 1)
-    return monthsData.map(month => ({
-      ...month,
-      percentage: (month.amount / maxAmount) * 100
-    }))
-  }
+  const getMonthlyData = () => calculateMonthlyData(recentOrders, chartPeriod)
 
   useEffect(() => {
     fetchBuyerData()
@@ -190,57 +254,6 @@ export default function BuyerDashboardPage() {
     )
   }
 
-  const statusColors: Record<string, string> = {
-    PENDING: 'bg-yellow-100 text-yellow-800',
-    CONFIRMED: 'bg-blue-100 text-blue-800',
-    PREPARING: 'bg-indigo-100 text-indigo-800',
-    READY_FOR_PICKUP: 'bg-cyan-100 text-cyan-800',
-    IN_DELIVERY: 'bg-purple-100 text-purple-800',
-    DELIVERED: 'bg-teal-100 text-teal-800',
-    PARTIALLY_DELIVERED: 'bg-orange-100 text-orange-800',
-    COMPLETED: 'bg-emerald-100 text-emerald-800',
-    CANCELED: 'bg-red-100 text-red-800',
-    PAYMENT_PENDING: 'bg-amber-100 text-amber-800',
-    PAID: 'bg-green-100 text-green-800',
-  }
-
-  const statusLabels: Record<string, string> = {
-    PENDING: 'Pendiente',
-    CONFIRMED: 'Confirmada',
-    PREPARING: 'Preparando',
-    READY_FOR_PICKUP: 'Listo para Recoger',
-    IN_DELIVERY: 'En Entrega',
-    DELIVERED: 'Entregado',
-    PARTIALLY_DELIVERED: 'Entrega Parcial',
-    COMPLETED: 'Completada',
-    CANCELED: 'Cancelada',
-    PAYMENT_PENDING: 'Pago Pendiente',
-    PAID: 'Pagado',
-  }
-
-  // Función para obtener el progreso de una orden
-  const getOrderProgress = (status: string): number => {
-    const progressMap: Record<string, number> = {
-      PENDING: 0,
-      PAYMENT_PENDING: 10,
-      CONFIRMED: 25,
-      PREPARING: 50,
-      READY_FOR_PICKUP: 65,
-      IN_DELIVERY: 75,
-      DELIVERED: 90,
-      COMPLETED: 100,
-      CANCELED: 0,
-      PAID: 20,
-    }
-    return progressMap[status] || 0
-  }
-
-  // Función para obtener color de estado
-  const getStatusColor = (status: string): string => {
-    return statusColors[status] || 'bg-gray-100 text-gray-800'
-  }
-
-  // Detectar alertas importantes
   const hasImportantAlerts = recentOrders.some(
     order => order.status === 'PAYMENT_PENDING' || order.status === 'READY_FOR_PICKUP'
   )
@@ -572,11 +585,7 @@ export default function BuyerDashboardPage() {
                       <div>
                         <h3 className="font-bold text-emerald-900">Mi Carrito</h3>
                         <p className="text-sm text-emerald-700 font-medium">
-                          {(() => {
-                            if (cartCount === 0) return 'Ver productos en carrito';
-                            const label = cartCount === 1 ? 'producto' : 'productos';
-                            return `${cartCount} ${label}`;
-                          })()}
+                          {getCartLabel(cartCount)}
                         </p>
                       </div>
                     </div>
@@ -754,7 +763,7 @@ export default function BuyerDashboardPage() {
                         </div>
                       </div>
                       <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap flex-shrink-0 ${getStatusColor(order.status)}`}>
-                        {statusLabels[order.status] || order.status}
+                        {STATUS_LABELS[order.status] || order.status}
                       </span>
                     </div>
                     

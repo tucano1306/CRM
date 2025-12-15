@@ -96,85 +96,114 @@ const RATE_LIMIT_CONFIGS: Record<string, RateLimitConfig> = {
 }
 
 /**
+ * Validate string field
+ */
+function validateStringField(value: any, rule: ValidationRule): string[] {
+  const errors: string[] = []
+  
+  if (typeof value !== 'string') {
+    errors.push(`Field ${rule.field} must be a string`)
+    return errors
+  }
+  
+  if (rule.minLength && value.length < rule.minLength) {
+    errors.push(`Field ${rule.field} must be at least ${rule.minLength} characters`)
+  }
+  if (rule.maxLength && value.length > rule.maxLength) {
+    errors.push(`Field ${rule.field} must be at most ${rule.maxLength} characters`)
+  }
+  if (rule.pattern && !new RegExp(rule.pattern).test(value)) {
+    errors.push(`Field ${rule.field} format is invalid`)
+  }
+  if (rule.allowedValues && !rule.allowedValues.includes(value)) {
+    errors.push(`Field ${rule.field} must be one of: ${rule.allowedValues.join(', ')}`)
+  }
+  
+  return errors
+}
+
+/**
+ * Validate number field
+ */
+function validateNumberField(value: any, rule: ValidationRule): string[] {
+  const numValue = typeof value === 'string' ? Number.parseFloat(value) : value
+  if (typeof numValue !== 'number' || Number.isNaN(numValue)) {
+    return [`Field ${rule.field} must be a valid number`]
+  }
+  return []
+}
+
+/**
+ * Validate email field
+ */
+function validateEmailField(value: any, rule: ValidationRule): string[] {
+  if (typeof value !== 'string') {
+    return [`Field ${rule.field} must be a string`]
+  }
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(value)) {
+    return [`Field ${rule.field} must be a valid email address`]
+  }
+  return []
+}
+
+/**
+ * Validate phone field
+ */
+function validatePhoneField(value: any, rule: ValidationRule): string[] {
+  if (typeof value !== 'string') {
+    return [`Field ${rule.field} must be a string`]
+  }
+  const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/
+  if (!phoneRegex.test(value)) {
+    return [`Field ${rule.field} must be a valid phone number`]
+  }
+  return []
+}
+
+/**
+ * Validate UUID field
+ */
+function validateUuidField(value: any, rule: ValidationRule): string[] {
+  if (typeof value !== 'string') {
+    return [`Field ${rule.field} must be a string`]
+  }
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+  if (!uuidRegex.test(value)) {
+    return [`Field ${rule.field} must be a valid UUID`]
+  }
+  return []
+}
+
+/**
  * Validate field based on type and rules
  */
 function validateField(value: any, rule: ValidationRule): string[] {
-  const errors: string[] = []
-
   // Required check
   if (rule.required && (value === undefined || value === null || value === '')) {
-    errors.push(`Field ${rule.field} is required`)
-    return errors
+    return [`Field ${rule.field} is required`]
   }
 
   // Skip validation if field is not provided and not required
   if (!rule.required && (value === undefined || value === null)) {
-    return errors
+    return []
   }
 
-  // Type validation
+  // Type validation using helper functions
   switch (rule.type) {
     case 'string':
-      if (typeof value !== 'string') {
-        errors.push(`Field ${rule.field} must be a string`)
-        break
-      }
-      if (rule.minLength && value.length < rule.minLength) {
-        errors.push(`Field ${rule.field} must be at least ${rule.minLength} characters`)
-      }
-      if (rule.maxLength && value.length > rule.maxLength) {
-        errors.push(`Field ${rule.field} must be at most ${rule.maxLength} characters`)
-      }
-      if (rule.pattern && !new RegExp(rule.pattern).test(value)) {
-        errors.push(`Field ${rule.field} format is invalid`)
-      }
-      if (rule.allowedValues && !rule.allowedValues.includes(value)) {
-        errors.push(`Field ${rule.field} must be one of: ${rule.allowedValues.join(', ')}`)
-      }
-      break
-
+      return validateStringField(value, rule)
     case 'number':
-      const numValue = typeof value === 'string' ? Number.parseFloat(value) : value
-      if (typeof numValue !== 'number' || Number.isNaN(numValue)) {
-        errors.push(`Field ${rule.field} must be a valid number`)
-      }
-      break
-
+      return validateNumberField(value, rule)
     case 'email':
-      if (typeof value !== 'string') {
-        errors.push(`Field ${rule.field} must be a string`)
-        break
-      }
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-      if (!emailRegex.test(value)) {
-        errors.push(`Field ${rule.field} must be a valid email address`)
-      }
-      break
-
+      return validateEmailField(value, rule)
     case 'phone':
-      if (typeof value !== 'string') {
-        errors.push(`Field ${rule.field} must be a string`)
-        break
-      }
-      const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/
-      if (!phoneRegex.test(value)) {
-        errors.push(`Field ${rule.field} must be a valid phone number`)
-      }
-      break
-
+      return validatePhoneField(value, rule)
     case 'uuid':
-      if (typeof value !== 'string') {
-        errors.push(`Field ${rule.field} must be a string`)
-        break
-      }
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-      if (!uuidRegex.test(value)) {
-        errors.push(`Field ${rule.field} must be a valid UUID`)
-      }
-      break
+      return validateUuidField(value, rule)
+    default:
+      return []
   }
-
-  return errors
 }
 
 /**
@@ -276,6 +305,106 @@ function transformData(data: any, endpoint: string): any {
   return data
 }
 
+/**
+ * Build metadata object for response
+ */
+function buildMetadata(startTime: number, checks: string[]) {
+  return {
+    processingTime: Date.now() - startTime,
+    region: process.env.VERCEL_REGION || 'unknown',
+    checks
+  }
+}
+
+/**
+ * Create rate limit exceeded response
+ */
+function createRateLimitResponse(startTime: number, checks: string[], resetTime?: number) {
+  return NextResponse.json(
+    {
+      valid: false,
+      rateLimited: true,
+      errors: ['Rate limit exceeded'],
+      resetTime,
+      metadata: buildMetadata(startTime, checks)
+    } as PreprocessingResult,
+    { 
+      status: 429,
+      headers: {
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': resetTime?.toString() || '',
+        'X-Runtime': 'edge'
+      }
+    }
+  )
+}
+
+/**
+ * Create JSON parse error response
+ */
+function createJsonParseErrorResponse(startTime: number, checks: string[]) {
+  return NextResponse.json(
+    {
+      valid: false,
+      errors: ['Invalid JSON format'],
+      metadata: buildMetadata(startTime, checks)
+    } as PreprocessingResult,
+    { status: 400 }
+  )
+}
+
+/**
+ * Validate request data against rules
+ */
+function validateRequestData(requestData: any, validationRules: ValidationRule[] | undefined): string[] {
+  const errors: string[] = []
+  if (validationRules && requestData) {
+    for (const rule of validationRules) {
+      const fieldErrors = validateField(requestData[rule.field], rule)
+      errors.push(...fieldErrors)
+    }
+  }
+  return errors
+}
+
+/**
+ * Check for automated/bot requests
+ */
+function checkBotRequest(userAgent: string): string | null {
+  if (userAgent.toLowerCase().includes('bot') && !userAgent.includes('googlebot')) {
+    return 'Automated requests not allowed'
+  }
+  return null
+}
+
+/**
+ * Create preprocessing result response
+ */
+function createPreprocessingResponse(
+  startTime: number,
+  checks: string[],
+  errors: string[],
+  transformedData: any
+) {
+  const result: PreprocessingResult = {
+    valid: errors.length === 0,
+    errors: errors.length > 0 ? errors : undefined,
+    transformedData: errors.length === 0 ? transformedData : undefined,
+    metadata: buildMetadata(startTime, checks)
+  }
+
+  return NextResponse.json(result, {
+    status: errors.length > 0 ? 400 : 200,
+    headers: {
+      'Cache-Control': 'no-cache',
+      'X-Edge-Region': process.env.VERCEL_REGION || 'unknown',
+      'X-Processing-Time': `${Date.now() - startTime}ms`,
+      'X-Runtime': 'edge',
+      'X-Validation-Checks': checks.join(',')
+    }
+  })
+}
+
 export async function POST(request: NextRequest) {
   const startTime = Date.now()
   const checks: string[] = []
@@ -292,27 +421,7 @@ export async function POST(request: NextRequest) {
     checks.push('rate-limit')
 
     if (!rateLimitResult.allowed) {
-      return NextResponse.json(
-        {
-          valid: false,
-          rateLimited: true,
-          errors: ['Rate limit exceeded'],
-          resetTime: rateLimitResult.resetTime,
-          metadata: {
-            processingTime: Date.now() - startTime,
-            region: process.env.VERCEL_REGION || 'unknown',
-            checks
-          }
-        } as PreprocessingResult,
-        { 
-          status: 429,
-          headers: {
-            'X-RateLimit-Remaining': '0',
-            'X-RateLimit-Reset': rateLimitResult.resetTime?.toString() || '',
-            'X-Runtime': 'edge'
-          }
-        }
-      )
+      return createRateLimitResponse(startTime, checks, rateLimitResult.resetTime)
     }
 
     // Parse request body if JSON
@@ -323,33 +432,14 @@ export async function POST(request: NextRequest) {
         checks.push('json-parsing')
       } catch (error) {
         console.error('Failed to parse JSON request body:', error)
-        return NextResponse.json(
-          {
-            valid: false,
-            errors: ['Invalid JSON format'],
-            metadata: {
-              processingTime: Date.now() - startTime,
-              region: process.env.VERCEL_REGION || 'unknown',
-              checks
-            }
-          } as PreprocessingResult,
-          { status: 400 }
-        )
+        return createJsonParseErrorResponse(startTime, checks)
       }
     }
 
     // Validation
     const validationRules = VALIDATION_SCHEMAS[targetEndpoint]
-    const errors: string[] = []
-
-    if (validationRules && requestData) {
-      checks.push('validation')
-      
-      for (const rule of validationRules) {
-        const fieldErrors = validateField(requestData[rule.field], rule)
-        errors.push(...fieldErrors)
-      }
-    }
+    checks.push('validation')
+    const errors = validateRequestData(requestData, validationRules)
 
     // Data transformation
     let transformedData = requestData
@@ -360,35 +450,13 @@ export async function POST(request: NextRequest) {
 
     // Security checks
     const userAgent = request.headers.get('user-agent') || ''
-    const _origin = request.headers.get('origin') // Available for CORS checks if needed
-    
-    // Basic bot detection
-    if (userAgent.toLowerCase().includes('bot') && !userAgent.includes('googlebot')) {
-      errors.push('Automated requests not allowed')
+    const botError = checkBotRequest(userAgent)
+    if (botError) {
+      errors.push(botError)
     }
     checks.push('security')
 
-    const result: PreprocessingResult = {
-      valid: errors.length === 0,
-      errors: errors.length > 0 ? errors : undefined,
-      transformedData: errors.length === 0 ? transformedData : undefined,
-      metadata: {
-        processingTime: Date.now() - startTime,
-        region: process.env.VERCEL_REGION || 'unknown',
-        checks
-      }
-    }
-
-    return NextResponse.json(result, {
-      status: errors.length > 0 ? 400 : 200,
-      headers: {
-        'Cache-Control': 'no-cache',
-        'X-Edge-Region': process.env.VERCEL_REGION || 'unknown',
-        'X-Processing-Time': `${Date.now() - startTime}ms`,
-        'X-Runtime': 'edge',
-        'X-Validation-Checks': checks.join(',')
-      }
-    })
+    return createPreprocessingResponse(startTime, checks, errors, transformedData)
 
   } catch (error) {
     console.error('[EDGE-PREPROCESS] Error:', error)

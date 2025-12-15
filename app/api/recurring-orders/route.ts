@@ -16,6 +16,80 @@ const recurringOrderInclude = {
   client: { select: { name: true, email: true } }
 }
 
+// Helper: Sanitize recurring order input data
+function sanitizeRecurringOrderData(validatedData: any) {
+  return {
+    ...validatedData,
+    name: sanitizeText(validatedData.name),
+    notes: validatedData.notes ? sanitizeText(validatedData.notes) : undefined,
+    deliveryInstructions: validatedData.deliveryInstructions ? 
+      sanitizeText(validatedData.deliveryInstructions) : undefined,
+    customDays: validatedData.customDays || null,
+    dayOfWeek: validatedData.dayOfWeek || null,
+    dayOfMonth: validatedData.dayOfMonth || null
+  }
+}
+
+// Helper: Calculate total amount from items
+function calculateTotalAmount(items: Array<{ quantity: number; pricePerUnit: number }>): number {
+  return items.reduce((sum, item) => sum + (item.quantity * item.pricePerUnit), 0)
+}
+
+// Helper: Build recurring order create data
+function buildRecurringOrderData(clientId: string, sanitizedData: any, totalAmount: number, nextDate: Date) {
+  return {
+    clientId,
+    name: sanitizedData.name,
+    frequency: sanitizedData.frequency,
+    customDays: sanitizedData.customDays || null,
+    dayOfWeek: sanitizedData.dayOfWeek || null,
+    dayOfMonth: sanitizedData.dayOfMonth || null,
+    startDate: sanitizedData.startDate ? new Date(sanitizedData.startDate) : new Date(),
+    endDate: sanitizedData.endDate ? new Date(sanitizedData.endDate) : null,
+    nextExecutionDate: nextDate,
+    notes: sanitizedData.notes || null,
+    deliveryInstructions: sanitizedData.deliveryInstructions || null,
+    totalAmount,
+    isActive: true,
+    items: {
+      create: sanitizedData.items.map((item: any) => ({
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+        pricePerUnit: item.pricePerUnit,
+        subtotal: item.quantity * item.pricePerUnit,
+        notes: item.notes || null
+      }))
+    }
+  }
+}
+
+// Helper: Create seller notification for new recurring order
+async function createSellerNotification(recurringOrder: any, totalAmount: number, originalClientId: string) {
+  if (!recurringOrder.client.sellerId) {
+    console.warn('⚠️ [NOTIFICATION] Cliente no tiene vendedor asociado')
+    return
+  }
+
+  try {
+    const notification = await prisma.notification.create({
+      data: {
+        type: 'NEW_ORDER',
+        title: '🔄 Nueva Orden Recurrente',
+        message: `${recurringOrder.client.name} ha creado una orden recurrente "${recurringOrder.name}" por ${formatPrice(totalAmount)}. Frecuencia: ${getFrequencyLabel(recurringOrder.frequency)}`,
+        clientId: originalClientId,
+        sellerId: recurringOrder.client.sellerId,
+        orderId: recurringOrder.id,
+        relatedId: recurringOrder.id,
+        isRead: false
+      }
+    })
+    console.log('✅ [NOTIFICATION] Notificación creada para vendedor:', notification.id)
+  } catch (notifError) {
+    console.error('❌ [NOTIFICATION] Error creando notificación:', notifError)
+  }
+}
+
 // GET - Obtener órdenes recurrentes
 export async function GET(request: Request) {
   try {
@@ -58,18 +132,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { userId } = await auth()
-
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'No autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 })
     }
 
     const body = await request.json()
     console.log('📦 [RECURRING ORDER] Datos recibidos:', JSON.stringify(body, null, 2))
 
-    // 🔒 Obtener cliente del usuario autenticado
     const authUser = await prisma.authenticated_users.findUnique({
       where: { authId: userId },
       include: { clients: true }
@@ -77,19 +146,13 @@ export async function POST(request: Request) {
 
     if (!authUser || authUser.clients.length === 0) {
       console.error('❌ [RECURRING ORDER] Usuario no tiene cliente asociado')
-      return NextResponse.json(
-        { success: false, error: 'Usuario no tiene cliente asociado' },
-        { status: 403 }
-      )
+      return NextResponse.json({ success: false, error: 'Usuario no tiene cliente asociado' }, { status: 403 })
     }
 
     const clientId = authUser.clients[0].id
     console.log('✅ [RECURRING ORDER] Cliente detectado:', clientId)
 
-    // Agregar clientId automáticamente
     const dataToValidate = { ...body, clientId }
-
-    // ✅ VALIDACIÓN CON ZOD
     const validation = validateSchema(createRecurringOrderSchema, dataToValidate)
     if (!validation.success) {
       console.error('❌ [RECURRING ORDER] Validación falló:', validation.errors)
@@ -100,26 +163,8 @@ export async function POST(request: Request) {
       }, { status: 400 })
     }
 
-    const validatedData = validation.data
-
-    // ✅ SANITIZACIÓN
-    const sanitizedData = {
-      ...validatedData,
-      name: sanitizeText(validatedData.name),
-      notes: validatedData.notes ? sanitizeText(validatedData.notes) : undefined,
-      deliveryInstructions: validatedData.deliveryInstructions ? 
-        sanitizeText(validatedData.deliveryInstructions) : undefined,
-      customDays: validatedData.customDays || null,
-      dayOfWeek: validatedData.dayOfWeek || null,
-      dayOfMonth: validatedData.dayOfMonth || null
-    }
-
-    // Calcular total
-    const totalAmount = sanitizedData.items.reduce((sum: number, item: any) => {
-      return sum + (item.quantity * item.pricePerUnit)
-    }, 0)
-
-    // Calcular próxima fecha de ejecución
+    const sanitizedData = sanitizeRecurringOrderData(validation.data)
+    const totalAmount = calculateTotalAmount(sanitizedData.items)
     const nextDate = calculateNextExecutionDate(
       sanitizedData.frequency, 
       sanitizedData.startDate, 
@@ -128,7 +173,6 @@ export async function POST(request: Request) {
       sanitizedData.customDays || undefined
     )
 
-    // Crear orden recurrente
     console.log('💾 [RECURRING ORDER] Creando orden con:', {
       clientId,
       name: sanitizedData.name,
@@ -138,67 +182,13 @@ export async function POST(request: Request) {
     })
 
     const recurringOrder = await prisma.recurringOrder.create({
-      data: {
-        clientId,
-        name: sanitizedData.name,
-        frequency: sanitizedData.frequency,
-        customDays: sanitizedData.customDays || null,
-        dayOfWeek: sanitizedData.dayOfWeek || null,
-        dayOfMonth: sanitizedData.dayOfMonth || null,
-        startDate: sanitizedData.startDate ? new Date(sanitizedData.startDate) : new Date(),
-        endDate: sanitizedData.endDate ? new Date(sanitizedData.endDate) : null,
-        nextExecutionDate: nextDate,
-        notes: sanitizedData.notes || null,
-        deliveryInstructions: sanitizedData.deliveryInstructions || null,
-        totalAmount,
-        isActive: true,
-        items: {
-          create: sanitizedData.items.map((item: any) => ({
-            productId: item.productId,
-            productName: item.productName,
-            quantity: item.quantity,
-            pricePerUnit: item.pricePerUnit,
-            subtotal: item.quantity * item.pricePerUnit,
-            notes: item.notes || null
-          }))
-        }
-      },
-      include: {
-        items: {
-          include: {
-            product: true
-          }
-        },
-        client: true
-      }
+      data: buildRecurringOrderData(clientId, sanitizedData, totalAmount, nextDate),
+      include: { items: { include: { product: true } }, client: true }
     })
 
     console.log('✅ [RECURRING ORDER] Orden recurrente creada:', recurringOrder.id)
 
-    // 🔔 CREAR NOTIFICACIÓN PARA EL VENDEDOR
-    try {
-      // El cliente ya tiene el seller en recurringOrder.client.sellerId
-      if (recurringOrder.client.sellerId) {
-        const notification = await prisma.notification.create({
-          data: {
-            type: 'NEW_ORDER',
-            title: '🔄 Nueva Orden Recurrente',
-            message: `${recurringOrder.client.name} ha creado una orden recurrente "${recurringOrder.name}" por ${formatPrice(totalAmount)}. Frecuencia: ${getFrequencyLabel(recurringOrder.frequency)}`,
-            clientId: body.clientId,
-            sellerId: recurringOrder.client.sellerId,
-            orderId: recurringOrder.id,
-            relatedId: recurringOrder.id,
-            isRead: false
-          }
-        })
-        console.log('✅ [NOTIFICATION] Notificación creada para vendedor:', notification.id)
-      } else {
-        console.warn('⚠️ [NOTIFICATION] Cliente no tiene vendedor asociado')
-      }
-    } catch (notifError) {
-      console.error('❌ [NOTIFICATION] Error creando notificación:', notifError)
-      // No fallar la creación de la orden por error en notificación
-    }
+    await createSellerNotification(recurringOrder, totalAmount, body.clientId)
 
     return NextResponse.json({
       success: true,

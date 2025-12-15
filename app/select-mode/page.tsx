@@ -27,6 +27,254 @@ type UserRoles = {
   }
 }
 
+// ============ Helper Components ============
+
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="text-center">
+        <Loader2 className="animate-spin h-12 w-12 text-purple-600 mx-auto mb-4" />
+        <p className="text-gray-600">Verificando permisos...</p>
+      </div>
+    </div>
+  )
+}
+
+function ErrorScreen({ error, onRetry }: { readonly error: string | null; readonly onRetry: () => void }) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100 flex items-center justify-center p-4">
+      <Card className="max-w-md">
+        <CardHeader>
+          <CardTitle className="text-red-600 flex items-center gap-2">
+            <AlertCircle className="w-6 h-6" />
+            Error de verificación
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-700 mb-4">
+            {error || 'No se pudieron verificar tus permisos'}
+          </p>
+          <Button onClick={onRetry} className="w-full">
+            Reintentar
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function RegistrationNeededScreen({ roles }: { readonly roles: UserRoles }) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100 flex items-center justify-center p-4">
+      <Card className="max-w-md">
+        <CardHeader>
+          <CardTitle className="text-orange-600 flex items-center gap-2">
+            <AlertCircle className="w-6 h-6" />
+            Cuenta no configurada
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-700 mb-4">
+            Tu cuenta existe pero no está configurada como vendedor ni comprador.
+            Por favor contacta al administrador para completar tu registro.
+          </p>
+          <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+            <p><strong>Email:</strong> {roles.userData?.email}</p>
+            <p><strong>Nombre:</strong> {roles.userData?.name}</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function RoleConflictBanner({ roleConflict }: { readonly roleConflict: NonNullable<UserRoles['roleConflict']> }) {
+  const roleLabel = roleConflict.currentRole === 'SELLER' ? '🏪 Vendedor' : '🛒 Comprador'
+  
+  return (
+    <div className="mb-8 mx-auto max-w-2xl">
+      <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-5 flex items-start gap-4 shadow-md">
+        <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <Lock className="w-6 h-6 text-orange-600" />
+        </div>
+        <div className="flex-1">
+          <h3 className="font-bold text-orange-900 text-lg mb-2">
+            ⚠️ Cuenta con rol asignado
+          </h3>
+          <p className="text-orange-800 mb-3">{roleConflict.message}</p>
+          <div className="bg-orange-100 rounded p-3 text-sm">
+            <p className="text-orange-900">
+              <strong>Tu rol actual:</strong> {roleLabel}
+            </p>
+            <p className="text-orange-700 mt-1">
+              Solo puedes acceder con las opciones disponibles para tu rol.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ErrorBanner({ error }: { readonly error: string }) {
+  const getErrorTitle = () => {
+    if (error === 'not_seller') return 'No tienes permisos de vendedor'
+    if (error === 'not_buyer') return 'No tienes permisos de comprador'
+    return 'Acceso no autorizado'
+  }
+
+  const getErrorMessage = () => {
+    if (error === 'not_seller') return 'Tu cuenta está registrada como comprador. Selecciona la opción de comprador para continuar.'
+    if (error === 'not_buyer') return 'Tu cuenta está registrada como vendedor. Selecciona la opción de vendedor para continuar.'
+    return 'Por favor, selecciona el tipo de acceso que corresponde a tu cuenta.'
+  }
+
+  return (
+    <div className="mb-8 mx-auto max-w-2xl">
+      <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3">
+        <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+        <div className="flex-1">
+          <h3 className="font-semibold text-red-900 mb-1">{getErrorTitle()}</h3>
+          <p className="text-sm text-red-700">{getErrorMessage()}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface RoleCardProps {
+  readonly isEnabled: boolean
+  readonly roleConflict?: UserRoles['roleConflict']
+  readonly blockedRole: 'SELLER' | 'CLIENT'
+  readonly href: string
+  readonly icon: React.ReactNode
+  readonly iconBgClass: string
+  readonly title: string
+  readonly description: string
+  readonly features: string[]
+  readonly buttonText: string
+  readonly buttonClass: string
+  readonly checkColor: string
+}
+
+function RoleCard({
+  isEnabled,
+  roleConflict,
+  blockedRole,
+  href,
+  icon,
+  iconBgClass,
+  title,
+  description,
+  features,
+  buttonText,
+  buttonClass,
+  checkColor
+}: RoleCardProps) {
+  const isBlocked = roleConflict?.blockedRole === blockedRole
+
+  if (isEnabled) {
+    return (
+      <Link href={href} className="transform transition-transform hover:scale-105">
+        <Card className={`h-full cursor-pointer border-2 border-transparent hover:border-${checkColor}-500 hover:shadow-2xl`}>
+          <CardHeader className="text-center pb-4">
+            <div className={`mx-auto mb-4 w-20 h-20 ${iconBgClass} rounded-full flex items-center justify-center`}>
+              {icon}
+            </div>
+            <CardTitle className="text-2xl font-bold text-gray-900">{title}</CardTitle>
+            <CardDescription className="text-base text-gray-600">{description}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <ul className="space-y-2 text-gray-700">
+              {features.map((feature, idx) => (
+                <li key={idx} className="flex items-start">
+                  <span className={`text-${checkColor}-500 mr-2`}>✓</span>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="pt-4">
+              <Button className={`w-full ${buttonClass}`}>
+                {buttonText}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+    )
+  }
+
+  const blockedLabel = isBlocked ? '🔒 Bloqueado' : 'No disponible'
+  const blockedMessage = isBlocked
+    ? `Tu cuenta ya está registrada como ${blockedRole === 'SELLER' ? 'Comprador' : 'Vendedor'}. No puedes acceder como ${blockedRole === 'SELLER' ? 'Vendedor' : 'Comprador'}.`
+    : `No tienes permisos de ${blockedRole === 'SELLER' ? 'vendedor' : 'comprador'}`
+
+  return (
+    <Card className={`h-full cursor-not-allowed border-2 ${isBlocked ? 'border-orange-300 bg-orange-50/30' : 'border-gray-300'} opacity-50`}>
+      <CardHeader className="text-center pb-4">
+        <div className={`mx-auto mb-4 w-20 h-20 ${isBlocked ? 'bg-orange-100' : 'bg-gray-100'} rounded-full flex items-center justify-center`}>
+          <Lock className={`w-10 h-10 ${isBlocked ? 'text-orange-500' : 'text-gray-400'}`} />
+        </div>
+        <CardTitle className={`text-2xl font-bold ${isBlocked ? 'text-orange-600' : 'text-gray-500'}`}>
+          {blockedRole === 'SELLER' ? 'Vendedor' : 'Comprador'}
+        </CardTitle>
+        <CardDescription className={`text-base ${isBlocked ? 'text-orange-500' : 'text-gray-500'}`}>
+          {blockedLabel}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className={`${isBlocked ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'} p-4 rounded-lg text-center`}>
+          <p className={`text-sm ${isBlocked ? 'text-orange-700 font-medium' : 'text-gray-600'}`}>
+            {blockedMessage}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Helper data for role features
+const SELLER_FEATURES = [
+  'Administra productos y catálogo',
+  'Gestiona clientes y pedidos',
+  'Revisa y confirma órdenes',
+  'Reportes y estadísticas'
+]
+
+const BUYER_FEATURES = [
+  'Explora productos disponibles',
+  'Realiza pedidos en línea',
+  'Seguimiento de tus órdenes',
+  'Historial de compras'
+]
+
+function FooterInfo({ roles }: { readonly roles: UserRoles }) {
+  const availableRoles = roles.roles.join(', ') || 'Ninguno'
+  const hasRoleConflict = Boolean(roles.roleConflict)
+  
+  return (
+    <div className="mt-12 text-center">
+      <p className="text-sm text-gray-600 mb-2">
+        Accediendo como: <strong>{roles.userData?.name}</strong> ({roles.userData?.email})
+      </p>
+      <p className="text-xs text-gray-400">
+        Roles disponibles: {availableRoles}
+      </p>
+      {hasRoleConflict && (
+        <p className="text-xs text-orange-500 mt-1">
+          ⚠️ Tu cuenta tiene restricción de rol único
+        </p>
+      )}
+      <p className="text-xs text-gray-400 mt-2">
+        Versión de prueba - Deployment en Vercel
+      </p>
+    </div>
+  )
+}
+
+// ============ Main Content Component ============
+
 function SelectModeContent() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
@@ -34,7 +282,6 @@ function SelectModeContent() {
   const [roles, setRoles] = useState<UserRoles | null>(null)
   const [checkError, setCheckError] = useState<string | null>(null)
 
-  // Verificar roles reales al cargar
   useEffect(() => {
     const checkRoles = async () => {
       try {
@@ -56,69 +303,16 @@ function SelectModeContent() {
     checkRoles()
   }, [])
 
-  // Mostrar loading
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="text-center">
-          <Loader2 className="animate-spin h-12 w-12 text-purple-600 mx-auto mb-4" />
-          <p className="text-gray-600">Verificando permisos...</p>
-        </div>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
-  // Error al verificar
   if (checkError || !roles) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100 flex items-center justify-center p-4">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle className="text-red-600 flex items-center gap-2">
-              <AlertCircle className="w-6 h-6" />
-              Error de verificación
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-700 mb-4">
-              {checkError || 'No se pudieron verificar tus permisos'}
-            </p>
-            <Button 
-              onClick={() => globalThis.location.reload()} 
-              className="w-full"
-            >
-              Reintentar
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
+    return <ErrorScreen error={checkError} onRetry={() => globalThis.location.reload()} />
   }
 
-  // Usuario necesita registro
   if (roles.needsRegistration) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100 flex items-center justify-center p-4">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle className="text-orange-600 flex items-center gap-2">
-              <AlertCircle className="w-6 h-6" />
-              Cuenta no configurada
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-700 mb-4">
-              Tu cuenta existe pero no está configurada como vendedor ni comprador.
-              Por favor contacta al administrador para completar tu registro.
-            </p>
-            <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-              <p><strong>Email:</strong> {roles.userData?.email}</p>
-              <p><strong>Nombre:</strong> {roles.userData?.name}</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
+    return <RegistrationNeededScreen roles={roles} />
   }
 
   return (
@@ -126,224 +320,48 @@ function SelectModeContent() {
       <div className="w-full max-w-4xl">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-900 mb-4">
-            Bargain CRM
-          </h1>
-          <p className="text-xl text-gray-600">
-            Sistema de gestión de pedidos de comida
-          </p>
-          <p className="text-md text-gray-500 mt-2">
-            Selecciona tu tipo de acceso
-          </p>
+          <h1 className="text-5xl font-bold text-gray-900 mb-4">Bargain CRM</h1>
+          <p className="text-xl text-gray-600">Sistema de gestión de pedidos de comida</p>
+          <p className="text-md text-gray-500 mt-2">Selecciona tu tipo de acceso</p>
         </div>
 
-        {/* 🔒 Mensaje de Conflicto de Roles - IMPORTANTE */}
-        {roles.roleConflict && (
-          <div className="mb-8 mx-auto max-w-2xl">
-            <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-5 flex items-start gap-4 shadow-md">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <Lock className="w-6 h-6 text-orange-600" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-orange-900 text-lg mb-2">
-                  ⚠️ Cuenta con rol asignado
-                </h3>
-                <p className="text-orange-800 mb-3">
-                  {roles.roleConflict.message}
-                </p>
-                <div className="bg-orange-100 rounded p-3 text-sm">
-                  <p className="text-orange-900">
-                    <strong>Tu rol actual:</strong> {roles.roleConflict.currentRole === 'SELLER' ? '🏪 Vendedor' : '🛒 Comprador'}
-                  </p>
-                  <p className="text-orange-700 mt-1">
-                    Solo puedes acceder con las opciones disponibles para tu rol.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        {roles.roleConflict && <RoleConflictBanner roleConflict={roles.roleConflict} />}
+        {error && <ErrorBanner error={error} />}
 
-        {/* Mensaje de Error */}
-        {error && (
-          <div className="mb-8 mx-auto max-w-2xl">
-            <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4 flex items-start gap-3">
-              <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <h3 className="font-semibold text-red-900 mb-1">
-                  {error === 'not_seller' && 'No tienes permisos de vendedor'}
-                  {error === 'not_buyer' && 'No tienes permisos de comprador'}
-                  {!error.startsWith('not_') && 'Acceso no autorizado'}
-                </h3>
-                <p className="text-sm text-red-700">{error === 'not_seller' && 'Tu cuenta está registrada como comprador. Selecciona la opción de comprador para continuar.'}
-                  {error === 'not_buyer' && 'Tu cuenta está registrada como vendedor. Selecciona la opción de vendedor para continuar.'}
-                  {!error.startsWith('not_') && 'Por favor, selecciona el tipo de acceso que corresponde a tu cuenta.'}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Tarjetas de Selección */}
+        {/* Role Selection Cards */}
         <div className="grid md:grid-cols-2 gap-8">
-          
-          {/* Opción Vendedor - Solo mostrar si tiene permisos */}
-          {roles.isSeller ? (
-            <Link href="/?mode=seller" className="transform transition-transform hover:scale-105">
-              <Card className="h-full cursor-pointer border-2 border-transparent hover:border-violet-500 hover:shadow-2xl">
-                <CardHeader className="text-center pb-4">
-                  <div className="mx-auto mb-4 w-20 h-20 bg-violet-100 rounded-full flex items-center justify-center">
-                    <Store className="w-10 h-10 text-violet-600" />
-                  </div>
-                  <CardTitle className="text-2xl font-bold text-gray-900">
-                    Soy Vendedor
-                  </CardTitle>
-                  <CardDescription className="text-base text-gray-600">
-                    Gestiona tu negocio y ventas
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <ul className="space-y-2 text-gray-700">
-                    <li className="flex items-start">
-                      <span className="text-violet-500 mr-2">✓</span>
-                      <span>Administra productos y catálogo</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-violet-500 mr-2">✓</span>
-                      <span>Gestiona clientes y pedidos</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-violet-500 mr-2">✓</span>
-                      <span>Revisa y confirma órdenes</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-violet-500 mr-2">✓</span>
-                      <span>Reportes y estadísticas</span>
-                    </li>
-                  </ul>
-                  
-                  <div className="pt-4">
-                    <Button className="w-full bg-violet-600 hover:bg-violet-700 text-white">
-                      Acceder como Vendedor
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ) : (
-            <Card className={`h-full cursor-not-allowed border-2 ${roles.roleConflict?.blockedRole === 'SELLER' ? 'border-orange-300 bg-orange-50/30' : 'border-gray-300'} opacity-50`}>
-              <CardHeader className="text-center pb-4">
-                <div className={`mx-auto mb-4 w-20 h-20 ${roles.roleConflict?.blockedRole === 'SELLER' ? 'bg-orange-100' : 'bg-gray-100'} rounded-full flex items-center justify-center`}>
-                  <Lock className={`w-10 h-10 ${roles.roleConflict?.blockedRole === 'SELLER' ? 'text-orange-500' : 'text-gray-400'}`} />
-                </div>
-                <CardTitle className={`text-2xl font-bold ${roles.roleConflict?.blockedRole === 'SELLER' ? 'text-orange-600' : 'text-gray-500'}`}>
-                  Vendedor
-                </CardTitle>
-                <CardDescription className={`text-base ${roles.roleConflict?.blockedRole === 'SELLER' ? 'text-orange-500' : 'text-gray-500'}`}>
-                  {roles.roleConflict?.blockedRole === 'SELLER' ? '🔒 Bloqueado' : 'No disponible'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className={`${roles.roleConflict?.blockedRole === 'SELLER' ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'} p-4 rounded-lg text-center`}>
-                  <p className={`text-sm ${roles.roleConflict?.blockedRole === 'SELLER' ? 'text-orange-700 font-medium' : 'text-gray-600'}`}>
-                    {roles.roleConflict?.blockedRole === 'SELLER' 
-                      ? 'Tu cuenta ya está registrada como Comprador. No puedes acceder como Vendedor.'
-                      : 'No tienes permisos de vendedor'}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          <RoleCard
+            isEnabled={roles.isSeller}
+            roleConflict={roles.roleConflict}
+            blockedRole="SELLER"
+            href="/?mode=seller"
+            icon={<Store className="w-10 h-10 text-violet-600" />}
+            iconBgClass="bg-violet-100"
+            title="Soy Vendedor"
+            description="Gestiona tu negocio y ventas"
+            features={SELLER_FEATURES}
+            buttonText="Acceder como Vendedor"
+            buttonClass="bg-violet-600 hover:bg-violet-700 text-white"
+            checkColor="violet"
+          />
 
-          {/* Opción Comprador - Solo mostrar si tiene permisos */}
-          {roles.isClient ? (
-            <Link href="/?mode=buyer" className="transform transition-transform hover:scale-105">
-              <Card className="h-full cursor-pointer border-2 border-transparent hover:border-blue-500 hover:shadow-2xl">
-                <CardHeader className="text-center pb-4">
-                  <div className="mx-auto mb-4 w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-                    <ShoppingCart className="w-10 h-10 text-blue-600" />
-                  </div>
-                  <CardTitle className="text-2xl font-bold text-gray-900">
-                    Soy Comprador
-                  </CardTitle>
-                  <CardDescription className="text-base text-gray-600">
-                    Realiza pedidos fácilmente
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <ul className="space-y-2 text-gray-700">
-                    <li className="flex items-start">
-                      <span className="text-blue-500 mr-2">✓</span>
-                      <span>Explora productos disponibles</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-blue-500 mr-2">✓</span>
-                      <span>Realiza pedidos en línea</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-blue-500 mr-2">✓</span>
-                      <span>Seguimiento de tus órdenes</span>
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-blue-500 mr-2">✓</span>
-                      <span>Historial de compras</span>
-                    </li>
-                  </ul>
-                  
-                  <div className="pt-4">
-                    <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                      Acceder como Comprador
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ) : (
-            <Card className={`h-full cursor-not-allowed border-2 ${roles.roleConflict?.blockedRole === 'CLIENT' ? 'border-orange-300 bg-orange-50/30' : 'border-gray-300'} opacity-50`}>
-              <CardHeader className="text-center pb-4">
-                <div className={`mx-auto mb-4 w-20 h-20 ${roles.roleConflict?.blockedRole === 'CLIENT' ? 'bg-orange-100' : 'bg-gray-100'} rounded-full flex items-center justify-center`}>
-                  <Lock className={`w-10 h-10 ${roles.roleConflict?.blockedRole === 'CLIENT' ? 'text-orange-500' : 'text-gray-400'}`} />
-                </div>
-                <CardTitle className={`text-2xl font-bold ${roles.roleConflict?.blockedRole === 'CLIENT' ? 'text-orange-600' : 'text-gray-500'}`}>
-                  Comprador
-                </CardTitle>
-                <CardDescription className={`text-base ${roles.roleConflict?.blockedRole === 'CLIENT' ? 'text-orange-500' : 'text-gray-500'}`}>
-                  {roles.roleConflict?.blockedRole === 'CLIENT' ? '🔒 Bloqueado' : 'No disponible'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className={`${roles.roleConflict?.blockedRole === 'CLIENT' ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'} p-4 rounded-lg text-center`}>
-                  <p className={`text-sm ${roles.roleConflict?.blockedRole === 'CLIENT' ? 'text-orange-700 font-medium' : 'text-gray-600'}`}>
-                    {roles.roleConflict?.blockedRole === 'CLIENT' 
-                      ? 'Tu cuenta ya está registrada como Vendedor. No puedes acceder como Comprador.'
-                      : 'No tienes permisos de comprador'}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
+          <RoleCard
+            isEnabled={roles.isClient}
+            roleConflict={roles.roleConflict}
+            blockedRole="CLIENT"
+            href="/?mode=buyer"
+            icon={<ShoppingCart className="w-10 h-10 text-blue-600" />}
+            iconBgClass="bg-blue-100"
+            title="Soy Comprador"
+            description="Realiza pedidos fácilmente"
+            features={BUYER_FEATURES}
+            buttonText="Acceder como Comprador"
+            buttonClass="bg-blue-600 hover:bg-blue-700 text-white"
+            checkColor="blue"
+          />
         </div>
 
-        {/* Footer Info */}
-        <div className="mt-12 text-center">
-          <p className="text-sm text-gray-600 mb-2">
-            Accediendo como: <strong>{roles.userData?.name}</strong> ({roles.userData?.email})
-          </p>
-          <p className="text-xs text-gray-400">
-            Roles disponibles: {roles.roles.join(', ') || 'Ninguno'}
-          </p>
-          {roles.roleConflict && (
-            <p className="text-xs text-orange-500 mt-1">
-              ⚠️ Tu cuenta tiene restricción de rol único
-            </p>
-          )}
-          <p className="text-xs text-gray-400 mt-2">
-            Versión de prueba - Deployment en Vercel
-          </p>
-        </div>
+        <FooterInfo roles={roles} />
       </div>
     </div>
   )

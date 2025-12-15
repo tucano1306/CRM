@@ -19,6 +19,87 @@ interface StockIssue {
   availableQty: number
 }
 
+// Helper: Build notification message for stock issues
+function buildStockIssueMessage(
+  order: { orderNumber: string; client: { name: string }; seller: { name: string } },
+  outOfStock: StockIssue[],
+  partialStock: StockIssue[]
+): string {
+  const messageLines: string[] = [
+    `⚠️ *Problemas con tu Pedido #${order.orderNumber}*`,
+    '',
+    `Hola ${order.client.name},`,
+    '',
+    `El vendedor *${order.seller.name}* ha revisado tu pedido y encontró los siguientes problemas:`,
+    ''
+  ]
+
+  if (outOfStock.length > 0) {
+    messageLines.push('❌ *PRODUCTOS SIN STOCK:')
+    outOfStock.forEach(item => {
+      messageLines.push(`   • ${item.productName} (solicitaste ${item.requestedQty})`)
+    })
+    messageLines.push('')
+  }
+
+  if (partialStock.length > 0) {
+    messageLines.push('⚠️ *PRODUCTOS CON STOCK PARCIAL:*')
+    partialStock.forEach(item => {
+      messageLines.push(`   • ${item.productName}: solo hay ${item.availableQty} de ${item.requestedQty} solicitados`)
+    })
+    messageLines.push('')
+  }
+
+  messageLines.push(
+    '📞 *El vendedor te contactará para resolver esto.*',
+    'También puedes responder a este mensaje o usar el chat de la app.',
+    '',
+    `🔗 Ver pedido: ${process.env.NEXT_PUBLIC_APP_URL || 'https://tuapp.com'}/buyer/orders`
+  )
+
+  return messageLines.join('\n')
+}
+
+// Helper: Create order issues in database
+async function createOrderIssues(orderId: string, issues: StockIssue[], reportedBy: string) {
+  return Promise.all(
+    issues.map(issue => 
+      prisma.orderIssue.create({
+        data: {
+          orderId,
+          issueType: issue.issueType,
+          description: issue.issueType === 'OUT_OF_STOCK' 
+            ? `Producto "${issue.productName}" sin stock disponible`
+            : `Producto "${issue.productName}" con stock parcial: ${issue.availableQty} de ${issue.requestedQty} disponibles`,
+          productId: issue.productId,
+          productName: issue.productName,
+          requestedQty: issue.requestedQty,
+          availableQty: issue.availableQty,
+          proposedSolution: issue.issueType === 'OUT_OF_STOCK'
+            ? 'El vendedor te contactará para ofrecer alternativas'
+            : `Se pueden enviar ${issue.availableQty} unidades. El vendedor te contactará para confirmar.`,
+          status: 'BUYER_NOTIFIED',
+          reportedBy
+        }
+      })
+    )
+  )
+}
+
+// Helper: Build chat message for stock issues
+function buildChatMessage(orderNumber: string, outOfStock: StockIssue[], partialStock: StockIssue[]): string {
+  let chatMessage = `⚠️ *Aviso sobre tu Pedido #${orderNumber}*\n\n`
+  if (outOfStock.length > 0) {
+    chatMessage += `❌ Sin stock: ${outOfStock.map(i => i.productName).join(', ')}\n`
+  }
+  if (partialStock.length > 0) {
+    const partialStockItems = partialStock.map(i => `${i.productName} (${i.availableQty}/${i.requestedQty})`).join(', ')
+    chatMessage += `⚠️ Stock parcial: ${partialStockItems}\n`
+  }
+  chatMessage += `\n📞 Te contactaré para resolver esto.`
+  return chatMessage
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -65,28 +146,7 @@ export async function POST(
     const partialStock = issues.filter(i => i.issueType === 'PARTIAL_STOCK')
 
     // Crear issues en la base de datos
-    const createdIssues = await Promise.all(
-      issues.map(issue => 
-        prisma.orderIssue.create({
-          data: {
-            orderId,
-            issueType: issue.issueType,
-            description: issue.issueType === 'OUT_OF_STOCK' 
-              ? `Producto "${issue.productName}" sin stock disponible`
-              : `Producto "${issue.productName}" con stock parcial: ${issue.availableQty} de ${issue.requestedQty} disponibles`,
-            productId: issue.productId,
-            productName: issue.productName,
-            requestedQty: issue.requestedQty,
-            availableQty: issue.availableQty,
-            proposedSolution: issue.issueType === 'OUT_OF_STOCK'
-              ? 'El vendedor te contactará para ofrecer alternativas'
-              : `Se pueden enviar ${issue.availableQty} unidades. El vendedor te contactará para confirmar.`,
-            status: 'BUYER_NOTIFIED',
-            reportedBy: userId
-          }
-        })
-      )
-    )
+    const createdIssues = await createOrderIssues(orderId, issues, userId)
 
     // Actualizar orden a ISSUE_REPORTED
     await prisma.order.update({
@@ -114,42 +174,7 @@ export async function POST(
     // GENERAR MENSAJE AUTOMÁTICO INTELIGENTE
     // ===============================================
     
-    let messageLines: string[] = []
-    messageLines.push(
-      `⚠️ *Problemas con tu Pedido #${order.orderNumber}*`,
-      '',
-      `Hola ${order.client.name},`,
-      '',
-      `El vendedor *${order.seller.name}* ha revisado tu pedido y encontró los siguientes problemas:`,
-      ''
-    )
-
-    // Productos SIN STOCK
-    if (outOfStock.length > 0) {
-      messageLines.push('❌ *PRODUCTOS SIN STOCK:')
-      outOfStock.forEach(item => {
-        messageLines.push(`   • ${item.productName} (solicitaste ${item.requestedQty})`)
-      })
-      messageLines.push('')
-    }
-
-    // Productos con STOCK PARCIAL
-    if (partialStock.length > 0) {
-      messageLines.push('⚠️ *PRODUCTOS CON STOCK PARCIAL:*')
-      partialStock.forEach(item => {
-        messageLines.push(`   • ${item.productName}: solo hay ${item.availableQty} de ${item.requestedQty} solicitados`)
-      })
-      messageLines.push('')
-    }
-
-    messageLines.push(
-      '📞 *El vendedor te contactará para resolver esto.*',
-      'También puedes responder a este mensaje o usar el chat de la app.',
-      '',
-      `🔗 Ver pedido: ${process.env.NEXT_PUBLIC_APP_URL || 'https://tuapp.com'}/buyer/orders`
-    )
-
-    const fullMessage = messageLines.join('\n')
+    const fullMessage = buildStockIssueMessage(order, outOfStock, partialStock)
     
     // ===============================================
     // ENVIAR NOTIFICACIONES POR TODOS LOS CANALES
@@ -233,16 +258,7 @@ export async function POST(
     const sellerUserId = order.seller.authenticated_users?.[0]?.id
     if (sellerAuthId && buyerAuthId && sellerUserId) {
       try {
-        // Mensaje más corto para el chat
-        let chatMessage = `⚠️ *Aviso sobre tu Pedido #${order.orderNumber}*\n\n`
-        if (outOfStock.length > 0) {
-          chatMessage += `❌ Sin stock: ${outOfStock.map(i => i.productName).join(', ')}\n`
-        }
-        if (partialStock.length > 0) {
-          const partialStockItems = partialStock.map(i => `${i.productName} (${i.availableQty}/${i.requestedQty})`).join(', ');
-          chatMessage += `⚠️ Stock parcial: ${partialStockItems}\n`
-        }
-        chatMessage += `\n📞 Te contactaré para resolver esto.`
+        const chatMessage = buildChatMessage(order.orderNumber, outOfStock, partialStock)
 
         await prisma.chatMessage.create({
           data: {

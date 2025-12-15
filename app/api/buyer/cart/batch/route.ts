@@ -24,6 +24,101 @@ type BatchResult = {
   productName?: string
 }
 
+type ProcessItemContext = {
+  productMap: Map<string, any>
+  existingItemMap: Map<string, any>
+  cartId: string
+}
+
+/**
+ * Validate stock and return error result if invalid
+ */
+function validateItemStock(
+  item: BatchItem,
+  product: any,
+  existingItem: any | undefined
+): BatchResult | null {
+  const currentQuantity = existingItem?.quantity || 0
+  const newQuantity = currentQuantity + item.quantity
+
+  if (product.stock === 0) {
+    return {
+      productId: item.productId,
+      success: false,
+      error: 'Sin stock disponible',
+      productName: product.name
+    }
+  }
+
+  if (product.stock < newQuantity) {
+    return {
+      productId: item.productId,
+      success: false,
+      error: `Stock insuficiente. Disponible: ${product.stock}`,
+      productName: product.name
+    }
+  }
+
+  return null
+}
+
+/**
+ * Add or update cart item in database
+ */
+async function upsertCartItem(
+  item: BatchItem,
+  product: any,
+  existingItem: any | undefined,
+  cartId: string
+): Promise<void> {
+  const newQuantity = (existingItem?.quantity || 0) + item.quantity
+
+  if (existingItem) {
+    await prisma.cartItem.update({
+      where: { id: existingItem.id },
+      data: { quantity: newQuantity },
+    })
+  } else {
+    await prisma.cartItem.create({
+      data: {
+        cartId,
+        productId: item.productId,
+        quantity: item.quantity,
+        price: product.price,
+      },
+    })
+  }
+}
+
+/**
+ * Process a single cart item and return result
+ */
+async function processCartItem(
+  item: BatchItem,
+  ctx: ProcessItemContext
+): Promise<BatchResult> {
+  const product = ctx.productMap.get(item.productId)
+
+  if (!product) {
+    return { productId: item.productId, success: false, error: 'Producto no encontrado' }
+  }
+
+  const existingItem = ctx.existingItemMap.get(item.productId)
+  const stockError = validateItemStock(item, product, existingItem)
+  
+  if (stockError) {
+    return stockError
+  }
+
+  try {
+    await upsertCartItem(item, product, existingItem, ctx.cartId)
+    return { productId: item.productId, success: true, productName: product.name }
+  } catch (err) {
+    console.error('Failed to add product to cart:', err)
+    return { productId: item.productId, success: false, error: 'Error al agregar producto', productName: product.name }
+  }
+}
+
 // POST /api/buyer/cart/batch - Agregar múltiples productos al carrito en una sola llamada
 export async function POST(request: Request) {
   try {
@@ -79,80 +174,16 @@ export async function POST(request: Request) {
     })
     const existingItemMap = new Map(existingItems.map(item => [item.productId, item]))
 
-    // Procesar cada item
+    // Build context for processing items
+    const ctx: ProcessItemContext = { productMap, existingItemMap, cartId: cart.id }
+
+    // Process each item using helper function
     for (const item of items) {
-      const product = productMap.get(item.productId)
-
-      if (!product) {
-        results.push({
-          productId: item.productId,
-          success: false,
-          error: 'Producto no encontrado'
-        })
-        failCount++
-        continue
-      }
-
-      // Verificar stock
-      const existingItem = existingItemMap.get(item.productId)
-      const currentQuantity = existingItem?.quantity || 0
-      const newQuantity = currentQuantity + item.quantity
-
-      if (product.stock === 0) {
-        results.push({
-          productId: item.productId,
-          success: false,
-          error: 'Sin stock disponible',
-          productName: product.name
-        })
-        failCount++
-        continue
-      }
-
-      if (product.stock < newQuantity) {
-        results.push({
-          productId: item.productId,
-          success: false,
-          error: `Stock insuficiente. Disponible: ${product.stock}`,
-          productName: product.name
-        })
-        failCount++
-        continue
-      }
-
-      try {
-        if (existingItem) {
-          // Actualizar cantidad
-          await prisma.cartItem.update({
-            where: { id: existingItem.id },
-            data: { quantity: newQuantity },
-          })
-        } else {
-          // Crear nuevo item
-          await prisma.cartItem.create({
-            data: {
-              cartId: cart.id,
-              productId: item.productId,
-              quantity: item.quantity,
-              price: product.price,
-            },
-          })
-        }
-
-        results.push({
-          productId: item.productId,
-          success: true,
-          productName: product.name
-        })
+      const result = await processCartItem(item, ctx)
+      results.push(result)
+      if (result.success) {
         successCount++
-      } catch (err) {
-        console.error('Failed to add product to cart:', err)
-        results.push({
-          productId: item.productId,
-          success: false,
-          error: 'Error al agregar producto',
-          productName: product.name
-        })
+      } else {
         failCount++
       }
     }

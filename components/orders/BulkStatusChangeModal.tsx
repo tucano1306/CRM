@@ -104,6 +104,35 @@ interface ReportableProductIssue {
   availableQty: number
 }
 
+// Helper functions to reduce cognitive complexity
+function initializeConfirmedItems(order: SelectedOrder): Set<string> {
+  const confirmedItems = new Set<string>()
+  for (const item of order.orderItems) {
+    if (item.confirmed) {
+      confirmedItems.add(item.id)
+    }
+  }
+  return confirmedItems
+}
+
+function initializeProductIssues(order: SelectedOrder): Map<string, ProductIssue> {
+  const initialIssues = new Map<string, ProductIssue>()
+  for (const item of order.orderItems) {
+    const hasIssue = item.issueNote && item.availableQty !== null && item.availableQty !== undefined
+    if (!hasIssue) continue
+    
+    const issueType: StockIssueType = item.availableQty === 0 ? 'OUT_OF_STOCK' : 'PARTIAL_STOCK'
+    initialIssues.set(item.id, {
+      productId: item.productId || item.id,
+      productName: item.productName,
+      issueType,
+      requestedQty: item.quantity,
+      availableQty: item.availableQty!
+    })
+  }
+  return initialIssues
+}
+
 interface OrderReviewModalProps {
   isOpen: boolean
   onClose: () => void

@@ -4,6 +4,90 @@ import { prisma } from '@/lib/prisma'
 import { notifyBuyer } from '@/lib/notifications-multicanal'
 import { sendRealtimeEvent, getBuyerChannel, getSellerChannel } from '@/lib/supabase-server'
 
+// Helper: Validate request body for adding items
+function validateAddItemBody(body: { productId?: string; quantity?: number }) {
+  const { productId, quantity } = body
+  if (!productId || !quantity || quantity <= 0) {
+    return { valid: false, error: 'productId y quantity son requeridos' }
+  }
+  return { valid: true, productId, quantity }
+}
+
+// Helper: Allowed statuses for adding products
+const ALLOWED_STATUSES_FOR_ADD = ['PENDING', 'REVIEWING', 'ISSUE_REPORTED', 'CONFIRMED', 'LOCKED']
+
+function canAddProductToOrder(status: string): boolean {
+  return ALLOWED_STATUSES_FOR_ADD.includes(status)
+}
+
+// Helper: Recalculate and update order total
+async function recalculateOrderTotal(orderId: string) {
+  const allItems = await prisma.orderItem.findMany({
+    where: { orderId, isDeleted: false }
+  })
+  const newSubtotal = allItems.reduce((sum, item) => sum + Number(item.subtotal), 0)
+  const newTotal = newSubtotal * 1.1
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { totalAmount: newTotal }
+  })
+  return { allItems, newTotal }
+}
+
+// Helper: Send notifications for item added
+async function sendItemAddedNotifications(
+  order: any,
+  product: any,
+  authUser: any,
+  buyerAuthUser: any,
+  existingItem: any,
+  quantity: number,
+  updatedQuantity: number,
+  note?: string
+) {
+  const actionText = existingItem 
+    ? `actualizado la cantidad de "${product.name}" a ${updatedQuantity}` 
+    : `agregado "${product.name}" (${quantity} ${product.unit || 'unid.'})`
+  
+  const noteSuffix = note ? `\n📝 Nota: ${note}` : ''
+  await prisma.chatMessage.create({
+    data: {
+      senderId: authUser.id,
+      receiverId: buyerAuthUser.id,
+      message: `📦 He ${actionText} en tu orden #${order.orderNumber}.${noteSuffix}`,
+      userId: authUser.id,
+      orderId: order.id,
+      sellerId: order.sellerId
+    }
+  })
+
+  await notifyBuyer(
+    order.clientId,
+    'PRODUCT_ADDED',
+    {
+      orderNumber: order.orderNumber,
+      orderId: order.id,
+      sellerName: order.seller.name,
+      productName: product.name,
+      quantity: existingItem ? updatedQuantity : quantity,
+      note: note || undefined
+    }
+  )
+
+  await sendRealtimeEvent(
+    getBuyerChannel(buyerAuthUser.authId),
+    'order:item_added',
+    {
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      productName: product.name,
+      quantity: existingItem ? updatedQuantity : quantity,
+      sellerName: order.seller.name,
+      isUpdate: !!existingItem
+    }
+  )
+}
+
 // POST /api/orders/[id]/items - Seller agrega un producto a una orden
 export async function POST(
   request: Request,
@@ -19,10 +103,9 @@ export async function POST(
     const body = await request.json()
     const { productId, quantity, note } = body
 
-    if (!productId || !quantity || quantity <= 0) {
-      return NextResponse.json({ 
-        error: 'productId y quantity son requeridos' 
-      }, { status: 400 })
+    const validation = validateAddItemBody({ productId, quantity })
+    if (!validation.valid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 })
     }
 
     // Verificar que el usuario sea un vendedor
@@ -59,8 +142,7 @@ export async function POST(
     }
 
     // Permitir agregar productos en ciertos estados
-    const allowedStatuses = ['PENDING', 'REVIEWING', 'ISSUE_REPORTED', 'CONFIRMED', 'LOCKED']
-    if (!allowedStatuses.includes(order.status)) {
+    if (!canAddProductToOrder(order.status)) {
       return NextResponse.json({ 
         error: `No se pueden agregar productos en estado ${order.status}` 
       }, { status: 400 })
@@ -110,67 +192,14 @@ export async function POST(
     }
 
     // Recalcular el total de la orden
-    const allItems = await prisma.orderItem.findMany({
-      where: { 
-        orderId: orderId,
-        isDeleted: false
-      }
-    })
-    
-    const newSubtotal = allItems.reduce((sum, item) => sum + Number(item.subtotal), 0)
-    const newTotal = newSubtotal * 1.1 // Añadir impuesto
-
-    // Actualizar el total de la orden
-    await prisma.order.update({
-      where: { id: orderId },
-      data: { totalAmount: newTotal }
-    })
+    const { allItems, newTotal } = await recalculateOrderTotal(orderId)
 
     // Crear mensaje en el chat notificando al comprador
     const buyerAuthUser = order.client.authenticated_users[0]
     if (buyerAuthUser) {
-      const actionText = existingItem 
-        ? `actualizado la cantidad de "${product.name}" a ${updatedQuantity}` 
-        : `agregado "${product.name}" (${quantity} ${product.unit || 'unid.'})`
-      
-      const noteSuffix = note ? `\n📝 Nota: ${note}` : '';
-      await prisma.chatMessage.create({
-        data: {
-          senderId: authUser.id,
-          receiverId: buyerAuthUser.id,
-          message: `📦 He ${actionText} en tu orden #${order.orderNumber}.${noteSuffix}`,
-          userId: authUser.id,
-          orderId: orderId,
-          sellerId: sellerId
-        }
-      })
-
-      // Enviar notificación multicanal con el tipo correcto
-      await notifyBuyer(
-        order.clientId,
-        'PRODUCT_ADDED',
-        {
-          orderNumber: order.orderNumber,
-          orderId: order.id,
-          sellerName: order.seller.name,
-          productName: product.name,
-          quantity: existingItem ? updatedQuantity : quantity,
-          note: note || undefined
-        }
-      )
-
-      // Enviar evento en tiempo real al comprador
-      await sendRealtimeEvent(
-        getBuyerChannel(buyerAuthUser.authId),
-        'order:item_added',
-        {
-          orderId: order.id,
-          orderNumber: order.orderNumber,
-          productName: product.name,
-          quantity: existingItem ? updatedQuantity : quantity,
-          sellerName: order.seller.name,
-          isUpdate: !!existingItem
-        }
+      await sendItemAddedNotifications(
+        order, product, authUser, buyerAuthUser,
+        existingItem, quantity, updatedQuantity, note
       )
     }
 

@@ -30,6 +30,72 @@ const VALID_STATUSES = [
   'PAID'
 ] as const
 
+// Helper: Broadcast realtime status change events
+async function broadcastStatusChange(
+  orderId: string,
+  sellerId: string,
+  clientId: string,
+  orderNumber: string | undefined,
+  oldStatus: string,
+  newStatus: string
+) {
+  const sellerAuth = await prisma.authenticated_users.findFirst({
+    where: { sellers: { some: { id: sellerId } } },
+    select: { authId: true }
+  })
+
+  if (sellerAuth) {
+    await sendRealtimeEvent(
+      getSellerChannel(sellerAuth.authId),
+      'order:status-changed',
+      { orderId, orderNumber, oldStatus, newStatus, timestamp: new Date().toISOString() }
+    )
+  }
+
+  const buyerAuth = await prisma.authenticated_users.findFirst({
+    where: { clients: { some: { id: clientId } } },
+    select: { authId: true }
+  })
+
+  if (buyerAuth) {
+    await sendRealtimeEvent(
+      getBuyerChannel(buyerAuth.authId),
+      'order:status-changed',
+      { orderId, orderNumber, oldStatus, newStatus, timestamp: new Date().toISOString() }
+    )
+  }
+}
+
+// Helper: Send status-specific notifications
+async function sendStatusNotifications(
+  status: string,
+  order: { clientId: string; sellerId: string; status: string },
+  orderId: string,
+  orderNumber: string,
+  user: { name: string; role: string },
+  userId: string,
+  notes?: string
+) {
+  await notifyOrderStatusChanged(
+    order.clientId,
+    orderId,
+    orderNumber,
+    order.status,
+    status as OrderStatus
+  )
+
+  if (status === 'CONFIRMED') {
+    await notifyOrderConfirmed(order.clientId, orderId, orderNumber, '2-3 días hábiles')
+  } else if (status === 'COMPLETED') {
+    await notifyOrderCompleted(order.clientId, orderId, orderNumber)
+  } else if (status === 'DELIVERED' && user.role === 'CLIENT') {
+    await notifyOrderReceived(order.sellerId, orderId, orderNumber, user.name)
+  } else if (status === 'CANCELED' && user.role === 'CLIENT') {
+    await notifyOrderCancelled(order.sellerId, orderId, orderNumber, user.name, notes)
+    await sendAutomaticCancellationMessage(order.sellerId, userId, orderNumber, notes)
+  }
+}
+
 /**
  * PATCH /api/orders/[id]/status
  * Actualizar estado de orden con auditoría automática
@@ -173,45 +239,14 @@ export async function PATCH(
 
     // 🔔 TIEMPO REAL: Notificar cambio de estado
     try {
-      // Obtener authId del vendedor para el canal
-      const sellerAuth = await prisma.authenticated_users.findFirst({
-        where: { sellers: { some: { id: order.sellerId } } },
-        select: { authId: true }
-      })
-
-      if (sellerAuth) {
-        await sendRealtimeEvent(
-          getSellerChannel(sellerAuth.authId),
-          'order:status-changed',
-          {
-            orderId: orderId,
-            orderNumber: updatedOrder?.orderNumber,
-            oldStatus: order.status,
-            newStatus: status,
-            timestamp: new Date().toISOString()
-          }
-        )
-      }
-
-      // También notificar al comprador
-      const buyerAuth = await prisma.authenticated_users.findFirst({
-        where: { clients: { some: { id: order.clientId } } },
-        select: { authId: true }
-      })
-
-      if (buyerAuth) {
-        await sendRealtimeEvent(
-          getBuyerChannel(buyerAuth.authId),
-          'order:status-changed',
-          {
-            orderId: orderId,
-            orderNumber: updatedOrder?.orderNumber,
-            oldStatus: order.status,
-            newStatus: status,
-            timestamp: new Date().toISOString()
-          }
-        )
-      }
+      await broadcastStatusChange(
+        orderId,
+        order.sellerId,
+        order.clientId,
+        updatedOrder?.orderNumber,
+        order.status,
+        status
+      )
     } catch (realtimeError) {
       // No bloquear si falla el tiempo real
       logger.warn(LogCategory.API, 'Realtime broadcast failed', { error: realtimeError })
@@ -219,56 +254,15 @@ export async function PATCH(
 
     // 🔔 ENVIAR NOTIFICACIÓN AL COMPRADOR sobre el cambio de estado
     try {
-      // Notificación genérica de cambio de estado
-      await notifyOrderStatusChanged(
-        order.clientId,
+      await sendStatusNotifications(
+        status,
+        order,
         orderId,
         updatedOrder?.orderNumber || 'N/A',
-        order.status,
-        status as OrderStatus
+        user,
+        userId,
+        notes
       )
-
-      // Notificaciones específicas adicionales
-      if (status === 'CONFIRMED') {
-        await notifyOrderConfirmed(
-          order.clientId,
-          orderId,
-          updatedOrder?.orderNumber || 'N/A',
-          '2-3 días hábiles' // Estimación opcional
-        )
-      } else if (status === 'COMPLETED') {
-        await notifyOrderCompleted(
-          order.clientId,
-          orderId,
-          updatedOrder?.orderNumber || 'N/A'
-        )
-      } else if (status === 'DELIVERED' && user.role === 'CLIENT') {
-        // Si el comprador marca como RECIBIDA, notificar al vendedor
-        await notifyOrderReceived(
-          order.sellerId,
-          orderId,
-          updatedOrder?.orderNumber || 'N/A',
-          user.name
-        )
-      } else if (status === 'CANCELED' && user.role === 'CLIENT') {
-        // 🚨 COMBO: Notificación + Mensaje automático al chat
-        // Notificar al vendedor que la orden fue cancelada
-        await notifyOrderCancelled(
-          order.sellerId,
-          orderId,
-          updatedOrder?.orderNumber || 'N/A',
-          user.name,
-          notes // Razón de cancelación
-        )
-        
-        // Enviar mensaje automático al chat
-        await sendAutomaticCancellationMessage(
-          order.sellerId,
-          userId, // authId del cliente
-          updatedOrder?.orderNumber || 'N/A',
-          notes // Razón de cancelación
-        )
-      }
 
       logger.info(
         LogCategory.API,

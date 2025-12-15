@@ -161,6 +161,130 @@ export async function GET(request: NextRequest) {
 }
 
 /**
+ * Get message preview for notifications
+ */
+function getMessagePreview(body: any, message: string): string {
+  return body.attachmentUrl 
+    ? `📎 ${body.attachmentName || 'Archivo adjunto'}`
+    : message
+}
+
+/**
+ * Create notification for seller receiver
+ */
+async function notifySellerReceiver(
+  sellerId: string,
+  senderName: string,
+  messagePreview: string
+): Promise<void> {
+  await notifyChatMessage(sellerId, senderName, messagePreview)
+}
+
+/**
+ * Create notification for client receiver
+ */
+async function notifyClientReceiver(
+  clientId: string,
+  senderName: string,
+  messagePreview: string
+): Promise<void> {
+  await prisma.notification.create({
+    data: {
+      clientId,
+      type: 'CHAT_MESSAGE',
+      title: '💬 Nuevo Mensaje',
+      message: `${senderName}: ${messagePreview.substring(0, 50)}${messagePreview.length > 50 ? '...' : ''}`,
+      metadata: {
+        senderName,
+        messagePreview: messagePreview.substring(0, 100),
+      }
+    }
+  })
+}
+
+/**
+ * Handle receiver notification creation
+ */
+async function createReceiverNotification(
+  receiverId: string,
+  senderName: string,
+  body: any,
+  message: string
+): Promise<void> {
+  const receiverAuth = await prisma.authenticated_users.findUnique({
+    where: { authId: receiverId },
+    include: {
+      sellers: true,
+      clients: true
+    }
+  })
+
+  if (!receiverAuth) return
+
+  const messagePreview = getMessagePreview(body, message)
+
+  // Notify seller if receiver is a seller
+  if (receiverAuth.sellers.length > 0) {
+    await notifySellerReceiver(receiverAuth.sellers[0].id, senderName, messagePreview)
+  }
+  
+  // Notify client if receiver is a client
+  if (receiverAuth.clients.length > 0) {
+    await notifyClientReceiver(receiverAuth.clients[0].id, senderName, messagePreview)
+  }
+}
+
+/**
+ * Emit chat message event to event system
+ */
+async function emitChatMessageEvent(
+  chatMessageId: string,
+  userId: string,
+  receiverId: string,
+  message: string,
+  orderId: string | null,
+  body: any
+): Promise<void> {
+  await eventEmitter.emit({
+    type: EventType.CHAT_MESSAGE_SENT,
+    timestamp: new Date(),
+    userId: userId,
+    data: {
+      messageId: chatMessageId,
+      senderId: userId,
+      receiverId: receiverId,
+      content: message,
+      orderId: orderId || undefined,
+      hasAttachment: !!body.attachmentUrl,
+      attachmentType: body.attachmentType || undefined
+    }
+  })
+}
+
+/**
+ * Send realtime chat event
+ */
+async function sendRealtimeChatNotification(
+  userId: string,
+  receiverId: string,
+  chatMessage: any,
+  message: string,
+  senderName: string,
+  body: any,
+  orderId: string | null
+): Promise<void> {
+  await sendChatMessageEvent(userId, receiverId, {
+    messageId: chatMessage.id,
+    message: message,
+    senderName: senderName,
+    attachmentUrl: body.attachmentUrl || null,
+    attachmentType: body.attachmentType || null,
+    orderId: orderId || null,
+    createdAt: chatMessage.createdAt.toISOString()
+  })
+}
+
+/**
  * POST /api/chat-messages
  * Enviar mensaje de chat
  * ✅ CON TIMEOUT DE 5 SEGUNDOS
@@ -271,48 +395,8 @@ export async function POST(request: NextRequest) {
 
     // 8. ✅ Crear notificación para el receptor
     try {
-      // Obtener información del receptor
-      const receiverAuth = await prisma.authenticated_users.findUnique({
-        where: { authId: receiverId },
-        include: {
-          sellers: true,
-          clients: true
-        }
-      })
-
-      if (receiverAuth) {
-        const senderName = authenticatedUser.name || 'Usuario'
-        const messagePreview = body.attachmentUrl 
-          ? `📎 ${body.attachmentName || 'Archivo adjunto'}`
-          : message
-
-        // Si el receptor es vendedor, crear notificación para él
-        if (receiverAuth.sellers.length > 0) {
-          await notifyChatMessage(
-            receiverAuth.sellers[0].id,
-            senderName,
-            messagePreview
-          )
-        }
-        
-        // Si el receptor es cliente, crear notificación para él
-        if (receiverAuth.clients.length > 0) {
-          const clientId = receiverAuth.clients[0].id
-          
-          await prisma.notification.create({
-            data: {
-              clientId,
-              type: 'CHAT_MESSAGE',
-              title: '💬 Nuevo Mensaje',
-              message: `${senderName}: ${messagePreview.substring(0, 50)}${messagePreview.length > 50 ? '...' : ''}`,
-              metadata: {
-                senderName,
-                messagePreview: messagePreview.substring(0, 100),
-              }
-            }
-          })
-        }
-      }
+      const senderName = authenticatedUser.name || 'Usuario'
+      await createReceiverNotification(receiverId, senderName, body, message)
     } catch (notificationError) {
       // No fallar el envío del mensaje si falla la notificación
       console.error('Error creando notificación de chat:', notificationError)
@@ -320,20 +404,7 @@ export async function POST(request: NextRequest) {
 
     // 9. 🎉 Emitir evento CHAT_MESSAGE_SENT para el sistema event-driven
     try {
-      await eventEmitter.emit({
-        type: EventType.CHAT_MESSAGE_SENT,
-        timestamp: new Date(),
-        userId: userId,
-        data: {
-          messageId: chatMessage.id,
-          senderId: userId,
-          receiverId: receiverId,
-          content: message,
-          orderId: orderId || undefined,
-          hasAttachment: !!body.attachmentUrl,
-          attachmentType: body.attachmentType || undefined
-        }
-      })
+      await emitChatMessageEvent(chatMessage.id, userId, receiverId, message, orderId, body)
     } catch (eventError) {
       // No bloquear la respuesta si falla el evento
       console.error('Error emitting CHAT_MESSAGE_SENT event:', eventError)
@@ -341,15 +412,8 @@ export async function POST(request: NextRequest) {
 
     // 10. 📡 ENVIAR EVENTO REALTIME al receptor
     try {
-      await sendChatMessageEvent(userId, receiverId, {
-        messageId: chatMessage.id,
-        message: message,
-        senderName: authenticatedUser.name || 'Usuario',
-        attachmentUrl: body.attachmentUrl || null,
-        attachmentType: body.attachmentType || null,
-        orderId: orderId || null,
-        createdAt: chatMessage.createdAt.toISOString()
-      })
+      const senderName = authenticatedUser.name || 'Usuario'
+      await sendRealtimeChatNotification(userId, receiverId, chatMessage, message, senderName, body, orderId)
     } catch (realtimeError) {
       // No bloquear si falla realtime
       console.error('Error sending realtime chat event:', realtimeError)

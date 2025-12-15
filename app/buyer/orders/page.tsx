@@ -271,6 +271,129 @@ const statusConfig = {
   },
 }
 
+// ============ Helper Types for Filter/Sort ============
+
+type FilterStatusType = 'ALL' | OrderStatus
+type SortByType = 'newest' | 'oldest' | 'highest' | 'lowest'
+type DateRangeType = '7days' | '30days' | '90days' | 'all'
+
+interface FilterOptions {
+  filterStatus: FilterStatusType
+  searchQuery: string
+  dateRange: DateRangeType
+  dateFrom: string
+  dateTo: string
+}
+
+// ============ Helper Functions ============
+
+// Check if order matches status filter
+function matchesStatusFilter(order: Order, filterStatus: FilterStatusType): boolean {
+  if (filterStatus === 'ALL') return true
+  
+  if (filterStatus === 'CANCELED') {
+    return order.status === 'CANCELED' || order.status === 'CANCELLED'
+  }
+  if (filterStatus === 'DELIVERED') {
+    return order.status === 'DELIVERED' || order.status === 'COMPLETED'
+  }
+  if (filterStatus === 'PREPARING') {
+    return order.status === 'PREPARING' || order.status === 'PROCESSING'
+  }
+  return order.status === filterStatus
+}
+
+// Check if order matches search query
+function matchesSearchQuery(order: Order, searchQuery: string): boolean {
+  if (!searchQuery) return true
+  
+  const query = searchQuery.toLowerCase()
+  const matchesOrderNumber = (order.orderNumber || '').toLowerCase().includes(query)
+  const matchesId = order.id.toLowerCase().includes(query)
+  const matchesTotal = order.totalAmount.toString().includes(query)
+  return matchesOrderNumber || matchesId || matchesTotal
+}
+
+// Check if order is within date range
+function matchesDateRange(order: Order, dateRange: DateRangeType): boolean {
+  if (dateRange === 'all') return true
+  
+  const orderDate = new Date(order.createdAt)
+  const now = new Date()
+  const daysAgoMap: Record<string, number> = { '7days': 7, '30days': 30, '90days': 90 }
+  const daysAgo = daysAgoMap[dateRange] || 90
+  const cutoffDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000))
+  return orderDate >= cutoffDate
+}
+
+// Check if order is within manual date filters
+function matchesManualDateFilters(order: Order, dateFrom: string, dateTo: string): boolean {
+  const orderDate = new Date(order.createdAt)
+  
+  if (dateFrom) {
+    const fromDate = new Date(dateFrom)
+    if (orderDate < fromDate) return false
+  }
+  if (dateTo) {
+    const toDate = new Date(dateTo)
+    toDate.setHours(23, 59, 59, 999)
+    if (orderDate > toDate) return false
+  }
+  return true
+}
+
+// Filter orders based on all criteria
+function filterOrders(orders: Order[], options: FilterOptions): Order[] {
+  return orders.filter(order => {
+    if (!matchesStatusFilter(order, options.filterStatus)) return false
+    if (!matchesSearchQuery(order, options.searchQuery)) return false
+    if (!matchesDateRange(order, options.dateRange)) return false
+    if (!matchesManualDateFilters(order, options.dateFrom, options.dateTo)) return false
+    return true
+  })
+}
+
+// Sort orders based on criteria
+function sortOrders(orders: Order[], sortBy: SortByType): Order[] {
+  return [...orders].sort((a, b) => {
+    switch (sortBy) {
+      case 'newest':
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      case 'oldest':
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      case 'highest':
+        return Number(b.totalAmount) - Number(a.totalAmount)
+      case 'lowest':
+        return Number(a.totalAmount) - Number(b.totalAmount)
+      default:
+        return 0
+    }
+  })
+}
+
+// Combined filter and sort function
+function filterAndSortOrders(orders: Order[], options: FilterOptions, sortBy: SortByType): Order[] {
+  const filtered = filterOrders(orders, options)
+  return sortOrders(filtered, sortBy)
+}
+
+// Determine order display states
+function getOrderDisplayStates(order: Order) {
+  const isCompleted = order.status === 'COMPLETED' || order.status === 'DELIVERED'
+  const needsAttention = !['COMPLETED', 'DELIVERED', 'CANCELED', 'CANCELLED'].includes(order.status)
+  const isConfirmedOrLater = ['CONFIRMED', 'LOCKED', 'PREPARING', 'READY_FOR_PICKUP', 'IN_DELIVERY', 'DELIVERED', 'COMPLETED'].includes(order.status)
+  const hasStockIssues = !isConfirmedOrLater && (order.hasIssues || (order.issues && order.issues.length > 0) || order.status === 'ISSUE_REPORTED')
+  
+  return { isCompleted, needsAttention, isConfirmedOrLater, hasStockIssues }
+}
+
+// Get item display style based on issue type
+function getItemStyleClasses(isOutOfStock: boolean, isPartialStock: boolean) {
+  if (isOutOfStock) return { bg: 'bg-red-50 border-red-300', iconBg: 'bg-red-100' }
+  if (isPartialStock) return { bg: 'bg-amber-50 border-amber-300', iconBg: 'bg-amber-100' }
+  return { bg: 'bg-gray-50 border-gray-200 hover:bg-gray-100', iconBg: 'bg-purple-100' }
+}
+
 // Componente que usa useSearchParams - necesita Suspense
 function OrdersPageContent() {
   const router = useRouter()
@@ -1145,65 +1268,15 @@ function OrdersPageContent() {
     )
   }
 
-  // Filtrado y ordenamiento de órdenes
-  const filteredAndSortedOrders = orders
-    .filter(order => {
-      // Filtro por estado
-      if (filterStatus !== 'ALL') {
-        if (filterStatus === 'CANCELED' && order.status !== 'CANCELED' && order.status !== 'CANCELLED') return false
-        if (filterStatus === 'DELIVERED' && order.status !== 'DELIVERED' && order.status !== 'COMPLETED') return false
-        if (filterStatus === 'PREPARING' && order.status !== 'PREPARING' && order.status !== 'PROCESSING') return false
-        if (filterStatus !== 'CANCELED' && filterStatus !== 'DELIVERED' && filterStatus !== 'PREPARING' && order.status !== filterStatus) return false
-      }
-
-      // Filtro por búsqueda
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase()
-        const matchesOrderNumber = (order.orderNumber || '').toLowerCase().includes(query)
-        const matchesId = order.id.toLowerCase().includes(query)
-        const matchesTotal = order.totalAmount.toString().includes(query)
-        if (!matchesOrderNumber && !matchesId && !matchesTotal) return false
-      }
-
-      // Filtro por rango de fechas predefinido
-      if (dateRange !== 'all') {
-        const orderDate = new Date(order.createdAt)
-        const now = new Date()
-        const daysAgoMap: Record<string, number> = { '7days': 7, '30days': 30, '90days': 90 }
-        const daysAgo = daysAgoMap[dateRange] || 90
-        const cutoffDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000))
-        if (orderDate < cutoffDate) return false
-      }
-
-      // Filtro por rango de fechas manual
-      if (dateFrom) {
-        const orderDate = new Date(order.createdAt)
-        const fromDate = new Date(dateFrom)
-        if (orderDate < fromDate) return false
-      }
-      if (dateTo) {
-        const orderDate = new Date(order.createdAt)
-        const toDate = new Date(dateTo)
-        toDate.setHours(23, 59, 59, 999) // Incluir el día completo
-        if (orderDate > toDate) return false
-      }
-
-      return true
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'newest':
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        case 'oldest':
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        case 'highest':
-          return Number(b.totalAmount) - Number(a.totalAmount)
-        case 'lowest':
-          return Number(a.totalAmount) - Number(b.totalAmount)
-        default:
-          return 0
-      }
-    })
+  // Filtrado y ordenamiento de órdenes usando funciones helper
+  const filterOptions: FilterOptions = {
+    filterStatus,
+    searchQuery,
+    dateRange,
+    dateFrom,
+    dateTo
+  }
+  const filteredAndSortedOrders = filterAndSortOrders(orders, filterOptions, sortBy)
 
   // Paginación
   const totalPages = Math.ceil(filteredAndSortedOrders.length / ordersPerPage)

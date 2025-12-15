@@ -4,6 +4,62 @@ import { prisma } from '@/lib/prisma'
 import { updateProductSchema, validateSchema } from '@/lib/validations'
 import { sanitizeText } from '@/lib/sanitize'
 
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Build sanitized data object from validated input
+ */
+function buildSanitizedProductData(validatedData: any): Record<string, any> {
+  const sanitizedData: Record<string, any> = {}
+
+  if (validatedData.name) {
+    sanitizedData.name = sanitizeText(validatedData.name)
+  }
+  if (validatedData.description !== undefined) {
+    sanitizedData.description = validatedData.description
+      ? sanitizeText(validatedData.description)
+      : ''
+  }
+  if (validatedData.unit) {
+    sanitizedData.unit = validatedData.unit
+  }
+  if (validatedData.price !== undefined) {
+    sanitizedData.price = validatedData.price
+  }
+  if (validatedData.stock !== undefined) {
+    sanitizedData.stock = validatedData.stock
+  }
+  if (validatedData.sku !== undefined) {
+    sanitizedData.sku = validatedData.sku ? sanitizeText(validatedData.sku) : null
+  }
+  if (validatedData.imageUrl !== undefined) {
+    sanitizedData.imageUrl = validatedData.imageUrl || null
+  }
+  if (validatedData.isActive !== undefined) {
+    sanitizedData.isActive = validatedData.isActive
+  }
+  if (validatedData.category !== undefined) {
+    sanitizedData.category = validatedData.category
+  }
+
+  return sanitizedData
+}
+
+/**
+ * Verify seller authorization for product updates
+ */
+async function verifySeller(userId: string) {
+  return prisma.seller.findFirst({
+    where: {
+      authenticated_users: {
+        some: { authId: userId }
+      }
+    }
+  })
+}
+
 // GET - Obtener producto por ID con estadísticas
 export async function GET(
   request: NextRequest,
@@ -102,46 +158,32 @@ export async function PUT(
     const { userId } = await auth()
 
     if (!userId) {
-      return NextResponse.json({ 
-        error: 'No autorizado' 
-      }, { status: 401 })
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
     // 🔒 SEGURIDAD: Verificar que es un vendedor
-    const seller = await prisma.seller.findFirst({
-      where: {
-        authenticated_users: {
-          some: { authId: userId }
-        }
-      }
-    })
+    const seller = await verifySeller(userId)
 
     if (!seller) {
-      return NextResponse.json({ 
-        success: false,
-        error: 'Solo vendedores pueden actualizar productos' 
-      }, { status: 403 })
+      return NextResponse.json(
+        { success: false, error: 'Solo vendedores pueden actualizar productos' },
+        { status: 403 }
+      )
     }
 
     const body = await request.json()
 
-    // 🔒 CRÍTICO: Solo SELLER puede modificar el precio
+    // 🔒 CRÍTICO: Log price updates
     if (body.price !== undefined) {
-      if (!seller) {
-        return NextResponse.json({ 
-          success: false,
-          error: 'No autorizado para modificar precios. Solo vendedores pueden cambiar precios.' 
-        }, { status: 403 })
-      }
       console.log(`💰 [PRICE UPDATE] Seller ${seller.id} updating price for product ${productId}`)
     }
 
     // ✅ VALIDACIÓN CON ZOD
     const validation = validateSchema(updateProductSchema, body)
-    
+
     if (!validation.success) {
       return NextResponse.json(
-        { 
+        {
           success: false,
           error: 'Datos inválidos',
           details: validation.errors
@@ -150,38 +192,8 @@ export async function PUT(
       )
     }
 
-    // ✅ SANITIZACIÓN
-    const sanitizedData: any = {}
-    
-    if (validation.data.name) {
-      sanitizedData.name = sanitizeText(validation.data.name)
-    }
-    if (validation.data.description !== undefined) {
-      sanitizedData.description = validation.data.description ? 
-        sanitizeText(validation.data.description) : ''
-    }
-    if (validation.data.unit) {
-      sanitizedData.unit = validation.data.unit
-    }
-    if (validation.data.price !== undefined) {
-      sanitizedData.price = validation.data.price
-    }
-    if (validation.data.stock !== undefined) {
-      sanitizedData.stock = validation.data.stock
-    }
-    if (validation.data.sku !== undefined) {
-      sanitizedData.sku = validation.data.sku ? 
-        sanitizeText(validation.data.sku) : null
-    }
-    if (validation.data.imageUrl !== undefined) {
-      sanitizedData.imageUrl = validation.data.imageUrl || null
-    }
-    if (validation.data.isActive !== undefined) {
-      sanitizedData.isActive = validation.data.isActive
-    }
-    if (validation.data.category !== undefined) {
-      sanitizedData.category = validation.data.category
-    }
+    // ✅ SANITIZACIÓN using helper function
+    const sanitizedData = buildSanitizedProductData(validation.data)
 
     const updatedProduct = await prisma.product.update({
       where: { id: productId },

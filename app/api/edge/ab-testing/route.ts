@@ -306,6 +306,88 @@ function meetsABTestConditions(
   return true
 }
 
+/**
+ * Calculate user hash for consistent assignment
+ */
+function getUserHash(userId: string | undefined, name: string): number {
+  return userId ? hashUserId(userId, name) : Math.floor(Math.random() * 100)
+}
+
+/**
+ * Check if user passes rollout percentage
+ */
+function passesRollout(userId: string | undefined, flagName: string, rolloutPercentage: number): boolean {
+  return userId 
+    ? hashUserId(userId, flagName) < rolloutPercentage 
+    : Math.random() * 100 < rolloutPercentage
+}
+
+/**
+ * Evaluate a single feature flag for a user
+ */
+function evaluateFeatureFlag(
+  flag: FeatureFlag,
+  flagName: string,
+  country: string,
+  role?: string,
+  userId?: string
+): boolean | string {
+  const enabled = flag.enabled && 
+    meetsConditions(flag, country, role, userId) &&
+    passesRollout(userId, flagName, flag.rolloutPercentage)
+  
+  return flag.variant || enabled
+}
+
+/**
+ * Select variant based on hash and weights
+ */
+function selectVariant(hash: number, trafficAllocation: number, variants: ABTest['variants']): string {
+  let cumulativeWeight = 0
+  const normalizedHash = hash * (100 / trafficAllocation)
+  
+  for (const variant of variants) {
+    cumulativeWeight += variant.weight
+    if (normalizedHash < cumulativeWeight) {
+      return variant.name
+    }
+  }
+  
+  return variants[0]?.name || 'control'
+}
+
+/**
+ * Evaluate a single A/B test for a user
+ */
+function evaluateABTest(
+  test: ABTest,
+  testName: string,
+  country: string,
+  role?: string,
+  isNewUser?: boolean,
+  userId?: string
+): string {
+  if (!test.active || !meetsABTestConditions(test, country, role, isNewUser)) {
+    return 'control'
+  }
+
+  const hash = getUserHash(userId, testName)
+  
+  if (hash >= test.trafficAllocation) {
+    return 'control'
+  }
+
+  return selectVariant(hash, test.trafficAllocation, test.variants)
+}
+
+/**
+ * Get variant config from test
+ */
+function getVariantConfig(test: ABTest, variantName: string): Record<string, any> {
+  const variant = test.variants.find(v => v.name === variantName)
+  return variant?.config || test.variants[0]?.config || {}
+}
+
 export async function GET(request: NextRequest) {
   const startTime = Date.now()
   
@@ -331,9 +413,7 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      const enabled = flag.enabled && 
-                     meetsConditions(flag, country, role, userId) &&
-                     (userId ? hashUserId(userId, flagName) < flag.rolloutPercentage : Math.random() * 100 < flag.rolloutPercentage)
+      const enabled = evaluateFeatureFlag(flag, flagName, country, role, userId)
 
       return NextResponse.json({
         flag: flagName,
@@ -353,43 +433,13 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      if (!test.active || !meetsABTestConditions(test, country, role, isNewUser)) {
-        return NextResponse.json({
-          test: testName,
-          variant: 'control',
-          config: test.variants[0]?.config || {}
-        })
-      }
+      const variant = evaluateABTest(test, testName, country, role, isNewUser, userId)
+      const config = getVariantConfig(test, variant)
 
-      // Assign variant based on user hash and traffic allocation
-      const hash = userId ? hashUserId(userId, testName) : Math.floor(Math.random() * 100)
-      
-      if (hash >= test.trafficAllocation) {
-        return NextResponse.json({
-          test: testName,
-          variant: 'control',
-          config: test.variants[0]?.config || {}
-        })
-      }
-
-      // Select variant based on weights
-      let cumulativeWeight = 0
-      for (const variant of test.variants) {
-        cumulativeWeight += variant.weight
-        if (hash * (100 / test.trafficAllocation) < cumulativeWeight) {
-          return NextResponse.json({
-            test: testName,
-            variant: variant.name,
-            config: variant.config
-          })
-        }
-      }
-
-      // Fallback to first variant
       return NextResponse.json({
         test: testName,
-        variant: test.variants[0].name,
-        config: test.variants[0].config
+        variant,
+        config
       })
     }
 
@@ -399,40 +449,12 @@ export async function GET(request: NextRequest) {
 
     // Evaluate all feature flags
     for (const [name, flag] of Object.entries(FEATURE_FLAGS)) {
-      const enabled = flag.enabled && 
-                     meetsConditions(flag, country, role, userId) &&
-                     (userId ? hashUserId(userId, name) < flag.rolloutPercentage : Math.random() * 100 < flag.rolloutPercentage)
-      
-      featureFlags[name] = flag.variant || enabled
+      featureFlags[name] = evaluateFeatureFlag(flag, name, country, role, userId)
     }
 
     // Evaluate all A/B tests
     for (const [name, test] of Object.entries(AB_TESTS)) {
-      if (!test.active || !meetsABTestConditions(test, country, role, isNewUser)) {
-        abTests[name] = 'control'
-        continue
-      }
-
-      const hash = userId ? hashUserId(userId, name) : Math.floor(Math.random() * 100)
-      
-      if (hash >= test.trafficAllocation) {
-        abTests[name] = 'control'
-        continue
-      }
-
-      // Select variant based on weights
-      let cumulativeWeight = 0
-      let selectedVariant = 'control'
-      
-      for (const variant of test.variants) {
-        cumulativeWeight += variant.weight
-        if (hash * (100 / test.trafficAllocation) < cumulativeWeight) {
-          selectedVariant = variant.name
-          break
-        }
-      }
-
-      abTests[name] = selectedVariant
+      abTests[name] = evaluateABTest(test, name, country, role, isNewUser, userId)
     }
 
     const response: UserAssignment = {
