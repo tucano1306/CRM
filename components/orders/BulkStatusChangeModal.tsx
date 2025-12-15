@@ -156,8 +156,7 @@ export default function BulkStatusChangeModal({
 }: OrderReviewModalProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [step, setStep] = useState<'review' | 'issues' | 'confirm'>('review')
+  const [_step, setStep] = useState<'review' | 'issues' | 'confirm'>('review')
   
   // Estado para problemas de stock
   const [productIssues, setProductIssues] = useState<Map<string, ProductIssue>>(new Map())

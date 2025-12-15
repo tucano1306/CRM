@@ -64,17 +64,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Crear trabajo según el tipo
-    let jobId: string
-
-    switch (type) {
-      case 'pdf-generation':
-        jobId = await queuePDFGeneration(jobData, options)
-        break
-      
-      default:
-        jobId = await jobQueue.addJob(type, jobData, options)
-        break
-    }
+    const jobId = type === 'pdf-generation'
+      ? await queuePDFGeneration(jobData, options)
+      : await jobQueue.addJob(type, jobData, options)
 
     return NextResponse.json({
       success: true,

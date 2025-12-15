@@ -420,11 +420,11 @@ async function processAllDataRows(
 /**
  * Parse Excel file and extract raw data
  */
-function parseExcelFile(buffer: ArrayBuffer) {
+function parseExcelFile(buffer: ArrayBuffer): any[] {
   const workbook = XLSX.read(buffer, { type: 'array' })
   const sheetName = workbook.SheetNames[0]
   const worksheet = workbook.Sheets[sheetName]
-  return XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as any[]
+  return XLSX.utils.sheet_to_json(worksheet, { header: 1 })
 }
 
 /**

@@ -52,17 +52,34 @@ class InMemoryDatabase {
   private products: Product[] = [];
   private orders: Order[] = [];
 
+  /**
+   * Generates a mock bcrypt hash for testing purposes.
+   * This avoids hardcoding actual password hashes in source code.
+   * In production, use proper bcrypt.hash() with env-based secrets.
+   */
+  private generateMockHash(): string {
+    // Mock bcrypt format: $2a$10$ + 53 chars of base64-like characters
+    const prefix = '$2a$10$';
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789./';
+    let hash = '';
+    for (let i = 0; i < 53; i++) {
+      hash += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return prefix + hash;
+  }
+
   constructor() {
     // Inicialización síncrona con hashes pre-computados
     this.initializeData();
   }
 
   private initializeData() {
-    // Hashes pre-computados para bcrypt cost 10 (para desarrollo/tests)
-    // admin123, seller123, client123 respectivamente
-    const adminPassword = '$2a$10$rVz8vR8lWdJLv8rTpBJOj.YQKjYe6hGZkQgz8iA8cGO3rWf0a9Gie';
-    const sellerPassword = '$2a$10$rVz8vR8lWdJLv8rTpBJOj.YQKjYe6hGZkQgz8iA8cGO3rWf0a9Gie';
-    const clientPassword = '$2a$10$rVz8vR8lWdJLv8rTpBJOj.YQKjYe6hGZkQgz8iA8cGO3rWf0a9Gie';
+    // Use environment variable for test passwords or a generated mock hash
+    // This is a mock in-memory database for development/tests only
+    const mockPasswordHash = process.env.TEST_PASSWORD_HASH ?? this.generateMockHash();
+    const adminPassword = mockPasswordHash;
+    const sellerPassword = mockPasswordHash;
+    const clientPassword = mockPasswordHash;
 
     this.users = [
       {

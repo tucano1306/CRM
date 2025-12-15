@@ -76,8 +76,8 @@ export function getOrderStatusLabel(status: string): string {
 
 // Recent Orders Table (Desktop view)
 interface RecentOrdersTableProps {
-  orders: RecentOrder[]
-  router: AppRouterInstance
+  readonly orders: RecentOrder[]
+  readonly router: AppRouterInstance
 }
 
 export function RecentOrdersTable({ orders, router }: RecentOrdersTableProps) {
@@ -123,8 +123,8 @@ export function RecentOrdersTable({ orders, router }: RecentOrdersTableProps) {
 
 // Recent Orders Cards (Mobile view)
 interface RecentOrdersCardsProps {
-  orders: RecentOrder[]
-  router: AppRouterInstance
+  readonly orders: RecentOrder[]
+  readonly router: AppRouterInstance
 }
 
 export function RecentOrdersCards({ orders, router }: RecentOrdersCardsProps) {
@@ -161,8 +161,8 @@ export function RecentOrdersCards({ orders, router }: RecentOrdersCardsProps) {
 
 // Activity Tab Orders List
 interface ActivityOrdersListProps {
-  orders: RecentOrder[]
-  router: AppRouterInstance
+  readonly orders: RecentOrder[]
+  readonly router: AppRouterInstance
 }
 
 export function ActivityOrdersList({ orders, router }: ActivityOrdersListProps) {
@@ -211,7 +211,7 @@ export function ActivityOrdersList({ orders, router }: ActivityOrdersListProps) 
 
 // Activity Timeline
 interface ActivityTimelineProps {
-  orders: RecentOrder[]
+  readonly orders: RecentOrder[]
 }
 
 export function ActivityTimeline({ orders }: ActivityTimelineProps) {
@@ -292,7 +292,7 @@ function getTimelineStatusLabel(status: string): string {
 
 // Daily Activity Stats Cards
 interface DailyActivityStatsProps {
-  orders: RecentOrder[]
+  readonly orders: RecentOrder[]
 }
 
 export function DailyActivityStats({ orders }: DailyActivityStatsProps) {
@@ -342,7 +342,7 @@ export function DailyActivityStats({ orders }: DailyActivityStatsProps) {
 
 // Sales Summary Cards
 interface SalesSummaryCardsProps {
-  stats: Stats
+  readonly stats: Stats
 }
 
 export function SalesSummaryCards({ stats }: SalesSummaryCardsProps) {

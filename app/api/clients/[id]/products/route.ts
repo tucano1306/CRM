@@ -179,8 +179,8 @@ export async function POST(
     )
 
     if (existingProducts.length !== productIds.length) {
-      const foundIds = existingProducts.map(p => p.id)
-      const missingIds = productIds.filter((id: string) => !foundIds.includes(id))
+      const foundIds = new Set(existingProducts.map(p => p.id))
+      const missingIds = productIds.filter((id: string) => !foundIds.has(id))
       return NextResponse.json(
         { error: `Productos no encontrados: ${missingIds.join(', ')}` },
         { status: 400 }

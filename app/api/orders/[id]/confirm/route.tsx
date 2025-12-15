@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { auth } from '@clerk/nextjs/server'
-import { sanitizeText } from '@/lib/sanitize'
 import { z } from 'zod'
 
 // Usar singleton de Prisma

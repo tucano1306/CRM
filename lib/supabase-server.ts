@@ -78,7 +78,7 @@ export function getOrderChannel(orderId: string) {
  */
 export function getChatChannel(userId1: string, userId2: string) {
   // Ordenar IDs para que el canal sea consistente sin importar quién envía
-  const sorted = [userId1, userId2].sort()
+  const sorted = [userId1, userId2].sort((a, b) => a.localeCompare(b))
   return `chat-${sorted[0]}-${sorted[1]}`
 }
 

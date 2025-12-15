@@ -134,13 +134,13 @@ function HistoryEntryTitle({
   isProductDeleted, 
   isProductAction,
   isFirst 
-}: { 
+}: Readonly<{ 
   entry: HistoryEntry
   isStatusChange: boolean
   isProductDeleted: boolean
   isProductAction: boolean
   isFirst: boolean
-}) {
+}>) {
   if (isStatusChange && entry.newStatus) {
     return (
       <div className="flex items-center gap-2 mb-2 flex-wrap">

@@ -2132,16 +2132,14 @@ function OrdersPageContent() {
 
         {/* Order Detail Modal */}
         {showOrderModal && selectedOrder && (
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            role="button"
-            tabIndex={0}
+          <button 
+            type="button"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 w-full h-full border-none cursor-default"
             onClick={closeOrderModal}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') closeOrderModal(); }}
           >
             <div 
-              className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
-              role="presentation"
+              className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto cursor-auto"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}
             >
@@ -2873,7 +2871,7 @@ function OrdersPageContent() {
                 )}
               </div>
             </div>
-          </div>
+          </button>
         )}
       </div>
 

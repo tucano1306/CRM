@@ -66,7 +66,7 @@ function computeStats(orders: any[]) {
     paused: orders.filter(o => !o.isActive).length,
     totalRecurringAmount: activeOrders.reduce((sum, o) => sum + Number(o.totalAmount), 0),
     totalExecuted: orders.reduce((sum, o) => sum + (Number(o.totalAmount) * (o.executionCount || 0)), 0),
-    upcomingOrders: activeOrders.sort((a, b) => 
+    upcomingOrders: activeOrders.toSorted((a, b) => 
       new Date(a.nextExecutionDate).getTime() - new Date(b.nextExecutionDate).getTime()
     )
   }
@@ -208,12 +208,12 @@ function getUpcomingLabel(userRole: 'SELLER' | 'CLIENT', orderCount: number): st
   return isMultiple ? `${orderCount} Órdenes Automáticas Programadas` : 'Próxima Orden Automática'
 }
 
-function SingleOrderDetails({ nextOrder, nextInfo, formattedDate, userRole }: {
+function SingleOrderDetails({ nextOrder, nextInfo, formattedDate, userRole }: Readonly<{
   nextOrder: any
   nextInfo: ReturnType<typeof getDaysUntilNext>
   formattedDate: string
   userRole: 'SELLER' | 'CLIENT'
-}) {
+}>) {
   const showClientName = userRole === 'SELLER' && nextOrder.client
   return (
     <>
@@ -233,11 +233,11 @@ function SingleOrderDetails({ nextOrder, nextInfo, formattedDate, userRole }: {
   )
 }
 
-function MultipleOrdersDetails({ nextInfo, formattedDate, orderCount }: {
+function MultipleOrdersDetails({ nextInfo, formattedDate, orderCount }: Readonly<{
   nextInfo: ReturnType<typeof getDaysUntilNext>
   formattedDate: string
   orderCount: number
-}) {
+}>) {
   return (
     <>
       <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">

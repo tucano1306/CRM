@@ -14,10 +14,10 @@ function validateAddItemBody(body: { productId?: string; quantity?: number }) {
 }
 
 // Helper: Allowed statuses for adding products
-const ALLOWED_STATUSES_FOR_ADD = ['PENDING', 'REVIEWING', 'ISSUE_REPORTED', 'CONFIRMED', 'LOCKED']
+const ALLOWED_STATUSES_FOR_ADD = new Set(['PENDING', 'REVIEWING', 'ISSUE_REPORTED', 'CONFIRMED', 'LOCKED'])
 
 function canAddProductToOrder(status: string): boolean {
-  return ALLOWED_STATUSES_FOR_ADD.includes(status)
+  return ALLOWED_STATUSES_FOR_ADD.has(status)
 }
 
 // Helper: Recalculate and update order total

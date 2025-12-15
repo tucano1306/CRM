@@ -9,14 +9,14 @@ import { sanitizeText } from '@/lib/sanitize'
 // Constants
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
 const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt', 'csv']
-const ALLOWED_MIME_TYPES = [
+const ALLOWED_MIME_TYPES = new Set([
   'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
   'application/pdf', 'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.ms-excel',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'text/plain', 'text/csv'
-]
+])
 const EXTENSION_TO_MIME: Record<string, string[]> = {
   'jpg': ['image/jpeg'], 'jpeg': ['image/jpeg'], 'png': ['image/png'],
   'gif': ['image/gif'], 'webp': ['image/webp'], 'pdf': ['application/pdf'],
@@ -40,7 +40,7 @@ function validateFileBasics(file: File): string | null {
     return `Extensión no permitida. Permitidas: ${ALLOWED_EXTENSIONS.join(', ')}`
   }
   
-  if (!ALLOWED_MIME_TYPES.includes(file.type)) return 'Tipo de archivo no permitido'
+  if (!ALLOWED_MIME_TYPES.has(file.type)) return 'Tipo de archivo no permitido'
   
   return null
 }

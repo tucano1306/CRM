@@ -329,7 +329,6 @@ export default function ProductListCheckbox({
                     {isSelected && showQuantityInput && (
                       <div 
                         className="flex items-center gap-2"
-                        role="presentation"
                         onClick={(e) => e.stopPropagation()}
                         onKeyDown={(e) => e.stopPropagation()}
                       >

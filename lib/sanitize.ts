@@ -22,7 +22,7 @@ export function sanitizeText(text: string, maxLength: number = 1000): string {
   return text
     .trim()
     .replaceAll(/<[^>]*>/g, '') // Remove all HTML tags
-    .replaceAll(/[<>'"]|/g, '') // Remove dangerous characters
+    .replaceAll(/[<>'"]/g, '') // Remove dangerous characters
     .replaceAll(/javascript:/gi, '') // Remove javascript: protocol
     .replaceAll(/on\w+\s*=/gi, '') // Remove event handlers (onclick=, onerror=, etc.)
     .substring(0, maxLength) // Limit length

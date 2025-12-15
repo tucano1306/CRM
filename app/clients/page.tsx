@@ -846,7 +846,7 @@ export default function ClientsPage() {
   const [showHistoryModal, setShowHistoryModal] = useState(false)
   const [historyClientName, setHistoryClientName] = useState<string>('')
   const [clientOrders, setClientOrders] = useState<any[]>([])
-  const [loadingHistory, setLoadingHistory] = useState(false)
+  const [loadingHistory, _setLoadingHistory] = useState(false)
   
   const [showCatalogModal, setShowCatalogModal] = useState(false)
   const [catalogClientId, setCatalogClientId] = useState<string | null>(null)

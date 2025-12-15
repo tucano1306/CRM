@@ -116,7 +116,7 @@ export async function POST(
       })
 
       if (!Buffer.isBuffer(pdfBuffer)) {
-        throw new Error('Expected PDF buffer but got job result')
+        throw new TypeError('Expected PDF buffer but got job result')
       }
 
       // Retornar PDF directamente

@@ -26,14 +26,25 @@ class WASMWorkerPool extends WorkerPool {
   private readonly loadedModules = new Set<string>()
   private initPromise: Promise<void> | null = null
 
+  /**
+   * Factory method to create and initialize a WASMWorkerPool.
+   * Use this instead of direct constructor to ensure proper async initialization.
+   */
+  static async create(scriptPath: string, options: WorkerPoolOptions = {}): Promise<WASMWorkerPool> {
+    const pool = new WASMWorkerPool(scriptPath, options)
+    await pool.ensureInitialized()
+    return pool
+  }
+
   constructor(scriptPath: string, options: WorkerPoolOptions = {}) {
     // Usar el script WASM worker
     const wasmWorkerPath = path.resolve(__dirname, 'wasm-worker-script.js')
     super(wasmWorkerPath, options)
     
     console.log('🧪 WASM Worker Pool initialized')
-    // Defer async initialization - store promise for later await if needed
-    this.initPromise = this.checkWorkersWASMCapability()
+    // Store promise for deferred initialization - caller should use ensureInitialized()
+    // or the static create() factory method
+    this.initPromise = Promise.resolve().then(() => this.checkWorkersWASMCapability())
   }
 
   /**

@@ -520,7 +520,7 @@ export async function POST(request: Request) {
     )
 
     // Send notifications
-    await sendOrderNotifications(order!, userId)
+    await sendOrderNotifications(order, userId)
 
     return NextResponse.json({ success: true, order, message: 'Orden creada exitosamente' })
   } catch (error) {

@@ -10,7 +10,7 @@ import { ProductCategory } from '@prisma/client'
 // Helper: Check if text contains any keyword from the list
 function matchesAnyKeyword(text: string, keywords: string[]): boolean {
   return keywords.some(keyword => {
-    const regex = new RegExp(`\\b${keyword}\\b`, 'i')
+    const regex = new RegExp(String.raw`\b${keyword}\b`, 'i')
     return regex.test(text)
   })
 }

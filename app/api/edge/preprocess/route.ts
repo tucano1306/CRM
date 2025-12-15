@@ -154,7 +154,7 @@ function validatePhoneField(value: any, rule: ValidationRule): string[] {
   if (typeof value !== 'string') {
     return [`Field ${rule.field} must be a string`]
   }
-  const phoneRegex = /^\+?[\d\s\-\(\)]{10,}$/
+  const phoneRegex = /^\+?[\d\s\-()]{10,}$/
   if (!phoneRegex.test(value)) {
     return [`Field ${rule.field} must be a valid phone number`]
   }

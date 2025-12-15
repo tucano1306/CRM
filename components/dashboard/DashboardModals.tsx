@@ -20,11 +20,11 @@ interface PendingOrder {
 
 // Out of Stock Modal
 interface OutOfStockModalProps {
-  show: boolean
-  onClose: () => void
-  loading: boolean
-  products: Product[]
-  router: AppRouterInstance
+  readonly show: boolean
+  readonly onClose: () => void
+  readonly loading: boolean
+  readonly products: Product[]
+  readonly router: AppRouterInstance
 }
 
 export function OutOfStockModal({ show, onClose, loading, products, router }: OutOfStockModalProps) {
@@ -77,11 +77,11 @@ export function OutOfStockModal({ show, onClose, loading, products, router }: Ou
 
 // Low Stock Modal
 interface LowStockModalProps {
-  show: boolean
-  onClose: () => void
-  loading: boolean
-  products: Product[]
-  router: AppRouterInstance
+  readonly show: boolean
+  readonly onClose: () => void
+  readonly loading: boolean
+  readonly products: Product[]
+  readonly router: AppRouterInstance
 }
 
 export function LowStockModal({ show, onClose, loading, products, router }: LowStockModalProps) {
@@ -134,10 +134,10 @@ export function LowStockModal({ show, onClose, loading, products, router }: LowS
 
 // Pending Orders Modal
 interface PendingOrdersModalProps {
-  show: boolean
-  onClose: () => void
-  orders: PendingOrder[]
-  router: AppRouterInstance
+  readonly show: boolean
+  readonly onClose: () => void
+  readonly orders: PendingOrder[]
+  readonly router: AppRouterInstance
 }
 
 export function PendingOrdersModal({ show, onClose, orders, router }: PendingOrdersModalProps) {
@@ -201,9 +201,9 @@ export function PendingOrdersModal({ show, onClose, orders, router }: PendingOrd
 
 // Quick Actions Modal
 interface QuickActionsModalProps {
-  show: boolean
-  onClose: () => void
-  router: AppRouterInstance
+  readonly show: boolean
+  readonly onClose: () => void
+  readonly router: AppRouterInstance
 }
 
 export function QuickActionsModal({ show, onClose, router }: QuickActionsModalProps) {

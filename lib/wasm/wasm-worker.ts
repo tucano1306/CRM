@@ -33,6 +33,16 @@ export class WASMWorkerInstance extends EventEmitter {
 
   private initPromise: Promise<void> | null = null
 
+  /**
+   * Factory method to create and initialize a WASMWorkerInstance.
+   * Use this instead of direct constructor to ensure proper async initialization.
+   */
+  static async create(scriptPath: string): Promise<WASMWorkerInstance> {
+    const instance = new WASMWorkerInstance(scriptPath)
+    await instance.ensureInitialized()
+    return instance
+  }
+
   constructor(scriptPath: string) {
     super()
     
@@ -45,8 +55,9 @@ export class WASMWorkerInstance extends EventEmitter {
     })
     
     this.setupWorkerListeners()
-    // Defer async initialization
-    this.initPromise = this.checkWASMCapability()
+    // Store promise for deferred initialization - caller should use ensureInitialized()
+    // or the static create() factory method
+    this.initPromise = Promise.resolve().then(() => this.checkWASMCapability())
   }
 
   /**
