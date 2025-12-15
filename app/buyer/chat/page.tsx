@@ -202,7 +202,7 @@ function BuyerChatContent() {
         )}
 
         {/* Chat Window */}
-        {seller && seller.clerkUserId ? (
+        {seller?.clerkUserId ? (
           <ChatWindow 
             receiverId={seller.clerkUserId}
             receiverName={seller.name}

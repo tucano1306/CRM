@@ -57,7 +57,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (invalidated) {
-      console.log(`✅ [CACHE WEBHOOK] Cache invalidated for ${entityType}${entityId ? ` (${entityId})` : ''}`)
+      const entityIdSuffix = entityId ? ` (${entityId})` : '';
+      console.log(`✅ [CACHE WEBHOOK] Cache invalidated for ${entityType}${entityIdSuffix}`)
     }
 
     return NextResponse.json({

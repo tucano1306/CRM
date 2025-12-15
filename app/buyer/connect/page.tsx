@@ -74,7 +74,7 @@ function ConnectPageContent() {
     if (!isLoaded) return
 
     // Verificar si hay una invitación pendiente después del login
-    if (userId && typeof globalThis.window !== 'undefined') {
+    if (userId && globalThis.window !== undefined) {
       const pending = sessionStorage.getItem('pendingInvitation')
       if (pending) {
         const { token: pendingToken, sellerId: pendingSellerId } = JSON.parse(pending)
@@ -101,7 +101,7 @@ function ConnectPageContent() {
 
   const handleCancel = () => {
     // Limpiar cualquier invitación pendiente
-    if (typeof globalThis.window !== 'undefined') {
+    if (globalThis.window !== undefined) {
       sessionStorage.removeItem('pendingInvitation')
     }
     setStatus('cancelled')
@@ -110,7 +110,7 @@ function ConnectPageContent() {
   const handleConnect = async () => {
     if (!userId) {
       // Guardar el token en sessionStorage para recuperarlo después del login
-      if (typeof globalThis.window !== 'undefined') {
+      if (globalThis.window !== undefined) {
         sessionStorage.setItem('pendingInvitation', JSON.stringify({ token, sellerId }))
       }
       // Redirigir a sign-up de comprador con redirect_url para volver aquí

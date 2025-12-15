@@ -44,7 +44,7 @@ type SelectedProduct = {
 }
 
 export default function CatalogPage() {
-  const router = useRouter() // Required for navigation context
+  const _router = useRouter() // Required for navigation context
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -105,11 +105,11 @@ export default function CatalogPage() {
         let productData = []
         let apiData = result.data
         
-        if (apiData && apiData.success && apiData.data) {
+        if (apiData?.success && apiData.data) {
           apiData = apiData.data
         }
         
-        if (apiData && apiData.data && Array.isArray(apiData.data)) {
+        if (apiData?.data && Array.isArray(apiData.data)) {
           productData = apiData.data
         } else if (Array.isArray(apiData)) {
           productData = apiData
@@ -137,8 +137,8 @@ export default function CatalogPage() {
       const searchLower = search.toLowerCase()
       filtered = filtered.filter(p => 
         p.name.toLowerCase().includes(searchLower) ||
-        (p.description && p.description.toLowerCase().includes(searchLower)) ||
-        (p.sku && p.sku.toLowerCase().includes(searchLower))
+        (p.description?.toLowerCase().includes(searchLower)) ||
+        (p.sku?.toLowerCase().includes(searchLower))
       )
     }
 

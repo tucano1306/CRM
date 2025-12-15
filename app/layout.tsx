@@ -12,7 +12,7 @@ import NotificationInitializer from '@/components/notifications/NotificationInit
 const inter = Inter({ subsets: ['latin'] })
 
 // Initialize event handlers (server-side only)
-if (typeof globalThis.window === 'undefined') {
+if (globalThis.window === undefined) {
   initializeEventHandlers()
 }
 

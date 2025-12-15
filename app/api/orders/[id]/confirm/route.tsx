@@ -49,10 +49,10 @@ export async function PUT(
       )
     }
 
-    const { idempotencyKey, notes } = validation.data
+    const { idempotencyKey, notes: _notes } = validation.data
     
     // ✅ SANITIZACIÓN - sanitize notes if needed in future
-    // const sanitizedNotes = notes ? sanitizeText(notes) : undefined
+    // const sanitizedNotes = _notes ? sanitizeText(_notes) : undefined
 
     // 2. Validar idempotencyKey (opcional)
     if (idempotencyKey) {

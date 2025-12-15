@@ -64,7 +64,7 @@ export default function ClientsPage() {
   
   // Estados para modal de historial
   const [showHistoryModal, setShowHistoryModal] = useState(false)
-  const [historyClientId, setHistoryClientId] = useState<string | null>(null)
+  const [_historyClientId, setHistoryClientId] = useState<string | null>(null)
   const [historyClientName, setHistoryClientName] = useState<string>('')
   const [clientOrders, setClientOrders] = useState<any[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
@@ -255,7 +255,7 @@ export default function ClientsPage() {
   }
 
   // Ver historial de un cliente
-  const viewClientHistory = async (clientId: string, clientName: string) => {
+  const _viewClientHistory = async (clientId: string, clientName: string) => {
     setHistoryClientId(clientId)
     setHistoryClientName(clientName)
     setShowHistoryModal(true)
@@ -607,7 +607,7 @@ export default function ClientsPage() {
       </div>
 
       {/* 🔔 Panel de Solicitudes de Conexión Pendientes */}
-      {typeof globalThis.window !== 'undefined' && (
+      {globalThis.window !== undefined && (
         <div className="mb-6">
           <Suspense fallback={null}>
             <ConnectionRequestsPanel

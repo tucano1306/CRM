@@ -71,7 +71,7 @@ export default function ProductListCheckbox({
   const filteredProducts = useMemo(() => {
     let filtered = products.filter(p => {
       const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-        (p.sku && p.sku.toLowerCase().includes(search.toLowerCase()))
+        (p.sku?.toLowerCase().includes(search.toLowerCase()))
       const matchesCategory = filterCategory === 'all' || p.category === filterCategory
       return matchesSearch && matchesCategory
     })

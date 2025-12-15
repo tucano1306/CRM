@@ -154,7 +154,7 @@ export default function DashboardPage() {
     }
   }, [])
 
-  const fetchOutOfStockProducts = useCallback(async () => {
+  const _fetchOutOfStockProducts = useCallback(async () => {
     console.log('🔍 [DASHBOARD] Fetching out of stock products...')
     setLoadingOutOfStock(true)
     try {
@@ -228,7 +228,7 @@ export default function DashboardPage() {
   }, [stats, revenuePeriod, generateRevenueData])
 
   // Abrir modal de stock bajo y cargar productos
-  const openLowStockModal = async () => {
+  const _openLowStockModal = async () => {
     setShowLowStockModal(true)
     await fetchLowStockProducts()
   }

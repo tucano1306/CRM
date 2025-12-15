@@ -112,7 +112,7 @@ export default function BuyerDashboardPage() {
       
       // Verificar si la respuesta es JSON
       const contentType = response.headers.get('content-type')
-      if (!contentType || !contentType.includes('application/json')) {
+      if (!contentType?.includes('application/json')) {
         const text = await response.text()
         console.error('❌ Server returned non-JSON response:', text.substring(0, 200))
         alert('❌ Error del servidor. Por favor, verifica que estés autenticado.')

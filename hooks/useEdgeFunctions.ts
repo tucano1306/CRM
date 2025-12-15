@@ -373,7 +373,7 @@ export function useEdgeFunctions(
     }
     
     // Listen for route changes (Next.js)
-    if (typeof globalThis.window !== 'undefined') {
+    if (globalThis.window !== undefined) {
       globalThis.addEventListener('popstate', handleRouteChange)
       return () => globalThis.removeEventListener('popstate', handleRouteChange)
     }

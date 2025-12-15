@@ -456,7 +456,7 @@ function OrdersPageContent() {
     }
   }
 
-  const showUpdateToast = (status: string) => {
+  const _showUpdateToast = (status: string) => {
     setToastStatus(status)
     setToastMessage('¡Tu orden ha sido actualizada!')
     setShowToast(true)
@@ -808,7 +808,7 @@ function OrdersPageContent() {
   }
 
   // ✅ confirmOrder CON TIMEOUT
-  const confirmOrder = async (orderId: string) => {
+  const _confirmOrder = async (orderId: string) => {
     if (!confirm('¿Confirmar esta orden?')) return
 
     try {
@@ -1059,7 +1059,7 @@ function OrdersPageContent() {
       const newWindow = window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
       
       // Fallback si el popup fue bloqueado
-      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+      if (!newWindow || newWindow.closed || newWindow.closed === undefined) {
         // Intentar con location.href como alternativa
         globalThis.location.href = whatsappUrl
       }

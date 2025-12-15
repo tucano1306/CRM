@@ -127,7 +127,7 @@ export default function BulkStatusChangeModal({
 }: OrderReviewModalProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [step, setStep] = useState<'review' | 'issues' | 'confirm'>('review')
+  const [_step, setStep] = useState<'review' | 'issues' | 'confirm'>('review')
   
   // Estado para problemas de stock
   const [productIssues, setProductIssues] = useState<Map<string, ProductIssue>>(new Map())
@@ -943,9 +943,11 @@ export default function BulkStatusChangeModal({
                         <MessageSquare className="w-4 h-4" />
                         Abrir Chat
                       </Link>
-                      {singleOrder.client?.phone && (
+                      {singleOrder.client?.phone && (() => {
+                        const whatsappMessage = `Hola ${singleOrder.client.name}, te escribo sobre tu pedido #${singleOrder.orderNumber}`;
+                        return (
                         <a 
-                          href={`https://wa.me/${singleOrder.client.phone.replaceAll(/\D/g, '')}?text=${encodeURIComponent(`Hola ${singleOrder.client.name}, te escribo sobre tu pedido #${singleOrder.orderNumber}`)}`}
+                          href={`https://wa.me/${singleOrder.client.phone.replaceAll(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 transition-colors font-medium"
@@ -953,7 +955,8 @@ export default function BulkStatusChangeModal({
                           <WhatsAppIcon className="w-4 h-4" />
                           WhatsApp
                         </a>
-                      )}
+                        );
+                      })()}
                       {singleOrder.client?.email && (
                         <a 
                           href={`mailto:${singleOrder.client.email}?subject=Pedido ${singleOrder.orderNumber} - Productos no disponibles`}

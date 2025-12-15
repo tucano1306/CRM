@@ -406,7 +406,7 @@ export default function ManageCatalogModal({
 
   const filteredProducts = clientProducts.filter(p =>
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()))
+    (p.sku?.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
   if (!isOpen) return null

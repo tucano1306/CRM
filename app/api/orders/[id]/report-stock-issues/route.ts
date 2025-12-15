@@ -115,16 +115,18 @@ export async function POST(
     // ===============================================
     
     let messageLines: string[] = []
-    messageLines.push(`⚠️ *Problemas con tu Pedido #${order.orderNumber}*`)
-    messageLines.push('')
-    messageLines.push(`Hola ${order.client.name},`)
-    messageLines.push('')
-    messageLines.push(`El vendedor *${order.seller.name}* ha revisado tu pedido y encontró los siguientes problemas:`)
-    messageLines.push('')
+    messageLines.push(
+      `⚠️ *Problemas con tu Pedido #${order.orderNumber}*`,
+      '',
+      `Hola ${order.client.name},`,
+      '',
+      `El vendedor *${order.seller.name}* ha revisado tu pedido y encontró los siguientes problemas:`,
+      ''
+    )
 
     // Productos SIN STOCK
     if (outOfStock.length > 0) {
-      messageLines.push('❌ *PRODUCTOS SIN STOCK:*')
+      messageLines.push('❌ *PRODUCTOS SIN STOCK:')
       outOfStock.forEach(item => {
         messageLines.push(`   • ${item.productName} (solicitaste ${item.requestedQty})`)
       })
@@ -140,10 +142,12 @@ export async function POST(
       messageLines.push('')
     }
 
-    messageLines.push('📞 *El vendedor te contactará para resolver esto.*')
-    messageLines.push('También puedes responder a este mensaje o usar el chat de la app.')
-    messageLines.push('')
-    messageLines.push(`🔗 Ver pedido: ${process.env.NEXT_PUBLIC_APP_URL || 'https://tuapp.com'}/buyer/orders`)
+    messageLines.push(
+      '📞 *El vendedor te contactará para resolver esto.*',
+      'También puedes responder a este mensaje o usar el chat de la app.',
+      '',
+      `🔗 Ver pedido: ${process.env.NEXT_PUBLIC_APP_URL || 'https://tuapp.com'}/buyer/orders`
+    )
 
     const fullMessage = messageLines.join('\n')
     
@@ -235,7 +239,8 @@ export async function POST(
           chatMessage += `❌ Sin stock: ${outOfStock.map(i => i.productName).join(', ')}\n`
         }
         if (partialStock.length > 0) {
-          chatMessage += `⚠️ Stock parcial: ${partialStock.map(i => `${i.productName} (${i.availableQty}/${i.requestedQty})`).join(', ')}\n`
+          const partialStockItems = partialStock.map(i => `${i.productName} (${i.availableQty}/${i.requestedQty})`).join(', ');
+          chatMessage += `⚠️ Stock parcial: ${partialStockItems}\n`
         }
         chatMessage += `\n📞 Te contactaré para resolver esto.`
 

@@ -187,11 +187,12 @@ export async function notifyOrderCancelled(
   clientName: string,
   reason?: string
 ) {
+  const reasonSuffix = reason ? `. Razón: ${reason}` : '';
   return createNotification({
     sellerId,
     type: 'ORDER_CANCELLED',
     title: '❌ Orden Cancelada',
-    message: `${clientName} canceló la orden #${orderNumber}${reason ? `. Razón: ${reason}` : ''}`,
+    message: `${clientName} canceló la orden #${orderNumber}${reasonSuffix}`,
     orderId,
     metadata: {
       orderNumber,
@@ -311,11 +312,12 @@ export async function notifyOrderConfirmed(
   orderNumber: string,
   estimatedDelivery?: string
 ) {
+  const deliverySuffix = estimatedDelivery ? `. Entrega estimada: ${estimatedDelivery}` : '';
   return createNotification({
     clientId,
     type: 'ORDER_CONFIRMED',
     title: '✅ Orden Confirmada',
-    message: `Tu orden #${orderNumber} ha sido confirmada${estimatedDelivery ? `. Entrega estimada: ${estimatedDelivery}` : ''}`,
+    message: `Tu orden #${orderNumber} ha sido confirmada${deliverySuffix}`,
     orderId,
     metadata: {
       orderNumber,
@@ -512,7 +514,7 @@ export async function sendAutomaticCancellationMessage(
       `📦 Orden: #${orderNumber}\n` +
       `📅 Fecha: ${formattedDate}\n` +
       `🕒 Hora: ${formattedTime}\n` +
-      `${reason ? `\n📝 Motivo de cancelación:\n"${reason}"\n` : '\n⚠️ Sin motivo especificado\n'}` +
+      (reason ? `\n📝 Motivo de cancelación:\n"${reason}"\n` : '\n⚠️ Sin motivo especificado\n') +
       `\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n` +
       `⚡ Acción requerida: Por favor, toma las medidas necesarias para procesar esta cancelación.`
 
@@ -607,7 +609,7 @@ class PushNotificationService {
 
   // Inicializar el servicio (llamar al cargar la app)
   async init(): Promise<boolean> {
-    if (typeof globalThis.window === 'undefined') return false
+    if (globalThis.window === undefined) return false
     
     if (!('serviceWorker' in navigator) || !('Notification' in globalThis)) {
       console.warn('⚠️ Notificaciones no soportadas')
@@ -664,7 +666,7 @@ class PushNotificationService {
 
   // Actualizar badge del ícono de la app (número en el ícono)
   async setBadge(count: number): Promise<void> {
-    if (typeof globalThis.window === 'undefined') return
+    if (globalThis.window === undefined) return
 
     if ('setAppBadge' in navigator) {
       try {
@@ -690,14 +692,14 @@ class PushNotificationService {
 
   // Vibrar el dispositivo
   vibrate(pattern: number | number[] = [200, 100, 200]): void {
-    if (typeof globalThis.window !== 'undefined' && 'vibrate' in navigator) {
+    if (globalThis.window !== undefined && 'vibrate' in navigator) {
       navigator.vibrate(pattern)
     }
   }
 
   // Reproducir sonido
   playSound(soundUrl: string = '/notification.mp3'): void {
-    if (typeof globalThis.window === 'undefined') return
+    if (globalThis.window === undefined) return
     try {
       const audio = new Audio(soundUrl)
       audio.volume = 0.5

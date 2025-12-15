@@ -133,11 +133,12 @@ export async function POST(
         ? `actualizado la cantidad de "${product.name}" a ${updatedQuantity}` 
         : `agregado "${product.name}" (${quantity} ${product.unit || 'unid.'})`
       
+      const noteSuffix = note ? `\n📝 Nota: ${note}` : '';
       await prisma.chatMessage.create({
         data: {
           senderId: authUser.id,
           receiverId: buyerAuthUser.id,
-          message: `📦 He ${actionText} en tu orden #${order.orderNumber}.${note ? `\n📝 Nota: ${note}` : ''}`,
+          message: `📦 He ${actionText} en tu orden #${order.orderNumber}.${noteSuffix}`,
           userId: authUser.id,
           orderId: orderId,
           sellerId: sellerId

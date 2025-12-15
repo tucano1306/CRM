@@ -63,7 +63,10 @@ export async function GET(request: Request) {
             orderNumber: `REC-${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
             status: 'PENDING',
             totalAmount: subtotal,
-            notes: `Orden automática: ${recurringOrder.name}${recurringOrder.notes ? `\n\n${recurringOrder.notes}` : ''}`,
+            notes: (() => {
+              const notesSuffix = recurringOrder.notes ? `\n\n${recurringOrder.notes}` : '';
+              return `Orden automática: ${recurringOrder.name}${notesSuffix}`;
+            })(),
             orderItems: {
               create: recurringOrder.items.map((item: any) => ({
                 productId: item.productId,

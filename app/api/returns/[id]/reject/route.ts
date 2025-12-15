@@ -63,9 +63,13 @@ export async function POST(
         status: 'REJECTED',
         approvedBy: userId,
         approvedAt: new Date(),
-        notes: sanitizedReason 
-          ? `RECHAZADA: ${sanitizedReason}${returnRecord.notes ? `\n\nNotas originales: ${returnRecord.notes}` : ''}`
-          : sanitizedNotes || returnRecord.notes
+        notes: (() => {
+          if (sanitizedReason) {
+            const originalNotes = returnRecord.notes ? `\n\nNotas originales: ${returnRecord.notes}` : '';
+            return `RECHAZADA: ${sanitizedReason}${originalNotes}`;
+          }
+          return sanitizedNotes || returnRecord.notes;
+        })()
       },
       include: {
         items: true,

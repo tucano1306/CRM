@@ -177,85 +177,82 @@ export async function PATCH(
     })
 
     // ⚡ NON-CRITICAL: Execute all side-effects in BACKGROUND (no blocking)
-    const backgroundTasks = []
-
-    // 📡 Realtime event to seller
-    backgroundTasks.push(async () => {
-      const sellerAuth = await prisma.authenticated_users.findFirst({
-        where: { sellers: { some: { id: order.sellerId } } },
-        select: { authId: true }
-      })
-      if (sellerAuth) {
-        await sendRealtimeEvent(
-          getSellerChannel(sellerAuth.authId),
-          'order:status-changed',
-          {
-            orderId: orderId,
-            orderNumber: updatedOrder?.orderNumber,
-            oldStatus: order.status,
-            newStatus: status,
-            timestamp: new Date().toISOString()
-          }
-        )
-      }
-    })
-
-    // 📡 Realtime event to buyer
-    backgroundTasks.push(async () => {
-      const buyerAuth = await prisma.authenticated_users.findFirst({
-        where: { clients: { some: { id: order.clientId } } },
-        select: { authId: true }
-      })
-      if (buyerAuth) {
-        await sendRealtimeEvent(
-          getBuyerChannel(buyerAuth.authId),
-          'order:status-changed',
-          {
-            orderId: orderId,
-            orderNumber: updatedOrder?.orderNumber,
-            oldStatus: order.status,
-            newStatus: status,
-            timestamp: new Date().toISOString()
-          }
-        )
-      }
-    })
-
-    // 🔔 Generic status change notification
-    backgroundTasks.push(async () => {
-      await notifyOrderStatusChanged(
-        order.clientId,
-        orderId,
-        updatedOrder?.orderNumber || 'N/A',
-        order.status,
-        status as OrderStatus
-      )
-      logger.info(
-        LogCategory.API,
-        'Status change notification sent',
-        { orderId, oldStatus: order.status, newStatus: status }
-      )
-    })
-
-    // 🎉 Event emitter for event-driven system
-    backgroundTasks.push(async () => {
-      await eventEmitter.emit({
-        type: EventType.ORDER_UPDATED,
-        timestamp: new Date(),
-        userId: userId,
-        data: {
-          orderId: orderId,
-          clientId: updatedOrder?.clientId || order.clientId,
-          sellerId: updatedOrder?.sellerId || order.sellerId,
-          amount: updatedOrder ? Number(updatedOrder.totalAmount) : 0,
-          status: status,
-          oldStatus: order.status,
-          changedBy: user.name,
-          changedByRole: user.role,
-          items: updatedOrder?.orderItems || []
+    const backgroundTasks: Array<() => Promise<void>> = [
+      // 📡 Realtime event to seller
+      async () => {
+        const sellerAuth = await prisma.authenticated_users.findFirst({
+          where: { sellers: { some: { id: order.sellerId } } },
+          select: { authId: true }
+        })
+        if (sellerAuth) {
+          await sendRealtimeEvent(
+            getSellerChannel(sellerAuth.authId),
+            'order:status-changed',
+            {
+              orderId: orderId,
+              orderNumber: updatedOrder?.orderNumber,
+              oldStatus: order.status,
+              newStatus: status,
+              timestamp: new Date().toISOString()
+            }
+          )
         }
-      })
-    })
+      },
+      // 📡 Realtime event to buyer
+      async () => {
+        const buyerAuth = await prisma.authenticated_users.findFirst({
+          where: { clients: { some: { id: order.clientId } } },
+          select: { authId: true }
+        })
+        if (buyerAuth) {
+          await sendRealtimeEvent(
+            getBuyerChannel(buyerAuth.authId),
+            'order:status-changed',
+            {
+              orderId: orderId,
+              orderNumber: updatedOrder?.orderNumber,
+              oldStatus: order.status,
+              newStatus: status,
+              timestamp: new Date().toISOString()
+            }
+          )
+        }
+      },
+      // 🔔 Generic status change notification
+      async () => {
+        await notifyOrderStatusChanged(
+          order.clientId,
+          orderId,
+          updatedOrder?.orderNumber || 'N/A',
+          order.status,
+          status as OrderStatus
+        )
+        logger.info(
+          LogCategory.API,
+          'Status change notification sent',
+          { orderId, oldStatus: order.status, newStatus: status }
+        )
+      },
+      // 🎉 Event emitter for event-driven system
+      async () => {
+        await eventEmitter.emit({
+          type: EventType.ORDER_UPDATED,
+          timestamp: new Date(),
+          userId: userId,
+          data: {
+            orderId: orderId,
+            clientId: updatedOrder?.clientId || order.clientId,
+            sellerId: updatedOrder?.sellerId || order.sellerId,
+            amount: updatedOrder ? Number(updatedOrder.totalAmount) : 0,
+            status: status,
+            oldStatus: order.status,
+            changedBy: user.name,
+            changedByRole: user.role,
+            items: updatedOrder?.orderItems || []
+          }
+        })
+      }
+    ]
 
     // 🔔 Status-specific notifications
     if (status === 'CONFIRMED') {

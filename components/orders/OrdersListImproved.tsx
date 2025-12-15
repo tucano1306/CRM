@@ -106,7 +106,7 @@ export default function OrdersListImproved({
   }, [selectedOrders])
 
   // ⚡ Optimización: Memoizar toggle de expansión
-  const toggleExpand = useCallback((orderId: string) => {
+  const _toggleExpand = useCallback((orderId: string) => {
     setExpandedOrder(prev => prev === orderId ? null : orderId)
   }, [])
 

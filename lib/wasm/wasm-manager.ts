@@ -65,7 +65,7 @@ class WASMManager {
       let wasmBytes: ArrayBuffer
 
       if (typeof source === 'string') {
-        if (typeof globalThis.window !== 'undefined') {
+        if (globalThis.window !== undefined) {
           // Browser environment
           const response = await fetch(source)
           if (!response.ok) {
@@ -127,7 +127,7 @@ class WASMManager {
     
     try {
       const wasmModule = this.modules.get(moduleName)
-      if (!wasmModule || !wasmModule.loaded) {
+      if (!wasmModule?.loaded) {
         throw new Error(`WASM module '${moduleName}' not loaded`)
       }
 
