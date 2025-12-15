@@ -57,11 +57,9 @@ export async function POST(request: Request) {
       where: { userId },
     })
 
-    if (!cart) {
-      cart = await prisma.cart.create({
-        data: { userId },
-      })
-    }
+    cart ??= await prisma.cart.create({
+      data: { userId },
+    })
 
     // Obtener todos los productos de una vez (optimización)
     const productIds = items.map(item => item.productId)

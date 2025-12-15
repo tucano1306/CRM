@@ -24,8 +24,7 @@ function ConnectPageContent() {
     email: string
     phone?: string
   } | null>(null)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [requestInfo, setRequestInfo] = useState<{
+  const [_requestInfo, setRequestInfo] = useState<{
     requestId?: string
     createdAt?: string
   } | null>(null)

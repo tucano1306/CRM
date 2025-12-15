@@ -232,7 +232,7 @@ export function exportClientHistory(
           { header: 'Veces Comprado', key: 'vecesComprado', width: 18 },
           { header: 'Total Gastado', key: 'totalGastado', width: 18 }
         ],
-        data: productsData.sort((a, b) => b.totalGastado - a.totalGastado)
+        data: productsData.toSorted((a, b) => b.totalGastado - a.totalGastado)
       }
     ],
     `historial-${clientName.toLowerCase().replaceAll(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.xlsx`

@@ -321,6 +321,7 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
               : {}
             }
             className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-2xl w-full sm:w-[90vw] sm:max-w-md max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-right-4 duration-500 ring-0 sm:ring-4 sm:ring-blue-500/50"
+            role="presentation"
             onClick={(e) => e.stopPropagation()}
             onKeyDown={(e) => e.stopPropagation()}
           >

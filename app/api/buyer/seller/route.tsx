@@ -113,16 +113,12 @@ export async function GET(request: Request) {
     )
     
     // Si no hay ninguno con user_, tomar el primero con role SELLER
-    if (!sellerAuth) {
-      sellerAuth = client.seller.authenticated_users.find(
-        auth => auth.role === 'SELLER'
-      )
-    }
+    sellerAuth ??= client.seller.authenticated_users.find(
+      auth => auth.role === 'SELLER'
+    )
     
     // Si aún no hay, tomar el primero
-    if (!sellerAuth) {
-      sellerAuth = client.seller.authenticated_users[0]
-    }
+    sellerAuth ??= client.seller.authenticated_users[0]
 
     console.log('✅ Seller authId seleccionado:', sellerAuth.authId)
     console.log('   De un total de:', client.seller.authenticated_users.length, 'opciones')

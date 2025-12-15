@@ -880,6 +880,7 @@ export default function ManageCatalogModal({
                     ? 'border-green-400 bg-green-50' 
                     : 'border-gray-300 hover:border-purple-400 hover:bg-gray-50'
                 }`}
+                role="presentation"
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation() }}
                 onDrop={(e) => {
                   e.preventDefault()

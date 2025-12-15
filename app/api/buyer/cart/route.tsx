@@ -25,18 +25,16 @@ export async function GET() {
       },
     })
 
-    if (!cart) {
-      cart = await prisma.cart.create({
-        data: { userId },
-        include: {
-          items: {
-            include: {
-              product: true,
-            },
+    cart ??= await prisma.cart.create({
+      data: { userId },
+      include: {
+        items: {
+          include: {
+            product: true,
           },
         },
-      })
-    }
+      },
+    })
 
     return NextResponse.json({
       success: true,
@@ -104,11 +102,9 @@ export async function POST(request: Request) {
       where: { userId },
     })
 
-    if (!cart) {
-      cart = await prisma.cart.create({
-        data: { userId },
-      })
-    }
+    cart ??= await prisma.cart.create({
+      data: { userId },
+    })
 
     // Verificar si el producto ya está en el carrito
     const existingItem = await prisma.cartItem.findFirst({
