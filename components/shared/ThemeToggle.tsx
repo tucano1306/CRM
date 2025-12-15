@@ -4,6 +4,12 @@ import { Button } from '@/components/ui/button'
 import { Sun, Moon, Monitor } from 'lucide-react'
 import { useTheme } from '@/lib/use-theme'
 
+function getThemeLabel(theme: string): string {
+  if (theme === 'system') return 'Sistema';
+  if (theme === 'light') return 'Claro';
+  return 'Oscuro';
+}
+
 export default function ThemeToggle() {
   const { theme, setTheme, mounted } = useTheme()
 
@@ -40,7 +46,7 @@ export default function ThemeToggle() {
       size="sm"
       onClick={cycleTheme}
       className="w-9 h-9 p-0 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
-      title={`Tema actual: ${theme === 'system' ? 'Sistema' : theme === 'light' ? 'Claro' : 'Oscuro'}`}
+      title={`Tema actual: ${getThemeLabel(theme)}`}
     >
       {getIcon()}
     </Button>

@@ -396,8 +396,14 @@ function getItemStyleClasses(isOutOfStock: boolean, isPartialStock: boolean) {
 
 // ============ Status Animation Components ============
 
+function getSizeDimensions(size: 'normal' | 'small' | 'large'): string {
+  if (size === 'small') return 'w-16 h-16';
+  if (size === 'large') return 'w-24 h-24';
+  return 'w-20 h-20';
+}
+
 function ConfirmedStatusAnimation({ size = 'normal' }: { size?: 'normal' | 'small' | 'large' }) {
-  const dimensions = size === 'small' ? 'w-16 h-16' : size === 'large' ? 'w-24 h-24' : 'w-20 h-20'
+  const dimensions = getSizeDimensions(size)
   return (
     <div className={`relative ${dimensions}`}>
       <svg viewBox="0 0 100 100" className="w-full h-full">
@@ -430,7 +436,7 @@ function ConfirmedStatusAnimation({ size = 'normal' }: { size?: 'normal' | 'smal
 }
 
 function InDeliveryStatusAnimation({ size = 'normal' }: { size?: 'normal' | 'small' | 'large' }) {
-  const dimensions = size === 'small' ? 'w-16 h-16' : size === 'large' ? 'w-24 h-24' : 'w-20 h-20'
+  const dimensions = getSizeDimensions(size)
   return (
     <div className={`relative ${dimensions}`}>
       <svg viewBox="0 0 100 100" className="w-full h-full">
@@ -462,7 +468,7 @@ function InDeliveryStatusAnimation({ size = 'normal' }: { size?: 'normal' | 'sma
 }
 
 function DeliveredStatusAnimation({ size = 'normal' }: { size?: 'normal' | 'small' | 'large' }) {
-  const dimensions = size === 'small' ? 'w-16 h-16' : size === 'large' ? 'w-24 h-24' : 'w-20 h-20'
+  const dimensions = getSizeDimensions(size)
   return (
     <div className={`relative ${dimensions}`}>
       <svg viewBox="0 0 100 100" className="w-full h-full">
