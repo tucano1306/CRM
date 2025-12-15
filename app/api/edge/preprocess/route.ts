@@ -261,48 +261,73 @@ function checkRateLimit(request: NextRequest, endpoint: string): { allowed: bool
 }
 
 /**
+ * Sanitize a single value - removes XSS scripts from strings
+ */
+function sanitizeValue(value: unknown): unknown {
+  if (typeof value !== 'string') {
+    return value
+  }
+  return value.trim().replaceAll(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+}
+
+/**
+ * Apply sanitization to all object entries
+ */
+function sanitizeObject(data: Record<string, unknown>): Record<string, unknown> {
+  const transformed: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(data)) {
+    transformed[key] = sanitizeValue(value)
+  }
+  return transformed
+}
+
+/**
+ * Transform product-specific fields
+ */
+function transformProductFields(data: Record<string, unknown>): void {
+  if (data.price) {
+    data.price = Number.parseFloat(String(data.price))
+  }
+}
+
+/**
+ * Transform order-specific fields
+ */
+function transformOrderFields(data: Record<string, unknown>): void {
+  if (data.items && typeof data.items === 'string') {
+    try {
+      data.items = JSON.parse(data.items)
+    } catch {
+      // Keep as string if JSON parsing fails
+    }
+  }
+  if (data.totalAmount) {
+    data.totalAmount = Number.parseFloat(String(data.totalAmount))
+  }
+}
+
+/**
+ * Apply endpoint-specific transformations
+ */
+function applyEndpointTransformations(data: Record<string, unknown>, endpoint: string): void {
+  if (endpoint === '/api/products') {
+    transformProductFields(data)
+  } else if (endpoint === '/api/orders') {
+    transformOrderFields(data)
+  }
+}
+
+/**
  * Sanitize and transform input data
  */
-function transformData(data: any, endpoint: string): any {
-  // Basic sanitization
-  if (typeof data === 'object' && data !== null) {
-    const transformed: any = {}
-    
-    for (const [key, value] of Object.entries(data)) {
-      if (typeof value === 'string') {
-        // Trim whitespace and remove potential XSS
-        transformed[key] = value.trim().replaceAll(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-      } else {
-        transformed[key] = value
-      }
-    }
-
-    // Endpoint-specific transformations
-    switch (endpoint) {
-      case '/api/products':
-        if (transformed.price) {
-          transformed.price = Number.parseFloat(transformed.price)
-        }
-        break
-      
-      case '/api/orders':
-        if (transformed.items && typeof transformed.items === 'string') {
-          try {
-            transformed.items = JSON.parse(transformed.items)
-          } catch {
-            // Keep as string if JSON parsing fails
-          }
-        }
-        if (transformed.totalAmount) {
-          transformed.totalAmount = Number.parseFloat(transformed.totalAmount)
-        }
-        break
-    }
-
-    return transformed
+function transformData(data: unknown, endpoint: string): unknown {
+  if (typeof data !== 'object' || data === null) {
+    return data
   }
 
-  return data
+  const transformed = sanitizeObject(data as Record<string, unknown>)
+  applyEndpointTransformations(transformed, endpoint)
+  return transformed
 }
 
 /**

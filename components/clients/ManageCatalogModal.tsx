@@ -54,6 +54,207 @@ const UNITS = [
   { value: 'gallon', label: 'Galón' },
 ]
 
+// --- Helper Components to reduce cognitive complexity ---
+
+function LoadingState() {
+  return (
+    <div className="text-center py-12">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
+      <p className="text-gray-500 mt-4">Cargando catálogo...</p>
+    </div>
+  )
+}
+
+function EmptyState({ searchTerm, onCreateClick }: { searchTerm: string; onCreateClick: () => void }) {
+  return (
+    <div className="text-center py-12">
+      <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+      <p className="text-gray-500 text-lg mb-2">
+        {searchTerm ? 'No se encontraron productos' : 'Sin productos asignados'}
+      </p>
+      <p className="text-gray-400 text-sm mb-4">
+        Crea productos para este cliente en la pestaña &ldquo;Crear Producto&rdquo;
+      </p>
+      <Button
+        onClick={onCreateClick}
+        className="bg-purple-600 hover:bg-purple-700"
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Crear Primer Producto
+      </Button>
+    </div>
+  )
+}
+
+function ImportFileDropzone({
+  importFile,
+  fileInputRef,
+  onFileSelect,
+  onFileClear,
+}: {
+  importFile: File | null
+  fileInputRef: React.RefObject<HTMLInputElement>
+  onFileSelect: (file: File) => void
+  onFileClear: () => void
+}) {
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.dataTransfer.files?.[0]) {
+      const file = e.dataTransfer.files[0]
+      if (/\.(xlsx|xls|csv)$/i.test(file.name)) {
+        onFileSelect(file)
+      }
+    }
+  }
+
+  return (
+    <div
+      className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
+        importFile
+          ? 'border-green-400 bg-green-50'
+          : 'border-gray-300 hover:border-purple-400 hover:bg-gray-50'
+      }`}
+      onDragOver={(e) => { e.preventDefault(); e.stopPropagation() }}
+      onDrop={handleDrop}
+    >
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx,.xls,.csv"
+        onChange={(e) => {
+          if (e.target.files?.[0]) {
+            onFileSelect(e.target.files[0])
+          }
+        }}
+        className="hidden"
+      />
+
+      {importFile ? (
+        <ImportFileSelected file={importFile} onClear={onFileClear} />
+      ) : (
+        <ImportFileEmpty onSelectClick={() => fileInputRef.current?.click()} />
+      )}
+    </div>
+  )
+}
+
+function ImportFileSelected({ file, onClear }: { file: File; onClear: () => void }) {
+  return (
+    <div className="space-y-3">
+      <div className="w-14 h-14 mx-auto bg-green-100 rounded-full flex items-center justify-center">
+        <FileSpreadsheet className="w-7 h-7 text-green-600" />
+      </div>
+      <div>
+        <p className="font-semibold text-gray-900">{file.name}</p>
+        <p className="text-sm text-gray-500">{(file.size / 1024).toFixed(1)} KB</p>
+      </div>
+      <Button variant="outline" size="sm" onClick={onClear}>
+        Cambiar archivo
+      </Button>
+    </div>
+  )
+}
+
+function ImportFileEmpty({ onSelectClick }: { onSelectClick: () => void }) {
+  return (
+    <div className="space-y-3">
+      <div className="w-14 h-14 mx-auto bg-purple-100 rounded-full flex items-center justify-center">
+        <Upload className="w-7 h-7 text-purple-600" />
+      </div>
+      <div>
+        <p className="font-semibold text-gray-900">Arrastra tu archivo Excel aquí</p>
+        <p className="text-sm text-gray-500">o haz clic para seleccionar</p>
+      </div>
+      <Button variant="outline" onClick={onSelectClick}>
+        <Upload className="w-4 h-4 mr-2" />
+        Seleccionar archivo
+      </Button>
+    </div>
+  )
+}
+
+interface ImportResultData {
+  success: boolean
+  stats: { created: number; updated: number; skipped: number; errors: number; associatedToClient?: number }
+  errors: string[]
+}
+
+function ImportResultDisplay({
+  result,
+  clientName,
+  onImportAnother,
+  onViewCatalog,
+}: {
+  result: ImportResultData
+  clientName: string
+  onImportAnother: () => void
+  onViewCatalog: () => void
+}) {
+  return (
+    <div className={`rounded-xl p-4 ${result.success ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'}`}>
+      <div className="flex items-center gap-2 mb-3">
+        {result.success ? (
+          <>
+            <CheckCircle className="w-6 h-6 text-green-600" />
+            <span className="font-bold text-green-800">¡Importación completada!</span>
+          </>
+        ) : (
+          <>
+            <X className="w-6 h-6 text-red-600" />
+            <span className="font-bold text-red-800">Error en importación</span>
+          </>
+        )}
+      </div>
+
+      {result.stats.associatedToClient !== undefined && result.stats.associatedToClient > 0 && (
+        <div className="bg-purple-100 rounded-lg p-3 mb-3 text-center">
+          <p className="text-2xl font-bold text-purple-700">{result.stats.associatedToClient}</p>
+          <p className="text-sm text-purple-600 font-medium">Productos agregados al catálogo de {clientName}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+        <div className="bg-white rounded-lg p-2 text-center">
+          <p className="text-lg font-bold text-green-600">{result.stats.created}</p>
+          <p className="text-xs text-gray-600">Nuevos</p>
+        </div>
+        <div className="bg-white rounded-lg p-2 text-center">
+          <p className="text-lg font-bold text-blue-600">{result.stats.updated}</p>
+          <p className="text-xs text-gray-600">Actualizados</p>
+        </div>
+        <div className="bg-white rounded-lg p-2 text-center">
+          <p className="text-lg font-bold text-orange-500">{result.stats.skipped}</p>
+          <p className="text-xs text-gray-600">Ya existían</p>
+        </div>
+        <div className="bg-white rounded-lg p-2 text-center">
+          <p className="text-lg font-bold text-red-500">{result.stats.errors}</p>
+          <p className="text-xs text-gray-600">Errores</p>
+        </div>
+      </div>
+
+      {result.errors.length > 0 && (
+        <div className="text-sm text-red-700 max-h-24 overflow-y-auto">
+          {result.errors.map((err, i) => (
+            <p key={`error-${i}`}>• {err}</p>
+          ))}
+        </div>
+      )}
+
+      <div className="flex gap-2 mt-4">
+        <Button variant="outline" size="sm" onClick={onImportAnother}>
+          Importar otro archivo
+        </Button>
+        <Button size="sm" onClick={onViewCatalog} className="bg-purple-600 hover:bg-purple-700">
+          Ver catálogo
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// --- End Helper Components ---
+
 export default function ManageCatalogModal({ 
   isOpen, 
   onClose, 
@@ -121,6 +322,11 @@ export default function ManageCatalogModal({
       setLoading(false)
     }
   }, [clientId])
+
+  // Tab navigation handlers - extracted to reduce nesting depth
+  const handleTabCatalog = useCallback(() => setActiveTab('catalog'), [])
+  const handleTabCreate = useCallback(() => setActiveTab('create'), [])
+  const handleTabImport = useCallback(() => setActiveTab('import'), [])
 
   // Abrir modal de edición
   const handleOpenEdit = (product: ClientProduct) => {
@@ -432,7 +638,7 @@ export default function ManageCatalogModal({
           {/* Tabs */}
           <div className="flex gap-2 mt-4 sm:mt-6 flex-wrap">
             <button
-              onClick={() => setActiveTab('catalog')}
+              onClick={handleTabCatalog}
               className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base ${
                 activeTab === 'catalog'
                   ? 'bg-white text-purple-600'
@@ -442,7 +648,7 @@ export default function ManageCatalogModal({
               📦 Catálogo ({clientProducts.length})
             </button>
             <button
-              onClick={() => setActiveTab('create')}
+              onClick={handleTabCreate}
               className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base ${
                 activeTab === 'create'
                   ? 'bg-white text-purple-600'
@@ -454,7 +660,7 @@ export default function ManageCatalogModal({
               <span className="sm:hidden">+</span>
             </button>
             <button
-              onClick={() => setActiveTab('import')}
+              onClick={handleTabImport}
               className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base ${
                 activeTab === 'import'
                   ? 'bg-white text-purple-600'
@@ -470,7 +676,7 @@ export default function ManageCatalogModal({
 
         {/* Content */}
         <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(95vh-180px)]">
-          {activeTab === 'catalog' ? (
+          {activeTab === 'catalog' && (
             // TAB: Catálogo actual
             <div>
               {/* Search and Export */}
@@ -502,36 +708,11 @@ export default function ManageCatalogModal({
                 </Button>
               </div>
 
-              {(() => {
-                if (loading) {
-                  return (
-                    <div className="text-center py-12">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
-                      <p className="text-gray-500 mt-4">Cargando catálogo...</p>
-                    </div>
-                  )
-                }
-                if (filteredProducts.length === 0) {
-                  return (
-                    <div className="text-center py-12">
-                      <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500 text-lg mb-2">
-                        {searchTerm ? 'No se encontraron productos' : 'Sin productos asignados'}
-                      </p>
-                      <p className="text-gray-400 text-sm mb-4">
-                        Crea productos para este cliente en la pestaña &ldquo;Crear Producto&rdquo;
-                      </p>
-                      <Button
-                        onClick={() => setActiveTab('create')}
-                        className="bg-purple-600 hover:bg-purple-700"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Crear Primer Producto
-                      </Button>
-                    </div>
-                  )
-                }
-                return (
+              {loading && <LoadingState />}
+              {!loading && filteredProducts.length === 0 && (
+                <EmptyState searchTerm={searchTerm} onCreateClick={() => setActiveTab('create')} />
+              )}
+              {!loading && filteredProducts.length > 0 && (
                 <div className="space-y-3">
                   {filteredProducts.map((product) => (
                     <div
@@ -676,10 +857,10 @@ export default function ManageCatalogModal({
                     </div>
                   ))}
                 </div>
-              )
-              })()}
+              )}
             </div>
-          ) : activeTab === 'create' ? (
+          )}
+          {activeTab === 'create' && (
             // TAB: Crear nuevo producto
             <div>
               <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-4 mb-6">
@@ -845,7 +1026,8 @@ export default function ManageCatalogModal({
                 </div>
               </div>
             </div>
-          ) : (
+          )}
+          {activeTab === 'import' && (
             // TAB: Importar desde Excel
             <div className="space-y-6">
               <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-4">
@@ -882,78 +1064,19 @@ export default function ManageCatalogModal({
               </div>
 
               {/* Zona de carga */}
-              <div 
-                className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
-                  importFile 
-                    ? 'border-green-400 bg-green-50' 
-                    : 'border-gray-300 hover:border-purple-400 hover:bg-gray-50'
-                }`}
-                onDragOver={(e) => { e.preventDefault(); e.stopPropagation() }}
-                onDrop={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  if (e.dataTransfer.files?.[0]) {
-                    const file = e.dataTransfer.files[0]
-                    if (/\.(xlsx|xls|csv)$/i.test(file.name)) {
-                      setImportFile(file)
-                      setImportResult(null)
-                    }
-                  }
+              <ImportFileDropzone
+                importFile={importFile}
+                fileInputRef={fileInputRef}
+                onFileSelect={(file) => {
+                  setImportFile(file)
+                  setImportResult(null)
                 }}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".xlsx,.xls,.csv"
-                  onChange={(e) => {
-                    if (e.target.files?.[0]) {
-                      setImportFile(e.target.files[0])
-                      setImportResult(null)
-                    }
-                  }}
-                  className="hidden"
-                />
-                
-                {importFile ? (
-                  <div className="space-y-3">
-                    <div className="w-14 h-14 mx-auto bg-green-100 rounded-full flex items-center justify-center">
-                      <FileSpreadsheet className="w-7 h-7 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">{importFile.name}</p>
-                      <p className="text-sm text-gray-500">{(importFile.size / 1024).toFixed(1)} KB</p>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setImportFile(null)
-                        setImportResult(null)
-                        if (fileInputRef.current) fileInputRef.current.value = ''
-                      }}
-                    >
-                      Cambiar archivo
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="w-14 h-14 mx-auto bg-purple-100 rounded-full flex items-center justify-center">
-                      <Upload className="w-7 h-7 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="font-semibold text-gray-900">Arrastra tu archivo Excel aquí</p>
-                      <p className="text-sm text-gray-500">o haz clic para seleccionar</p>
-                    </div>
-                    <Button 
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Seleccionar archivo
-                    </Button>
-                  </div>
-                )}
-              </div>
+                onFileClear={() => {
+                  setImportFile(null)
+                  setImportResult(null)
+                  if (fileInputRef.current) fileInputRef.current.value = ''
+                }}
+              />
 
               {/* Botón de importar */}
               {importFile && !importResult && (
@@ -1017,77 +1140,16 @@ export default function ManageCatalogModal({
 
               {/* Resultado */}
               {importResult && (
-                <div className={`rounded-xl p-4 ${importResult.success ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'}`}>
-                  <div className="flex items-center gap-2 mb-3">
-                    {importResult.success ? (
-                      <>
-                        <CheckCircle className="w-6 h-6 text-green-600" />
-                        <span className="font-bold text-green-800">¡Importación completada!</span>
-                      </>
-                    ) : (
-                      <>
-                        <X className="w-6 h-6 text-red-600" />
-                        <span className="font-bold text-red-800">Error en importación</span>
-                      </>
-                    )}
-                  </div>
-                  
-                  {/* Estadística principal: productos asociados al cliente */}
-                  {importResult.stats.associatedToClient !== undefined && importResult.stats.associatedToClient > 0 && (
-                    <div className="bg-purple-100 rounded-lg p-3 mb-3 text-center">
-                      <p className="text-2xl font-bold text-purple-700">{importResult.stats.associatedToClient}</p>
-                      <p className="text-sm text-purple-600 font-medium">Productos agregados al catálogo de {clientName}</p>
-                    </div>
-                  )}
-                  
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-                    <div className="bg-white rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-green-600">{importResult.stats.created}</p>
-                      <p className="text-xs text-gray-600">Nuevos</p>
-                    </div>
-                    <div className="bg-white rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-blue-600">{importResult.stats.updated}</p>
-                      <p className="text-xs text-gray-600">Actualizados</p>
-                    </div>
-                    <div className="bg-white rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-orange-500">{importResult.stats.skipped}</p>
-                      <p className="text-xs text-gray-600">Ya existían</p>
-                    </div>
-                    <div className="bg-white rounded-lg p-2 text-center">
-                      <p className="text-lg font-bold text-red-500">{importResult.stats.errors}</p>
-                      <p className="text-xs text-gray-600">Errores</p>
-                    </div>
-                  </div>
-
-                  {importResult.errors.length > 0 && (
-                    <div className="text-sm text-red-700 max-h-24 overflow-y-auto">
-                      {importResult.errors.map((err, i) => (
-                        <p key={`error-${i}`}>• {err}</p>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex gap-2 mt-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setImportFile(null)
-                        setImportResult(null)
-                        if (fileInputRef.current) fileInputRef.current.value = ''
-                      }}
-                    >
-                      Importar otro archivo
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => setActiveTab('catalog')}
-                      className="bg-purple-600 hover:bg-purple-700"
-                    >
-                      Ver catálogo
-                    </Button>
-                  </div>
-                </div>
+                <ImportResultDisplay
+                  result={importResult}
+                  clientName={clientName}
+                  onImportAnother={() => {
+                    setImportFile(null)
+                    setImportResult(null)
+                    if (fileInputRef.current) fileInputRef.current.value = ''
+                  }}
+                  onViewCatalog={() => setActiveTab('catalog')}
+                />
               )}
             </div>
           )}

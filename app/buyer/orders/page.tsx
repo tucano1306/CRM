@@ -394,6 +394,120 @@ function getItemStyleClasses(isOutOfStock: boolean, isPartialStock: boolean) {
   return { bg: 'bg-gray-50 border-gray-200 hover:bg-gray-100', iconBg: 'bg-purple-100' }
 }
 
+// ============ Status Animation Components ============
+
+function ConfirmedStatusAnimation({ size = 'normal' }: { size?: 'normal' | 'small' | 'large' }) {
+  const dimensions = size === 'small' ? 'w-16 h-16' : size === 'large' ? 'w-24 h-24' : 'w-20 h-20'
+  return (
+    <div className={`relative ${dimensions}`}>
+      <svg viewBox="0 0 100 100" className="w-full h-full">
+        <rect x="25" y="15" width="50" height="70" fill="#fff" stroke="#3b82f6" strokeWidth="2" rx="3" />
+        <rect x="35" y="10" width="30" height="8" fill="#3b82f6" rx="2" />
+        <circle cx="35" cy="30" r="4" fill="#10b981" />
+        <path d="M 33 30 L 35 32 L 38 28" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        <line x1="42" y1="30" x2="65" y2="30" stroke="#d1d5db" strokeWidth="2" />
+        <circle cx="35" cy="45" r="4" fill="#10b981">
+          <animate attributeName="fill" values="#e5e7eb;#10b981" dur="2s" begin="0s" fill="freeze" />
+        </circle>
+        <path d="M 33 45 L 35 47 L 38 43" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round">
+          <animate attributeName="stroke-dasharray" values="0,20;20,0" dur="2s" begin="0s" fill="freeze" />
+          <animate attributeName="stroke-dashoffset" values="20;0" dur="2s" begin="0s" fill="freeze" />
+        </path>
+        <line x1="42" y1="45" x2="65" y2="45" stroke="#d1d5db" strokeWidth="2" />
+        <circle cx="35" cy="60" r="4" fill="#e5e7eb">
+          <animate attributeName="fill" values="#e5e7eb;#e5e7eb;#10b981" dur="4s" begin="0s" repeatCount="indefinite" />
+        </circle>
+        <path d="M 33 60 L 35 62 L 38 58" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round">
+          <animate attributeName="stroke-dasharray" values="0,20;0,20;20,0" dur="4s" begin="0s" repeatCount="indefinite" />
+        </path>
+        <line x1="42" y1="60" x2="65" y2="60" stroke="#d1d5db" strokeWidth="2" />
+        <circle cx="35" cy="75" r="4" fill="#e5e7eb" />
+        <line x1="42" y1="75" x2="65" y2="75" stroke="#d1d5db" strokeWidth="2" />
+        <text x="72" y="25" fontSize={size === 'small' ? '12' : '14'} fill="#fbbf24" className="animate-ping">⭐</text>
+      </svg>
+    </div>
+  )
+}
+
+function InDeliveryStatusAnimation({ size = 'normal' }: { size?: 'normal' | 'small' | 'large' }) {
+  const dimensions = size === 'small' ? 'w-16 h-16' : size === 'large' ? 'w-24 h-24' : 'w-20 h-20'
+  return (
+    <div className={`relative ${dimensions}`}>
+      <svg viewBox="0 0 100 100" className="w-full h-full">
+        <line x1="0" y1="70" x2="100" y2="70" stroke="#9ca3af" strokeWidth="2" strokeDasharray="5,5">
+          <animate attributeName="stroke-dashoffset" from="0" to="10" dur="0.5s" repeatCount="indefinite" />
+        </line>
+        <g className="animate-truck-move">
+          <rect x="10" y="50" width="15" height="15" fill="#8b5cf6" rx="2" />
+          <rect x="12" y="52" width="5" height="6" fill="#ddd6fe" rx="1" />
+          <rect x="25" y="45" width="25" height="20" fill="#a78bfa" rx="2" />
+          <line x1="35" y1="45" x2="35" y2="65" stroke="#8b5cf6" strokeWidth="1" />
+          <line x1="42" y1="45" x2="42" y2="65" stroke="#8b5cf6" strokeWidth="1" />
+          <circle cx="18" cy="68" r="4" fill="#374151">
+            <animateTransform attributeName="transform" type="rotate" from="0 18 68" to="360 18 68" dur="0.5s" repeatCount="indefinite" />
+          </circle>
+          <circle cx="43" cy="68" r="4" fill="#374151">
+            <animateTransform attributeName="transform" type="rotate" from="0 43 68" to="360 43 68" dur="0.5s" repeatCount="indefinite" />
+          </circle>
+          <line x1="5" y1="55" x2="0" y2="55" stroke="#8b5cf6" strokeWidth="2" opacity="0.5">
+            <animate attributeName="x1" values="5;0;5" dur="0.3s" repeatCount="indefinite" />
+          </line>
+        </g>
+        <ellipse cx="70" cy="20" rx="10" ry="6" fill="#e0e7ff" opacity="0.7">
+          <animate attributeName="cx" values="70;75;70" dur="3s" repeatCount="indefinite" />
+        </ellipse>
+      </svg>
+    </div>
+  )
+}
+
+function DeliveredStatusAnimation({ size = 'normal' }: { size?: 'normal' | 'small' | 'large' }) {
+  const dimensions = size === 'small' ? 'w-16 h-16' : size === 'large' ? 'w-24 h-24' : 'w-20 h-20'
+  return (
+    <div className={`relative ${dimensions}`}>
+      <svg viewBox="0 0 100 100" className="w-full h-full">
+        <rect x="30" y="35" width="40" height="40" fill="#10b981" rx="2" className="animate-wiggle" />
+        <line x1="30" y1="55" x2="70" y2="55" stroke="#059669" strokeWidth="3" />
+        <line x1="50" y1="35" x2="50" y2="75" stroke="#059669" strokeWidth="3" />
+        <circle cx="50" cy="55" r="18" fill="#fff" className="animate-scale-in" />
+        <path d="M 42 55 L 48 62 L 60 48" stroke="#10b981" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" className="animate-draw-check" />
+        <circle cx="25" cy="20" r="2" fill="#fbbf24" className="animate-confetti-1" />
+        <circle cx="75" cy="25" r="2" fill="#ec4899" className="animate-confetti-2" />
+        <circle cx="20" cy="80" r="2" fill="#3b82f6" className="animate-confetti-3" />
+        <circle cx="80" cy="75" r="2" fill="#8b5cf6" className="animate-confetti-4" />
+      </svg>
+    </div>
+  )
+}
+
+// Renders the appropriate status animation based on order status
+function StatusAnimationRenderer({ status, size = 'normal' }: { status: OrderStatus; size?: 'normal' | 'small' | 'large' }) {
+  if (status === 'CONFIRMED') return <ConfirmedStatusAnimation size={size} />
+  if (status === 'IN_DELIVERY') return <InDeliveryStatusAnimation size={size} />
+  if (status === 'DELIVERED' || status === 'COMPLETED') return <DeliveredStatusAnimation size={size} />
+  return null
+}
+
+// Check if status should show animation
+function shouldShowStatusAnimation(status: OrderStatus): boolean {
+  return ['CONFIRMED', 'IN_DELIVERY', 'DELIVERED', 'COMPLETED'].includes(status)
+}
+
+// Check if order can be cancelled
+function canCancelOrder(status: OrderStatus): boolean {
+  return ['PENDING', 'CONFIRMED', 'REVIEWING', 'ISSUE_REPORTED'].includes(status)
+}
+
+// Check if order can be tracked
+function canTrackOrder(status: OrderStatus): boolean {
+  return ['CONFIRMED', 'PREPARING', 'IN_DELIVERY'].includes(status)
+}
+
+// Check if order shows invoice button
+function showsInvoiceButton(status: OrderStatus): boolean {
+  return status === 'DELIVERED' || status === 'COMPLETED'
+}
+
 // Componente que usa useSearchParams - necesita Suspense
 function OrdersPageContent() {
   const router = useRouter()
@@ -1631,95 +1745,7 @@ function OrdersPageContent() {
 
                   {/* Animaciones según estado */}
                   <div className="mb-4 flex justify-center">
-                    {order.status === 'CONFIRMED' && (
-                      <div className="relative w-20 h-20">
-                        <svg viewBox="0 0 100 100" className="w-full h-full">
-                          {/* Clipboard/Lista */}
-                          <rect x="25" y="15" width="50" height="70" fill="#fff" stroke="#3b82f6" strokeWidth="2" rx="3" />
-                          <rect x="35" y="10" width="30" height="8" fill="#3b82f6" rx="2" />
-                          
-                          {/* Items de la lista con checkmarks animados */}
-                          {/* Item 1 - Ya marcado */}
-                          <circle cx="35" cy="30" r="4" fill="#10b981" />
-                          <path d="M 33 30 L 35 32 L 38 28" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                          <line x1="42" y1="30" x2="65" y2="30" stroke="#d1d5db" strokeWidth="2" />
-                          
-                          {/* Item 2 - Marcándose (animado) */}
-                          <circle cx="35" cy="45" r="4" fill="#10b981">
-                            <animate attributeName="fill" values="#e5e7eb;#10b981" dur="2s" begin="0s" fill="freeze" />
-                          </circle>
-                          <path d="M 33 45 L 35 47 L 38 43" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round">
-                            <animate attributeName="stroke-dasharray" values="0,20;20,0" dur="2s" begin="0s" fill="freeze" />
-                            <animate attributeName="stroke-dashoffset" values="20;0" dur="2s" begin="0s" fill="freeze" />
-                          </path>
-                          <line x1="42" y1="45" x2="65" y2="45" stroke="#d1d5db" strokeWidth="2" />
-                          
-                          {/* Item 3 - Por marcar */}
-                          <circle cx="35" cy="60" r="4" fill="#e5e7eb">
-                            <animate attributeName="fill" values="#e5e7eb;#e5e7eb;#10b981" dur="4s" begin="0s" repeatCount="indefinite" />
-                          </circle>
-                          <path d="M 33 60 L 35 62 L 38 58" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round">
-                            <animate attributeName="stroke-dasharray" values="0,20;0,20;20,0" dur="4s" begin="0s" repeatCount="indefinite" />
-                          </path>
-                          <line x1="42" y1="60" x2="65" y2="60" stroke="#d1d5db" strokeWidth="2" />
-                          
-                          {/* Item 4 - Por marcar */}
-                          <circle cx="35" cy="75" r="4" fill="#e5e7eb" />
-                          <line x1="42" y1="75" x2="65" y2="75" stroke="#d1d5db" strokeWidth="2" />
-                          
-                          {/* Estrella de confirmación */}
-                          <text x="72" y="25" fontSize="14" fill="#fbbf24" className="animate-ping">⭐</text>
-                        </svg>
-                      </div>
-                    )}
-
-                    {order.status === 'IN_DELIVERY' && (
-                      <div className="relative w-20 h-20">
-                        <svg viewBox="0 0 100 100" className="w-full h-full">
-                          {/* Road */}
-                          <line x1="0" y1="70" x2="100" y2="70" stroke="#9ca3af" strokeWidth="2" strokeDasharray="5,5">
-                            <animate attributeName="stroke-dashoffset" from="0" to="10" dur="0.5s" repeatCount="indefinite" />
-                          </line>
-                          {/* Truck */}
-                          <g className="animate-truck-move">
-                            <rect x="10" y="50" width="15" height="15" fill="#8b5cf6" rx="2" />
-                            <rect x="12" y="52" width="5" height="6" fill="#ddd6fe" rx="1" />
-                            <rect x="25" y="45" width="25" height="20" fill="#a78bfa" rx="2" />
-                            <line x1="35" y1="45" x2="35" y2="65" stroke="#8b5cf6" strokeWidth="1" />
-                            <line x1="42" y1="45" x2="42" y2="65" stroke="#8b5cf6" strokeWidth="1" />
-                            <circle cx="18" cy="68" r="4" fill="#374151">
-                              <animateTransform attributeName="transform" type="rotate" from="0 18 68" to="360 18 68" dur="0.5s" repeatCount="indefinite" />
-                            </circle>
-                            <circle cx="43" cy="68" r="4" fill="#374151">
-                              <animateTransform attributeName="transform" type="rotate" from="0 43 68" to="360 43 68" dur="0.5s" repeatCount="indefinite" />
-                            </circle>
-                            <line x1="5" y1="55" x2="0" y2="55" stroke="#8b5cf6" strokeWidth="2" opacity="0.5">
-                              <animate attributeName="x1" values="5;0;5" dur="0.3s" repeatCount="indefinite" />
-                            </line>
-                          </g>
-                          {/* Clouds */}
-                          <ellipse cx="70" cy="20" rx="10" ry="6" fill="#e0e7ff" opacity="0.7">
-                            <animate attributeName="cx" values="70;75;70" dur="3s" repeatCount="indefinite" />
-                          </ellipse>
-                        </svg>
-                      </div>
-                    )}
-
-                    {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && (
-                      <div className="relative w-20 h-20">
-                        <svg viewBox="0 0 100 100" className="w-full h-full">
-                          <rect x="30" y="35" width="40" height="40" fill="#10b981" rx="2" className="animate-wiggle" />
-                          <line x1="30" y1="55" x2="70" y2="55" stroke="#059669" strokeWidth="3" />
-                          <line x1="50" y1="35" x2="50" y2="75" stroke="#059669" strokeWidth="3" />
-                          <circle cx="50" cy="55" r="18" fill="#fff" className="animate-scale-in" />
-                          <path d="M 42 55 L 48 62 L 60 48" stroke="#10b981" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" className="animate-draw-check" />
-                          <circle cx="25" cy="20" r="2" fill="#fbbf24" className="animate-confetti-1" />
-                          <circle cx="75" cy="25" r="2" fill="#ec4899" className="animate-confetti-2" />
-                          <circle cx="20" cy="80" r="2" fill="#3b82f6" className="animate-confetti-3" />
-                          <circle cx="80" cy="75" r="2" fill="#8b5cf6" className="animate-confetti-4" />
-                        </svg>
-                      </div>
-                    )}
+                    <StatusAnimationRenderer status={order.status} size="normal" />
                   </div>
                   
                   {/* Productos */}
@@ -1757,8 +1783,7 @@ function OrdersPageContent() {
 
                   {/* Acciones rápidas */}
                   <div className="flex gap-2 flex-wrap">
-                    {/* Botón cancelar para PENDING, CONFIRMED, REVIEWING, ISSUE_REPORTED */}
-                    {(order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'REVIEWING' || order.status === 'ISSUE_REPORTED') && (
+                    {canCancelOrder(order.status) && (
                       <button 
                         onClick={(e) => handleQuickCancel(order.id, e)}
                         className="flex-1 min-w-[100px] bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 text-red-600 py-2 rounded-lg hover:border-red-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
@@ -1768,7 +1793,6 @@ function OrdersPageContent() {
                       </button>
                     )}
                     
-                    {/* Botón reordenar siempre visible */}
                     <button 
                       onClick={(e) => handleQuickReorder(order, e)}
                       className="flex-1 min-w-[100px] bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 text-emerald-600 py-2 rounded-lg hover:border-emerald-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
@@ -1777,7 +1801,7 @@ function OrdersPageContent() {
                       Reordenar
                     </button>
                     
-                    {(order.status === 'CONFIRMED' || order.status === 'PREPARING' || order.status === 'IN_DELIVERY') && (
+                    {canTrackOrder(order.status) && (
                       <button 
                         onClick={(e) => handleQuickTrack(order, e)}
                         className="flex-1 min-w-[100px] bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 text-cyan-600 py-2 rounded-lg hover:border-cyan-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
@@ -1787,7 +1811,7 @@ function OrdersPageContent() {
                       </button>
                     )}
                     
-                    {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && (
+                    {showsInvoiceButton(order.status) && (
                       <button 
                         onClick={(e) => handleQuickInvoice(order, e)}
                         className="flex-1 min-w-[100px] bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 text-purple-600 py-2 rounded-lg hover:border-purple-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
@@ -1845,81 +1869,9 @@ function OrdersPageContent() {
                     <div className="flex items-center gap-4 flex-1">
                       {/* Animaciones según estado */}
                       <div className="flex-shrink-0">
-                        {order.status === 'CONFIRMED' && (
-                          <div className="relative w-16 h-16">
-                            <svg viewBox="0 0 100 100" className="w-full h-full">
-                              {/* Clipboard/Lista */}
-                              <rect x="25" y="15" width="50" height="70" fill="#fff" stroke="#3b82f6" strokeWidth="2" rx="3" />
-                              <rect x="35" y="10" width="30" height="8" fill="#3b82f6" rx="2" />
-                              
-                              {/* Items con checkmarks animados */}
-                              <circle cx="35" cy="30" r="4" fill="#10b981" />
-                              <path d="M 33 30 L 35 32 L 38 28" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                              <line x1="42" y1="30" x2="65" y2="30" stroke="#d1d5db" strokeWidth="2" />
-                              
-                              <circle cx="35" cy="45" r="4" fill="#10b981">
-                                <animate attributeName="fill" values="#e5e7eb;#10b981" dur="2s" begin="0s" fill="freeze" />
-                              </circle>
-                              <path d="M 33 45 L 35 47 L 38 43" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round">
-                                <animate attributeName="stroke-dasharray" values="0,20;20,0" dur="2s" begin="0s" fill="freeze" />
-                              </path>
-                              <line x1="42" y1="45" x2="65" y2="45" stroke="#d1d5db" strokeWidth="2" />
-                              
-                              <circle cx="35" cy="60" r="4" fill="#e5e7eb">
-                                <animate attributeName="fill" values="#e5e7eb;#e5e7eb;#10b981" dur="4s" begin="0s" repeatCount="indefinite" />
-                              </circle>
-                              <path d="M 33 60 L 35 62 L 38 58" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round">
-                                <animate attributeName="stroke-dasharray" values="0,20;0,20;20,0" dur="4s" begin="0s" repeatCount="indefinite" />
-                              </path>
-                              <line x1="42" y1="60" x2="65" y2="60" stroke="#d1d5db" strokeWidth="2" />
-                              
-                              <circle cx="35" cy="75" r="4" fill="#e5e7eb" />
-                              <line x1="42" y1="75" x2="65" y2="75" stroke="#d1d5db" strokeWidth="2" />
-                              
-                              <text x="72" y="25" fontSize="12" fill="#fbbf24" className="animate-ping">⭐</text>
-                            </svg>
-                          </div>
-                        )}
-
-                        {order.status === 'IN_DELIVERY' && (
-                          <div className="relative w-16 h-16">
-                            <svg viewBox="0 0 100 100" className="w-full h-full">
-                              <line x1="0" y1="70" x2="100" y2="70" stroke="#9ca3af" strokeWidth="2" strokeDasharray="5,5">
-                                <animate attributeName="stroke-dashoffset" from="0" to="10" dur="0.5s" repeatCount="indefinite" />
-                              </line>
-                              <g className="animate-truck-move">
-                                <rect x="10" y="50" width="15" height="15" fill="#8b5cf6" rx="2" />
-                                <rect x="12" y="52" width="5" height="6" fill="#ddd6fe" rx="1" />
-                                <rect x="25" y="45" width="25" height="20" fill="#a78bfa" rx="2" />
-                                <circle cx="18" cy="68" r="4" fill="#374151">
-                                  <animateTransform attributeName="transform" type="rotate" from="0 18 68" to="360 18 68" dur="0.5s" repeatCount="indefinite" />
-                                </circle>
-                                <circle cx="43" cy="68" r="4" fill="#374151">
-                                  <animateTransform attributeName="transform" type="rotate" from="0 43 68" to="360 43 68" dur="0.5s" repeatCount="indefinite" />
-                                </circle>
-                              </g>
-                              <ellipse cx="70" cy="20" rx="10" ry="6" fill="#e0e7ff" opacity="0.7">
-                                <animate attributeName="cx" values="70;75;70" dur="3s" repeatCount="indefinite" />
-                              </ellipse>
-                            </svg>
-                          </div>
-                        )}
-
-                        {(order.status === 'DELIVERED' || order.status === 'COMPLETED') && (
-                          <div className="relative w-16 h-16">
-                            <svg viewBox="0 0 100 100" className="w-full h-full">
-                              <rect x="30" y="35" width="40" height="40" fill="#10b981" rx="2" className="animate-wiggle" />
-                              <line x1="30" y1="55" x2="70" y2="55" stroke="#059669" strokeWidth="3" />
-                              <line x1="50" y1="35" x2="50" y2="75" stroke="#059669" strokeWidth="3" />
-                              <circle cx="50" cy="55" r="18" fill="#fff" className="animate-scale-in" />
-                              <path d="M 42 55 L 48 62 L 60 48" stroke="#10b981" strokeWidth="4" fill="none" strokeLinecap="round" className="animate-draw-check" />
-                              <circle cx="25" cy="20" r="2" fill="#fbbf24" className="animate-confetti-1" />
-                              <circle cx="75" cy="25" r="2" fill="#ec4899" className="animate-confetti-2" />
-                            </svg>
-                          </div>
-                        )}
-
-                        {!['CONFIRMED', 'IN_DELIVERY', 'DELIVERED', 'COMPLETED'].includes(order.status) && (
+                        {shouldShowStatusAnimation(order.status) ? (
+                          <StatusAnimationRenderer status={order.status} size="small" />
+                        ) : (
                           <div className={`p-3 rounded-lg ${config.bg}`}>
                             <StatusIcon className={`${config.color} w-6 h-6`} />
                           </div>
@@ -1982,8 +1934,7 @@ function OrdersPageContent() {
 
                     {/* Derecha: Acciones */}
                     <div className="flex gap-2 flex-shrink-0 flex-wrap">
-                      {/* Botón cancelar para PENDING, CONFIRMED, REVIEWING, ISSUE_REPORTED */}
-                      {(order.status === 'PENDING' || order.status === 'CONFIRMED' || order.status === 'REVIEWING' || order.status === 'ISSUE_REPORTED') && (
+                      {canCancelOrder(order.status) && (
                         <button 
                           onClick={(e) => handleQuickCancel(order.id, e)}
                           className="bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 text-red-600 p-2 rounded-lg hover:border-red-300 hover:shadow-lg transition-all"
@@ -1993,7 +1944,6 @@ function OrdersPageContent() {
                         </button>
                       )}
                       
-                      {/* Botón reordenar siempre visible */}
                       <button 
                         onClick={(e) => handleQuickReorder(order, e)}
                         className="bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 text-emerald-600 p-2 rounded-lg hover:border-emerald-300 hover:shadow-lg transition-all"
@@ -2002,7 +1952,6 @@ function OrdersPageContent() {
                         <RotateCcw className="w-5 h-5" />
                       </button>
                       
-                      {/* Botón para confirmar recepción (EN_DELIVERY) */}
                       {order.status === 'IN_DELIVERY' && (
                         <button 
                           onClick={(e) => {
@@ -2017,7 +1966,7 @@ function OrdersPageContent() {
                         </button>
                       )}
 
-                      {(order.status === 'CONFIRMED' || order.status === 'PREPARING' || order.status === 'IN_DELIVERY') && (
+                      {canTrackOrder(order.status) && (
                         <button 
                           onClick={(e) => handleQuickTrack(order, e)}
                           className="bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 text-cyan-600 p-2 rounded-lg hover:border-cyan-300 hover:shadow-lg transition-all"
@@ -2510,121 +2459,9 @@ function OrdersPageContent() {
                             <div className="flex items-center gap-4">
                               {/* Animación personalizada según el estado */}
                               <div className="flex-shrink-0">
-                                {selectedOrder.status === 'CONFIRMED' && (
-                                  <div className="relative w-24 h-24">
-                                    <svg viewBox="0 0 100 100" className="w-full h-full">
-                                      {/* Clipboard/Lista */}
-                                      <rect x="25" y="15" width="50" height="70" fill="#fff" stroke="#3b82f6" strokeWidth="2" rx="3" />
-                                      <rect x="35" y="10" width="30" height="8" fill="#3b82f6" rx="2" />
-                                      
-                                      {/* Items de la lista con checkmarks animados */}
-                                      {/* Item 1 - Ya marcado */}
-                                      <circle cx="35" cy="30" r="4" fill="#10b981" />
-                                      <path d="M 33 30 L 35 32 L 38 28" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-                                      <line x1="42" y1="30" x2="65" y2="30" stroke="#d1d5db" strokeWidth="2" />
-                                      
-                                      {/* Item 2 - Marcándose (animado) */}
-                                      <circle cx="35" cy="45" r="4" fill="#10b981">
-                                        <animate attributeName="fill" values="#e5e7eb;#10b981" dur="2s" begin="0s" fill="freeze" />
-                                      </circle>
-                                      <path d="M 33 45 L 35 47 L 38 43" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round">
-                                        <animate attributeName="stroke-dasharray" values="0,20;20,0" dur="2s" begin="0s" fill="freeze" />
-                                        <animate attributeName="stroke-dashoffset" values="20;0" dur="2s" begin="0s" fill="freeze" />
-                                      </path>
-                                      <line x1="42" y1="45" x2="65" y2="45" stroke="#d1d5db" strokeWidth="2" />
-                                      
-                                      {/* Item 3 - Por marcar (loop) */}
-                                      <circle cx="35" cy="60" r="4" fill="#e5e7eb">
-                                        <animate attributeName="fill" values="#e5e7eb;#e5e7eb;#10b981" dur="4s" begin="0s" repeatCount="indefinite" />
-                                      </circle>
-                                      <path d="M 33 60 L 35 62 L 38 58" stroke="#fff" strokeWidth="1.5" fill="none" strokeLinecap="round">
-                                        <animate attributeName="stroke-dasharray" values="0,20;0,20;20,0" dur="4s" begin="0s" repeatCount="indefinite" />
-                                      </path>
-                                      <line x1="42" y1="60" x2="65" y2="60" stroke="#d1d5db" strokeWidth="2" />
-                                      
-                                      {/* Item 4 - Por marcar */}
-                                      <circle cx="35" cy="75" r="4" fill="#e5e7eb" />
-                                      <line x1="42" y1="75" x2="65" y2="75" stroke="#d1d5db" strokeWidth="2" />
-                                      
-                                      {/* Estrella de confirmación */}
-                                      <text x="72" y="25" fontSize="14" fill="#fbbf24" className="animate-ping">⭐</text>
-                                    </svg>
-                                  </div>
-                                )}
-                                
-                                {selectedOrder.status === 'IN_DELIVERY' && (
-                                  <div className="relative w-24 h-24">
-                                    {/* Animación de camión moviéndose */}
-                                    <svg viewBox="0 0 100 100" className="w-full h-full">
-                                      {/* Carretera */}
-                                      <line x1="0" y1="70" x2="100" y2="70" stroke="#9ca3af" strokeWidth="2" strokeDasharray="5,5">
-                                        <animate attributeName="stroke-dashoffset" from="0" to="10" dur="0.5s" repeatCount="indefinite" />
-                                      </line>
-                                      
-                                      {/* Camión animado */}
-                                      <g className="animate-truck-move">
-                                        {/* Cabina */}
-                                        <rect x="10" y="50" width="15" height="15" fill="#8b5cf6" stroke="#6d28d9" strokeWidth="1.5" rx="2" />
-                                        <rect x="12" y="52" width="5" height="5" fill="#ddd6fe" />
-                                        {/* Contenedor */}
-                                        <rect x="25" y="45" width="25" height="20" fill="#a78bfa" stroke="#6d28d9" strokeWidth="1.5" rx="2" />
-                                        <line x1="32" y1="45" x2="32" y2="65" stroke="#6d28d9" strokeWidth="1" />
-                                        <line x1="40" y1="45" x2="40" y2="65" stroke="#6d28d9" strokeWidth="1" />
-                                        {/* Ruedas */}
-                                        <circle cx="18" cy="68" r="4" fill="#374151" stroke="#1f2937" strokeWidth="1">
-                                          <animateTransform attributeName="transform" type="rotate" from="0 18 68" to="360 18 68" dur="0.5s" repeatCount="indefinite" />
-                                        </circle>
-                                        <circle cx="42" cy="68" r="4" fill="#374151" stroke="#1f2937" strokeWidth="1">
-                                          <animateTransform attributeName="transform" type="rotate" from="0 42 68" to="360 42 68" dur="0.5s" repeatCount="indefinite" />
-                                        </circle>
-                                        {/* Líneas de velocidad */}
-                                        <line x1="5" y1="55" x2="0" y2="55" stroke="#8b5cf6" strokeWidth="2" opacity="0.5">
-                                          <animate attributeName="x1" values="5;0;5" dur="0.3s" repeatCount="indefinite" />
-                                          <animate attributeName="x2" values="0;-5;0" dur="0.3s" repeatCount="indefinite" />
-                                        </line>
-                                        <line x1="5" y1="60" x2="0" y2="60" stroke="#8b5cf6" strokeWidth="2" opacity="0.5">
-                                          <animate attributeName="x1" values="5;0;5" dur="0.3s" repeatCount="indefinite" begin="0.1s" />
-                                          <animate attributeName="x2" values="0;-5;0" dur="0.3s" repeatCount="indefinite" begin="0.1s" />
-                                        </line>
-                                      </g>
-                                      
-                                      {/* Nubes de fondo */}
-                                      <ellipse cx="70" cy="20" rx="10" ry="6" fill="#e0e7ff" opacity="0.6">
-                                        <animate attributeName="cx" values="70;75;70" dur="3s" repeatCount="indefinite" />
-                                      </ellipse>
-                                      <ellipse cx="85" cy="25" rx="8" ry="5" fill="#e0e7ff" opacity="0.6">
-                                        <animate attributeName="cx" values="85;90;85" dur="4s" repeatCount="indefinite" />
-                                      </ellipse>
-                                    </svg>
-                                  </div>
-                                )}
-
-                                {selectedOrder.status === 'DELIVERED' && (
-                                  <div className="relative w-24 h-24">
-                                    {/* Animación de paquete con check */}
-                                    <svg viewBox="0 0 100 100" className="w-full h-full">
-                                      {/* Paquete */}
-                                      <rect x="30" y="35" width="40" height="40" fill="#10b981" stroke="#059669" strokeWidth="2" rx="4" className="animate-wiggle" />
-                                      <line x1="50" y1="35" x2="50" y2="75" stroke="#059669" strokeWidth="2" />
-                                      <line x1="30" y1="55" x2="70" y2="55" stroke="#059669" strokeWidth="2" />
-                                      
-                                      {/* Check grande animado */}
-                                      <circle cx="50" cy="55" r="18" fill="#fff" opacity="0.9" className="animate-scale-in" />
-                                      <path d="M 42 55 L 48 62 L 60 48" stroke="#10b981" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" className="animate-draw-check" />
-                                      
-                                      {/* Confeti */}
-                                      <circle cx="25" cy="20" r="2" fill="#fbbf24" className="animate-confetti-1" />
-                                      <circle cx="75" cy="25" r="2" fill="#ec4899" className="animate-confetti-2" />
-                                      <circle cx="20" cy="80" r="2" fill="#3b82f6" className="animate-confetti-3" />
-                                      <circle cx="80" cy="75" r="2" fill="#8b5cf6" className="animate-confetti-4" />
-                                      <rect x="30" y="15" width="3" height="3" fill="#ef4444" className="animate-confetti-1" transform="rotate(45 31.5 16.5)" />
-                                      <rect x="70" y="80" width="3" height="3" fill="#10b981" className="animate-confetti-2" transform="rotate(45 71.5 81.5)" />
-                                    </svg>
-                                  </div>
-                                )}
-
-                                {/* Para otros estados, mostrar el ícono normal */}
-                                {!['CONFIRMED', 'IN_DELIVERY', 'DELIVERED'].includes(selectedOrder.status) && (
+                                {shouldShowStatusAnimation(selectedOrder.status) ? (
+                                  <StatusAnimationRenderer status={selectedOrder.status} size="large" />
+                                ) : (
                                   <StatusIcon className={`w-12 h-12 ${config.color}`} />
                                 )}
                               </div>

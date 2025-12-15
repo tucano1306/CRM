@@ -43,9 +43,13 @@ export function OutOfStockModal({ show, onClose, loading, products, router }: Ou
           </button>
         </div>
         <div className="p-4">
-          {loading ? (
+          {loading && (
             <p className="text-gray-500 text-center py-8">Cargando productos...</p>
-          ) : products.length > 0 ? (
+          )}
+          {!loading && products.length === 0 && (
+            <p className="text-gray-500 text-center py-8">No hay productos agotados</p>
+          )}
+          {!loading && products.length > 0 && (
             <div className="space-y-2">
               {products.map((product) => (
                 <div
@@ -66,8 +70,6 @@ export function OutOfStockModal({ show, onClose, loading, products, router }: Ou
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-gray-500 text-center py-8">No hay productos agotados</p>
           )}
         </div>
       </div>
@@ -100,9 +102,13 @@ export function LowStockModal({ show, onClose, loading, products, router }: LowS
           </button>
         </div>
         <div className="p-4">
-          {loading ? (
+          {loading && (
             <p className="text-gray-500 text-center py-8">Cargando productos...</p>
-          ) : products.length > 0 ? (
+          )}
+          {!loading && products.length === 0 && (
+            <p className="text-gray-500 text-center py-8">No hay productos con stock bajo</p>
+          )}
+          {!loading && products.length > 0 && (
             <div className="space-y-2">
               {products.map((product) => (
                 <div
@@ -123,8 +129,6 @@ export function LowStockModal({ show, onClose, loading, products, router }: LowS
                 </div>
               ))}
             </div>
-          ) : (
-            <p className="text-gray-500 text-center py-8">No hay productos con stock bajo</p>
           )}
         </div>
       </div>

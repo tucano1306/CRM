@@ -336,13 +336,16 @@ export default function OrderDetailModal({
                     )
                   }
 
+                  const borderClass = (() => {
+                    if (isOutOfStock) return 'border-red-300 bg-red-50';
+                    if (isPartialStock) return 'border-amber-300 bg-amber-50';
+                    return '';
+                  })();
+
                   return (
                     <div 
                       key={item.id} 
-                      className={`bg-white rounded-lg shadow-sm p-4 border transition-all ${
-                        isOutOfStock ? 'border-red-300 bg-red-50' :
-                        isPartialStock ? 'border-amber-300 bg-amber-50' : ''
-                      }`}
+                      className={`bg-white rounded-lg shadow-sm p-4 border transition-all ${borderClass}`}
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex-1">

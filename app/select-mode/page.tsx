@@ -157,81 +157,97 @@ interface RoleCardProps {
   readonly checkColor: string
 }
 
-function RoleCard({
-  isEnabled,
-  roleConflict,
-  blockedRole,
-  href,
-  icon,
-  iconBgClass,
-  title,
-  description,
-  features,
-  buttonText,
-  buttonClass,
-  checkColor
-}: RoleCardProps) {
-  const isBlocked = roleConflict?.blockedRole === blockedRole
+// ============ Role Card Helper Functions ============
 
-  if (isEnabled) {
-    return (
-      <Link href={href} className="transform transition-transform hover:scale-105">
-        <Card className={`h-full cursor-pointer border-2 border-transparent hover:border-${checkColor}-500 hover:shadow-2xl`}>
-          <CardHeader className="text-center pb-4">
-            <div className={`mx-auto mb-4 w-20 h-20 ${iconBgClass} rounded-full flex items-center justify-center`}>
-              {icon}
-            </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">{title}</CardTitle>
-            <CardDescription className="text-base text-gray-600">{description}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <ul className="space-y-2 text-gray-700">
-              {features.map((feature, idx) => (
-                <li key={`feature-${idx}`} className="flex items-start">
-                  <span className={`text-${checkColor}-500 mr-2`}>✓</span>
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="pt-4">
-              <Button className={`w-full ${buttonClass}`}>
-                {buttonText}
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </Link>
-    )
+const ROLE_LABELS: Record<'SELLER' | 'CLIENT', { current: string; target: string; lower: string; display: string }> = {
+  SELLER: { current: 'Comprador', target: 'Vendedor', lower: 'vendedor', display: 'Vendedor' },
+  CLIENT: { current: 'Vendedor', target: 'Comprador', lower: 'comprador', display: 'Comprador' }
+}
+
+function getBlockedCardStyles(isBlocked: boolean) {
+  return {
+    card: isBlocked ? 'border-orange-300 bg-orange-50/30' : 'border-gray-300',
+    iconBg: isBlocked ? 'bg-orange-100' : 'bg-gray-100',
+    iconColor: isBlocked ? 'text-orange-500' : 'text-gray-400',
+    titleColor: isBlocked ? 'text-orange-600' : 'text-gray-500',
+    descColor: isBlocked ? 'text-orange-500' : 'text-gray-500',
+    contentBg: isBlocked ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50',
+    textColor: isBlocked ? 'text-orange-700 font-medium' : 'text-gray-600'
   }
+}
 
+function getBlockedMessage(blockedRole: 'SELLER' | 'CLIENT', isBlocked: boolean): string {
+  const labels = ROLE_LABELS[blockedRole]
+  return isBlocked
+    ? `Tu cuenta ya está registrada como ${labels.current}. No puedes acceder como ${labels.target}.`
+    : `No tienes permisos de ${labels.lower}`
+}
+
+function EnabledRoleCard({ href, iconBgClass, icon, title, description, features, buttonText, buttonClass, checkColor }: Omit<RoleCardProps, 'isEnabled' | 'roleConflict' | 'blockedRole'>) {
+  return (
+    <Link href={href} className="transform transition-transform hover:scale-105">
+      <Card className={`h-full cursor-pointer border-2 border-transparent hover:border-${checkColor}-500 hover:shadow-2xl`}>
+        <CardHeader className="text-center pb-4">
+          <div className={`mx-auto mb-4 w-20 h-20 ${iconBgClass} rounded-full flex items-center justify-center`}>
+            {icon}
+          </div>
+          <CardTitle className="text-2xl font-bold text-gray-900">{title}</CardTitle>
+          <CardDescription className="text-base text-gray-600">{description}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <ul className="space-y-2 text-gray-700">
+            {features.map((feature, idx) => (
+              <li key={`feature-${idx}`} className="flex items-start">
+                <span className={`text-${checkColor}-500 mr-2`}>✓</span>
+                <span>{feature}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="pt-4">
+            <Button className={`w-full ${buttonClass}`}>
+              {buttonText}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  )
+}
+
+function DisabledRoleCard({ blockedRole, isBlocked }: { readonly blockedRole: 'SELLER' | 'CLIENT'; readonly isBlocked: boolean }) {
+  const styles = getBlockedCardStyles(isBlocked)
   const blockedLabel = isBlocked ? '🔒 Bloqueado' : 'No disponible'
-  const blockedMessage = isBlocked
-    ? `Tu cuenta ya está registrada como ${blockedRole === 'SELLER' ? 'Comprador' : 'Vendedor'}. No puedes acceder como ${blockedRole === 'SELLER' ? 'Vendedor' : 'Comprador'}.`
-    : `No tienes permisos de ${blockedRole === 'SELLER' ? 'vendedor' : 'comprador'}`
+  const blockedMessage = getBlockedMessage(blockedRole, isBlocked)
+  const displayTitle = ROLE_LABELS[blockedRole].display
 
   return (
-    <Card className={`h-full cursor-not-allowed border-2 ${isBlocked ? 'border-orange-300 bg-orange-50/30' : 'border-gray-300'} opacity-50`}>
+    <Card className={`h-full cursor-not-allowed border-2 ${styles.card} opacity-50`}>
       <CardHeader className="text-center pb-4">
-        <div className={`mx-auto mb-4 w-20 h-20 ${isBlocked ? 'bg-orange-100' : 'bg-gray-100'} rounded-full flex items-center justify-center`}>
-          <Lock className={`w-10 h-10 ${isBlocked ? 'text-orange-500' : 'text-gray-400'}`} />
+        <div className={`mx-auto mb-4 w-20 h-20 ${styles.iconBg} rounded-full flex items-center justify-center`}>
+          <Lock className={`w-10 h-10 ${styles.iconColor}`} />
         </div>
-        <CardTitle className={`text-2xl font-bold ${isBlocked ? 'text-orange-600' : 'text-gray-500'}`}>
-          {blockedRole === 'SELLER' ? 'Vendedor' : 'Comprador'}
-        </CardTitle>
-        <CardDescription className={`text-base ${isBlocked ? 'text-orange-500' : 'text-gray-500'}`}>
-          {blockedLabel}
-        </CardDescription>
+        <CardTitle className={`text-2xl font-bold ${styles.titleColor}`}>{displayTitle}</CardTitle>
+        <CardDescription className={`text-base ${styles.descColor}`}>{blockedLabel}</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className={`${isBlocked ? 'bg-orange-50 border border-orange-200' : 'bg-gray-50'} p-4 rounded-lg text-center`}>
-          <p className={`text-sm ${isBlocked ? 'text-orange-700 font-medium' : 'text-gray-600'}`}>
-            {blockedMessage}
-          </p>
+        <div className={`${styles.contentBg} p-4 rounded-lg text-center`}>
+          <p className={`text-sm ${styles.textColor}`}>{blockedMessage}</p>
         </div>
       </CardContent>
     </Card>
   )
+}
+
+function RoleCard(props: RoleCardProps) {
+  const { isEnabled, roleConflict, blockedRole, ...enabledProps } = props
+  const isBlocked = roleConflict?.blockedRole === blockedRole
+
+  if (isEnabled) {
+    return <EnabledRoleCard {...enabledProps} />
+  }
+
+  return <DisabledRoleCard blockedRole={blockedRole} isBlocked={isBlocked} />
 }
 
 // Helper data for role features

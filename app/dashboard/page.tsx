@@ -144,6 +144,63 @@ function isCompletedStatus(status: string): boolean {
   return status === 'DELIVERED' || status === 'COMPLETED'
 }
 
+// ============ UI State Components ============
+
+function DashboardLoadingState() {
+  return (
+    <MainLayout>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
+          <TrendingUp className="text-blue-600" size={36} />
+          Dashboard
+        </h1>
+        <p className="text-gray-600 mt-1">Cargando datos...</p>
+      </div>
+      <DashboardStatsSkeleton />
+    </MainLayout>
+  )
+}
+
+function DashboardTimedOutState({ onRetry }: { readonly onRetry: () => void }) {
+  return (
+    <MainLayout>
+      <div className="max-w-md mx-auto mt-8 bg-yellow-50 border border-yellow-200 p-6 rounded-lg">
+        <div className="flex items-center gap-3 mb-4">
+          <Clock className="h-8 w-8 text-yellow-600" />
+          <h2 className="text-xl font-bold text-yellow-900">Tiempo de espera excedido</h2>
+        </div>
+        <p className="text-gray-700 mb-4">La carga del dashboard está tardando más de lo esperado.</p>
+        <button
+          onClick={onRetry}
+          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+        >
+          Reintentar
+        </button>
+      </div>
+    </MainLayout>
+  )
+}
+
+function DashboardErrorState({ error, onRetry }: { readonly error: string; readonly onRetry: () => void }) {
+  return (
+    <MainLayout>
+      <div className="max-w-md mx-auto mt-8 bg-red-50 border border-red-200 p-6 rounded-lg">
+        <div className="flex items-center gap-3 mb-4">
+          <AlertCircle className="h-8 w-8 text-red-600" />
+          <h2 className="text-xl font-bold text-red-900">Error</h2>
+        </div>
+        <p className="text-gray-700 mb-4">{error}</p>
+        <button
+          onClick={onRetry}
+          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+        >
+          Reintentar
+        </button>
+      </div>
+    </MainLayout>
+  )
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [stats, setStats] = useState<Stats | null>(null)
@@ -326,71 +383,11 @@ export default function DashboardPage() {
     await fetchPendingOrders()
   }
 
-  // ✅ UI States
-  if (loading) {
-    return (
-      <MainLayout>
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-            <TrendingUp className="text-blue-600" size={36} />
-            Dashboard
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Cargando datos...
-          </p>
-        </div>
-        <DashboardStatsSkeleton />
-      </MainLayout>
-    )
-  }
-
-  if (timedOut) {
-    return (
-      <MainLayout>
-        <div className="max-w-md mx-auto mt-8 bg-yellow-50 border border-yellow-200 p-6 rounded-lg">
-          <div className="flex items-center gap-3 mb-4">
-            <Clock className="h-8 w-8 text-yellow-600" />
-            <h2 className="text-xl font-bold text-yellow-900">
-              Tiempo de espera excedido
-            </h2>
-          </div>
-          <p className="text-gray-700 mb-4">
-            La carga del dashboard está tardando más de lo esperado.
-          </p>
-          <button
-            onClick={fetchDashboard}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-          >
-            Reintentar
-          </button>
-        </div>
-      </MainLayout>
-    )
-  }
-
-  if (error) {
-    return (
-      <MainLayout>
-        <div className="max-w-md mx-auto mt-8 bg-red-50 border border-red-200 p-6 rounded-lg">
-          <div className="flex items-center gap-3 mb-4">
-            <AlertCircle className="h-8 w-8 text-red-600" />
-            <h2 className="text-xl font-bold text-red-900">Error</h2>
-          </div>
-          <p className="text-gray-700 mb-4">{error}</p>
-          <button
-            onClick={fetchDashboard}
-            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
-          >
-            Reintentar
-          </button>
-        </div>
-      </MainLayout>
-    )
-  }
-
-  if (!stats) {
-    return null
-  }
+  // ✅ UI States - Early returns with extracted components
+  if (loading) return <DashboardLoadingState />
+  if (timedOut) return <DashboardTimedOutState onRetry={fetchDashboard} />
+  if (error) return <DashboardErrorState error={error} onRetry={fetchDashboard} />
+  if (!stats) return null
 
   const statCards = [
     {

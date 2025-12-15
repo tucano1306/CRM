@@ -591,12 +591,13 @@ function HistoryModal({ show, historyClientName, clientOrders, loadingHistory, o
         </div>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {loadingHistory ? (
+          {loadingHistory && (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-purple-600 mx-auto mb-4" />
               <p className="text-gray-600 text-lg">Cargando historial...</p>
             </div>
-          ) : !clientOrders || clientOrders.length === 0 ? (
+          )}
+          {!loadingHistory && (!clientOrders || clientOrders.length === 0) && (
             <div className="text-center py-12">
               <div className="w-20 h-20 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                 <ShoppingBag className="h-10 w-10 text-gray-400" />
@@ -604,7 +605,8 @@ function HistoryModal({ show, historyClientName, clientOrders, loadingHistory, o
               <h3 className="text-xl font-bold text-gray-700 mb-2">Sin órdenes registradas</h3>
               <p className="text-gray-500">Este cliente aún no ha realizado ninguna compra</p>
             </div>
-          ) : (
+          )}
+          {!loadingHistory && clientOrders && clientOrders.length > 0 && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-4 text-white">
