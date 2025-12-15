@@ -347,15 +347,11 @@ export default function OrderDetailModal({
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            {hasIssue ? (
-                              isOutOfStock ? (
-                                <X className="h-4 w-4 text-red-500" />
-                              ) : (
-                                <AlertTriangle className="h-4 w-4 text-amber-500" />
-                              )
-                            ) : (
-                              <CheckCircle className="h-4 w-4 text-green-500" />
-                            )}
+                            {(() => {
+                              if (!hasIssue) return <CheckCircle className="h-4 w-4 text-green-500" />;
+                              if (isOutOfStock) return <X className="h-4 w-4 text-red-500" />;
+                              return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+                            })()}
                             <p className="font-semibold text-gray-900">{item.productName}</p>
                           </div>
                           

@@ -45,13 +45,11 @@ export default function RoleSwitcher() {
             }`}
           >
             <span>🛒 Vista Comprador</span>
-            {switching && currentRole !== 'CLIENT' ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : currentRole === 'CLIENT' ? (
-              <span className="text-xs">Activo</span>
-            ) : (
-              <ArrowRight className="h-4 w-4" />
-            )}
+            {(() => {
+              if (switching && currentRole !== 'CLIENT') return <Loader2 className="h-4 w-4 animate-spin" />
+              if (currentRole === 'CLIENT') return <span className="text-xs">Activo</span>
+              return <ArrowRight className="h-4 w-4" />
+            })()}
           </button>
 
           <button
@@ -64,13 +62,11 @@ export default function RoleSwitcher() {
             }`}
           >
             <span>📊 Vista Vendedor</span>
-            {switching && currentRole !== 'SELLER' ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : currentRole === 'SELLER' ? (
-              <span className="text-xs">Activo</span>
-            ) : (
-              <ArrowRight className="h-4 w-4" />
-            )}
+            {(() => {
+              if (switching && currentRole !== 'SELLER') return <Loader2 className="h-4 w-4 animate-spin" />
+              if (currentRole === 'SELLER') return <span className="text-xs">Activo</span>
+              return <ArrowRight className="h-4 w-4" />
+            })()}
           </button>
         </div>
 

@@ -334,20 +334,22 @@ export default function CatalogPage() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 page-transition">
       {/* Toast Notifications */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
-        {toasts.map(toast => (
+        {toasts.map(toast => {
+          const getToastStyle = () => {
+            if (toast.type === 'success') return 'bg-green-500 text-white';
+            if (toast.type === 'error') return 'bg-red-500 text-white';
+            return 'bg-blue-500 text-white';
+          };
+          return (
           <div
             key={toast.id}
-            className={`px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-slide-in ${
-              toast.type === 'success' ? 'bg-green-500 text-white' :
-              toast.type === 'error' ? 'bg-red-500 text-white' :
-              'bg-blue-500 text-white'
-            }`}
+            className={`px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-slide-in ${getToastStyle()}`}
           >
             {toast.type === 'success' && <CheckCircle className="w-5 h-5" />}
             {toast.type === 'error' && <AlertCircle className="w-5 h-5" />}
             <span className="font-medium">{toast.message}</span>
           </div>
-        ))}
+        )})}
       </div>
 
       {/* Header */}
@@ -528,11 +530,11 @@ export default function CatalogPage() {
                             SIN STOCK
                           </span>
                         ) : (
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            product.stock > 50 ? 'bg-green-100 text-green-700' :
-                            product.stock > 10 ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-red-100 text-red-700'
-                          }`}>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${(() => {
+                            if (product.stock > 50) return 'bg-green-100 text-green-700';
+                            if (product.stock > 10) return 'bg-yellow-100 text-yellow-700';
+                            return 'bg-red-100 text-red-700';
+                          })()}`}>
                             {product.stock} {product.unit}
                           </span>
                         )}
@@ -540,42 +542,50 @@ export default function CatalogPage() {
 
                       {/* Cantidad */}
                       <div className="col-span-6 md:col-span-3 flex items-center justify-center gap-2">
-                        {isOutOfStock ? (
-                          <div className="flex flex-col items-center">
-                            <span className="text-red-500 text-xs font-bold flex items-center gap-1 bg-red-50 px-3 py-1.5 rounded-lg">
-                              <AlertCircle className="w-4 h-4" />
-                              No disponible
+                        {(() => {
+                          if (isOutOfStock) {
+                            return (
+                              <div className="flex flex-col items-center">
+                                <span className="text-red-500 text-xs font-bold flex items-center gap-1 bg-red-50 px-3 py-1.5 rounded-lg">
+                                  <AlertCircle className="w-4 h-4" />
+                                  No disponible
+                                </span>
+                                <span className="text-gray-400 text-[10px] mt-1">Sin stock</span>
+                              </div>
+                            );
+                          }
+                          if (isSelected) {
+                            return (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => updateQuantity(product.id, quantity - 1)}
+                                  className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center hover:bg-purple-200 transition-colors"
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </button>
+                                <input
+                                  type="number"
+                                  value={quantity}
+                                  onChange={(e) => updateQuantity(product.id, Number.parseInt(e.target.value, 10) || 0)}
+                                  className="w-16 text-center border-2 border-purple-200 rounded-lg py-1 font-semibold focus:ring-2 focus:ring-purple-500"
+                                  min="1"
+                                  max={product.stock}
+                                />
+                                <button
+                                  onClick={() => updateQuantity(product.id, quantity + 1)}
+                                  className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center hover:bg-purple-200 transition-colors"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </button>
+                              </div>
+                            );
+                          }
+                          return (
+                            <span className="text-gray-400 text-sm">
+                              Seleccionar
                             </span>
-                            <span className="text-gray-400 text-[10px] mt-1">Sin stock</span>
-                          </div>
-                        ) : isSelected ? (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => updateQuantity(product.id, quantity - 1)}
-                              className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center hover:bg-purple-200 transition-colors"
-                            >
-                              <Minus className="w-4 h-4" />
-                            </button>
-                            <input
-                              type="number"
-                              value={quantity}
-                              onChange={(e) => updateQuantity(product.id, Number.parseInt(e.target.value, 10) || 0)}
-                              className="w-16 text-center border-2 border-purple-200 rounded-lg py-1 font-semibold focus:ring-2 focus:ring-purple-500"
-                              min="1"
-                              max={product.stock}
-                            />
-                            <button
-                              onClick={() => updateQuantity(product.id, quantity + 1)}
-                              className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center hover:bg-purple-200 transition-colors"
-                            >
-                              <Plus className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-sm">
-                            Seleccionar
-                          </span>
-                        )}
+                          );
+                        })()}
                       </div>
                     </div>
                   )

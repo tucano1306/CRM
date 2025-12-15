@@ -317,7 +317,11 @@ export default function ProductListCheckbox({
 
                   {/* Stock y cantidad */}
                   <div className="flex items-center justify-between mt-2">
-                    <span className={`text-sm ${product.stock > 10 ? 'text-green-600' : product.stock > 0 ? 'text-yellow-600' : 'text-red-600'}`}>
+                    <span className={`text-sm ${(() => {
+                      if (product.stock > 10) return 'text-green-600'
+                      if (product.stock > 0) return 'text-yellow-600'
+                      return 'text-red-600'
+                    })()}`}>
                       {outOfStock ? 'Sin stock' : `${product.stock} disponibles`}
                     </span>
 

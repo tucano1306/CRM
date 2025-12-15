@@ -224,19 +224,26 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
       {/* Content */}
       {isExpanded && (
         <div className="p-4 space-y-3">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
-            </div>
-          ) : error ? (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-              <p className="text-red-600">{error}</p>
-              <Button variant="outline" size="sm" onClick={() => fetchRequests(false)} className="mt-2">
-                Reintentar
-              </Button>
-            </div>
-          ) : (
-            Array.isArray(requests) && requests.map((request) => (
+          {(() => {
+            if (loading) {
+              return (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+                </div>
+              )
+            }
+            if (error) {
+              return (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                  <p className="text-red-600">{error}</p>
+                  <Button variant="outline" size="sm" onClick={() => fetchRequests(false)} className="mt-2">
+                    Reintentar
+                  </Button>
+                </div>
+              )
+            }
+            return (
+              Array.isArray(requests) && requests.map((request) => (
               <div
                 key={request.id}
                 className="bg-white rounded-xl border border-amber-200 p-4 shadow-sm hover:shadow-md transition-all"
@@ -299,7 +306,8 @@ export default function ConnectionRequestsPanel({ onRequestAccepted }: Connectio
                 </div>
               </div>
             ))
-          )}
+          )
+          })()}
         </div>
       )}
     </div>

@@ -44,7 +44,18 @@ export async function GET(request: Request) {
 
     const isClient = authUser.clients.length > 0
     const isSeller = authUser.sellers.length > 0
-    const effectiveRole = role || (isClient ? 'client' : isSeller ? 'seller' : null)
+    
+    // Determine effective role - extracted to avoid nested ternary
+    let effectiveRole = role
+    if (!effectiveRole) {
+      if (isClient) {
+        effectiveRole = 'client'
+      } else if (isSeller) {
+        effectiveRole = 'seller'
+      } else {
+        effectiveRole = null
+      }
+    }
 
     // Build where clause based on role
     let whereClause: any

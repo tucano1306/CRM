@@ -538,29 +538,39 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
       >
         {/* Mensajes */}
         <div className="flex-1 overflow-y-auto p-2 md:p-4 space-y-2">
-          {loading && messages.length === 0 ? (
-            <div className="flex justify-center items-center h-full">
-              <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 rounded-xl shadow-md">
-                <div className="animate-spin rounded-full h-8 w-8 border-4 border-white border-t-transparent" />
-              </div>
-            </div>
-          ) : messages.length === 0 && !searchQuery ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400">
-              <div className="bg-gradient-to-br from-purple-100 to-indigo-100 p-4 rounded-full mb-3">
-                <Send className="h-12 w-12 text-purple-600" />
-              </div>
-              <p className="font-semibold text-gray-600">¡Inicia la conversación!</p>
-              <p className="text-sm">Envía el primer mensaje a {receiverName}</p>
-            </div>
-          ) : filteredMessages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-gray-400">
-              <div className="bg-gradient-to-br from-purple-100 to-indigo-100 p-4 rounded-full mb-3">
-                <Search className="h-12 w-12 text-purple-600" />
-              </div>
-              <p className="font-semibold text-gray-600">No se encontraron mensajes</p>
-              <p className="text-sm">Intenta con otra búsqueda</p>
-            </div>
-          ) : (
+          {(() => {
+            if (loading && messages.length === 0) {
+              return (
+                <div className="flex justify-center items-center h-full">
+                  <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 rounded-xl shadow-md">
+                    <div className="animate-spin rounded-full h-8 w-8 border-4 border-white border-t-transparent" />
+                  </div>
+                </div>
+              )
+            }
+            if (messages.length === 0 && !searchQuery) {
+              return (
+                <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                  <div className="bg-gradient-to-br from-purple-100 to-indigo-100 p-4 rounded-full mb-3">
+                    <Send className="h-12 w-12 text-purple-600" />
+                  </div>
+                  <p className="font-semibold text-gray-600">¡Inicia la conversación!</p>
+                  <p className="text-sm">Envía el primer mensaje a {receiverName}</p>
+                </div>
+              )
+            }
+            if (filteredMessages.length === 0) {
+              return (
+                <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                  <div className="bg-gradient-to-br from-purple-100 to-indigo-100 p-4 rounded-full mb-3">
+                    <Search className="h-12 w-12 text-purple-600" />
+                  </div>
+                  <p className="font-semibold text-gray-600">No se encontraron mensajes</p>
+                  <p className="text-sm">Intenta con otra búsqueda</p>
+                </div>
+              )
+            }
+            return (
             <>
               {filteredMessages.map((msg, index) => {
                 const isOwn = msg.senderId === user?.id
@@ -676,7 +686,8 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
               
               <div ref={messagesEndRef} />
             </>
-          )}
+            )
+          })()}
         </div>
 
         {/* Error - Solo mostrar si ya estábamos conectados antes y ahora hay error */}

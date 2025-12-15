@@ -782,12 +782,12 @@ export default function BulkStatusChangeModal({
                   return (
                     <div 
                       key={item.id}
-                      className={`p-4 sm:p-5 transition-colors ${
-                        isAccepted ? 'bg-green-50' :
-                        hasIssue ? 'bg-red-50' : 
-                        isSelected ? 'bg-purple-50' :
-                        'hover:bg-gray-50'
-                      }`}
+                      className={`p-4 sm:p-5 transition-colors ${(() => {
+                        if (isAccepted) return 'bg-green-50';
+                        if (hasIssue) return 'bg-red-50';
+                        if (isSelected) return 'bg-purple-50';
+                        return 'hover:bg-gray-50';
+                      })()}`}
                     >
                       {/* Fila principal del producto */}
                       <div className="flex items-start gap-3 sm:gap-4">
@@ -866,13 +866,11 @@ export default function BulkStatusChangeModal({
                           type="button"
                           onClick={() => openDeleteModal(item)}
                           disabled={deletingItem === item.id || deletedItems.has(item.id)}
-                          className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-bold transition-all flex items-center gap-1.5 ${
-                            deletedItems.has(item.id)
-                              ? 'bg-gray-400 text-white cursor-not-allowed'
-                              : deletingItem === item.id
-                              ? 'bg-gray-300 text-gray-500 cursor-wait'
-                              : 'bg-white border-2 border-gray-200 text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700'
-                          }`}
+                          className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg text-sm sm:text-base font-bold transition-all flex items-center gap-1.5 ${(() => {
+                            if (deletedItems.has(item.id)) return 'bg-gray-400 text-white cursor-not-allowed';
+                            if (deletingItem === item.id) return 'bg-gray-300 text-gray-500 cursor-wait';
+                            return 'bg-white border-2 border-gray-200 text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700';
+                          })()}`}
                         >
                           <Trash2 className="w-4 h-4" />
                           {deletedItems.has(item.id) ? 'Eliminado' : 'Quitar'}
@@ -1013,54 +1011,62 @@ export default function BulkStatusChangeModal({
               Cancelar
             </Button>
             
-            {allProductsOk ? (
-              /* Todos los productos aceptados - Confirmar orden */
-              <Button
-                onClick={handleLockOrder}
-                className="flex-1 bg-green-600 hover:bg-green-700"
-                disabled={loading || !hasProducts}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Confirmando...
-                  </>
-                ) : (
-                  <>
-                    <Lock className="w-4 h-4 mr-2" />
-                    ✓ Confirmar Pedido
-                  </>
-                )}
-              </Button>
-            ) : issuesCount > 0 ? (
-              /* Hay productos faltantes - Notificar al comprador */
-              <Button
-                onClick={handleReportIssues}
-                className="flex-1 bg-amber-600 hover:bg-amber-700"
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Enviando notificación...
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4 mr-2" />
-                    📱 Notificar Faltantes ({issuesCount})
-                  </>
-                )}
-              </Button>
-            ) : (
-              /* Productos pendientes de revisar */
-              <Button
-                disabled={true}
-                className="flex-1 bg-gray-400 cursor-not-allowed"
-              >
-                <Package className="w-4 h-4 mr-2" />
-                Revisa todos los productos
-              </Button>
-            )}
+            {(() => {
+              if (allProductsOk) {
+                return (
+                  /* Todos los productos aceptados - Confirmar orden */
+                  <Button
+                    onClick={handleLockOrder}
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    disabled={loading || !hasProducts}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Confirmando...
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4 mr-2" />
+                        ✓ Confirmar Pedido
+                      </>
+                    )}
+                  </Button>
+                );
+              }
+              if (issuesCount > 0) {
+                return (
+                  /* Hay productos faltantes - Notificar al comprador */
+                  <Button
+                    onClick={handleReportIssues}
+                    className="flex-1 bg-amber-600 hover:bg-amber-700"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Enviando notificación...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        📱 Notificar Faltantes ({issuesCount})
+                      </>
+                    )}
+                  </Button>
+                );
+              }
+              return (
+                /* Productos pendientes de revisar */
+                <Button
+                  disabled={true}
+                  className="flex-1 bg-gray-400 cursor-not-allowed"
+                >
+                  <Package className="w-4 h-4 mr-2" />
+                  Revisa todos los productos
+                </Button>
+              );
+            })()}
           </div>
 
           {/* Información adicional */}
@@ -1171,16 +1177,23 @@ export default function BulkStatusChangeModal({
 
             {/* Lista de productos */}
             <div className="flex-1 overflow-y-auto p-4">
-              {loadingProducts ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-                </div>
-              ) : filteredProducts.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Package className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                  <p>No se encontraron productos</p>
-                </div>
-              ) : (
+              {(() => {
+                if (loadingProducts) {
+                  return (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                    </div>
+                  );
+                }
+                if (filteredProducts.length === 0) {
+                  return (
+                    <div className="text-center py-8 text-gray-500">
+                      <Package className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p>No se encontraron productos</p>
+                    </div>
+                  );
+                }
+                return (
                 <div className="space-y-2">
                   {filteredProducts.slice(0, 20).map((product: any) => {
                     const isSelected = selectedProduct?.id === product.id
@@ -1191,13 +1204,11 @@ export default function BulkStatusChangeModal({
                         key={product.id}
                         onClick={() => setSelectedProduct(product)}
                         disabled={wasAdded}
-                        className={`w-full text-left p-3 rounded-lg border-2 transition-all ${
-                          wasAdded 
-                            ? 'border-green-300 bg-green-50 cursor-not-allowed'
-                            : isSelected 
-                            ? 'border-purple-400 bg-purple-50' 
-                            : 'border-gray-200 hover:border-purple-200 hover:bg-gray-50'
-                        }`}
+                        className={`w-full text-left p-3 rounded-lg border-2 transition-all ${(() => {
+                          if (wasAdded) return 'border-green-300 bg-green-50 cursor-not-allowed';
+                          if (isSelected) return 'border-purple-400 bg-purple-50';
+                          return 'border-gray-200 hover:border-purple-200 hover:bg-gray-50';
+                        })()}`}
                       >
                         <div className="flex items-center justify-between">
                           <div>
@@ -1217,7 +1228,8 @@ export default function BulkStatusChangeModal({
                     )
                   })}
                 </div>
-              )}
+                );
+              })()}
             </div>
 
             {/* Formulario de cantidad */}

@@ -444,10 +444,11 @@ export default function PerformanceDashboard() {
                     </td>
                     <td className="text-right py-2">{hotspot.count.toLocaleString()}</td>
                     <td className="text-right py-2">{hotspot.totalTime.toFixed(2)}ms</td>
-                    <td className={`text-right py-2 font-medium ${
-                      hotspot.avgTime > 50 ? 'text-red-600' :
-                      hotspot.avgTime > 20 ? 'text-yellow-600' : 'text-green-600'
-                    }`}>
+                    <td className={`text-right py-2 font-medium ${(() => {
+                      if (hotspot.avgTime > 50) return 'text-red-600';
+                      if (hotspot.avgTime > 20) return 'text-yellow-600';
+                      return 'text-green-600';
+                    })()}`}>
                       {hotspot.avgTime.toFixed(2)}ms
                     </td>
                   </tr>

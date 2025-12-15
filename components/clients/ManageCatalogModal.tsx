@@ -502,29 +502,36 @@ export default function ManageCatalogModal({
                 </Button>
               </div>
 
-              {loading ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
-                  <p className="text-gray-500 mt-4">Cargando catálogo...</p>
-                </div>
-              ) : filteredProducts.length === 0 ? (
-                <div className="text-center py-12">
-                  <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 text-lg mb-2">
-                    {searchTerm ? 'No se encontraron productos' : 'Sin productos asignados'}
-                  </p>
-                  <p className="text-gray-400 text-sm mb-4">
-                    Crea productos para este cliente en la pestaña &ldquo;Crear Producto&rdquo;
-                  </p>
-                  <Button
-                    onClick={() => setActiveTab('create')}
-                    className="bg-purple-600 hover:bg-purple-700"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Crear Primer Producto
-                  </Button>
-                </div>
-              ) : (
+              {(() => {
+                if (loading) {
+                  return (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500 mx-auto"></div>
+                      <p className="text-gray-500 mt-4">Cargando catálogo...</p>
+                    </div>
+                  )
+                }
+                if (filteredProducts.length === 0) {
+                  return (
+                    <div className="text-center py-12">
+                      <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 text-lg mb-2">
+                        {searchTerm ? 'No se encontraron productos' : 'Sin productos asignados'}
+                      </p>
+                      <p className="text-gray-400 text-sm mb-4">
+                        Crea productos para este cliente en la pestaña &ldquo;Crear Producto&rdquo;
+                      </p>
+                      <Button
+                        onClick={() => setActiveTab('create')}
+                        className="bg-purple-600 hover:bg-purple-700"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Crear Primer Producto
+                      </Button>
+                    </div>
+                  )
+                }
+                return (
                 <div className="space-y-3">
                   {filteredProducts.map((product) => (
                     <div
@@ -669,7 +676,8 @@ export default function ManageCatalogModal({
                     </div>
                   ))}
                 </div>
-              )}
+              )
+              })()}
             </div>
           ) : activeTab === 'create' ? (
             // TAB: Crear nuevo producto

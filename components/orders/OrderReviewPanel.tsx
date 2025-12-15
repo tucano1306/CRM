@@ -274,13 +274,17 @@ export default function OrderReviewPanel({
                         {hasItemIssue && (
                           <span className={`
                             text-xs px-2 py-0.5 rounded-full
-                            ${itemIssue.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
-                              itemIssue.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
-                              'bg-yellow-100 text-yellow-700'}
+                            ${(() => {
+                              if (itemIssue.status === 'ACCEPTED') return 'bg-green-100 text-green-700';
+                              if (itemIssue.status === 'REJECTED') return 'bg-red-100 text-red-700';
+                              return 'bg-yellow-100 text-yellow-700';
+                            })()}
                           `}>
-                            {itemIssue.status === 'ACCEPTED' ? '✓ Aceptado' :
-                             itemIssue.status === 'REJECTED' ? '✗ Rechazado' :
-                             '⏳ Pendiente'}
+                            {(() => {
+                              if (itemIssue.status === 'ACCEPTED') return '✓ Aceptado';
+                              if (itemIssue.status === 'REJECTED') return '✗ Rechazado';
+                              return '⏳ Pendiente';
+                            })()}
                           </span>
                         )}
                       </div>
@@ -295,29 +299,35 @@ export default function OrderReviewPanel({
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      {item.product.stock >= item.quantity ? (
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                      ) : hasItemIssue ? null : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 border-red-300"
-                          onClick={() => {
-                            setSelectedItem(item)
-                            setIssueForm({
-                              ...issueForm,
-                              availableQty: item.product.stock,
-                              description: item.product.stock === 0 
-                                ? 'Producto sin stock disponible'
-                                : `Solo hay ${item.product.stock} unidades disponibles (se pidieron ${item.quantity})`
-                            })
-                            setShowIssueForm(true)
-                          }}
-                        >
-                          <AlertTriangle className="w-4 h-4 mr-1" />
-                          Reportar
-                        </Button>
-                      )}
+                      {(() => {
+                        if (item.product.stock >= item.quantity) {
+                          return <CheckCircle className="w-5 h-5 text-green-500" />;
+                        }
+                        if (hasItemIssue) {
+                          return null;
+                        }
+                        return (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 border-red-300"
+                            onClick={() => {
+                              setSelectedItem(item)
+                              setIssueForm({
+                                ...issueForm,
+                                availableQty: item.product.stock,
+                                description: item.product.stock === 0 
+                                  ? 'Producto sin stock disponible'
+                                  : `Solo hay ${item.product.stock} unidades disponibles (se pidieron ${item.quantity})`
+                              })
+                              setShowIssueForm(true)
+                            }}
+                          >
+                            <AlertTriangle className="w-4 h-4 mr-1" />
+                            Reportar
+                          </Button>
+                        );
+                      })()}
                     </div>
                   </div>
                 )
@@ -454,15 +464,19 @@ export default function OrderReviewPanel({
                     </div>
                     <span className={`
                       text-xs px-2 py-1 rounded-full
-                      ${issue.status === 'ACCEPTED' ? 'bg-green-100 text-green-700' :
-                        issue.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
-                        issue.status === 'RESOLVED' ? 'bg-blue-100 text-blue-700' :
-                        'bg-yellow-100 text-yellow-700'}
+                      ${(() => {
+                        if (issue.status === 'ACCEPTED') return 'bg-green-100 text-green-700';
+                        if (issue.status === 'REJECTED') return 'bg-red-100 text-red-700';
+                        if (issue.status === 'RESOLVED') return 'bg-blue-100 text-blue-700';
+                        return 'bg-yellow-100 text-yellow-700';
+                      })()}
                     `}>
-                      {issue.status === 'ACCEPTED' ? '✓ Aceptado' :
-                       issue.status === 'REJECTED' ? '✗ Rechazado' :
-                       issue.status === 'RESOLVED' ? '✓ Resuelto' :
-                       '⏳ Esperando respuesta'}
+                      {(() => {
+                        if (issue.status === 'ACCEPTED') return '✓ Aceptado';
+                        if (issue.status === 'REJECTED') return '✗ Rechazado';
+                        if (issue.status === 'RESOLVED') return '✓ Resuelto';
+                        return '⏳ Esperando respuesta';
+                      })()}
                     </span>
                   </div>
                 </div>

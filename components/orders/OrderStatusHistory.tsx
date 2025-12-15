@@ -217,11 +217,12 @@ export default function OrderStatusHistory({ orderId, refreshTrigger }: OrderSta
                 <div className="flex items-start gap-3 sm:gap-4">
                   {/* Icono */}
                   <div className="flex-shrink-0">
-                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center ${
-                      isProductDeleted ? 'bg-red-100' :
-                      isProductAction ? 'bg-green-100' :
-                      index === 0 ? 'bg-blue-100' : 'bg-gray-100'
-                    }`}>
+                    <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center ${(() => {
+                      if (isProductDeleted) return 'bg-red-100';
+                      if (isProductAction) return 'bg-green-100';
+                      if (index === 0) return 'bg-blue-100';
+                      return 'bg-gray-100';
+                    })()}`}>
                       <EntryIcon className={`h-5 w-5 sm:h-6 sm:w-6 ${getEntryColor()}`} />
                     </div>
                   </div>
@@ -229,49 +230,60 @@ export default function OrderStatusHistory({ orderId, refreshTrigger }: OrderSta
                   {/* Contenido */}
                   <div className="flex-1 min-w-0">
                     {/* Título según tipo */}
-                    {isStatusChange && entry.newStatus ? (
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        {entry.previousStatus ? (
-                          <>
-                            <span className={`font-medium text-sm sm:text-base ${
-                              statusConfig[entry.previousStatus]?.color || 'text-gray-500'
+                    {(() => {
+                      if (isStatusChange && entry.newStatus) {
+                        return (
+                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                            {entry.previousStatus ? (
+                              <>
+                                <span className={`font-medium text-sm sm:text-base ${
+                                  statusConfig[entry.previousStatus]?.color || 'text-gray-500'
+                                }`}>
+                                  {statusConfig[entry.previousStatus]?.label || entry.previousStatus}
+                                </span>
+                                <ArrowRight className="h-4 w-4 text-gray-400" />
+                              </>
+                            ) : (
+                              <span className="text-xs sm:text-sm text-gray-500">Estado inicial:</span>
+                            )}
+                            <span className={`font-bold text-sm sm:text-base ${
+                              statusConfig[entry.newStatus]?.color || 'text-gray-600'
                             }`}>
-                              {statusConfig[entry.previousStatus]?.label || entry.previousStatus}
+                              {statusConfig[entry.newStatus]?.label || entry.newStatus}
                             </span>
-                            <ArrowRight className="h-4 w-4 text-gray-400" />
-                          </>
-                        ) : (
-                          <span className="text-xs sm:text-sm text-gray-500">Estado inicial:</span>
-                        )}
-                        <span className={`font-bold text-sm sm:text-base ${
-                          statusConfig[entry.newStatus]?.color || 'text-gray-600'
-                        }`}>
-                          {statusConfig[entry.newStatus]?.label || entry.newStatus}
-                        </span>
-                        {index === 0 && (
-                          <span className="ml-2 px-2 py-0.5 bg-blue-200 text-blue-800 text-xs rounded-full font-bold">
-                            Actual
-                          </span>
-                        )}
-                      </div>
-                    ) : isProductDeleted ? (
-                      <div className="mb-2">
-                        <span className="font-bold text-red-700 text-sm sm:text-base flex items-center gap-2">
-                          <Trash2 className="h-4 w-4" />
-                          Producto Eliminado
-                        </span>
-                        {entry.description && (
-                          <p className="text-sm text-gray-700 mt-1">{entry.description}</p>
-                        )}
-                      </div>
-                    ) : isProductAction ? (
-                      <div className="mb-2">
-                        <span className="font-bold text-green-700 text-sm sm:text-base flex items-center gap-2">
-                          {entry.notes?.includes('agregado') ? <Plus className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
-                          {entry.notes?.includes('agregado') ? 'Producto Agregado' : 'Acción en Producto'}
-                        </span>
-                      </div>
-                    ) : null}
+                            {index === 0 && (
+                              <span className="ml-2 px-2 py-0.5 bg-blue-200 text-blue-800 text-xs rounded-full font-bold">
+                                Actual
+                              </span>
+                            )}
+                          </div>
+                        );
+                      }
+                      if (isProductDeleted) {
+                        return (
+                          <div className="mb-2">
+                            <span className="font-bold text-red-700 text-sm sm:text-base flex items-center gap-2">
+                              <Trash2 className="h-4 w-4" />
+                              Producto Eliminado
+                            </span>
+                            {entry.description && (
+                              <p className="text-sm text-gray-700 mt-1">{entry.description}</p>
+                            )}
+                          </div>
+                        );
+                      }
+                      if (isProductAction) {
+                        return (
+                          <div className="mb-2">
+                            <span className="font-bold text-green-700 text-sm sm:text-base flex items-center gap-2">
+                              {entry.notes?.includes('agregado') ? <Plus className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}
+                              {entry.notes?.includes('agregado') ? 'Producto Agregado' : 'Acción en Producto'}
+                            </span>
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
 
                     {/* Usuario y rol */}
                     <div className="flex items-center gap-2 mb-2 flex-wrap">

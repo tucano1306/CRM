@@ -2243,18 +2243,18 @@ function OrdersPageContent() {
                       return (
                         <div 
                           key={item.id} 
-                          className={`rounded-xl border transition-all ${
-                            isOutOfStock ? 'bg-red-50 border-red-300' :
-                            isPartialStock ? 'bg-amber-50 border-amber-300' :
-                            'bg-gray-50 border-gray-200 hover:bg-gray-100'
-                          }`}
+                          className={`rounded-xl border transition-all ${(() => {
+                            if (isOutOfStock) return 'bg-red-50 border-red-300'
+                            if (isPartialStock) return 'bg-amber-50 border-amber-300'
+                            return 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                          })()}`}
                         >
                           <div className="flex items-center gap-4 p-4">
-                            <div className={`flex-shrink-0 w-16 h-16 rounded-lg flex items-center justify-center ${
-                              isOutOfStock ? 'bg-red-100' :
-                              isPartialStock ? 'bg-amber-100' :
-                              'bg-purple-100'
-                            }`}>
+                            <div className={`flex-shrink-0 w-16 h-16 rounded-lg flex items-center justify-center ${(() => {
+                              if (isOutOfStock) return 'bg-red-100'
+                              if (isPartialStock) return 'bg-amber-100'
+                              return 'bg-purple-100'
+                            })()}`}>
                               {hasIssue ? (
                                 isOutOfStock ? (
                                   <XCircle className="w-8 h-8 text-red-600" />
@@ -2751,14 +2751,16 @@ function OrdersPageContent() {
                                       })}
                                     </span>
                                     <span>•</span>
-                                    <span className={`px-2 py-0.5 rounded-full text-xs ${
-                                      event.changedByRole === 'SELLER' ? 'bg-blue-100 text-blue-700' :
-                                      event.changedByRole === 'CLIENT' || event.changedByRole === 'BUYER' ? 'bg-purple-100 text-purple-700' :
-                                      'bg-gray-100 text-gray-700'
-                                    }`}>
-                                      {event.changedByRole === 'SELLER' ? '👤 Vendedor' :
-                                       event.changedByRole === 'CLIENT' || event.changedByRole === 'BUYER' ? '🛒 Comprador' :
-                                       '⚙️ Sistema'}
+                                    <span className={`px-2 py-0.5 rounded-full text-xs ${(() => {
+                                      if (event.changedByRole === 'SELLER') return 'bg-blue-100 text-blue-700'
+                                      if (event.changedByRole === 'CLIENT' || event.changedByRole === 'BUYER') return 'bg-purple-100 text-purple-700'
+                                      return 'bg-gray-100 text-gray-700'
+                                    })()}`}>
+                                      {(() => {
+                                        if (event.changedByRole === 'SELLER') return '👤 Vendedor'
+                                        if (event.changedByRole === 'CLIENT' || event.changedByRole === 'BUYER') return '🛒 Comprador'
+                                        return '⚙️ Sistema'
+                                      })()}
                                     </span>
                                     {event.changedByName && (
                                       <span className="text-gray-400">({event.changedByName})</span>
@@ -3159,19 +3161,26 @@ function OrdersPageContent() {
             ) : (
               /* Vista de lista de productos */
               <>
-                {loadingCatalog ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                  </div>
-                ) : filteredCatalogProducts.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
-                    <Package className="w-12 h-12 mx-auto mb-2 text-gray-400" />
-                    <p>No se encontraron productos disponibles</p>
-                  </div>
-                ) : (
-                  <div className="grid gap-3">
-                    {filteredCatalogProducts.map((product) => (
-                      <button
+                {(() => {
+                  if (loadingCatalog) {
+                    return (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                      </div>
+                    )
+                  }
+                  if (filteredCatalogProducts.length === 0) {
+                    return (
+                      <div className="text-center py-8 text-gray-500">
+                        <Package className="w-12 h-12 mx-auto mb-2 text-gray-400" />
+                        <p>No se encontraron productos disponibles</p>
+                      </div>
+                    )
+                  }
+                  return (
+                    <div className="grid gap-3">
+                      {filteredCatalogProducts.map((product) => (
+                        <button
                         key={product.id}
                         onClick={() => handleSelectSubstituteProduct(product)}
                         disabled={removingItem === substituteItemInfo.itemId}
@@ -3193,7 +3202,8 @@ function OrdersPageContent() {
                       </button>
                     ))}
                   </div>
-                )}
+                  )
+                })()}
               </>
             )}
           </div>

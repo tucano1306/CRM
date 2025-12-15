@@ -373,20 +373,22 @@ function CartPageContent() {
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 page-transition">
       {/* Toast Notifications */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
-        {toasts.map(toast => (
+        {toasts.map(toast => {
+          const getToastStyle = () => {
+            if (toast.type === 'success') return 'bg-green-500 text-white';
+            if (toast.type === 'error') return 'bg-red-500 text-white';
+            return 'bg-blue-500 text-white';
+          };
+          return (
           <div
             key={toast.id}
-            className={`px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-slide-in ${
-              toast.type === 'success' ? 'bg-green-500 text-white' :
-              toast.type === 'error' ? 'bg-red-500 text-white' :
-              'bg-blue-500 text-white'
-            }`}
+            className={`px-4 py-3 rounded-lg shadow-lg flex items-center gap-2 animate-slide-in ${getToastStyle()}`}
           >
             {toast.type === 'success' && <CheckCircle className="w-5 h-5" />}
             {toast.type === 'error' && <AlertCircle className="w-5 h-5" />}
             <span className="font-medium">{toast.message}</span>
           </div>
-        ))}
+        )})}
       </div>
 
       {/* Header */}
@@ -531,21 +533,32 @@ function CartPageContent() {
                           {item.product.sku || item.product.unit}
                         </p>
                         {/* Stock warning */}
-                        {item.product.stock === 0 ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
-                            <AlertCircle className="w-3 h-3" />
-                            SIN STOCK
-                          </span>
-                        ) : item.product.stock <= item.quantity ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">
-                            <AlertCircle className="w-3 h-3" />
-                            Último(s) {item.product.stock}
-                          </span>
-                        ) : item.product.stock <= 10 ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">
-                            Stock bajo: {item.product.stock}
-                          </span>
-                        ) : null}
+                        {(() => {
+                          if (item.product.stock === 0) {
+                            return (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                                <AlertCircle className="w-3 h-3" />
+                                SIN STOCK
+                              </span>
+                            );
+                          }
+                          if (item.product.stock <= item.quantity) {
+                            return (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">
+                                <AlertCircle className="w-3 h-3" />
+                                Último(s) {item.product.stock}
+                              </span>
+                            );
+                          }
+                          if (item.product.stock <= 10) {
+                            return (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-medium text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">
+                                Stock bajo: {item.product.stock}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
                         {/* Precio móvil */}
                         <p className="text-sm font-bold text-purple-600 md:hidden">
                           {formatPrice(item.price)}

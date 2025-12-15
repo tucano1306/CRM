@@ -341,20 +341,36 @@ async function calculateShipping(country: string, weight: number) {
   }
 
   // Basic shipping calculation (in production, use actual shipping API)
-  const baseCost = country === 'US' ? 5.99 : 
-                   country === 'CA' ? 8.99 : 
-                   country === 'MX' ? 7.99 : 
-                   15.99 // International
+  // Extracted nested ternary to if/else for clarity
+  let baseCost: number
+  if (country === 'US') {
+    baseCost = 5.99
+  } else if (country === 'CA') {
+    baseCost = 8.99
+  } else if (country === 'MX') {
+    baseCost = 7.99
+  } else {
+    baseCost = 15.99 // International
+  }
 
   const weightMultiplier = Math.max(1, Math.ceil(weight / 1000)) // Per kg
   
+  // Extracted nested ternary for estimatedDays
+  let estimatedDays: string
+  if (country === 'US') {
+    estimatedDays = '2-3'
+  } else if (country === 'CA') {
+    estimatedDays = '3-5'
+  } else if (country === 'MX') {
+    estimatedDays = '5-7'
+  } else {
+    estimatedDays = '7-14'
+  }
+
   return {
     available: true,
     cost: baseCost * weightMultiplier,
     currency: config.currency?.code,
-    estimatedDays: country === 'US' ? '2-3' : 
-                   country === 'CA' ? '3-5' : 
-                   country === 'MX' ? '5-7' : 
-                   '7-14'
+    estimatedDays
   }
 }

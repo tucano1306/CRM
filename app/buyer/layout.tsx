@@ -88,10 +88,10 @@ export default function BuyerLayout({ children }: BuyerLayoutProps) {
                   <Icon className="h-5 w-5" />
                   {(showChatBadge || showCartBadge) && (
                     <span className="absolute -top-1 -right-1 h-4 w-4 bg-gradient-to-r from-rose-500 to-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
-                      {showChatBadge 
-                        ? (unreadCount > 9 ? '9+' : unreadCount) 
-                        : (cartCount > 9 ? '9+' : cartCount)
-                      }
+                      {(() => {
+                        if (showChatBadge) return unreadCount > 9 ? '9+' : unreadCount;
+                        return cartCount > 9 ? '9+' : cartCount;
+                      })()}
                     </span>
                   )}
                 </div>

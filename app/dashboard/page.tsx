@@ -487,15 +487,12 @@ export default function DashboardPage() {
                       <p className="text-sm text-gray-600">{order.clientName}</p>
                     </div>
                     <span
-                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        order.status === 'PENDING'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : order.status === 'IN_PROGRESS'
-                          ? 'bg-blue-100 text-blue-800'
-                          : order.status === 'COMPLETED'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
+                      className={`px-2 py-1 text-xs font-semibold rounded-full ${(() => {
+                        if (order.status === 'PENDING') return 'bg-yellow-100 text-yellow-800';
+                        if (order.status === 'IN_PROGRESS') return 'bg-blue-100 text-blue-800';
+                        if (order.status === 'COMPLETED') return 'bg-green-100 text-green-800';
+                        return 'bg-gray-100 text-gray-800';
+                      })()}`}
                     >
                       {order.status}
                     </span>
@@ -551,15 +548,12 @@ export default function DashboardPage() {
                       </td>
                       <td className="py-3 px-4">
                         <span
-                          className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                            order.status === 'PENDING'
-                              ? 'bg-yellow-100 text-yellow-800'
-                              : order.status === 'IN_PROGRESS'
-                              ? 'bg-blue-100 text-blue-800'
-                              : order.status === 'COMPLETED'
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
+                          className={`px-2 py-1 text-xs font-semibold rounded-full ${(() => {
+                            if (order.status === 'PENDING') return 'bg-yellow-100 text-yellow-800';
+                            if (order.status === 'IN_PROGRESS') return 'bg-blue-100 text-blue-800';
+                            if (order.status === 'COMPLETED') return 'bg-green-100 text-green-800';
+                            return 'bg-gray-100 text-gray-800';
+                          })()}`}
                         >
                           {order.status}
                         </span>
@@ -697,14 +691,14 @@ export default function DashboardPage() {
                     className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-purple-50 rounded-lg border border-gray-200 cursor-pointer transition-all hover:border-purple-300"
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-600' :
-                        order.status === 'CONFIRMED' ? 'bg-green-100 text-green-600' :
-                        order.status === 'IN_DELIVERY' ? 'bg-purple-100 text-purple-600' :
-                        order.status === 'DELIVERED' || order.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-600' :
-                        order.status === 'CANCELED' || order.status === 'CANCELLED' ? 'bg-red-100 text-red-600' :
-                        'bg-blue-100 text-blue-600'
-                      }`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${(() => {
+                        if (order.status === 'PENDING') return 'bg-yellow-100 text-yellow-600';
+                        if (order.status === 'CONFIRMED') return 'bg-green-100 text-green-600';
+                        if (order.status === 'IN_DELIVERY') return 'bg-purple-100 text-purple-600';
+                        if (order.status === 'DELIVERED' || order.status === 'COMPLETED') return 'bg-emerald-100 text-emerald-600';
+                        if (order.status === 'CANCELED' || order.status === 'CANCELLED') return 'bg-red-100 text-red-600';
+                        return 'bg-blue-100 text-blue-600';
+                      })()}`}>
                         <ShoppingCart size={18} />
                       </div>
                       <div>
@@ -718,21 +712,23 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-gray-900">${Number(order.totalAmount || 0).toFixed(2)}</p>
-                      <p className={`text-xs font-medium px-2 py-1 rounded-full ${
-                        order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-                        order.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
-                        order.status === 'IN_DELIVERY' ? 'bg-purple-100 text-purple-700' :
-                        order.status === 'DELIVERED' || order.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' :
-                        order.status === 'CANCELED' || order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
-                        'bg-blue-100 text-blue-700'
-                      }`}>
-                        {order.status === 'PENDING' ? 'Pendiente' :
-                         order.status === 'CONFIRMED' ? 'Confirmada' :
-                         order.status === 'IN_DELIVERY' ? 'En Entrega' :
-                         order.status === 'DELIVERED' ? 'Entregada' :
-                         order.status === 'COMPLETED' ? 'Completada' :
-                         order.status === 'CANCELED' || order.status === 'CANCELLED' ? 'Cancelada' :
-                         order.status}
+                      <p className={`text-xs font-medium px-2 py-1 rounded-full ${(() => {
+                        if (order.status === 'PENDING') return 'bg-yellow-100 text-yellow-700';
+                        if (order.status === 'CONFIRMED') return 'bg-green-100 text-green-700';
+                        if (order.status === 'IN_DELIVERY') return 'bg-purple-100 text-purple-700';
+                        if (order.status === 'DELIVERED' || order.status === 'COMPLETED') return 'bg-emerald-100 text-emerald-700';
+                        if (order.status === 'CANCELED' || order.status === 'CANCELLED') return 'bg-red-100 text-red-700';
+                        return 'bg-blue-100 text-blue-700';
+                      })()}`}>
+                        {(() => {
+                          if (order.status === 'PENDING') return 'Pendiente';
+                          if (order.status === 'CONFIRMED') return 'Confirmada';
+                          if (order.status === 'IN_DELIVERY') return 'En Entrega';
+                          if (order.status === 'DELIVERED') return 'Entregada';
+                          if (order.status === 'COMPLETED') return 'Completada';
+                          if (order.status === 'CANCELED' || order.status === 'CANCELLED') return 'Cancelada';
+                          return order.status;
+                        })()}
                       </p>
                     </div>
                   </button>
@@ -806,14 +802,14 @@ export default function DashboardPage() {
                 <div className="space-y-4">
                   {recentOrders.slice(0, 8).map((order: any, index: number) => (
                     <div key={order.id} className="flex items-start gap-4 relative">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-md ${
-                        order.status === 'PENDING' ? 'bg-yellow-500 text-white' :
-                        order.status === 'CONFIRMED' ? 'bg-green-500 text-white' :
-                        order.status === 'IN_DELIVERY' ? 'bg-purple-500 text-white' :
-                        order.status === 'DELIVERED' || order.status === 'COMPLETED' ? 'bg-emerald-500 text-white' :
-                        order.status === 'CANCELED' || order.status === 'CANCELLED' ? 'bg-red-500 text-white' :
-                        'bg-blue-500 text-white'
-                      }`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center z-10 shadow-md ${(() => {
+                        if (order.status === 'PENDING') return 'bg-yellow-500 text-white';
+                        if (order.status === 'CONFIRMED') return 'bg-green-500 text-white';
+                        if (order.status === 'IN_DELIVERY') return 'bg-purple-500 text-white';
+                        if (order.status === 'DELIVERED' || order.status === 'COMPLETED') return 'bg-emerald-500 text-white';
+                        if (order.status === 'CANCELED' || order.status === 'CANCELLED') return 'bg-red-500 text-white';
+                        return 'bg-blue-500 text-white';
+                      })()}`}>
                         <ShoppingCart size={18} />
                       </div>
                       <div className="flex-1 bg-gray-50 rounded-lg p-3 border border-gray-100">
@@ -821,14 +817,16 @@ export default function DashboardPage() {
                           <p className="font-semibold text-gray-900">
                             Orden #{order.orderNumber?.replace('ORD-', '').slice(-6) || order.id.slice(0, 6)}
                           </p>
-                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                            order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
-                            order.status === 'CONFIRMED' ? 'bg-green-100 text-green-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
-                            {order.status === 'PENDING' ? 'Nueva' :
-                             order.status === 'CONFIRMED' ? 'Confirmada' :
-                             order.status}
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${(() => {
+                            if (order.status === 'PENDING') return 'bg-yellow-100 text-yellow-700';
+                            if (order.status === 'CONFIRMED') return 'bg-green-100 text-green-700';
+                            return 'bg-gray-100 text-gray-700';
+                          })()}`}>
+                            {(() => {
+                              if (order.status === 'PENDING') return 'Nueva';
+                              if (order.status === 'CONFIRMED') return 'Confirmada';
+                              return order.status;
+                            })()}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600 mt-1">

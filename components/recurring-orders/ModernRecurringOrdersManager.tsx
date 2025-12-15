@@ -277,14 +277,16 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
                   </div>
                   <div>
                     <p className="text-sm font-medium text-purple-600 mb-1">
-                      {userRole === 'SELLER' 
-                        ? stats.upcomingOrders.length > 1 
-                          ? `${stats.upcomingOrders.length} Órdenes Próximas de Clientes` 
-                          : 'Próxima Orden de Cliente'
-                        : stats.upcomingOrders.length > 1 
+                      {(() => {
+                        if (userRole === 'SELLER') {
+                          return stats.upcomingOrders.length > 1 
+                            ? `${stats.upcomingOrders.length} Órdenes Próximas de Clientes` 
+                            : 'Próxima Orden de Cliente';
+                        }
+                        return stats.upcomingOrders.length > 1 
                           ? `${stats.upcomingOrders.length} Órdenes Automáticas Programadas`
-                          : 'Próxima Orden Automática'
-                      }
+                          : 'Próxima Orden Automática';
+                      })()}
                     </p>
                     
                     {stats.upcomingOrders.length === 1 ? (
@@ -387,30 +389,38 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
               <Repeat className="h-16 w-16 text-purple-400" />
             </div>
             <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3">
-              {filterStatus === 'all' 
-                ? userRole === 'SELLER' 
-                  ? 'No hay órdenes recurrentes de clientes'
-                  : 'No tienes órdenes recurrentes'
-                : filterStatus === 'active'
-                ? userRole === 'SELLER'
-                  ? 'No hay órdenes activas'
-                  : 'No tienes órdenes activas'
-                : userRole === 'SELLER'
-                ? 'No hay órdenes pausadas'
-                : 'No tienes órdenes pausadas'}
+              {(() => {
+                if (filterStatus === 'all') {
+                  return userRole === 'SELLER' 
+                    ? 'No hay órdenes recurrentes de clientes'
+                    : 'No tienes órdenes recurrentes';
+                }
+                if (filterStatus === 'active') {
+                  return userRole === 'SELLER'
+                    ? 'No hay órdenes activas'
+                    : 'No tienes órdenes activas';
+                }
+                return userRole === 'SELLER'
+                  ? 'No hay órdenes pausadas'
+                  : 'No tienes órdenes pausadas';
+              })()}
             </h3>
             <p className="text-gray-600 mb-6 text-lg">
-              {filterStatus === 'all'
-                ? userRole === 'SELLER'
-                  ? 'Tus clientes aún no han creado órdenes recurrentes'
-                  : 'Crea tu primera orden recurrente y automatiza tus pedidos favoritos'
-                : filterStatus === 'active'
-                ? userRole === 'SELLER'
-                  ? 'Todas las órdenes de tus clientes están pausadas'
-                  : 'Todas tus órdenes están pausadas. Activa alguna para que se ejecute automáticamente.'
-                : userRole === 'SELLER'
-                ? 'Todas las órdenes de tus clientes están activas'
-                : 'Todas tus órdenes están activas.'}
+              {(() => {
+                if (filterStatus === 'all') {
+                  return userRole === 'SELLER'
+                    ? 'Tus clientes aún no han creado órdenes recurrentes'
+                    : 'Crea tu primera orden recurrente y automatiza tus pedidos favoritos';
+                }
+                if (filterStatus === 'active') {
+                  return userRole === 'SELLER'
+                    ? 'Todas las órdenes de tus clientes están pausadas'
+                    : 'Todas tus órdenes están pausadas. Activa alguna para que se ejecute automáticamente.';
+                }
+                return userRole === 'SELLER'
+                  ? 'Todas las órdenes de tus clientes están activas'
+                  : 'Todas tus órdenes están activas.';
+              })()}
             </p>
             {userRole === 'CLIENT' && filterStatus === 'all' && (
               <button
@@ -572,19 +582,25 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
                             : 'bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-300 text-emerald-700 hover:border-emerald-400 hover:shadow-lg'
                         } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
-                        {isProcessing ? (
-                          <RefreshCw className="h-4 w-4 animate-spin" />
-                        ) : order.isActive ? (
-                          <>
-                            <Pause className="h-4 w-4" />
-                            Pausar
-                          </>
-                        ) : (
+                        {(() => {
+                        if (isProcessing) {
+                          return <RefreshCw className="h-4 w-4 animate-spin" />;
+                        }
+                        if (order.isActive) {
+                          return (
+                            <>
+                              <Pause className="h-4 w-4" />
+                              Pausar
+                            </>
+                          );
+                        }
+                        return (
                           <>
                             <Play className="h-4 w-4" />
                             Activar
                           </>
-                        )}
+                        );
+                      })()}
                       </button>
                       
                       <button

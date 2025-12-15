@@ -47,7 +47,12 @@ export default function BuyerDashboardPage() {
   const getMonthlyData = () => {
     const monthsData = []
     const now = new Date()
-    const monthCount = chartPeriod === '6months' ? 6 : chartPeriod === 'year' ? 12 : 24
+    const getMonthCount = () => {
+      if (chartPeriod === '6months') return 6;
+      if (chartPeriod === 'year') return 12;
+      return 24;
+    };
+    const monthCount = getMonthCount()
 
     for (let i = monthCount - 1; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1)
@@ -567,7 +572,11 @@ export default function BuyerDashboardPage() {
                       <div>
                         <h3 className="font-bold text-emerald-900">Mi Carrito</h3>
                         <p className="text-sm text-emerald-700 font-medium">
-                          {cartCount > 0 ? `${cartCount} ${cartCount === 1 ? 'producto' : 'productos'}` : 'Ver productos en carrito'}
+                          {(() => {
+                            if (cartCount === 0) return 'Ver productos en carrito';
+                            const label = cartCount === 1 ? 'producto' : 'productos';
+                            return `${cartCount} ${label}`;
+                          })()}
                         </p>
                       </div>
                     </div>

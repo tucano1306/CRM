@@ -43,7 +43,18 @@ export async function GET(request: Request) {
     // Determinar el rol del usuario si no se especifica
     const isClient = authUser.clients.length > 0
     const isSeller = authUser.sellers.length > 0
-    const effectiveRole = role || (isClient ? 'client' : isSeller ? 'seller' : null)
+    
+    // Determine effective role - extracted to avoid nested ternary
+    let effectiveRole = role
+    if (!effectiveRole) {
+      if (isClient) {
+        effectiveRole = 'client'
+      } else if (isSeller) {
+        effectiveRole = 'seller'
+      } else {
+        effectiveRole = null
+      }
+    }
 
     console.log('🎭 [ORDERS GET] Effective role:', effectiveRole, { isClient, isSeller })
 

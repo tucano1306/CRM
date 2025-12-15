@@ -182,12 +182,12 @@ export default async function DashboardSSRPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
                         <span className="font-semibold text-lg">{order.orderNumber}</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          order.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                          order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                          order.status === 'CONFIRMED' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${(() => {
+                          if (order.status === 'COMPLETED') return 'bg-green-100 text-green-800';
+                          if (order.status === 'PENDING') return 'bg-yellow-100 text-yellow-800';
+                          if (order.status === 'CONFIRMED') return 'bg-blue-100 text-blue-800';
+                          return 'bg-gray-100 text-gray-800';
+                        })()}`}>
                           {order.status}
                         </span>
                       </div>

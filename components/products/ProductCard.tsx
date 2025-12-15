@@ -78,12 +78,16 @@ export default function ProductCard({ product, onEdit, onDelete, onClick }: Prod
             )}
           </div>
 
-          <div className={`rounded-lg p-3 ${
-            isOutOfStock ? 'bg-red-50' : isLowStock ? 'bg-yellow-50' : 'bg-blue-50'
-          }`}>
-            <div className={`flex items-center gap-2 mb-1 ${
-              isOutOfStock ? 'text-red-600' : isLowStock ? 'text-yellow-600' : 'text-blue-600'
-            }`}>
+          <div className={`rounded-lg p-3 ${(() => {
+            if (isOutOfStock) return 'bg-red-50';
+            if (isLowStock) return 'bg-yellow-50';
+            return 'bg-blue-50';
+          })()}`}>
+            <div className={`flex items-center gap-2 mb-1 ${(() => {
+              if (isOutOfStock) return 'text-red-600';
+              if (isLowStock) return 'text-yellow-600';
+              return 'text-blue-600';
+            })()}`}>
               {isOutOfStock || isLowStock ? (
                 <AlertCircle className="h-4 w-4" />
               ) : (
@@ -91,9 +95,11 @@ export default function ProductCard({ product, onEdit, onDelete, onClick }: Prod
               )}
               <span className="text-xs font-medium">Stock</span>
             </div>
-            <p className={`text-xl font-bold ${
-              isOutOfStock ? 'text-red-700' : isLowStock ? 'text-yellow-700' : 'text-blue-700'
-            }`}>
+            <p className={`text-xl font-bold ${(() => {
+              if (isOutOfStock) return 'text-red-700';
+              if (isLowStock) return 'text-yellow-700';
+              return 'text-blue-700';
+            })()}`}>
               {product.stock}
             </p>
             {product.unit && (

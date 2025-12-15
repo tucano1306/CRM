@@ -570,7 +570,11 @@ export default function ClientsPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-sm font-medium mb-1">
-                {selectedClientId ? 'Cliente Seleccionado' : searchQuery ? 'Clientes Filtrados' : 'Total Clientes'}
+                {(() => {
+                  if (selectedClientId) return 'Cliente Seleccionado';
+                  if (searchQuery) return 'Clientes Filtrados';
+                  return 'Total Clientes';
+                })()}
               </p>
               <p className="text-4xl font-bold">{displayClients.length}</p>
             </div>
@@ -898,11 +902,11 @@ export default function ClientsPage() {
                     </label>
                     <input
                       type={invitationMethod === 'email' ? 'email' : 'tel'}
-                      placeholder={
-                        invitationMethod === 'email' ? 'ejemplo@correo.com' :
-                        invitationMethod === 'whatsapp' ? '7862585427' :
-                        '786 2585427'
-                      }
+                      placeholder={(() => {
+                        if (invitationMethod === 'email') return 'ejemplo@correo.com';
+                        if (invitationMethod === 'whatsapp') return '7862585427';
+                        return '786 2585427';
+                      })()}
                       value={invitationValue}
                       onChange={(e) => setInvitationValue(e.target.value)}
                       className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base"
@@ -922,7 +926,11 @@ export default function ClientsPage() {
                       </>
                     ) : (
                       <>
-                        ✉️ Enviar Invitación por {invitationMethod === 'email' ? 'Email' : invitationMethod === 'whatsapp' ? 'WhatsApp' : 'SMS'}
+                        ✉️ Enviar Invitación por {(() => {
+                          if (invitationMethod === 'email') return 'Email';
+                          if (invitationMethod === 'whatsapp') return 'WhatsApp';
+                          return 'SMS';
+                        })()}
                       </>
                     )}
                   </button>
@@ -1121,15 +1129,12 @@ export default function ClientsPage() {
                             </p>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className={`px-3 py-1.5 rounded-lg text-sm font-bold ${
-                              order.status === 'COMPLETED' || order.status === 'DELIVERED' 
-                                ? 'bg-green-100 text-green-700'
-                                : order.status === 'PENDING'
-                                ? 'bg-yellow-100 text-yellow-700'
-                                : order.status === 'CANCELED'
-                                ? 'bg-red-100 text-red-700'
-                                : 'bg-blue-100 text-blue-700'
-                            }`}>
+                            <span className={`px-3 py-1.5 rounded-lg text-sm font-bold ${(() => {
+                              if (order.status === 'COMPLETED' || order.status === 'DELIVERED') return 'bg-green-100 text-green-700';
+                              if (order.status === 'PENDING') return 'bg-yellow-100 text-yellow-700';
+                              if (order.status === 'CANCELED') return 'bg-red-100 text-red-700';
+                              return 'bg-blue-100 text-blue-700';
+                            })()}`}>
                               {order.status || 'N/A'}
                             </span>
                             <p className="text-xl font-black text-gray-900">

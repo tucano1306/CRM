@@ -47,7 +47,11 @@ export async function triggerRevalidation(options: RevalidateOptions) {
         'Authorization': `Bearer ${process.env.REVALIDATE_SECRET}`
       },
       body: JSON.stringify({
-        type: options.tag ? 'tag' : options.tags ? 'tags' : 'path',
+        type: (() => {
+          if (options.tag) return 'tag';
+          if (options.tags) return 'tags';
+          return 'path';
+        })(),
         path: options.path,
         tag: options.tag,
         tags: options.tags

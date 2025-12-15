@@ -239,15 +239,22 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
 
             {/* Notification List */}
             <div className="flex-1 overflow-y-auto">
-              {loading ? (
-                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  Cargando...
-                </div>
-              ) : notifications.length === 0 ? (
-                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                  No hay notificaciones
-                </div>
-              ) : (
+              {(() => {
+                if (loading) {
+                  return (
+                    <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                      Cargando...
+                    </div>
+                  )
+                }
+                if (notifications.length === 0) {
+                  return (
+                    <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                      No hay notificaciones
+                    </div>
+                  )
+                }
+                return (
                 <div className="divide-y divide-gray-100 dark:divide-gray-700">
                   {notifications.map((notification: Notification) => (
                     <button
@@ -286,7 +293,8 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
                     </button>
                   ))}
                 </div>
-              )}
+              )
+              })()}
             </div>
 
             {/* Footer */}
@@ -335,9 +343,11 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
             {/* Header */}
             <div 
               onMouseDown={handleMouseDown}
-              className={`flex items-start justify-between p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700 select-none bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 ${
-                role === 'seller' && !isDragging ? 'sm:cursor-grab cursor-default' : isDragging ? 'cursor-grabbing' : ''
-              }`}
+              className={`flex items-start justify-between p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700 select-none bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 ${(() => {
+                if (role === 'seller' && !isDragging) return 'sm:cursor-grab cursor-default'
+                if (isDragging) return 'cursor-grabbing'
+                return ''
+              })()}`}
             >
               <div className="flex items-start gap-3 flex-1 min-w-0">
                 <span className="text-3xl sm:text-4xl animate-bounce flex-shrink-0">{getTypeIcon(selectedNotification.type)}</span>
