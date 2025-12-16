@@ -15,8 +15,8 @@ export function TableSkeleton({ rows = 5 }: TableSkeletonProps) {
         </div>
       </div>
       <div className="divide-y">
-        {Array.from({ length: rows }).map((_, i) => (
-          <div key={`skeleton-row-${i}`} className="p-4 flex gap-4">
+        {Array.from({ length: rows }, (_, i) => i + 1).map((num) => (
+          <div key={`table-skeleton-row-${num}`} className="p-4 flex gap-4">
             <Skeleton className="h-8 w-8" />
             <Skeleton className="h-8 flex-1" />
             <Skeleton className="h-8 w-24" />

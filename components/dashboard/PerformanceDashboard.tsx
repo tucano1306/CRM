@@ -6,9 +6,10 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react'
+import type { PerformanceAlertType, AlertSeverity } from '@/lib/monitoring/performance-profiler'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 // Simple progress bar without external dependencies
-const Progress = ({ value, className }: { value: number, className?: string }) => (
+const Progress = ({ value, className }: Readonly<{ value: number, className?: string }>) => (
   <div className={`w-full bg-gray-200 rounded-full h-2 ${className}`}>
     <div 
       className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
@@ -48,8 +49,8 @@ interface WorkerPoolStats {
 }
 
 interface PerformanceAlert {
-  type: 'event_loop_lag' | 'memory_leak' | 'cpu_spike' | 'gc_pressure'
-  severity: 'low' | 'medium' | 'high' | 'critical'
+  type: PerformanceAlertType
+  severity: AlertSeverity
   message: string
   timestamp: number
 }
@@ -206,8 +207,8 @@ export default function PerformanceDashboard() {
         <div className="animate-pulse">
           <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={`skeleton-${i}`} className="h-32 bg-gray-200 rounded"></div>
+            {[1, 2, 3, 4, 5, 6].map((num) => (
+              <div key={`perf-skeleton-${num}`} className="h-32 bg-gray-200 rounded"></div>
             ))}
           </div>
         </div>

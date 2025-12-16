@@ -1,5 +1,6 @@
 // lib/postgres.ts
 import { Pool, PoolClient, QueryResult } from 'pg';
+import type { UserRole, ProductUnit, OrderStatus } from '@/types';
 
 // ============================================
 // CONFIGURACIÓN DE POSTGRESQL
@@ -29,7 +30,7 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'ADMIN' | 'SELLER' | 'CLIENT';
+  role: UserRole;
   password?: string;
   created_at?: Date;
   updated_at?: Date;
@@ -50,7 +51,7 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  unit: 'case' | 'pk';
+  unit: ProductUnit;
   price: number;
   stock: number;
   seller_ids?: string[];
@@ -62,7 +63,7 @@ export interface Order {
   id: string;
   client_id: string;
   seller_id: string;
-  status: 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY_FOR_PICKUP' | 'IN_DELIVERY' | 'DELIVERED' | 'PARTIALLY_DELIVERED' | 'COMPLETED' | 'CANCELED' | 'PAYMENT_PENDING' | 'PAID';
+  status: OrderStatus;
   total_amount: number;
   items?: OrderItem[];
   created_at?: Date;

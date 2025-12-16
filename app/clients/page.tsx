@@ -52,8 +52,8 @@ function LoadingState() {
         description="Cargando clientes..."
       />
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-        {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="animate-pulse bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-200">
+        {[1, 2, 3, 4, 5, 6].map((num) => (
+          <div key={`client-skeleton-${num}`} className="animate-pulse bg-white rounded-2xl shadow-lg p-6 border-2 border-gray-200">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-16 h-16 bg-gray-200 rounded-full" />
               <div className="flex-1">

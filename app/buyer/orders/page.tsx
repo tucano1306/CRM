@@ -402,7 +402,7 @@ function getSizeDimensions(size: 'normal' | 'small' | 'large'): string {
   return 'w-20 h-20';
 }
 
-function ConfirmedStatusAnimation({ size = 'normal' }: { size?: 'normal' | 'small' | 'large' }) {
+function ConfirmedStatusAnimation({ size = 'normal' }: Readonly<{ size?: 'normal' | 'small' | 'large' }>) {
   const dimensions = getSizeDimensions(size)
   return (
     <div className={`relative ${dimensions}`}>
@@ -435,7 +435,7 @@ function ConfirmedStatusAnimation({ size = 'normal' }: { size?: 'normal' | 'smal
   )
 }
 
-function InDeliveryStatusAnimation({ size = 'normal' }: { size?: 'normal' | 'small' | 'large' }) {
+function InDeliveryStatusAnimation({ size = 'normal' }: Readonly<{ size?: 'normal' | 'small' | 'large' }>) {
   const dimensions = getSizeDimensions(size)
   return (
     <div className={`relative ${dimensions}`}>
@@ -467,7 +467,7 @@ function InDeliveryStatusAnimation({ size = 'normal' }: { size?: 'normal' | 'sma
   )
 }
 
-function DeliveredStatusAnimation({ size = 'normal' }: { size?: 'normal' | 'small' | 'large' }) {
+function DeliveredStatusAnimation({ size = 'normal' }: Readonly<{ size?: 'normal' | 'small' | 'large' }>) {
   const dimensions = getSizeDimensions(size)
   return (
     <div className={`relative ${dimensions}`}>
@@ -487,7 +487,7 @@ function DeliveredStatusAnimation({ size = 'normal' }: { size?: 'normal' | 'smal
 }
 
 // Renders the appropriate status animation based on order status
-function StatusAnimationRenderer({ status, size = 'normal' }: { status: OrderStatus; size?: 'normal' | 'small' | 'large' }) {
+function StatusAnimationRenderer({ status, size = 'normal' }: Readonly<{ status: OrderStatus; size?: 'normal' | 'small' | 'large' }>) {
   if (status === 'CONFIRMED') return <ConfirmedStatusAnimation size={size} />
   if (status === 'IN_DELIVERY') return <InDeliveryStatusAnimation size={size} />
   if (status === 'DELIVERED' || status === 'COMPLETED') return <DeliveredStatusAnimation size={size} />
@@ -2719,7 +2719,7 @@ function OrdersPageContent() {
       </div>
 
       {/* CSS Animations */}
-      <style>{`
+      <style jsx={true}>{`
         @keyframes orderPulse {
           0%, 100% {
             transform: scale(1);
@@ -3376,8 +3376,8 @@ function OrdersPageLoading() {
         <div className="animate-pulse space-y-4">
           <div className="h-8 bg-gray-200 rounded w-1/4"></div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={`skeleton-${i}`} className="bg-white rounded-lg p-4 h-48">
+            {[1, 2, 3, 4, 5, 6].map((num) => (
+              <div key={`buyer-order-skeleton-${num}`} className="bg-white rounded-lg p-4 h-48">
                 <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
                 <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
                 <div className="h-4 bg-gray-200 rounded w-2/3"></div>

@@ -9,7 +9,7 @@ interface QueryProviderProps {
 }
 
 export function QueryProvider({ children }: QueryProviderProps) {
-  const [queryClient] = useState(
+  const [queryClient, _setQueryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {

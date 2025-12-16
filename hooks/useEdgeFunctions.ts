@@ -132,7 +132,7 @@ export function useEdgeFunctions(
   const [featuresError, setFeaturesError] = useState<string | null>(null)
 
   // Session ID for analytics
-  const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`)
+  const [sessionId, _setSessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`)
 
   // Check authentication
   const checkAuth = useCallback(async (): Promise<EdgeAuth | null> => {

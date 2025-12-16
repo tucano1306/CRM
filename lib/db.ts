@@ -1,9 +1,11 @@
+import type { UserRole, ProductUnit, OrderStatus } from '@/types';
+
 // Interfaces
 interface User {
   id: string;
   email: string;
   name: string;
-  role: 'ADMIN' | 'SELLER' | 'CLIENT';
+  role: UserRole;
   password?: string;
 }
 
@@ -20,7 +22,7 @@ interface Product {
   id: string;
   name: string;
   description: string;
-  unit: 'case' | 'pk';
+  unit: ProductUnit;
   price: number;
   stock: number;
   sellerIds: string[];
@@ -30,7 +32,7 @@ interface Order {
   id: string;
   clientId: string;
   sellerId: string;
-  status: 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY_FOR_PICKUP' | 'IN_DELIVERY' | 'DELIVERED' | 'PARTIALLY_DELIVERED' | 'COMPLETED' | 'CANCELED' | 'PAYMENT_PENDING' | 'PAID';
+  status: OrderStatus;
   items: OrderItem[];
   totalAmount: number;
   createdAt: string;

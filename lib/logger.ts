@@ -5,6 +5,8 @@
  * y preparado para integración con servicios externos (Sentry, Logtail, etc.)
  */
 
+import type { AlertSeverity } from '@/lib/monitoring/performance-profiler'
+
 // ============================================================================
 // TIPOS Y ENUMS
 // ============================================================================
@@ -515,7 +517,7 @@ class Logger {
    */
   security(
     event: string,
-    severity: 'low' | 'medium' | 'high' | 'critical',
+    severity: AlertSeverity,
     context?: LogContext,
     metadata?: Record<string, any>
   ): void {

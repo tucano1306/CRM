@@ -16,9 +16,13 @@ export interface PerformanceMetrics {
   timestamp: number
 }
 
+// Type aliases for commonly used union types
+export type PerformanceAlertType = 'event_loop_lag' | 'memory_leak' | 'cpu_spike' | 'gc_pressure'
+export type AlertSeverity = 'low' | 'medium' | 'high' | 'critical'
+
 export interface PerformanceAlert {
-  type: 'event_loop_lag' | 'memory_leak' | 'cpu_spike' | 'gc_pressure'
-  severity: 'low' | 'medium' | 'high' | 'critical'
+  type: PerformanceAlertType
+  severity: AlertSeverity
   message: string
   metrics: PerformanceMetrics
   timestamp: number

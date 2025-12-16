@@ -1,8 +1,13 @@
+// Type aliases for commonly used union types
+export type UserRole = 'ADMIN' | 'SELLER' | 'CLIENT';
+export type ProductUnit = 'case' | 'pk';
+export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY_FOR_PICKUP' | 'IN_DELIVERY' | 'DELIVERED' | 'PARTIALLY_DELIVERED' | 'COMPLETED' | 'CANCELED' | 'PAYMENT_PENDING' | 'PAID';
+
 export interface User {
   id: string;
   email: string;
   name: string;
-  role: 'ADMIN' | 'SELLER' | 'CLIENT';
+  role: UserRole;
   password?: string;
 }
 
@@ -19,7 +24,7 @@ export interface Product {
   id: string;
   name: string;
   description: string;
-  unit: 'case' | 'pk';
+  unit: ProductUnit;
   price: number;
   stock: number;
   sellerIds: string[];
@@ -29,7 +34,7 @@ export interface Order {
   id: string;
   clientId: string;
   sellerId: string;
-  status: 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY_FOR_PICKUP' | 'IN_DELIVERY' | 'DELIVERED' | 'PARTIALLY_DELIVERED' | 'COMPLETED' | 'CANCELED' | 'PAYMENT_PENDING' | 'PAID';
+  status: OrderStatus;
   items: OrderItem[];
   totalAmount: number;  // AGREGADO
   createdAt: string;

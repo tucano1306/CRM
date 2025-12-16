@@ -65,7 +65,7 @@ function LoadingState() {
   )
 }
 
-function EmptyState({ searchTerm, onCreateClick }: { searchTerm: string; onCreateClick: () => void }) {
+function EmptyState({ searchTerm, onCreateClick }: Readonly<{ searchTerm: string; onCreateClick: () => void }>) {
   return (
     <div className="text-center py-12">
       <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -91,12 +91,12 @@ function ImportFileDropzone({
   fileInputRef,
   onFileSelect,
   onFileClear,
-}: {
+}: Readonly<{
   importFile: File | null
   fileInputRef: React.RefObject<HTMLInputElement>
   onFileSelect: (file: File) => void
   onFileClear: () => void
-}) {
+}>) {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -139,7 +139,7 @@ function ImportFileDropzone({
   )
 }
 
-function ImportFileSelected({ file, onClear }: { file: File; onClear: () => void }) {
+function ImportFileSelected({ file, onClear }: Readonly<{ file: File; onClear: () => void }>) {
   return (
     <div className="space-y-3">
       <div className="w-14 h-14 mx-auto bg-green-100 rounded-full flex items-center justify-center">
@@ -156,7 +156,7 @@ function ImportFileSelected({ file, onClear }: { file: File; onClear: () => void
   )
 }
 
-function ImportFileEmpty({ onSelectClick }: { onSelectClick: () => void }) {
+function ImportFileEmpty({ onSelectClick }: Readonly<{ onSelectClick: () => void }>) {
   return (
     <div className="space-y-3">
       <div className="w-14 h-14 mx-auto bg-purple-100 rounded-full flex items-center justify-center">
@@ -235,8 +235,8 @@ function ImportResultDisplay({
 
       {result.errors.length > 0 && (
         <div className="text-sm text-red-700 max-h-24 overflow-y-auto">
-          {result.errors.map((err, i) => (
-            <p key={`error-${i}`}>• {err}</p>
+          {result.errors.map((err) => (
+            <p key={err}>• {err}</p>
           ))}
         </div>
       )}

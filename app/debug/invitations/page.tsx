@@ -129,7 +129,7 @@ export default function DebugInvitationsPage() {
             <CardContent>
               <ol className="space-y-3">
                 {instructions.howToTest.map((step: string, i: number) => (
-                  <li key={`step-${i}`} className="flex gap-3">
+                  <li key={step} className="flex gap-3">
                     <span className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-600 text-white text-sm flex items-center justify-center font-bold">
                       {i + 1}
                     </span>

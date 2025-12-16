@@ -196,8 +196,8 @@ function EnabledRoleCard({ href, iconBgClass, icon, title, description, features
         </CardHeader>
         <CardContent className="space-y-3">
           <ul className="space-y-2 text-gray-700">
-            {features.map((feature, idx) => (
-              <li key={`feature-${idx}`} className="flex items-start">
+            {features.map((feature) => (
+              <li key={feature} className="flex items-start">
                 <span className={`text-${checkColor}-500 mr-2`}>✓</span>
                 <span>{feature}</span>
               </li>

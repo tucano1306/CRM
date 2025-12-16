@@ -552,8 +552,8 @@ function OrderCard({ order, userRole, isProcessing, index, onToggle, onDelete, o
               </p>
             </div>
             <div className="space-y-1">
-              {order.items.slice(0, 2).map((item: any, i: number) => (
-                <p key={`${item.productName}-${i}`} className="text-sm text-gray-700 truncate">
+              {order.items.slice(0, 2).map((item: any) => (
+                <p key={item.id || `${item.productId}-${item.productName}`} className="text-sm text-gray-700 truncate">
                   • {item.productName} <span className="text-gray-500">x{item.quantity}</span>
                 </p>
               ))}
