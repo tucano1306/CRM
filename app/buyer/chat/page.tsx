@@ -63,6 +63,89 @@ function BuyerChatContent() {
     }
   }, [orderId])
 
+  // Helper function to render order context based on loading and order state
+  const renderOrderContext = () => {
+    if (loadingOrder) {
+      return (
+        <Card className="bg-white rounded-xl shadow-xl border-2 border-purple-200">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3">
+              <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-600 border-t-transparent" />
+              <p className="text-gray-600">Cargando información de orden...</p>
+            </div>
+          </CardContent>
+        </Card>
+      )
+    }
+    
+    if (order) {
+      const statusClass = (() => {
+        if (order.status === 'COMPLETED' || order.status === 'DELIVERED') return 'bg-green-100 text-green-800';
+        if (order.status === 'PENDING') return 'bg-yellow-100 text-yellow-800';
+        return 'bg-blue-100 text-blue-800';
+      })();
+      
+      return (
+        <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl shadow-xl border-2 border-purple-300">
+          <CardContent className="p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 rounded-xl shadow-md">
+                  <ShoppingBag className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-purple-900 mb-1">
+                    Orden: {order.orderNumber}
+                  </h3>
+                  <p className="text-sm text-purple-700 mb-2">
+                    {new Date(order.createdAt).toLocaleDateString('es-ES', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    })}
+                  </p>
+                  <div className="flex items-center gap-4 text-sm">
+                    <span className={`px-3 py-1 rounded-full font-medium ${statusClass}`}>
+                      {order.status}
+                    </span>
+                    <span className="text-purple-700 flex items-center gap-1">
+                      <Package className="w-4 h-4" />
+                      {order.orderItems?.length || 0} productos
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-purple-600 font-medium mb-1">Total</p>
+                <p className="text-2xl font-bold text-purple-900">
+                  {formatPrice(order.totalAmount)}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4 pt-4 border-t border-purple-200">
+              <p className="text-xs text-purple-600 font-medium mb-2">💬 Pregunta sobre esta orden</p>
+              <p className="text-sm text-purple-800">
+                Este chat está vinculado con la orden <span className="font-bold">{order.orderNumber}</span>. 
+                El vendedor verá esta orden cuando reciba tus mensajes.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )
+    }
+    
+    return (
+      <Card className="bg-white rounded-xl shadow-xl border-2 border-yellow-200">
+        <CardContent className="p-6">
+          <div className="flex items-center gap-3 text-yellow-600">
+            <span className="text-2xl">⚠️</span>
+            <p className="font-medium">No se pudo cargar la información de la orden</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   useEffect(() => {
     fetchSellerInfo()
     if (orderId) {
@@ -127,75 +210,7 @@ function BuyerChatContent() {
         {/* Order Context Card */}
         {orderId && (
           <div className="mb-6">
-            {loadingOrder ? (
-              <Card className="bg-white rounded-xl shadow-xl border-2 border-purple-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <div className="animate-spin rounded-full h-8 w-8 border-4 border-purple-600 border-t-transparent" />
-                    <p className="text-gray-600">Cargando información de orden...</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : order ? (
-              <Card className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl shadow-xl border-2 border-purple-300">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-3 rounded-xl shadow-md">
-                        <ShoppingBag className="h-6 w-6 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-purple-900 mb-1">
-                          Orden: {order.orderNumber}
-                        </h3>
-                        <p className="text-sm text-purple-700 mb-2">
-                          {new Date(order.createdAt).toLocaleDateString('es-ES', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric'
-                          })}
-                        </p>
-                        <div className="flex items-center gap-4 text-sm">
-                          <span className={`px-3 py-1 rounded-full font-medium ${(() => {
-                            if (order.status === 'COMPLETED' || order.status === 'DELIVERED') return 'bg-green-100 text-green-800';
-                            if (order.status === 'PENDING') return 'bg-yellow-100 text-yellow-800';
-                            return 'bg-blue-100 text-blue-800';
-                          })()}`}>
-                            {order.status}
-                          </span>
-                          <span className="text-purple-700 flex items-center gap-1">
-                            <Package className="w-4 h-4" />
-                            {order.orderItems?.length || 0} productos
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-purple-600 font-medium mb-1">Total</p>
-                      <p className="text-2xl font-bold text-purple-900">
-                        {formatPrice(order.totalAmount)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-4 pt-4 border-t border-purple-200">
-                    <p className="text-xs text-purple-600 font-medium mb-2">💬 Pregunta sobre esta orden</p>
-                    <p className="text-sm text-purple-800">
-                      Este chat está vinculado con la orden <span className="font-bold">{order.orderNumber}</span>. 
-                      El vendedor verá esta orden cuando reciba tus mensajes.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="bg-white rounded-xl shadow-xl border-2 border-yellow-200">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3 text-yellow-600">
-                    <span className="text-2xl">⚠️</span>
-                    <p className="font-medium">No se pudo cargar la información de la orden</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {renderOrderContext()}
           </div>
         )}
 

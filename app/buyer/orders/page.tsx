@@ -2281,15 +2281,11 @@ function OrdersPageContent() {
                               if (isPartialStock) return 'bg-amber-100'
                               return 'bg-purple-100'
                             })()}`}>
-                              {hasIssue ? (
-                                isOutOfStock ? (
-                                  <XCircle className="w-8 h-8 text-red-600" />
-                                ) : (
-                                  <AlertTriangle className="w-8 h-8 text-amber-600" />
-                                )
-                              ) : (
-                                <Package className="w-8 h-8 text-purple-600" />
-                              )}
+                              {(() => {
+                                if (!hasIssue) return <Package className="w-8 h-8 text-purple-600" />;
+                                if (isOutOfStock) return <XCircle className="w-8 h-8 text-red-600" />;
+                                return <AlertTriangle className="w-8 h-8 text-amber-600" />;
+                              })()}
                             </div>
                             <div className="flex-1">
                               <h4 className={`font-semibold ${hasIssue ? 'text-gray-700' : 'text-gray-900'}`}>

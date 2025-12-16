@@ -39,6 +39,48 @@ export default function DeliveryInstructions({
     setIsEditing(false)
   }
 
+  // Helper function to render display state (non-editing)
+  const renderInstructionsDisplay = () => {
+    if (currentInstructions) {
+      return (
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start gap-2 flex-1">
+              <MapPin className="h-4 w-4 text-purple-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-purple-900">{currentInstructions}</p>
+            </div>
+            {editable && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsEditing(true)}
+                className="flex-shrink-0"
+              >
+                <Edit2 className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        </div>
+      )
+    }
+    
+    if (editable) {
+      return (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => setIsEditing(true)}
+          className="gap-2 text-purple-600 border-purple-300 hover:bg-purple-50"
+        >
+          <MapPin className="h-4 w-4" />
+          Agregar instrucciones de entrega
+        </Button>
+      )
+    }
+    
+    return <p className="text-sm text-gray-500 italic">Sin instrucciones de entrega</p>
+  }
+
   if (!editable && !currentInstructions) {
     return null
   }
@@ -82,37 +124,8 @@ export default function DeliveryInstructions({
             </Button>
           </div>
         </div>
-      ) : currentInstructions ? (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-start gap-2 flex-1">
-              <MapPin className="h-4 w-4 text-purple-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-purple-900">{currentInstructions}</p>
-            </div>
-            {editable && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setIsEditing(true)}
-                className="flex-shrink-0"
-              >
-                <Edit2 className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-        </div>
-      ) : editable ? (
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => setIsEditing(true)}
-          className="gap-2 text-purple-600 border-purple-300 hover:bg-purple-50"
-        >
-          <MapPin className="h-4 w-4" />
-          Agregar instrucciones de entrega
-        </Button>
       ) : (
-        <p className="text-sm text-gray-500 italic">Sin instrucciones de entrega</p>
+        renderInstructionsDisplay()
       )}
     </div>
   )

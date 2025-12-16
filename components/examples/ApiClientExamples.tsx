@@ -193,9 +193,15 @@ export function ExamplePostWithTimeout() {
     }
   }
 
+  const buttonText = (() => {
+    if (loading) return 'Creando orden...';
+    if (success) return '✅ Creado';
+    return 'Crear Orden';
+  })();
+
   return (
     <Button onClick={() => createOrder({ notes: 'Test' })} disabled={loading}>
-      {loading ? 'Creando orden...' : success ? '✅ Creado' : 'Crear Orden'}
+      {buttonText}
     </Button>
   )
 }

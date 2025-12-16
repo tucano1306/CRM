@@ -174,25 +174,21 @@ export default function ProductModal({ product, isOpen, onClose, onTagsUpdate }:
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900">Stock Actual</h3>
-                  <span className={`px-4 py-2 rounded-full font-bold text-lg ${
-                    product.stock === 0 
-                      ? 'bg-red-100 text-red-700' 
-                      : product.stock < 10 
-                      ? 'bg-yellow-100 text-yellow-700' 
-                      : 'bg-green-100 text-green-700'
-                  }`}>
+                  <span className={`px-4 py-2 rounded-full font-bold text-lg ${(() => {
+                    if (product.stock === 0) return 'bg-red-100 text-red-700';
+                    if (product.stock < 10) return 'bg-yellow-100 text-yellow-700';
+                    return 'bg-green-100 text-green-700';
+                  })()}`}>
                     {product.stock} {product.unit || 'unidades'}
                   </span>
                 </div>
                 <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className={`h-full transition-all ${
-                      product.stock === 0 
-                        ? 'bg-red-500' 
-                        : product.stock < 10 
-                        ? 'bg-yellow-500' 
-                        : 'bg-green-500'
-                    }`}
+                    className={`h-full transition-all ${(() => {
+                      if (product.stock === 0) return 'bg-red-500';
+                      if (product.stock < 10) return 'bg-yellow-500';
+                      return 'bg-green-500';
+                    })()}`}
                     style={{ width: `${Math.min((product.stock / 100) * 100, 100)}%` }}
                   />
                 </div>

@@ -41,6 +41,51 @@ export default function OrderItemNotes({
     setIsEditing(false)
   }
 
+  // Helper function to render display state (non-editing)
+  const renderNoteDisplay = () => {
+    if (currentNote) {
+      return (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start gap-2 flex-1">
+              <FileText className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-xs text-blue-600 font-medium mb-1">Nota:</p>
+                <p className="text-sm text-blue-900">{currentNote}</p>
+              </div>
+            </div>
+            {editable && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setIsEditing(true)}
+                className="flex-shrink-0"
+              >
+                <Edit2 className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        </div>
+      )
+    }
+    
+    if (editable) {
+      return (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setIsEditing(true)}
+          className="gap-1 text-gray-600"
+        >
+          <Edit2 className="h-3 w-3" />
+          Agregar nota
+        </Button>
+      )
+    }
+    
+    return null
+  }
+
   if (!editable && !currentNote) {
     return null
   }
@@ -83,39 +128,9 @@ export default function OrderItemNotes({
             </Button>
           </div>
         </div>
-      ) : currentNote ? (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex items-start gap-2 flex-1">
-              <FileText className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-xs text-blue-600 font-medium mb-1">Nota:</p>
-                <p className="text-sm text-blue-900">{currentNote}</p>
-              </div>
-            </div>
-            {editable && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setIsEditing(true)}
-                className="flex-shrink-0"
-              >
-                <Edit2 className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-        </div>
-      ) : editable ? (
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => setIsEditing(true)}
-          className="gap-1 text-gray-600"
-        >
-          <Edit2 className="h-3 w-3" />
-          Agregar nota
-        </Button>
-      ) : null}
+      ) : (
+        renderNoteDisplay()
+      )}
     </div>
   )
 }

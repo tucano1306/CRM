@@ -404,6 +404,24 @@ class Logger {
   // ============================================================================
 
   /**
+   * Convert HTTP status code to appropriate log level
+   */
+  private getLogLevelForStatusCode(statusCode: number): LogLevel {
+    if (statusCode >= 500) return LogLevel.ERROR;
+    if (statusCode >= 400) return LogLevel.WARN;
+    return LogLevel.INFO;
+  }
+
+  /**
+   * Convert alert severity to appropriate log level
+   */
+  private getLogLevelForSeverity(severity: AlertSeverity): LogLevel {
+    if (severity === 'critical' || severity === 'high') return LogLevel.ERROR;
+    if (severity === 'medium') return LogLevel.WARN;
+    return LogLevel.INFO;
+  }
+
+  /**
    * Log para inicio de request API
    */
   apiStart(endpoint: string, method: string, context?: LogContext): void {
@@ -424,7 +442,7 @@ class Logger {
     duration: number,
     context?: LogContext
   ): void {
-    const level = statusCode >= 500 ? LogLevel.ERROR : statusCode >= 400 ? LogLevel.WARN : LogLevel.INFO
+    const level = this.getLogLevelForStatusCode(statusCode)
     this.log(level, LogCategory.API, `${method} ${endpoint} - Request completed`, {
       endpoint,
       method,
@@ -521,11 +539,7 @@ class Logger {
     context?: LogContext,
     metadata?: Record<string, any>
   ): void {
-    const level = severity === 'critical' || severity === 'high' 
-      ? LogLevel.ERROR 
-      : severity === 'medium' 
-      ? LogLevel.WARN 
-      : LogLevel.INFO
+    const level = this.getLogLevelForSeverity(severity)
 
     this.log(level, LogCategory.SECURITY, `Security event: ${event}`, context, undefined, {
       severity,

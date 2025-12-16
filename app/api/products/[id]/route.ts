@@ -48,6 +48,15 @@ function buildSanitizedProductData(validatedData: any): Record<string, any> {
 }
 
 /**
+ * Get stock status label based on stock level
+ */
+function getStockStatus(stock: number): string {
+  if (stock > 10) return 'good';
+  if (stock > 0) return 'low';
+  return 'out';
+}
+
+/**
  * Verify seller authorization for product updates
  */
 async function verifySeller(userId: string) {
@@ -131,7 +140,7 @@ export async function GET(
         stats: {
           totalOrders: stats._count,
           totalSold: stats._sum.quantity || 0,
-          stockStatus: product.stock > 10 ? 'good' : product.stock > 0 ? 'low' : 'out'
+          stockStatus: getStockStatus(product.stock)
         }
       }
     })

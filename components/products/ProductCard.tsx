@@ -103,9 +103,11 @@ export default function ProductCard({ product, onEdit, onDelete, onClick }: Prod
               {product.stock}
             </p>
             {product.unit && (
-              <p className={`text-xs mt-1 ${
-                isOutOfStock ? 'text-red-600' : isLowStock ? 'text-yellow-600' : 'text-blue-600'
-              }`}>
+              <p className={`text-xs mt-1 ${(() => {
+                if (isOutOfStock) return 'text-red-600';
+                if (isLowStock) return 'text-yellow-600';
+                return 'text-blue-600';
+              })()}`}>
                 {product.unit}s
               </p>
             )}

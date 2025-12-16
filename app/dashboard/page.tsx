@@ -383,6 +383,96 @@ export default function DashboardPage() {
     await fetchPendingOrders()
   }
 
+  // ============ Render Helper Functions ============
+
+  // Helper function to render out of stock content
+  const renderOutOfStockContent = () => {
+    if (loadingOutOfStock) {
+      return (
+        <p className="text-gray-500 text-center py-8">
+          Cargando productos...
+        </p>
+      )
+    }
+    
+    if (outOfStockProducts.length > 0) {
+      return (
+        <div className="space-y-2">
+          {outOfStockProducts.map((product: any) => (
+            <div
+              key={product.id}
+              className="flex items-center justify-between p-3 border-2 border-red-300 bg-red-50 rounded-lg hover:bg-red-100"
+            >
+              <div>
+                <p className="font-medium text-gray-800">{product.name}</p>
+                <p className="text-sm text-red-700 font-semibold">
+                  🚨 Stock: 0 - AGOTADO
+                </p>
+              </div>
+              <button
+                onClick={() => router.push('/products')}
+                className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm flex items-center gap-2"
+              >
+                <RotateCcw size={16} />
+                Reabastecer
+              </button>
+            </div>
+          ))}
+        </div>
+      )
+    }
+    
+    return (
+      <p className="text-gray-500 text-center py-8">
+        No hay productos agotados
+      </p>
+    )
+  }
+
+  // Helper function to render low stock content
+  const renderLowStockContent = () => {
+    if (loadingLowStock) {
+      return (
+        <p className="text-gray-500 text-center py-8">
+          Cargando productos...
+        </p>
+      )
+    }
+    
+    if (lowStockProducts.length > 0) {
+      return (
+        <div className="space-y-2">
+          {lowStockProducts.map((product: any) => (
+            <div
+              key={product.id}
+              className="flex items-center justify-between p-3 border-2 border-amber-300 bg-amber-50 rounded-lg hover:bg-amber-100"
+            >
+              <div>
+                <p className="font-medium text-gray-800">{product.name}</p>
+                <p className="text-sm text-amber-700 font-semibold">
+                  ⚠️ Stock: {product.stock} unidades
+                </p>
+              </div>
+              <button
+                onClick={() => router.push('/products')}
+                className="px-3 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-sm flex items-center gap-2"
+              >
+                <RotateCcw size={16} />
+                Reabastecer
+              </button>
+            </div>
+          ))}
+        </div>
+      )
+    }
+    
+    return (
+      <p className="text-gray-500 text-center py-8">
+        No hay productos con stock bajo
+      </p>
+    )
+  }
+
   // ✅ UI States - Early returns with extracted components
   if (loading) return <DashboardLoadingState />
   if (timedOut) return <DashboardTimedOutState onRetry={fetchDashboard} />
@@ -910,38 +1000,7 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="p-4">
-              {loadingOutOfStock ? (
-                <p className="text-gray-500 text-center py-8">
-                  Cargando productos...
-                </p>
-              ) : outOfStockProducts.length > 0 ? (
-                <div className="space-y-2">
-                  {outOfStockProducts.map((product: any) => (
-                    <div
-                      key={product.id}
-                      className="flex items-center justify-between p-3 border-2 border-red-300 bg-red-50 rounded-lg hover:bg-red-100"
-                    >
-                      <div>
-                        <p className="font-medium text-gray-800">{product.name}</p>
-                        <p className="text-sm text-red-700 font-semibold">
-                          🚨 Stock: 0 - AGOTADO
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => router.push('/products')}
-                        className="px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm flex items-center gap-2"
-                      >
-                        <RotateCcw size={16} />
-                        Reabastecer
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center py-8">
-                  No hay productos agotados
-                </p>
-              )}
+              {renderOutOfStockContent()}
             </div>
           </div>
         </div>
@@ -964,38 +1023,7 @@ export default function DashboardPage() {
               </button>
             </div>
             <div className="p-4">
-              {loadingLowStock ? (
-                <p className="text-gray-500 text-center py-8">
-                  Cargando productos...
-                </p>
-              ) : lowStockProducts.length > 0 ? (
-                <div className="space-y-2">
-                  {lowStockProducts.map((product: any) => (
-                    <div
-                      key={product.id}
-                      className="flex items-center justify-between p-3 border-2 border-amber-300 bg-amber-50 rounded-lg hover:bg-amber-100"
-                    >
-                      <div>
-                        <p className="font-medium text-gray-800">{product.name}</p>
-                        <p className="text-sm text-amber-700 font-semibold">
-                          ⚠️ Stock: {product.stock} unidades
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => router.push('/products')}
-                        className="px-3 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-sm flex items-center gap-2"
-                      >
-                        <RotateCcw size={16} />
-                        Reabastecer
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-center py-8">
-                  No hay productos con stock bajo
-                </p>
-              )}
+              {renderLowStockContent()}
             </div>
           </div>
         </div>
