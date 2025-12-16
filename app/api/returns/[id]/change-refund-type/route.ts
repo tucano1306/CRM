@@ -75,6 +75,47 @@ async function createCreditNoteForReturn(returnRecord: {
   })
 }
 
+// Helper: Handle refund type transition
+async function handleRefundTypeTransition(
+  refundType: 'CREDIT' | 'REFUND' | 'REPLACEMENT',
+  returnRecord: { creditNote: { id: string; balance: any; amount: any } | null } & {
+    id: string
+    returnNumber: string
+    clientId: string
+    sellerId: string
+    finalRefundAmount: any
+  }
+): Promise<{ success: boolean; noOp?: boolean; error?: string }> {
+  const hasCreditNote = !!returnRecord.creditNote
+  
+  // No-op case: already has credit note and requesting CREDIT
+  if (refundType === 'CREDIT' && hasCreditNote) {
+    return { success: true, noOp: true }
+  }
+  
+  // CREDIT -> REFUND: delete credit note if not used
+  if (refundType === 'REFUND' && hasCreditNote) {
+    const result = await handleCreditNoteDeletion(returnRecord.creditNote!)
+    if (!result.success) {
+      return { success: false, error: result.error }
+    }
+  }
+  
+  // REFUND -> CREDIT: create credit note
+  if (refundType === 'CREDIT' && !hasCreditNote) {
+    await createCreditNoteForReturn(returnRecord)
+  }
+  
+  return { success: true }
+}
+
+// Helper: Get success message for refund type change
+function getRefundTypeChangeMessage(refundType: string): string {
+  return refundType === 'CREDIT' 
+    ? 'Devolución cambiada a crédito exitosamente' 
+    : 'Devolución cambiada a reembolso exitosamente'
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -130,26 +171,19 @@ export async function POST(
       return NextResponse.json({ success: false, error: 'Devolución no encontrada o no se puede modificar' }, { status: 404 })
     }
 
-    // Handle no-op case
-    if (refundType === 'CREDIT' && returnRecord.creditNote) {
+    // Handle refund type transition
+    const transitionResult = await handleRefundTypeTransition(refundType, returnRecord)
+    
+    if (!transitionResult.success) {
+      return NextResponse.json({ success: false, error: transitionResult.error }, { status: 400 })
+    }
+    
+    if (transitionResult.noOp) {
       return NextResponse.json({
         success: true,
         message: 'La devolución ya está configurada como crédito',
         data: returnRecord
       })
-    }
-
-    // Handle CREDIT -> REFUND transition
-    if (refundType === 'REFUND' && returnRecord.creditNote) {
-      const result = await handleCreditNoteDeletion(returnRecord.creditNote)
-      if (!result.success) {
-        return NextResponse.json({ success: false, error: result.error }, { status: 400 })
-      }
-    }
-
-    // Handle REFUND -> CREDIT transition
-    if (refundType === 'CREDIT' && !returnRecord.creditNote) {
-      await createCreditNoteForReturn(returnRecord)
     }
 
     // Actualizar el tipo de reembolso en la devolución
@@ -167,9 +201,7 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: refundType === 'CREDIT' 
-        ? 'Devolución cambiada a crédito exitosamente' 
-        : 'Devolución cambiada a reembolso exitosamente',
+      message: getRefundTypeChangeMessage(refundType),
       data: updatedReturn
     })
 

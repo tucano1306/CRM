@@ -35,8 +35,8 @@ type ProcessItemContext = {
  */
 function validateItemStock(
   item: BatchItem,
-  product: any,
-  existingItem: any | undefined
+  product: { stock: number; name: string },
+  existingItem: { quantity: number } | undefined
 ): BatchResult | null {
   const currentQuantity = existingItem?.quantity || 0
   const newQuantity = currentQuantity + item.quantity
@@ -67,8 +67,8 @@ function validateItemStock(
  */
 async function upsertCartItem(
   item: BatchItem,
-  product: any,
-  existingItem: any | undefined,
+  product: { price: number },
+  existingItem: { id: string; quantity: number } | undefined,
   cartId: string
 ): Promise<void> {
   const newQuantity = (existingItem?.quantity || 0) + item.quantity

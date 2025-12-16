@@ -330,7 +330,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
         </button>
       )}
 
-      <style jsx={true}>{`
+      <style>{`
         @keyframes fadeInUp {
           from {
             opacity: 0;

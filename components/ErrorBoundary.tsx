@@ -1,7 +1,7 @@
 // components/ErrorBoundary.tsx
 'use client'
 
-import React, { Component, ErrorInfo, ReactNode } from 'react'
+import React, { Component, ErrorInfo, ReactNode, useState, useEffect } from 'react'
 import { AlertCircle, RefreshCw, Home } from 'lucide-react'
 
 interface Props {
@@ -95,9 +95,9 @@ export default ErrorBoundary
 
 // Hook para usar error boundary en componentes funcionales
 export function useErrorHandler() {
-  const [error, setError] = React.useState<Error | null>(null)
+  const [error, setError] = useState<Error | null>(null)
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (error) {
       throw error
     }

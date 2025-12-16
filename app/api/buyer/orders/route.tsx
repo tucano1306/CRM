@@ -41,7 +41,7 @@ const EMPTY_CREDIT_RESULT: CreditValidationResult = { success: false, error: '',
 /**
  * Validate a single credit note and return error message if invalid
  */
-function validateSingleCredit(credit: any | null, creditNoteId: string, amountToUse: number): string | null {
+function validateSingleCredit(credit: { creditNoteNumber: string; isActive: boolean; expiresAt: Date | null; balance: number } | null, creditNoteId: string, amountToUse: number): string | null {
   if (!credit) {
     logger.warn(LogCategory.VALIDATION, 'Credit note not found', { creditNoteId })
     return `Nota de crédito ${creditNoteId} no encontrada`
@@ -425,6 +425,87 @@ async function sendOrderNotifications(order: any, userId: string): Promise<void>
 }
 
 // ============================================================================
+// Order Creation Helpers
+// ============================================================================
+
+/**
+ * Check if order already exists by idempotency key
+ */
+async function checkIdempotency(idempotencyKey: string | undefined): Promise<{ exists: boolean; order?: any }> {
+  if (!idempotencyKey) return { exists: false }
+  
+  const existing = await withPrismaTimeout(() => prisma.order.findFirst({ where: { idempotencyKey } }))
+  if (existing) {
+    logger.info(LogCategory.API, 'Order already processed (idempotent)', { orderId: existing.id, idempotencyKey })
+    return { exists: true, order: existing }
+  }
+  return { exists: false }
+}
+
+/**
+ * Get and validate cart with items
+ */
+async function getAndValidateCart(userId: string): Promise<{ error?: string; cart?: any; status?: number }> {
+  const cart = await withPrismaTimeout(
+    () => prisma.cart.findFirst({
+      where: { userId },
+      include: { items: { include: { product: true } } },
+    })
+  )
+
+  const isEmpty = !cart || cart.items.length === 0
+  if (isEmpty) {
+    logger.warn(LogCategory.API, 'Empty cart', { userId })
+    return { error: 'El carrito está vacío', status: 400 }
+  }
+
+  const stockValidation = validateCartStock(cart.items)
+  if (!stockValidation.valid) {
+    return { error: stockValidation.error, status: 400 }
+  }
+
+  return { cart }
+}
+
+/**
+ * Prepare order context: auth user, client, seller, schedule validation
+ */
+async function prepareOrderContext(userId: string): Promise<{ error?: string; status?: number; client?: any; sellerId?: string; scheduleResult?: any }> {
+  const { authUser, error: authError } = await getOrCreateAuthUser(userId)
+  if (authError) return { error: authError, status: 401 }
+
+  const client = await getOrCreateClient(userId, authUser)
+  
+  const { sellerId, error: sellerError } = await ensureClientHasSeller(client)
+  if (sellerError) return { error: sellerError, status: 400 }
+
+  const scheduleResult = await validateSellerSchedule(sellerId)
+  if (!scheduleResult.valid) {
+    return { 
+      error: scheduleResult.error, 
+      status: 400, 
+      scheduleResult 
+    }
+  }
+
+  return { client, sellerId }
+}
+
+/**
+ * Handle POST error response
+ */
+function handlePostError(error: unknown): NextResponse {
+  logger.error(LogCategory.API, 'Error creating order', error instanceof Error ? error : new Error(String(error)))
+  
+  if (error instanceof TimeoutError) {
+    const timeoutResponse = handleTimeoutError(error)
+    return NextResponse.json({ success: false, ...timeoutResponse }, { status: timeoutResponse.status })
+  }
+
+  return NextResponse.json({ error: 'Error creando orden: ' + (error as Error).message }, { status: 500 })
+}
+
+// ============================================================================
 // Main POST Handler
 // ============================================================================
 
@@ -441,99 +522,53 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    
-    // Validate body
     const bodyValidation = validateAndExtractBody(body)
     if (!bodyValidation.valid) {
       return NextResponse.json({ error: bodyValidation.error }, { status: 400 })
     }
     const { notes, creditNotes, idempotencyKey } = bodyValidation
 
-    // Check idempotency
-    if (idempotencyKey) {
-      const existing = await withPrismaTimeout(() => prisma.order.findFirst({ where: { idempotencyKey } }))
-      if (existing) {
-        logger.info(LogCategory.API, 'Order already processed (idempotent)', { orderId: existing.id, idempotencyKey })
-        return NextResponse.json({ success: true, order: existing, message: 'Order already processed (idempotent)' })
-      }
+    // Check idempotency - early exit if order exists
+    const idempotencyCheck = await checkIdempotency(idempotencyKey)
+    if (idempotencyCheck.exists) {
+      return NextResponse.json({ success: true, order: idempotencyCheck.order, message: 'Order already processed (idempotent)' })
     }
 
-    // Get cart with items
-    const cart = await withPrismaTimeout(
-      () => prisma.cart.findFirst({
-        where: { userId },
-        include: { items: { include: { product: true } } },
-      })
-    )
-
-    if (!cart || cart.items.length === 0) {
-      logger.warn(LogCategory.API, 'Empty cart', { userId })
-      return NextResponse.json({ error: 'El carrito está vacío' }, { status: 400 })
+    // Validate cart and stock
+    const cartResult = await getAndValidateCart(userId)
+    if (cartResult.error) {
+      return NextResponse.json({ error: cartResult.error }, { status: cartResult.status })
     }
+    const cart = cartResult.cart!
 
-    // Validate stock
-    const stockValidation = validateCartStock(cart.items)
-    if (!stockValidation.valid) {
-      return NextResponse.json({ error: stockValidation.error }, { status: 400 })
-    }
-
-    // Calculate totals
+    // Calculate and validate credits
     const { totalAmount } = calculateCartTotals(cart.items)
     logger.debug(LogCategory.API, 'Cart totals calculated', { userId, totalAmount, itemCount: cart.items.length })
 
-    // Validate credits
     const creditValidation = await validateCreditNotes(creditNotes)
     if (!creditValidation.success) {
       return NextResponse.json({ error: creditValidation.error }, { status: 400 })
     }
-
     const finalTotal = Math.max(0, totalAmount - creditValidation.totalCreditsApplied)
-    logger.debug(LogCategory.API, 'Final total calculated', { originalTotal: totalAmount, creditsApplied: creditValidation.totalCreditsApplied, finalTotal })
 
-    // Get or create auth user
-    const { authUser, error: authError } = await getOrCreateAuthUser(userId)
-    if (authError) {
-      return NextResponse.json({ error: authError }, { status: 401 })
+    // Prepare order context (auth, client, seller, schedule)
+    const context = await prepareOrderContext(userId)
+    if (context.error) {
+      const response = context.scheduleResult 
+        ? { error: context.error, schedule: context.scheduleResult.schedule, nextAvailable: context.scheduleResult.nextAvailable }
+        : { error: context.error }
+      return NextResponse.json(response, { status: context.status })
     }
 
-    // Get or create client
-    const client = await getOrCreateClient(userId, authUser)
-
-    // Ensure client has seller
-    const { sellerId, error: sellerError } = await ensureClientHasSeller(client)
-    if (sellerError) {
-      return NextResponse.json({ error: sellerError }, { status: 400 })
-    }
-
-    // Validate seller schedule
-    const scheduleResult = await validateSellerSchedule(sellerId)
-    if (!scheduleResult.valid) {
-      return NextResponse.json(
-        { error: scheduleResult.error, schedule: scheduleResult.schedule, nextAvailable: scheduleResult.nextAvailable },
-        { status: 400 }
-      )
-    }
-
-    // Create order
+    // Create order and send notifications
     const order = await createOrderInTransaction(
-      client, sellerId, finalTotal, notes, idempotencyKey, cart, creditValidation.creditsToApply
+      context.client, context.sellerId!, finalTotal, notes, idempotencyKey, cart, creditValidation.creditsToApply
     )
-
-    // Send notifications
     await sendOrderNotifications(order, userId)
 
     return NextResponse.json({ success: true, order, message: 'Orden creada exitosamente' })
   } catch (error) {
-    logger.error(LogCategory.API, 'Error creating order', error instanceof Error ? error : new Error(String(error)))
-    
-    if (error instanceof TimeoutError) {
-      const timeoutResponse = handleTimeoutError(error)
-      return NextResponse.json({ success: false, ...timeoutResponse }, { status: timeoutResponse.status })
-    }
-
-    return NextResponse.json({ error: 'Error creando orden: ' + (error as Error).message }, { status: 500 })
-  } finally {
-    // prisma singleton
+    return handlePostError(error)
   }
 }
 

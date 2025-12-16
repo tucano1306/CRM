@@ -776,7 +776,7 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
         />
       )}
 
-      <style jsx={true}>{`
+      <style>{`
         @keyframes fadeInUp {
           from {
             opacity: 0;

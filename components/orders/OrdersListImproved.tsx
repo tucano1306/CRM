@@ -334,7 +334,7 @@ export default function OrdersListImproved({
       })}
       
       {/* Animaciones CSS inline */}
-      <style jsx={true}>{`
+      <style>{`
         @keyframes orderPulse {
           0%, 100% {
             transform: scale(1);

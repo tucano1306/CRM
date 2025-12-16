@@ -608,7 +608,7 @@ function OrdersPageContent() {
   const [catalogProducts, setCatalogProducts] = useState<any[]>([])
   const [loadingCatalog, setLoadingCatalog] = useState(false)
   const [catalogSearch, setCatalogSearch] = useState('')
-  const [selectedSubstituteProduct, setSelectedSubstituteProduct] = useState<any | null>(null)
+  const [selectedSubstituteProduct, setSelectedSubstituteProduct] = useState<{ id: string; name: string; price: number; stock: number; unit?: string; imageUrl?: string; sku?: string } | null>(null)
   const [substituteQuantity, setSubstituteQuantity] = useState(1)
   
   // Modal de opciones de contacto
@@ -2715,7 +2715,7 @@ function OrdersPageContent() {
       </div>
 
       {/* CSS Animations */}
-      <style jsx={true}>{`
+      <style>{`
         @keyframes orderPulse {
           0%, 100% {
             transform: scale(1);

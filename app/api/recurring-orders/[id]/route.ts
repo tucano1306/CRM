@@ -254,6 +254,58 @@ export async function DELETE(
   }
 }
 
+// Helper: Calculate days until next weekly occurrence
+function getDaysUntilWeekday(nextDate: Date, targetDay: number): number {
+  const currentDay = nextDate.getDay()
+  const daysUntil = (targetDay - currentDay + 7) % 7
+  return daysUntil === 0 ? 7 : daysUntil
+}
+
+// Helper: Get valid day of month (handles months with fewer days)
+function getValidDayOfMonth(year: number, month: number, day: number): number {
+  const lastDayOfMonth = new Date(year, month + 1, 0).getDate()
+  return Math.min(day, lastDayOfMonth)
+}
+
+// Frequency calculation options
+type FrequencyOptions = {
+  dayOfWeek?: number | null
+  dayOfMonth?: number | null
+  customDays?: number | null
+  now: Date
+}
+
+// Frequency handlers using lookup object pattern
+const frequencyCalculators: Record<string, (date: Date, opts: FrequencyOptions) => void> = {
+  DAILY: (date, { now }) => {
+    const isSameDay = date.toDateString() === now.toDateString()
+    if (isSameDay) date.setDate(date.getDate() + 1)
+  },
+  WEEKLY: (date, { dayOfWeek }) => {
+    const hasTargetDay = dayOfWeek !== null && dayOfWeek !== undefined
+    const daysToAdd = hasTargetDay ? getDaysUntilWeekday(date, dayOfWeek!) : 7
+    date.setDate(date.getDate() + daysToAdd)
+  },
+  BIWEEKLY: (date) => date.setDate(date.getDate() + 14),
+  MONTHLY: (date, { dayOfMonth }) => {
+    date.setMonth(date.getMonth() + 1)
+    if (dayOfMonth) {
+      date.setDate(getValidDayOfMonth(date.getFullYear(), date.getMonth(), dayOfMonth))
+    }
+  },
+  CUSTOM: (date, { customDays }) => date.setDate(date.getDate() + (customDays || 7)),
+}
+
+// Helper: Ensure date is in the future
+function ensureFutureDate(date: Date, now: Date): Date {
+  if (date <= now) {
+    const tomorrow = new Date(now)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    return tomorrow
+  }
+  return date
+}
+
 // Función auxiliar para calcular próxima fecha
 function calculateNextExecutionDate(
   frequency: string,
@@ -262,73 +314,26 @@ function calculateNextExecutionDate(
   dayOfMonth?: number | null,
   customDays?: number | null
 ): Date {
-  const baseDate = startDate ? new Date(startDate) : new Date()
   const now = new Date()
-  let nextDate = new Date(baseDate)
+  const baseDate = startDate ? new Date(startDate) : new Date()
+  const nextDate = baseDate < now ? new Date(now) : new Date(baseDate)
 
-  if (nextDate < now) {
-    nextDate = new Date(now)
-  }
+  const calculator = frequencyCalculators[frequency] || frequencyCalculators.WEEKLY
+  calculator(nextDate, { dayOfWeek, dayOfMonth, customDays, now })
 
-  switch (frequency) {
-    case 'DAILY':
-      if (nextDate.toDateString() === now.toDateString()) {
-        nextDate.setDate(nextDate.getDate() + 1)
-      }
-      break
+  return ensureFutureDate(nextDate, now)
+}
 
-    case 'WEEKLY':
-      if (dayOfWeek !== null && dayOfWeek !== undefined) {
-        const currentDay = nextDate.getDay()
-        let daysUntilNext = (dayOfWeek - currentDay + 7) % 7
-        if (daysUntilNext === 0) daysUntilNext = 7
-        nextDate.setDate(nextDate.getDate() + daysUntilNext)
-      } else {
-        nextDate.setDate(nextDate.getDate() + 7)
-      }
-      break
-
-    case 'BIWEEKLY':
-      nextDate.setDate(nextDate.getDate() + 14)
-      break
-
-    case 'MONTHLY':
-      if (dayOfMonth) {
-        nextDate.setMonth(nextDate.getMonth() + 1)
-        nextDate.setDate(Math.min(dayOfMonth, new Date(nextDate.getFullYear(), nextDate.getMonth() + 1, 0).getDate()))
-      } else {
-        nextDate.setMonth(nextDate.getMonth() + 1)
-      }
-      break
-
-    case 'CUSTOM':
-      if (customDays) {
-        nextDate.setDate(nextDate.getDate() + customDays)
-      } else {
-        nextDate.setDate(nextDate.getDate() + 7)
-      }
-      break
-
-    default:
-      nextDate.setDate(nextDate.getDate() + 7)
-  }
-
-  if (nextDate <= now) {
-    nextDate = new Date(now)
-    nextDate.setDate(nextDate.getDate() + 1)
-  }
-
-  return nextDate
+// Frequency labels lookup
+const frequencyLabels: Record<string, string> = {
+  DAILY: 'Diaria',
+  WEEKLY: 'Semanal',
+  BIWEEKLY: 'Quincenal',
+  MONTHLY: 'Mensual',
+  CUSTOM: 'Personalizada'
 }
 
 // Función auxiliar para obtener etiqueta de frecuencia legible
 function getFrequencyLabel(frequency: string): string {
-  switch (frequency) {
-    case 'DAILY': return 'Diaria'
-    case 'WEEKLY': return 'Semanal'
-    case 'BIWEEKLY': return 'Quincenal'
-    case 'MONTHLY': return 'Mensual'
-    case 'CUSTOM': return 'Personalizada'
-    default: return frequency
-  }
+  return frequencyLabels[frequency] || frequency
 }

@@ -680,7 +680,7 @@ function CartPageContent() {
       </div>
 
       {/* Estilos para animaciones */}
-      <style jsx={true}>{`
+      <style>{`
         @keyframes slide-in {
           from {
             transform: translateX(100%);

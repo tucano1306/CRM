@@ -188,7 +188,7 @@ export default function PWAInstallPrompt() {
         </div>
       )}
 
-      <style jsx={true}>{`
+      <style>{`
         @keyframes slide-up {
           from {
             opacity: 0;
