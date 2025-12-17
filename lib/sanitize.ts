@@ -39,7 +39,7 @@ export function sanitizeHTML(html: string, maxLength: number = 5000): string {
 
   // Allow only safe HTML tags
   const safeTags = ['b', 'i', 'u', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li']
-  const tagPattern = new RegExp(`<(?!\/?(${safeTags.join('|')})\\b)[^>]*>`, 'gi')
+  const tagPattern = new RegExp(`<(?!/?(${safeTags.join('|')})\\b)[^>]*>`, 'gi')
 
   return html
     .trim()

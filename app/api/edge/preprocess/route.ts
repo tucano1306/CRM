@@ -285,7 +285,7 @@ function sanitizeObject(data: Record<string, unknown>): Record<string, unknown> 
  * Transform product-specific fields
  */
 function transformProductFields(data: Record<string, unknown>): void {
-  if (data.price) {
+  if (data.price !== undefined && data.price !== null) {
     data.price = Number.parseFloat(String(data.price))
   }
 }
@@ -301,7 +301,7 @@ function transformOrderFields(data: Record<string, unknown>): void {
       // Keep as string if JSON parsing fails
     }
   }
-  if (data.totalAmount) {
+  if (data.totalAmount !== undefined && data.totalAmount !== null) {
     data.totalAmount = Number.parseFloat(String(data.totalAmount))
   }
 }

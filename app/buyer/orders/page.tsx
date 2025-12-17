@@ -3223,6 +3223,7 @@ function OrdersPageContent() {
                     return (
                       <label 
                         key={item.id}
+                        aria-label={`Seleccionar ${item.productName}`}
                         className={`flex items-center gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
                           isSelected 
                             ? 'border-emerald-300 bg-emerald-50' 

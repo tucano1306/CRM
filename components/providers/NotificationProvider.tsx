@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { NotificationType } from '@prisma/client'
 import { useUser } from '@clerk/nextjs'
 import { useRealtimeSubscription, RealtimeEvents } from '@/lib/supabase-realtime'
@@ -158,19 +158,32 @@ export function NotificationProvider({ children }: NotificationProviderProps) {
 
   const unreadCount = notifications.filter(n => !n.isRead).length
 
+  const contextValue = useMemo(() => ({ 
+    notifications, 
+    unreadCount, 
+    loading, 
+    error, 
+    newNotification,
+    realtimeConnected,
+    markAsRead, 
+    markAllAsRead, 
+    refreshNotifications: fetchNotifications,
+    clearNewNotification
+  }), [
+    notifications, 
+    unreadCount, 
+    loading, 
+    error, 
+    newNotification, 
+    realtimeConnected, 
+    markAsRead, 
+    markAllAsRead, 
+    fetchNotifications, 
+    clearNewNotification
+  ])
+
   return (
-    <NotificationContext.Provider value={{ 
-      notifications, 
-      unreadCount, 
-      loading, 
-      error, 
-      newNotification,
-      realtimeConnected,
-      markAsRead, 
-      markAllAsRead, 
-      refreshNotifications: fetchNotifications,
-      clearNewNotification
-    }}>
+    <NotificationContext.Provider value={contextValue}>
       {children}
     </NotificationContext.Provider>
   )

@@ -348,7 +348,6 @@ interface InvitationModalProps {
   readonly invitationValue: string
   readonly linkCopied: boolean
   readonly sendingInvitation: boolean
-  readonly sellerName: string
   readonly onMethodChange: (method: InvitationMethod) => void
   readonly onValueChange: (value: string) => void
   readonly onCopyLink: () => void
@@ -1212,7 +1211,6 @@ export default function ClientsPage() {
         invitationValue={invitationValue}
         linkCopied={linkCopied}
         sendingInvitation={sendingInvitation}
-        sellerName={sellerName}
         onMethodChange={handleMethodChange}
         onValueChange={setInvitationValue}
         onCopyLink={copyInvitationLink}
