@@ -110,6 +110,8 @@ function ImportFileDropzone({
 
   return (
     <div
+      role="region"
+      aria-label="Zona de arrastrar y soltar archivos"
       className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
         importFile
           ? 'border-green-400 bg-green-50'

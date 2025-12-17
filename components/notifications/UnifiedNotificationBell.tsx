@@ -323,6 +323,9 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
         >
           <div 
             ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="notification-modal-title"
             style={role === 'seller' && window.innerWidth >= 768 && modalPosition.x 
               ? { position: 'fixed', left: modalPosition.x, top: modalPosition.y }
               : {}
@@ -340,6 +343,7 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
             
             {/* Header */}
             <div 
+              role="banner"
               onMouseDown={handleMouseDown}
               className={`flex items-start justify-between p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700 select-none bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 ${(() => {
                 if (role === 'seller' && !isDragging) return 'sm:cursor-grab cursor-default'

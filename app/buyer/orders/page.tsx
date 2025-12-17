@@ -2094,6 +2094,8 @@ function OrdersPageContent() {
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') closeOrderModal(); }}
           >
             <div 
+              role="dialog"
+              aria-modal="true"
               className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto cursor-auto"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={(e) => e.stopPropagation()}

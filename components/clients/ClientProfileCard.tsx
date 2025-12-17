@@ -131,7 +131,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
   const clientLevel = getClientLevel(client.stats?.totalSpent || 0)
 
   return (
-    <div 
+    <article 
       className={`relative bg-white rounded-2xl sm:rounded-3xl overflow-hidden transition-all duration-500 w-full max-w-full ${
         isHovered ? 'shadow-2xl sm:scale-[1.02]' : 'shadow-lg'
       } ${colorScheme.glow}`}
@@ -256,7 +256,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
       </div>
 
       {/* Información de contacto - Más compacta */}
-      <div className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+      <section className="px-3 sm:px-4 pb-3 sm:pb-4 space-y-2" aria-label="Información de contacto" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
         <div className="bg-gray-50 rounded-lg sm:rounded-xl p-2 sm:p-3 space-y-1 sm:space-y-2">
           {/* Email */}
           <a 
@@ -299,7 +299,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
             </span>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Footer con info adicional */}
       <div className={`border-t border-gray-100 px-3 sm:px-4 py-2 sm:py-3 bg-gray-50/50 flex items-center justify-between`}>
@@ -342,6 +342,6 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
           }
         }
       `}</style>
-    </div>
+    </article>
   )
 }

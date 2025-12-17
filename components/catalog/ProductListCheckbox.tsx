@@ -328,6 +328,8 @@ export default function ProductListCheckbox({
                     {/* Control de cantidad */}
                     {isSelected && showQuantityInput && (
                       <div 
+                        role="group"
+                        aria-label="Control de cantidad"
                         className="flex items-center gap-2"
                         onClick={(e) => e.stopPropagation()}
                         onKeyDown={(e) => e.stopPropagation()}
