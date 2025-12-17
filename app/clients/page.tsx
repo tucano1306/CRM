@@ -339,15 +339,17 @@ function ClientFormModal({ show, editingId, formData, onFormChange, onSave, onCa
   )
 }
 
+type InvitationMethod = 'email' | 'whatsapp' | 'sms'
+
 interface InvitationModalProps {
   readonly show: boolean
   readonly invitationLink: string | null
-  readonly invitationMethod: 'email' | 'whatsapp' | 'sms'
+  readonly invitationMethod: InvitationMethod
   readonly invitationValue: string
   readonly linkCopied: boolean
   readonly sendingInvitation: boolean
   readonly sellerName: string
-  readonly onMethodChange: (method: 'email' | 'whatsapp' | 'sms') => void
+  readonly onMethodChange: (method: InvitationMethod) => void
   readonly onValueChange: (value: string) => void
   readonly onCopyLink: () => void
   readonly onSendInvitation: () => void
@@ -424,7 +426,7 @@ function InvitationModal({
                     <select
                       id="invitation-method-select"
                       value={invitationMethod}
-                      onChange={(e) => onMethodChange(e.target.value as 'email' | 'whatsapp' | 'sms')}
+                      onChange={(e) => onMethodChange(e.target.value as InvitationMethod)}
                       className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base bg-white"
                     >
                       <option value="email">📧 Email</option>
@@ -842,7 +844,7 @@ export default function ClientsPage() {
   const [generatingLink, setGeneratingLink] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
   const [sendingInvitation, setSendingInvitation] = useState(false)
-  const [invitationMethod, setInvitationMethod] = useState<'email' | 'whatsapp' | 'sms'>('email')
+  const [invitationMethod, setInvitationMethod] = useState<InvitationMethod>('email')
   const [invitationValue, setInvitationValue] = useState('')
   
   const [showHistoryModal, setShowHistoryModal] = useState(false)
@@ -1063,7 +1065,7 @@ export default function ClientsPage() {
     setSelectedClientId(null)
   }, [])
 
-  const handleMethodChange = useCallback((method: 'email' | 'whatsapp' | 'sms') => {
+  const handleMethodChange = useCallback((method: InvitationMethod) => {
     setInvitationMethod(method)
     setInvitationValue('')
   }, [])

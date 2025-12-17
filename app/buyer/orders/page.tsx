@@ -396,13 +396,15 @@ function getItemStyleClasses(isOutOfStock: boolean, isPartialStock: boolean) {
 
 // ============ Status Animation Components ============
 
-function getSizeDimensions(size: 'normal' | 'small' | 'large'): string {
+type AnimationSize = 'normal' | 'small' | 'large'
+
+function getSizeDimensions(size: AnimationSize): string {
   if (size === 'small') return 'w-16 h-16';
   if (size === 'large') return 'w-24 h-24';
   return 'w-20 h-20';
 }
 
-function ConfirmedStatusAnimation({ size = 'normal' }: Readonly<{ size?: 'normal' | 'small' | 'large' }>) {
+function ConfirmedStatusAnimation({ size = 'normal' }: Readonly<{ size?: AnimationSize }>) {
   const dimensions = getSizeDimensions(size)
   return (
     <div className={`relative ${dimensions}`}>
@@ -435,7 +437,7 @@ function ConfirmedStatusAnimation({ size = 'normal' }: Readonly<{ size?: 'normal
   )
 }
 
-function InDeliveryStatusAnimation({ size = 'normal' }: Readonly<{ size?: 'normal' | 'small' | 'large' }>) {
+function InDeliveryStatusAnimation({ size = 'normal' }: Readonly<{ size?: AnimationSize }>) {
   const dimensions = getSizeDimensions(size)
   return (
     <div className={`relative ${dimensions}`}>
@@ -467,7 +469,7 @@ function InDeliveryStatusAnimation({ size = 'normal' }: Readonly<{ size?: 'norma
   )
 }
 
-function DeliveredStatusAnimation({ size = 'normal' }: Readonly<{ size?: 'normal' | 'small' | 'large' }>) {
+function DeliveredStatusAnimation({ size = 'normal' }: Readonly<{ size?: AnimationSize }>) {
   const dimensions = getSizeDimensions(size)
   return (
     <div className={`relative ${dimensions}`}>
@@ -487,7 +489,7 @@ function DeliveredStatusAnimation({ size = 'normal' }: Readonly<{ size?: 'normal
 }
 
 // Renders the appropriate status animation based on order status
-function StatusAnimationRenderer({ status, size = 'normal' }: Readonly<{ status: OrderStatus; size?: 'normal' | 'small' | 'large' }>) {
+function StatusAnimationRenderer({ status, size = 'normal' }: Readonly<{ status: OrderStatus; size?: AnimationSize }>) {
   if (status === 'CONFIRMED') return <ConfirmedStatusAnimation size={size} />
   if (status === 'IN_DELIVERY') return <InDeliveryStatusAnimation size={size} />
   if (status === 'DELIVERED' || status === 'COMPLETED') return <DeliveredStatusAnimation size={size} />

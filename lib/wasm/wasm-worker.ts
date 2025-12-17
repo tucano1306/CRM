@@ -55,19 +55,20 @@ export class WASMWorkerInstance extends EventEmitter {
     })
     
     this.setupWorkerListeners()
-    // Store promise for deferred initialization - caller should use ensureInitialized()
+    // Initialization is deferred - caller should use ensureInitialized()
     // or the static create() factory method
-    this.initPromise = Promise.resolve().then(() => this.checkWASMCapability())
+    this.initPromise = null
   }
 
   /**
-   * Ensure async initialization is complete
+   * Ensure async initialization is complete.
+   * Lazily triggers capability check on first call.
    */
   public async ensureInitialized(): Promise<void> {
-    if (this.initPromise) {
-      await this.initPromise
-      this.initPromise = null
+    if (this.initPromise === null) {
+      this.initPromise = this.checkWASMCapability()
     }
+    await this.initPromise
   }
 
   private setupWorkerListeners() {

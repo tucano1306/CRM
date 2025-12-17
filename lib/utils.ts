@@ -35,11 +35,16 @@ export function formatPrice(value: number | string, currency: string = '$'): str
 // ==================== FUNCIONES DE FECHA ====================
 
 /**
+ * Common type for date inputs that can be Date, string, null or undefined
+ */
+type DateInput = Date | string | null | undefined
+
+/**
  * Formatea una fecha en formato legible
  * Ejemplo: "12/12/2025" o "12 dic 2025"
  */
 export function formatDate(
-  date: Date | string | null | undefined, 
+  date: DateInput, 
   options: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric' }
 ): string {
   if (!date) return '-'
@@ -52,7 +57,7 @@ export function formatDate(
  * Formatea una fecha con hora
  * Ejemplo: "12/12/2025 14:30"
  */
-export function formatDateTime(date: Date | string | null | undefined): string {
+export function formatDateTime(date: DateInput): string {
   if (!date) return '-'
   const dateObj = typeof date === 'string' ? new Date(date) : date
   if (Number.isNaN(dateObj.getTime())) return '-'
@@ -69,7 +74,7 @@ export function formatDateTime(date: Date | string | null | undefined): string {
  * Obtiene tiempo relativo desde una fecha
  * Ejemplo: "Hace 5 min", "Hace 2h", "Ayer", "Hace 3 días"
  */
-export function getRelativeTime(date: Date | string | null | undefined): string {
+export function getRelativeTime(date: DateInput): string {
   if (!date) return '-'
   const dateObj = typeof date === 'string' ? new Date(date) : date
   if (Number.isNaN(dateObj.getTime())) return '-'

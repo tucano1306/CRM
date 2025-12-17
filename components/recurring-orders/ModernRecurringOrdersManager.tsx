@@ -312,27 +312,29 @@ function UpcomingOrdersPanel({ stats, userRole }: UpcomingOrdersPanelProps) {
 
 // ============ Style Lookup Objects ============
 
-const BUTTON_ACTIVE_STYLES: Record<'all' | 'active' | 'paused', string> = {
+type FilterStatus = 'all' | 'active' | 'paused'
+
+const BUTTON_ACTIVE_STYLES: Record<FilterStatus, string> = {
   all: 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg',
   active: 'bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-lg',
   paused: 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg'
 }
 
-const BUTTON_INACTIVE_STYLES: Record<'all' | 'active' | 'paused', string> = {
+const BUTTON_INACTIVE_STYLES: Record<FilterStatus, string> = {
   all: 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50',
   active: 'border-2 border-emerald-200 text-gray-700 hover:border-emerald-400 hover:bg-emerald-50',
   paused: 'border-2 border-amber-200 text-gray-700 hover:border-amber-400 hover:bg-amber-50'
 }
 
-function getButtonClass(filter: 'all' | 'active' | 'paused', filterStatus: 'all' | 'active' | 'paused'): string {
+function getButtonClass(filter: FilterStatus, filterStatus: FilterStatus): string {
   const isActive = filter === filterStatus
   return isActive ? BUTTON_ACTIVE_STYLES[filter] : BUTTON_INACTIVE_STYLES[filter]
 }
 
 interface FilterButtonsProps {
-  readonly filterStatus: 'all' | 'active' | 'paused'
+  readonly filterStatus: FilterStatus
   readonly stats: ReturnType<typeof computeStats>
-  readonly onFilterChange: (filter: 'all' | 'active' | 'paused') => void
+  readonly onFilterChange: (filter: FilterStatus) => void
 }
 
 function FilterButtons({ filterStatus, stats, onFilterChange }: FilterButtonsProps) {
@@ -362,7 +364,6 @@ function FilterButtons({ filterStatus, stats, onFilterChange }: FilterButtonsPro
 
 // ============ EmptyState Text Lookups ============
 
-type FilterStatus = 'all' | 'active' | 'paused'
 type UserRole = 'SELLER' | 'CLIENT'
 
 const EMPTY_STATE_TITLES: Record<FilterStatus, Record<UserRole, string>> = {
@@ -396,7 +397,7 @@ const EMPTY_STATE_DESCRIPTIONS: Record<FilterStatus, Record<UserRole, string>> =
 }
 
 interface EmptyStateProps {
-  readonly filterStatus: 'all' | 'active' | 'paused'
+  readonly filterStatus: FilterStatus
   readonly userRole: 'SELLER' | 'CLIENT'
   readonly onCreateNew: () => void
 }
@@ -613,7 +614,7 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [selectedOrder, setSelectedOrder] = useState<any>(null)
   const [detailModalOpen, setDetailModalOpen] = useState(false)
-  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'paused'>('all')
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
   const [processingId, setProcessingId] = useState<string | null>(null)
 
   const fetchOrders = useCallback(async () => {
@@ -701,7 +702,7 @@ export default function ModernRecurringOrdersManager({ userRole, clientId }: Rec
     setSelectedOrder(null)
   }, [])
 
-  const handleFilterChange = useCallback((filter: 'all' | 'active' | 'paused') => {
+  const handleFilterChange = useCallback((filter: FilterStatus) => {
     setFilterStatus(filter)
   }, [])
 

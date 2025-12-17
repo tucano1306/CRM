@@ -187,12 +187,12 @@ function ImportResultDisplay({
   clientName,
   onImportAnother,
   onViewCatalog,
-}: {
+}: Readonly<{
   result: ImportResultData
   clientName: string
   onImportAnother: () => void
   onViewCatalog: () => void
-}) {
+}>) {
   return (
     <div className={`rounded-xl p-4 ${result.success ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'}`}>
       <div className="flex items-center gap-2 mb-3">

@@ -183,7 +183,7 @@ function getBlockedMessage(blockedRole: 'SELLER' | 'CLIENT', isBlocked: boolean)
     : `No tienes permisos de ${labels.lower}`
 }
 
-function EnabledRoleCard({ href, iconBgClass, icon, title, description, features, buttonText, buttonClass, checkColor }: Omit<RoleCardProps, 'isEnabled' | 'roleConflict' | 'blockedRole'>) {
+function EnabledRoleCard({ href, iconBgClass, icon, title, description, features, buttonText, buttonClass, checkColor }: Readonly<Omit<RoleCardProps, 'isEnabled' | 'roleConflict' | 'blockedRole'>>) {
   return (
     <Link href={href} className="transform transition-transform hover:scale-105">
       <Card className={`h-full cursor-pointer border-2 border-transparent hover:border-${checkColor}-500 hover:shadow-2xl`}>

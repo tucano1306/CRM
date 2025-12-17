@@ -83,7 +83,9 @@ function getStatusColor(status: string): string {
   return STATUS_COLORS[status] ?? 'bg-gray-100 text-gray-800'
 }
 
-function getMonthCount(chartPeriod: '6months' | 'year' | 'all'): number {
+type ChartPeriod = '6months' | 'year' | 'all'
+
+function getMonthCount(chartPeriod: ChartPeriod): number {
   if (chartPeriod === '6months') return 6
   if (chartPeriod === 'year') return 12
   return 24
@@ -91,7 +93,7 @@ function getMonthCount(chartPeriod: '6months' | 'year' | 'all'): number {
 
 function calculateMonthlyData(
   recentOrders: RecentOrder[],
-  chartPeriod: '6months' | 'year' | 'all'
+  chartPeriod: ChartPeriod
 ) {
   const monthsData = []
   const now = new Date()
@@ -135,7 +137,7 @@ export default function BuyerDashboardPage() {
   const [stats, setStats] = useState<BuyerStats | null>(null)
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
   const [loading, setLoading] = useState(true)
-  const [chartPeriod, setChartPeriod] = useState<'6months' | 'year' | 'all'>('6months')
+  const [chartPeriod, setChartPeriod] = useState<ChartPeriod>('6months')
   const [activeTab, setActiveTab] = useState<'shop' | 'manage' | 'support'>('shop')
   const [showQuickActions, setShowQuickActions] = useState(false)
   const [frequentProducts, setFrequentProducts] = useState<any[]>([])
@@ -413,7 +415,7 @@ export default function BuyerDashboardPage() {
             </h3>
             <select 
               value={chartPeriod}
-              onChange={(e) => setChartPeriod(e.target.value as '6months' | 'year' | 'all')}
+              onChange={(e) => setChartPeriod(e.target.value as ChartPeriod)}
               className="px-4 py-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-medium text-gray-700 bg-white shadow-sm hover:border-purple-400 transition-colors"
             >
               <option value="6months">Últimos 6 meses</option>

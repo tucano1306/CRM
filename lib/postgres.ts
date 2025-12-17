@@ -26,6 +26,11 @@ pool.on('error', (err: Error) => {
 // INTERFACES DE TIPOS
 // ============================================
 
+/**
+ * Helper type for create operations that omit auto-generated fields
+ */
+type OmitAutoFields<T> = Omit<T, 'id' | 'created_at' | 'updated_at'>
+
 export interface User {
   id: string;
   email: string;
@@ -146,7 +151,7 @@ export const UserDB = {
     return result.rows[0] || null;
   },
 
-  async create(userData: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<User> {
+  async create(userData: OmitAutoFields<User>): Promise<User> {
     const result = await query<User>(
       `INSERT INTO users (email, name, role, password) 
        VALUES ($1, $2, $3, $4) 
@@ -215,7 +220,7 @@ export const ClientDB = {
     return result.rows;
   },
 
-  async create(clientData: Omit<Client, 'id' | 'created_at' | 'updated_at'>): Promise<Client> {
+  async create(clientData: OmitAutoFields<Client>): Promise<Client> {
     const result = await query<Client>(
       `INSERT INTO clients (name, address, phone, email, seller_id) 
        VALUES ($1, $2, $3, $4, $5) 
@@ -300,7 +305,7 @@ export const ProductDB = {
     return result.rows;
   },
 
-  async create(productData: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product> {
+  async create(productData: OmitAutoFields<Product>): Promise<Product> {
     const client = await getClient();
     try {
       await client.query('BEGIN');
