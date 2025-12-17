@@ -91,7 +91,7 @@ export function InvoiceGeneratorExample({
       link.download = `factura-${orderNumber}.pdf`
       document.body.appendChild(link)
       link.click()
-      document.body.removeChild(link)
+      link.remove()
       globalThis.URL.revokeObjectURL(url)
 
       console.log('✅ PDF generated and downloaded synchronously')

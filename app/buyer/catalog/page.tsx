@@ -83,9 +83,8 @@ export default function CatalogPage() {
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Date.now().toString()
     setToasts(prev => [...prev, { id, message, type }])
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id))
-    }, 3000)
+    const removeToast = () => setToasts(prev => prev.filter(t => t.id !== id))
+    setTimeout(removeToast, 3000)
   }
 
   useEffect(() => {

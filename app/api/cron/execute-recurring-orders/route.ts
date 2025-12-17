@@ -180,12 +180,8 @@ function calculateNextExecutionDate(order: any): Date {
       break
 
     case 'WEEKLY':
-      if (order.dayOfWeek !== null && order.dayOfWeek !== undefined) {
-        // Avanzar a la próxima semana con el mismo día
-        nextDate.setDate(nextDate.getDate() + 7)
-      } else {
-        nextDate.setDate(nextDate.getDate() + 7)
-      }
+      // Avanzar a la próxima semana (7 días)
+      nextDate.setDate(nextDate.getDate() + 7)
       break
 
     case 'BIWEEKLY':

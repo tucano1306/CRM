@@ -1,9 +1,8 @@
 'use client'
 
-import { SignIn } from '@clerk/nextjs'
+import { SignIn, useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { useAuth } from '@clerk/nextjs'
 
 export default function LoginPage() {
   const router = useRouter()

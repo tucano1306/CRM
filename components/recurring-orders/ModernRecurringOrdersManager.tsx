@@ -570,7 +570,7 @@ function OrderCard({ order, userRole, isProcessing, index, onToggle, onDelete, o
       <div className="border-t-2 border-purple-100 p-4 bg-gradient-to-br from-slate-50 to-purple-50 flex gap-2">
         <button
           onClick={() => onViewDetails(order)}
-          className={`${userRole === 'SELLER' ? 'flex-1' : 'flex-1'} px-4 py-2.5 bg-white border-2 border-purple-200 rounded-xl hover:border-purple-400 hover:bg-purple-50 transition-all font-semibold text-sm flex items-center justify-center gap-2`}
+          className="flex-1 px-4 py-2.5 bg-white border-2 border-purple-200 rounded-xl hover:border-purple-400 hover:bg-purple-50 transition-all font-semibold text-sm flex items-center justify-center gap-2"
         >
           <Eye className="h-4 w-4" />
           Ver Detalles

@@ -430,7 +430,7 @@ export default function ManageCatalogModal({
       a.download = `productos_${safeClientName}_${new Date().toISOString().split('T')[0]}.xlsx`
       document.body.appendChild(a)
       a.click()
-      document.body.removeChild(a)
+      a.remove()
       globalThis.URL.revokeObjectURL(url)
       console.log('✅ Productos exportados exitosamente')
     } catch (error) {

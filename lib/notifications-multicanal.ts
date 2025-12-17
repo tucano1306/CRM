@@ -309,17 +309,21 @@ async function sendViaAllChannels(
   return results
 }
 
-// Helper function to send via specific channel
-async function sendViaChannel(
-  channel: string,
-  clientEmail: string | null | undefined,
-  clientPhone: string | null | undefined,
-  clientWhatsapp: string | null | undefined,
-  subject: string,
-  htmlBody: string,
-  shortMessage: string,
+// Options for sending via specific channel
+interface SendChannelOptions {
+  channel: string
+  clientEmail: string | null | undefined
+  clientPhone: string | null | undefined
+  clientWhatsapp: string | null | undefined
+  subject: string
+  htmlBody: string
+  shortMessage: string
   whatsappMessage: string
-): Promise<NotificationResult[]> {
+}
+
+// Helper function to send via specific channel
+async function sendViaChannel(options: SendChannelOptions): Promise<NotificationResult[]> {
+  const { channel, clientEmail, clientPhone, clientWhatsapp, subject, htmlBody, shortMessage, whatsappMessage } = options
   const results: NotificationResult[] = []
   if (channel === 'EMAIL' && clientEmail) {
     results.push(await sendEmailNotification(clientEmail, subject, htmlBody))
@@ -369,7 +373,7 @@ export async function sendMultichannelNotification(
   
   const results = channel === 'ALL'
     ? await sendViaAllChannels(clientEmail, clientPhone, clientWhatsapp, subject, htmlBody, whatsappMessage)
-    : await sendViaChannel(channel, clientEmail, clientPhone, clientWhatsapp, subject, htmlBody, shortMessage, whatsappMessage)
+    : await sendViaChannel({ channel, clientEmail, clientPhone, clientWhatsapp, subject, htmlBody, shortMessage, whatsappMessage })
 
   // Log para auditoría
   console.log(`[MULTICANAL] Notificación ${type} enviada a cliente ${clientId}:`, 

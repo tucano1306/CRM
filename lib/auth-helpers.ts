@@ -84,16 +84,7 @@ export async function getSeller(userId: string) {
       if (au) {
         const repaired = await prisma.$transaction(async (tx) => {
           let s = await tx.seller.findFirst({ where: { email: au.email } })
-          if (!s) {
-            s = await tx.seller.create({
-              data: {
-                name: au.name || au.email.split('@')[0] || 'Vendedor',
-                email: au.email,
-                isActive: true,
-                authenticated_users: { connect: { id: au.id } }
-              }
-            })
-          } else {
+          if (s) {
             // Ensure linkage exists
             const alreadyLinked = await tx.seller.findFirst({
               where: {
@@ -107,6 +98,15 @@ export async function getSeller(userId: string) {
                 data: { authenticated_users: { connect: { id: au.id } } }
               })
             }
+          } else {
+            s = await tx.seller.create({
+              data: {
+                name: au.name || au.email.split('@')[0] || 'Vendedor',
+                email: au.email,
+                isActive: true,
+                authenticated_users: { connect: { id: au.id } }
+              }
+            })
           }
           return s
         })

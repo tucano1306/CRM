@@ -83,21 +83,8 @@ async function fixAuthIssue() {
       where: { email: 'tucano0109@gmail.com' }
     })
 
-    // Step 5: Create seller if it doesn't exist
-    if (!seller) {
-      console.log('Step 5: Creating seller record...')
-      seller = await prisma.seller.create({
-        data: {
-          name: 'Leo Leo',
-          email: 'tucano0109@gmail.com',
-          isActive: true,
-          authenticated_users: {
-            connect: { id: authUser.id }
-          }
-        }
-      })
-      console.log('Created seller:', seller.id)
-    } else {
+    // Step 5: Create seller if it doesn't exist, or link existing
+    if (seller) {
       // Link existing seller to auth user if not linked
       const isLinked = await prisma.$queryRaw<Array<any>>`
         SELECT * FROM "_SellerUsers"
@@ -112,6 +99,19 @@ async function fixAuthIssue() {
         `
         console.log('Linked successfully')
       }
+    } else {
+      console.log('Step 5: Creating seller record...')
+      seller = await prisma.seller.create({
+        data: {
+          name: 'Leo Leo',
+          email: 'tucano0109@gmail.com',
+          isActive: true,
+          authenticated_users: {
+            connect: { id: authUser.id }
+          }
+        }
+      })
+      console.log('Created seller:', seller.id)
     }
 
     // Step 6: Verify the fix

@@ -154,13 +154,14 @@ export function useBackgroundJob(options: UseBackgroundJobOptions = {}) {
             onComplete?.(updatedJob)
             
             if (autoCleanup) {
-              setTimeout(() => {
+              const removeJob = () => {
                 setJobs(prev => {
                   const newMap = new Map(prev)
                   newMap.delete(jobId)
                   return newMap
                 })
-              }, 5000) // Limpiar después de 5 segundos
+              }
+              setTimeout(removeJob, 5000) // Limpiar después de 5 segundos
             }
           } else if (updatedJob.status === 'failed') {
             stopPolling(jobId)
@@ -246,7 +247,7 @@ export function useBackgroundJob(options: UseBackgroundJobOptions = {}) {
       link.download = filename
       document.body.appendChild(link)
       link.click()
-      document.body.removeChild(link)
+      link.remove()
       
       globalThis.URL.revokeObjectURL(url)
 

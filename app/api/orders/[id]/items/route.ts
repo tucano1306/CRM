@@ -34,17 +34,21 @@ async function recalculateOrderTotal(orderId: string) {
   return { allItems, newTotal }
 }
 
-// Helper: Send notifications for item added
-async function sendItemAddedNotifications(
-  order: any,
-  product: any,
-  authUser: any,
-  buyerAuthUser: any,
-  existingItem: any,
-  quantity: number,
-  updatedQuantity: number,
+// Options for sending item added notifications
+interface ItemAddedNotificationOptions {
+  order: any
+  product: any
+  authUser: any
+  buyerAuthUser: any
+  existingItem: any
+  quantity: number
+  updatedQuantity: number
   note?: string
-) {
+}
+
+// Helper: Send notifications for item added
+async function sendItemAddedNotifications(options: ItemAddedNotificationOptions) {
+  const { order, product, authUser, buyerAuthUser, existingItem, quantity, updatedQuantity, note } = options
   const actionText = existingItem 
     ? `actualizado la cantidad de "${product.name}" a ${updatedQuantity}` 
     : `agregado "${product.name}" (${quantity} ${product.unit || 'unid.'})`
@@ -197,10 +201,10 @@ export async function POST(
     // Crear mensaje en el chat notificando al comprador
     const buyerAuthUser = order.client.authenticated_users[0]
     if (buyerAuthUser) {
-      await sendItemAddedNotifications(
+      await sendItemAddedNotifications({
         order, product, authUser, buyerAuthUser,
         existingItem, quantity, updatedQuantity, note
-      )
+      })
     }
 
     // Enviar evento en tiempo real al vendedor para actualizar su UI

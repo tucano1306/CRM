@@ -65,19 +65,19 @@ class WASMManager {
       let wasmBytes: ArrayBuffer
 
       if (typeof source === 'string') {
-        if (globalThis.window !== undefined) {
+        if (globalThis.window === undefined) {
+          // Node.js environment
+          const fs = await import('node:fs')
+          const path = await import('node:path')
+          const fullPath = path.resolve(process.cwd(), source)
+          wasmBytes = fs.readFileSync(fullPath).buffer
+        } else {
           // Browser environment
           const response = await fetch(source)
           if (!response.ok) {
             throw new Error(`Failed to fetch WASM module: ${response.statusText}`)
           }
           wasmBytes = await response.arrayBuffer()
-        } else {
-          // Node.js environment
-          const fs = await import('node:fs')
-          const path = await import('node:path')
-          const fullPath = path.resolve(process.cwd(), source)
-          wasmBytes = fs.readFileSync(fullPath).buffer
         }
       } else {
         wasmBytes = source
