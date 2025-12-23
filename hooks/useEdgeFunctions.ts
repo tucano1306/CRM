@@ -5,7 +5,7 @@
  * for authentication, geolocation, feature flags, and analytics
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 
 interface EdgeAuth {
   authenticated: boolean
@@ -132,7 +132,7 @@ export function useEdgeFunctions(
   const [featuresError, setFeaturesError] = useState<string | null>(null)
 
   // Session ID for analytics
-  const [sessionId, _setSessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`)
+  const sessionId = useMemo(() => `session_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`, [])
 
   // Check authentication
   const checkAuth = useCallback(async (): Promise<EdgeAuth | null> => {

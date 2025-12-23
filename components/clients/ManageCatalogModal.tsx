@@ -109,8 +109,7 @@ function ImportFileDropzone({
   }
 
   return (
-    <div
-      role="region"
+    <section
       aria-label="Zona de arrastrar y soltar archivos"
       className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
         importFile
@@ -137,7 +136,7 @@ function ImportFileDropzone({
       ) : (
         <ImportFileEmpty onSelectClick={() => fileInputRef.current?.click()} />
       )}
-    </div>
+    </section>
   )
 }
 

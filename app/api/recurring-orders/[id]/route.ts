@@ -282,9 +282,12 @@ const frequencyCalculators: Record<string, (date: Date, opts: FrequencyOptions) 
     if (isSameDay) date.setDate(date.getDate() + 1)
   },
   WEEKLY: (date, { dayOfWeek }) => {
-    const hasTargetDay = dayOfWeek !== null && dayOfWeek !== undefined
-    const daysToAdd = hasTargetDay ? getDaysUntilWeekday(date, dayOfWeek!) : 7
-    date.setDate(date.getDate() + daysToAdd)
+    if (dayOfWeek !== null && dayOfWeek !== undefined) {
+      const daysToAdd = getDaysUntilWeekday(date, dayOfWeek)
+      date.setDate(date.getDate() + daysToAdd)
+    } else {
+      date.setDate(date.getDate() + 7)
+    }
   },
   BIWEEKLY: (date) => date.setDate(date.getDate() + 14),
   MONTHLY: (date, { dayOfMonth }) => {

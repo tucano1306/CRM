@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { apiCall, getErrorMessage } from '@/lib/api-client'
@@ -79,12 +79,16 @@ export default function CatalogPage() {
     { id: 'otros', name: 'Otros', emoji: '📦' },
   ]
 
+  // Helper para eliminar toast por ID
+  const removeToastById = useCallback((toastId: string) => {
+    setToasts(prev => prev.filter(t => t.id !== toastId))
+  }, [])
+
   // Mostrar toast
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Date.now().toString()
     setToasts(prev => [...prev, { id, message, type }])
-    const removeToast = () => setToasts(prev => prev.filter(t => t.id !== id))
-    setTimeout(removeToast, 3000)
+    setTimeout(() => removeToastById(id), 3000)
   }
 
   useEffect(() => {

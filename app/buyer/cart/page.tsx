@@ -66,14 +66,16 @@ function CartPageContent() {
   const [sortBy, setSortBy] = useState<'name' | 'price' | 'quantity'>('name')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
-
+  // Helper para eliminar toast por ID
+  const removeToastById = useCallback((toastId: string) => {
+    setToasts(prev => prev.filter(t => t.id !== toastId))
+  }, [])
 
   // Mostrar toast
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
     const id = Date.now().toString()
     setToasts(prev => [...prev, { id, message, type }])
-    const removeToast = () => setToasts(prev => prev.filter(t => t.id !== id))
-    setTimeout(removeToast, 3000)
+    setTimeout(() => removeToastById(id), 3000)
   }
 
   // Fetch cart

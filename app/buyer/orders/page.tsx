@@ -276,6 +276,8 @@ const statusConfig = {
 type FilterStatusType = 'ALL' | OrderStatus
 type SortByType = 'newest' | 'oldest' | 'highest' | 'lowest'
 type DateRangeType = '7days' | '30days' | '90days' | 'all'
+type OrderTabType = 'productos' | 'estado' | 'seguimiento'
+type ViewModeType = 'grid' | 'list'
 
 interface FilterOptions {
   filterStatus: FilterStatusType
@@ -392,6 +394,854 @@ function getItemStyleClasses(isOutOfStock: boolean, isPartialStock: boolean) {
   if (isOutOfStock) return { bg: 'bg-red-50 border-red-300', iconBg: 'bg-red-100' }
   if (isPartialStock) return { bg: 'bg-amber-50 border-amber-300', iconBg: 'bg-amber-100' }
   return { bg: 'bg-gray-50 border-gray-200 hover:bg-gray-100', iconBg: 'bg-purple-100' }
+}
+
+// Progress percentage for order status
+const ORDER_PROGRESS_MAP: Record<string, number> = {
+  'PENDING': 0,
+  'CONFIRMED': 25,
+  'PREPARING': 50,
+  'PROCESSING': 50,
+  'READY_FOR_PICKUP': 65,
+  'IN_DELIVERY': 75,
+  'DELIVERED': 100,
+  'COMPLETED': 100,
+  'CANCELED': 0,
+  'CANCELLED': 0,
+}
+
+function getProgressPercentage(status: OrderStatus): number {
+  return ORDER_PROGRESS_MAP[status] || 0
+}
+
+// Calculate monthly stats for orders
+function calculateMonthlyStats(orders: Order[]) {
+  const now = new Date()
+  const currentMonth = now.getMonth()
+  const currentYear = now.getFullYear()
+
+  const monthlyOrders = orders.filter(order => {
+    const orderDate = new Date(order.createdAt)
+    return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear
+  })
+
+  const totalSpent = monthlyOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0)
+  const totalOrders = monthlyOrders.length
+  const averageOrder = totalOrders > 0 ? totalSpent / totalOrders : 0
+  const estimatedSavings = totalSpent * 0.1
+
+  return { totalOrders, totalSpent, estimatedSavings, averageOrder }
+}
+
+// Prepare invoice data from order - extracted for reduced complexity
+function prepareInvoiceData(order: Order): InvoiceData {
+  const subtotal = order.orderItems.reduce((sum, item) => sum + Number(item.subtotal), 0)
+  const taxRate = 0.1
+  const taxAmount = subtotal * taxRate
+  const totalBeforeCredits = subtotal + taxAmount
+  
+  const creditNotesUsed = order.creditNoteUsages?.map(usage => ({
+    creditNoteId: usage.creditNote.id,
+    creditNoteNumber: usage.creditNote.creditNoteNumber,
+    amountUsed: Number(usage.amountUsed),
+    originalAmount: Number(usage.creditNote.amount),
+    remainingAmount: Number(usage.creditNote.balance)
+  })) || []
+  
+  const totalCreditApplied = creditNotesUsed.reduce((sum, credit) => sum + credit.amountUsed, 0)
+  const total = totalBeforeCredits - totalCreditApplied
+
+  const invoiceDate = new Date(order.createdAt)
+  const dueDate = new Date(invoiceDate)
+  dueDate.setDate(dueDate.getDate() + 30)
+
+  return {
+    invoiceNumber: order.orderNumber,
+    invoiceDate,
+    dueDate,
+    sellerName: order.seller?.name || 'Food Orders CRM',
+    sellerAddress: '123 Main Street, Miami, FL 33139',
+    sellerPhone: '(305) 555-0123',
+    sellerEmail: order.seller?.email || 'ventas@foodorders.com',
+    sellerTaxId: '12-3456789',
+    clientName: order.client?.name || 'Cliente',
+    clientAddress: order.client?.address || '',
+    clientPhone: order.client?.phone || '',
+    clientEmail: order.client?.email || '',
+    clientTaxId: '',
+    items: order.orderItems.map(item => ({
+      sku: item.product?.sku || '',
+      name: item.productName,
+      description: item.productName,
+      quantity: item.quantity,
+      unit: item.product?.unit || 'und',
+      unitPrice: Number(item.pricePerUnit),
+      pricePerUnit: Number(item.pricePerUnit),
+      subtotal: Number(item.subtotal),
+      total: Number(item.subtotal)
+    })),
+    subtotal,
+    taxRate,
+    taxAmount,
+    totalBeforeCredits,
+    creditNotesUsed: creditNotesUsed.length > 0 ? creditNotesUsed : undefined,
+    totalCreditApplied: totalCreditApplied > 0 ? totalCreditApplied : undefined,
+    total,
+    paymentMethod: 'Transferencia Bancaria',
+    paymentTerms: 'Pago a 30 días.',
+    notes: order.notes || undefined,
+    termsAndConditions: 'Productos sujetos a disponibilidad. Devoluciones dentro de 24 horas.'
+  }
+}
+
+// Toast helper type for state setters
+interface ToastSetters {
+  setToastMessage: (msg: string) => void
+  setToastStatus: (status: string) => void
+  setShowToast: (show: boolean) => void
+}
+
+function showSuccessToast(message: string, setters: ToastSetters) {
+  setters.setToastMessage(message)
+  setters.setToastStatus('success')
+  setters.setShowToast(true)
+}
+
+function showErrorToast(message: string, setters: ToastSetters) {
+  setters.setToastMessage(message)
+  setters.setToastStatus('error')
+  setters.setShowToast(true)
+}
+
+// ============ Custom Hooks - Reduce component complexity ============
+
+interface UseToastReturn {
+  showToast: boolean
+  toastMessage: string
+  toastStatus: string
+  setShowToast: (show: boolean) => void
+  showSuccess: (message: string) => void
+  showError: (message: string) => void
+}
+
+function useToast(): UseToastReturn {
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+  const [toastStatus, setToastStatus] = useState('')
+  
+  useEffect(() => {
+    if (showToast) {
+      const timer = setTimeout(() => setShowToast(false), 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [showToast])
+  
+  const showSuccess = (message: string) => {
+    setToastMessage(message)
+    setToastStatus('success')
+    setShowToast(true)
+  }
+  
+  const showError = (message: string) => {
+    setToastMessage(message)
+    setToastStatus('error')
+    setShowToast(true)
+  }
+  
+  return { showToast, toastMessage, toastStatus, setShowToast, showSuccess, showError }
+}
+
+interface UseOrderFiltersReturn {
+  filterStatus: FilterStatusType
+  setFilterStatus: (status: FilterStatusType) => void
+  searchQuery: string
+  setSearchQuery: (query: string) => void
+  dateFrom: string
+  setDateFrom: (date: string) => void
+  dateTo: string
+  setDateTo: (date: string) => void
+  sortBy: SortByType
+  setSortBy: (sort: SortByType) => void
+  dateRange: DateRangeType
+  setDateRange: (range: DateRangeType) => void
+  currentPage: number
+  setCurrentPage: (page: number) => void
+  viewMode: ViewModeType
+  setViewMode: (mode: ViewModeType) => void
+}
+
+function useOrderFilters(): UseOrderFiltersReturn {
+  const [filterStatus, setFilterStatus] = useState<FilterStatusType>('ALL')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [sortBy, setSortBy] = useState<SortByType>('newest')
+  const [dateRange, setDateRange] = useState<DateRangeType>('30days')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [viewMode, setViewMode] = useState<ViewModeType>('grid')
+  
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filterStatus, searchQuery, dateRange, sortBy])
+  
+  return {
+    filterStatus, setFilterStatus,
+    searchQuery, setSearchQuery,
+    dateFrom, setDateFrom,
+    dateTo, setDateTo,
+    sortBy, setSortBy,
+    dateRange, setDateRange,
+    currentPage, setCurrentPage,
+    viewMode, setViewMode
+  }
+}
+
+interface UseDeleteModalReturn {
+  showDeleteModal: boolean
+  deleteItemInfo: {itemId: string, productName: string} | null
+  deleteReason: string
+  setDeleteReason: (reason: string) => void
+  openDeleteModal: (itemId: string, productName: string) => void
+  closeDeleteModal: () => void
+}
+
+function useDeleteModal(): UseDeleteModalReturn {
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleteItemInfo, setDeleteItemInfo] = useState<{itemId: string, productName: string} | null>(null)
+  const [deleteReason, setDeleteReason] = useState('')
+  
+  const openDeleteModal = (itemId: string, productName: string) => {
+    setDeleteItemInfo({ itemId, productName })
+    setDeleteReason('')
+    setShowDeleteModal(true)
+  }
+  
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false)
+    setDeleteItemInfo(null)
+    setDeleteReason('')
+  }
+  
+  return { showDeleteModal, deleteItemInfo, deleteReason, setDeleteReason, openDeleteModal, closeDeleteModal }
+}
+
+interface UseContactModalReturn {
+  showContactModal: boolean
+  contactOrderInfo: Order | null
+  openContactModal: (order: Order) => void
+  closeContactModal: () => void
+}
+
+function useContactModal(): UseContactModalReturn {
+  const [showContactModal, setShowContactModal] = useState(false)
+  const [contactOrderInfo, setContactOrderInfo] = useState<Order | null>(null)
+  
+  const openContactModal = (order: Order) => {
+    setContactOrderInfo(order)
+    setShowContactModal(true)
+  }
+  
+  const closeContactModal = () => {
+    setShowContactModal(false)
+    setContactOrderInfo(null)
+  }
+  
+  return { showContactModal, contactOrderInfo, openContactModal, closeContactModal }
+}
+
+interface UseReorderModalReturn {
+  showReorderModal: boolean
+  reorderOrder: Order | null
+  selectedReorderItems: Set<string>
+  reordering: boolean
+  setReordering: (reordering: boolean) => void
+  openReorderModal: (order: Order) => void
+  closeReorderModal: () => void
+  toggleReorderItem: (itemId: string) => void
+  toggleAllReorderItems: () => void
+}
+
+function useReorderModal(): UseReorderModalReturn {
+  const [showReorderModal, setShowReorderModal] = useState(false)
+  const [reorderOrder, setReorderOrder] = useState<Order | null>(null)
+  const [selectedReorderItems, setSelectedReorderItems] = useState<Set<string>>(new Set())
+  const [reordering, setReordering] = useState(false)
+  
+  const openReorderModal = (order: Order) => {
+    setReorderOrder(order)
+    const activeItems = order.orderItems.filter(item => !item.isDeleted)
+    setSelectedReorderItems(new Set(activeItems.map(item => item.id)))
+    setShowReorderModal(true)
+  }
+  
+  const closeReorderModal = () => {
+    setShowReorderModal(false)
+    setReorderOrder(null)
+    setSelectedReorderItems(new Set())
+  }
+  
+  const toggleReorderItem = (itemId: string) => {
+    setSelectedReorderItems(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId)
+      } else {
+        newSet.add(itemId)
+      }
+      return newSet
+    })
+  }
+  
+  const toggleAllReorderItems = () => {
+    if (!reorderOrder) return
+    const activeItems = reorderOrder.orderItems.filter(item => !item.isDeleted)
+    
+    if (selectedReorderItems.size === activeItems.length) {
+      setSelectedReorderItems(new Set())
+    } else {
+      setSelectedReorderItems(new Set(activeItems.map(item => item.id)))
+    }
+  }
+  
+  return {
+    showReorderModal, reorderOrder, selectedReorderItems, reordering, setReordering,
+    openReorderModal, closeReorderModal, toggleReorderItem, toggleAllReorderItems
+  }
+}
+
+interface UseSubstituteModalReturn {
+  showSubstituteSelector: boolean
+  substituteItemInfo: {itemId: string, productName: string, productId: string, originalQty?: number} | null
+  catalogProducts: any[]
+  loadingCatalog: boolean
+  catalogSearch: string
+  setCatalogSearch: (search: string) => void
+  selectedSubstituteProduct: { id: string; name: string; price: number; stock: number; unit?: string; imageUrl?: string; sku?: string } | null
+  setSelectedSubstituteProduct: (product: any) => void
+  substituteQuantity: number
+  setSubstituteQuantity: (qty: number) => void
+  openSubstituteSelector: (itemId: string, productName: string, productId: string, sellerId: string | undefined, originalQty?: number) => Promise<void>
+  closeSubstituteSelector: () => void
+  setCatalogProducts: (products: any[]) => void
+  setLoadingCatalog: (loading: boolean) => void
+}
+
+function useSubstituteModal(): UseSubstituteModalReturn {
+  const [showSubstituteSelector, setShowSubstituteSelector] = useState(false)
+  const [substituteItemInfo, setSubstituteItemInfo] = useState<{itemId: string, productName: string, productId: string, originalQty?: number} | null>(null)
+  const [catalogProducts, setCatalogProducts] = useState<any[]>([])
+  const [loadingCatalog, setLoadingCatalog] = useState(false)
+  const [catalogSearch, setCatalogSearch] = useState('')
+  const [selectedSubstituteProduct, setSelectedSubstituteProduct] = useState<{ id: string; name: string; price: number; stock: number; unit?: string; imageUrl?: string; sku?: string } | null>(null)
+  const [substituteQuantity, setSubstituteQuantity] = useState(1)
+  
+  const openSubstituteSelector = async (itemId: string, productName: string, productId: string, sellerId: string | undefined, originalQty: number = 1) => {
+    setSubstituteItemInfo({ itemId, productName, productId, originalQty })
+    setShowSubstituteSelector(true)
+    setCatalogSearch('')
+    setSelectedSubstituteProduct(null)
+    setSubstituteQuantity(originalQty)
+    
+    // Cargar productos del catálogo del vendedor
+    try {
+      setLoadingCatalog(true)
+      const result = await apiCall(`/api/sellers/${sellerId}/products`, {
+        timeout: 10000,
+      })
+      if (result.success && result.data) {
+        const products = Array.isArray(result.data) ? result.data : (result.data.data || [])
+        setCatalogProducts(products.filter((p: any) => p.id !== productId && (p.stock > 0 || p.stock === undefined)))
+      } else {
+        console.error('Error loading products:', result.error)
+        setCatalogProducts([])
+      }
+    } catch (error) {
+      console.error('Error loading catalog:', error)
+      setCatalogProducts([])
+    } finally {
+      setLoadingCatalog(false)
+    }
+  }
+  
+  const closeSubstituteSelector = () => {
+    setShowSubstituteSelector(false)
+    setSubstituteItemInfo(null)
+    setSelectedSubstituteProduct(null)
+    setSubstituteQuantity(1)
+    setCatalogSearch('')
+  }
+  
+  return {
+    showSubstituteSelector, substituteItemInfo, catalogProducts, loadingCatalog, catalogSearch,
+    setCatalogSearch, selectedSubstituteProduct, setSelectedSubstituteProduct, substituteQuantity,
+    setSubstituteQuantity, openSubstituteSelector, closeSubstituteSelector,
+    setCatalogProducts, setLoadingCatalog
+  }
+}
+
+// ============ Order Data Hook - Reduces component complexity ============
+
+interface UseOrderDataReturn {
+  orders: Order[]
+  setOrders: React.Dispatch<React.SetStateAction<Order[]>>
+  loading: boolean
+  timedOut: boolean
+  error: string | null
+  selectedOrder: Order | null
+  setSelectedOrder: React.Dispatch<React.SetStateAction<Order | null>>
+  showOrderModal: boolean
+  setShowOrderModal: (show: boolean) => void
+  activeTab: OrderTabType
+  setActiveTab: (tab: OrderTabType) => void
+  removingItem: string | null
+  setRemovingItem: (id: string | null) => void
+  orderHistory: OrderHistoryItem[]
+  setOrderHistory: React.Dispatch<React.SetStateAction<OrderHistoryItem[]>>
+  loadingHistory: boolean
+  setLoadingHistory: (loading: boolean) => void
+  fetchOrders: () => Promise<void>
+  openOrderModal: (order: Order) => void
+  closeOrderModal: () => void
+}
+
+function useOrderData(): UseOrderDataReturn {
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+  const [timedOut, setTimedOut] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [showOrderModal, setShowOrderModal] = useState(false)
+  const [activeTab, setActiveTab] = useState<OrderTabType>('productos')
+  const [removingItem, setRemovingItem] = useState<string | null>(null)
+  const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true)
+      setTimedOut(false)
+      setError(null)
+
+      const result = await apiCall('/api/buyer/orders', {
+        timeout: 5000,
+        onTimeout: () => setTimedOut(true)
+      })
+
+      setLoading(false)
+
+      if (result.success) {
+        setOrders(result.data.orders)
+      } else {
+        setError(result.error || 'Error cargando órdenes')
+      }
+    } catch (err) {
+      setLoading(false)
+      setError(getErrorMessage(err))
+    }
+  }
+
+  const openOrderModal = (order: Order) => {
+    setSelectedOrder(order)
+    setShowOrderModal(true)
+    setActiveTab('productos')
+    setOrderHistory([])
+  }
+
+  const closeOrderModal = () => {
+    setShowOrderModal(false)
+    setSelectedOrder(null)
+    setOrderHistory([])
+  }
+
+  useEffect(() => {
+    fetchOrders()
+  }, [])
+
+  return {
+    orders, setOrders, loading, timedOut, error,
+    selectedOrder, setSelectedOrder, showOrderModal, setShowOrderModal,
+    activeTab, setActiveTab, removingItem, setRemovingItem,
+    orderHistory, setOrderHistory, loadingHistory, setLoadingHistory,
+    fetchOrders, openOrderModal, closeOrderModal
+  }
+}
+
+// ============ Loading/Error State Components ============
+
+function OrdersLoadingState() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pastel-beige-100 via-pastel-blue-100/30 to-pastel-cream-100 p-6 blob-bg">
+      <div className="max-w-6xl mx-auto">
+        <div className="glass-card rounded-3xl p-6 mb-6 border border-pastel-beige-300/50">
+          <h1 className="text-3xl font-bold gradient-text-pastel flex items-center gap-3">
+            <div className="bg-gradient-to-br from-pastel-blue-400 to-pastel-blue-500 p-3 rounded-2xl shadow-pastel">
+              <ShoppingBag className="text-white" size={32} />
+            </div>
+            Mis Órdenes
+          </h1>
+          <p className="text-muted-foreground mt-2 ml-14">Cargando órdenes...</p>
+        </div>
+        <div className="space-y-4">
+          <OrderCardSkeleton />
+          <OrderCardSkeleton />
+          <OrderCardSkeleton />
+          <OrderCardSkeleton />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function OrdersTimeoutState({ onRetry }: Readonly<{ onRetry: () => void }>) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pastel-beige-100 via-pastel-blue-100/30 to-pastel-cream-100 p-6 flex items-center justify-center blob-bg">
+      <div className="max-w-md glass-card rounded-3xl p-8 card-3d">
+        <div className="bg-gradient-to-br from-amber-100 to-pastel-beige-200 p-4 rounded-2xl mb-4 flex items-center gap-3">
+          <div className="bg-gradient-to-br from-amber-400 to-amber-500 p-3 rounded-xl shadow-lg">
+            <Clock className="h-6 w-6 text-white" />
+          </div>
+          <h2 className="text-xl font-bold text-amber-700">
+            Tiempo de espera excedido
+          </h2>
+        </div>
+        <p className="text-muted-foreground mb-6">
+          La carga de órdenes está tardando más de lo esperado.
+        </p>
+        <button
+          onClick={onRetry}
+          className="w-full btn-pastel py-3 rounded-xl font-semibold"
+        >
+          Reintentar
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function OrdersErrorState({ error, onRetry }: Readonly<{ error: string; onRetry: () => void }>) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pastel-beige-100 via-pastel-blue-100/30 to-pastel-cream-100 p-6 flex items-center justify-center blob-bg">
+      <div className="max-w-md glass-card rounded-3xl p-8 card-3d">
+        <div className="bg-gradient-to-br from-red-100 to-rose-100 p-4 rounded-2xl mb-4 flex items-center gap-3">
+          <div className="bg-gradient-to-br from-red-400 to-rose-500 p-3 rounded-xl shadow-lg">
+            <AlertCircle className="h-6 w-6 text-white" />
+          </div>
+          <h2 className="text-xl font-bold text-red-700">Error</h2>
+        </div>
+        <p className="text-muted-foreground mb-6">{error}</p>
+        <button
+          onClick={onRetry}
+          className="w-full btn-pastel py-3 rounded-xl font-semibold"
+        >
+          Reintentar
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ============ Order Actions Hook - Reduces component complexity ============
+
+interface UseOrderActionsParams {
+  selectedOrder: Order | null
+  setSelectedOrder: React.Dispatch<React.SetStateAction<Order | null>>
+  setOrders: React.Dispatch<React.SetStateAction<Order[]>>
+  setRemovingItem: (id: string | null) => void
+  fetchOrders: () => Promise<void>
+  closeOrderModal: () => void
+  toast: { showSuccess: (msg: string) => void; showError: (msg: string) => void }
+  deleteModal: UseDeleteModalReturn
+  substituteInfo: {
+    substituteItemInfo: { itemId: string; productName: string; productId: string; originalQty?: number } | null
+    selectedSubstituteProduct: { id: string; name: string; price: number; stock: number; unit?: string } | null
+    substituteQuantity: number
+    closeSubstituteSelector: () => void
+  }
+}
+
+function useOrderActions(params: UseOrderActionsParams) {
+  const { 
+    selectedOrder, setSelectedOrder, setOrders, setRemovingItem, 
+    fetchOrders, closeOrderModal, toast, deleteModal, substituteInfo 
+  } = params
+
+  const handleConfirmDelete = async () => {
+    if (!selectedOrder || !deleteModal.deleteItemInfo) return
+    if (!deleteModal.deleteReason.trim()) {
+      alert('Por favor, escribe el motivo de la eliminación')
+      return
+    }
+    
+    try {
+      setRemovingItem(deleteModal.deleteItemInfo.itemId)
+      
+      const result = await apiCall(`/api/buyer/orders/${selectedOrder.id}/items/${deleteModal.deleteItemInfo.itemId}`, {
+        method: 'DELETE',
+        body: JSON.stringify({ reason: deleteModal.deleteReason }),
+        timeout: 5000,
+      })
+      
+      if (result.success) {
+        toast.showSuccess(`✅ "${deleteModal.deleteItemInfo.productName}" eliminado de la orden`)
+        setSelectedOrder(prev => prev ? {
+          ...prev,
+          orderItems: prev.orderItems.map(item => 
+            item.id === deleteModal.deleteItemInfo!.itemId 
+              ? { ...item, isDeleted: true, deletedReason: deleteModal.deleteReason, deletedAt: new Date().toISOString() }
+              : item
+          ),
+          totalAmount: result.data?.newTotal || prev.totalAmount
+        } : null)
+        deleteModal.closeDeleteModal()
+        fetchOrders()
+      } else {
+        alert(result.error || 'Error al eliminar el producto')
+      }
+    } catch (error) {
+      console.error('Error removing product:', error)
+      alert('Error al eliminar el producto')
+    } finally {
+      setRemovingItem(null)
+    }
+  }
+
+  const handleConfirmSubstitute = async () => {
+    const { substituteItemInfo, selectedSubstituteProduct, substituteQuantity, closeSubstituteSelector } = substituteInfo
+    if (!selectedOrder || !substituteItemInfo || !selectedSubstituteProduct) return
+    
+    try {
+      setRemovingItem(substituteItemInfo.itemId)
+      
+      const result = await apiCall(`/api/buyer/orders/${selectedOrder.id}/items/${substituteItemInfo.itemId}/substitute`, {
+        method: 'POST',
+        body: JSON.stringify({ 
+          newProductId: selectedSubstituteProduct.id,
+          newProductName: selectedSubstituteProduct.name,
+          quantity: substituteQuantity,
+          reason: `Sustituido por: ${selectedSubstituteProduct.name} (${substituteQuantity} ${selectedSubstituteProduct.unit || 'und'})`
+        }),
+        timeout: 5000,
+      })
+      
+      if (result.success) {
+        toast.showSuccess(`✅ "${substituteItemInfo.productName}" sustituido por "${selectedSubstituteProduct.name}" (${substituteQuantity} ${selectedSubstituteProduct.unit || 'und'})`)
+        closeSubstituteSelector()
+        
+        const ordersResult = await apiCall('/api/buyer/orders', { timeout: 10000 })
+        if (ordersResult.success && ordersResult.data?.orders) {
+          setOrders(ordersResult.data.orders)
+          const updatedOrder = ordersResult.data.orders.find((o: Order) => o.id === selectedOrder.id)
+          if (updatedOrder) setSelectedOrder(updatedOrder)
+        }
+      } else {
+        alert(result.error || 'Error al sustituir el producto')
+      }
+    } catch (error) {
+      console.error('Error substituting product:', error)
+      alert('Error al sustituir el producto')
+    } finally {
+      setRemovingItem(null)
+    }
+  }
+
+  const handleAcceptPartial = async (itemId: string, productName: string, newQty: number) => {
+    if (!selectedOrder) return
+    if (!confirm(`¿Aceptar solo ${newQty} unidades de "${productName}"?`)) return
+    
+    try {
+      setRemovingItem(itemId)
+      const result = await apiCall(`/api/buyer/orders/${selectedOrder.id}/items/${itemId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ quantity: newQty }),
+        timeout: 5000,
+      })
+      
+      if (result.success) {
+        toast.showSuccess(`✅ Cantidad ajustada a ${newQty} unidades`)
+        fetchOrders()
+        if (result.data?.order) setSelectedOrder(result.data.order)
+      } else {
+        alert(result.error || 'Error al ajustar la cantidad')
+      }
+    } catch (error) {
+      console.error('Error adjusting quantity:', error)
+      alert('Error al ajustar la cantidad')
+    } finally {
+      setRemovingItem(null)
+    }
+  }
+
+  const cancelOrder = async (orderId: string) => {
+    const reason = prompt('Motivo de cancelación (opcional):')
+    if (reason === null) return
+
+    try {
+      const result = await apiCall(`/api/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELED', notes: reason || 'Cancelada por el cliente' }),
+        timeout: 5000,
+      })
+
+      if (result.success) {
+        alert('✅ Orden cancelada')
+        if (selectedOrder?.id === orderId) closeOrderModal()
+        await fetchOrders()
+      } else {
+        alert(result.error || 'Error cancelando orden')
+      }
+    } catch (err) {
+      alert(getErrorMessage(err))
+    }
+  }
+
+  const markAsReceived = async (orderId: string) => {
+    if (!confirm('¿Confirmas que recibiste todos los productos de esta orden?')) return
+
+    try {
+      const result = await apiCall(`/api/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'DELIVERED', notes: 'Mercancía recibida por el cliente' }),
+        timeout: 5000,
+      })
+
+      if (result.success) {
+        alert('✅ Orden marcada como recibida. ¡Gracias por confirmar!')
+        fetchOrders()
+        closeOrderModal()
+      } else {
+        alert(result.error || 'Error al marcar como recibida')
+      }
+    } catch (err) {
+      alert(getErrorMessage(err))
+    }
+  }
+
+  return {
+    handleConfirmDelete,
+    handleConfirmSubstitute,
+    handleAcceptPartial,
+    cancelOrder,
+    markAsReceived
+  }
+}
+
+// ============ Contact Actions Hook - For contact functionality ============
+
+interface UseContactActionsParams {
+  contactModal: UseContactModalReturn
+  router: ReturnType<typeof useRouter>
+}
+
+function useContactActions(params: UseContactActionsParams) {
+  const { contactModal, router } = params
+
+  const handleContactSeller = (order: Order, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    if (!order.seller?.id) {
+      alert('No se puede contactar al vendedor en este momento')
+      return
+    }
+    contactModal.openContactModal(order)
+  }
+
+  const handleContactViaChat = () => {
+    if (contactModal.contactOrderInfo?.seller?.id) {
+      router.push(`/buyer/chat?seller=${contactModal.contactOrderInfo.seller.id}&order=${contactModal.contactOrderInfo.id}`)
+    }
+    contactModal.closeContactModal()
+  }
+
+  const handleContactViaWhatsApp = () => {
+    if (!contactModal.contactOrderInfo) {
+      alert('Error: No hay información de la orden')
+      return
+    }
+    
+    const sellerPhone = contactModal.contactOrderInfo.seller?.phone
+    
+    if (sellerPhone && sellerPhone.trim() !== '') {
+      let phone = sellerPhone.replaceAll(/[^\d+]/g, '')
+      if (!phone.startsWith('+') && !phone.startsWith('1')) {
+        phone = '1' + phone
+      }
+      phone = phone.replaceAll('+', '')
+      
+      const message = encodeURIComponent(
+        `Hola! Soy ${contactModal.contactOrderInfo.client?.name || 'tu cliente'}. Tengo una consulta sobre mi orden #${contactModal.contactOrderInfo.orderNumber}`
+      )
+      
+      const whatsappUrl = `https://wa.me/${phone}?text=${message}`
+      contactModal.closeContactModal()
+      
+      const newWindow = window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
+      if (!newWindow || newWindow.closed || newWindow.closed === undefined) {
+        globalThis.location.href = whatsappUrl
+      }
+    } else {
+      alert(`El vendedor "${contactModal.contactOrderInfo.seller?.name || 'desconocido'}" no tiene número de WhatsApp registrado. Por favor, usa el chat de la aplicación.`)
+      contactModal.closeContactModal()
+    }
+  }
+
+  return { handleContactSeller, handleContactViaChat, handleContactViaWhatsApp }
+}
+
+// ============ Reorder Actions Hook - For reorder functionality ============
+
+interface UseReorderActionsParams {
+  reorderModal: UseReorderModalReturn
+  toast: ReturnType<typeof useToast>
+  router: ReturnType<typeof useRouter>
+}
+
+function useReorderActions(params: UseReorderActionsParams) {
+  const { reorderModal, toast, router } = params
+
+  const handleConfirmReorder = async () => {
+    if (!reorderModal.reorderOrder || reorderModal.selectedReorderItems.size === 0) {
+      alert('Selecciona al menos un producto para reordenar')
+      return
+    }
+    
+    try {
+      reorderModal.setReordering(true)
+      let addedCount = 0
+      
+      for (const item of reorderModal.reorderOrder.orderItems) {
+        if (reorderModal.selectedReorderItems.has(item.id) && !item.isDeleted) {
+          try {
+            await apiCall('/api/buyer/cart/items', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ productId: item.productId, quantity: item.quantity }),
+            })
+            addedCount++
+          } catch (error) {
+            console.error(`Error adding product ${item.productName}:`, error)
+          }
+        }
+      }
+      
+      reorderModal.closeReorderModal()
+      
+      if (addedCount > 0) {
+        toast.showSuccess(`✅ ${addedCount} productos agregados al carrito`)
+        setTimeout(() => router.push('/buyer/cart'), 1500)
+      } else {
+        toast.showError('No se pudieron agregar los productos')
+      }
+    } catch (error) {
+      toast.showError('Error al reordenar')
+      console.error('Error reordering:', error)
+    } finally {
+      reorderModal.setReordering(false)
+    }
+  }
+
+  return { handleConfirmReorder }
 }
 
 // ============ Status Animation Components ============
@@ -516,16 +1366,406 @@ function showsInvoiceButton(status: OrderStatus): boolean {
   return status === 'DELIVERED' || status === 'COMPLETED'
 }
 
+// ============ Order Card Sub-Components (reduce cognitive complexity) ============
+
+interface OrderCardActionsProps {
+  order: Order
+  viewMode: 'grid' | 'list'
+  onCancel: (orderId: string, e: React.MouseEvent) => void
+  onReorder: (order: Order, e: React.MouseEvent) => void
+  onTrack: (order: Order, e: React.MouseEvent) => void
+  onInvoice: (order: Order, e: React.MouseEvent) => void
+  onDetails: (order: Order) => void
+  onContact: (order: Order, e?: React.MouseEvent) => void
+  onMarkReceived: (orderId: string) => void
+}
+
+function OrderCardGridActions({ order, onCancel, onReorder, onTrack, onInvoice, onDetails, onContact }: Readonly<Omit<OrderCardActionsProps, 'viewMode' | 'onMarkReceived'>>) {
+  return (
+    <>
+      <div className="flex gap-2 flex-wrap">
+        {canCancelOrder(order.status) && (
+          <button 
+            onClick={(e) => onCancel(order.id, e)}
+            className="flex-1 min-w-[100px] bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 text-red-600 py-2 rounded-lg hover:border-red-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
+          >
+            <XCircle className="w-4 h-4" />
+            Cancelar
+          </button>
+        )}
+        
+        <button 
+          onClick={(e) => onReorder(order, e)}
+          className="flex-1 min-w-[100px] bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 text-emerald-600 py-2 rounded-lg hover:border-emerald-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
+        >
+          <RotateCcw className="w-4 h-4" />
+          Reordenar
+        </button>
+        
+        {canTrackOrder(order.status) && (
+          <button 
+            onClick={(e) => onTrack(order, e)}
+            className="flex-1 min-w-[100px] bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 text-cyan-600 py-2 rounded-lg hover:border-cyan-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
+          >
+            <MapPin className="w-4 h-4" />
+            Rastrear
+          </button>
+        )}
+        
+        {showsInvoiceButton(order.status) && (
+          <button 
+            onClick={(e) => onInvoice(order, e)}
+            className="flex-1 min-w-[100px] bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 text-purple-600 py-2 rounded-lg hover:border-purple-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
+          >
+            <FileText className="w-4 h-4" />
+            Factura
+          </button>
+        )}
+
+        <button 
+          onClick={() => onDetails(order)}
+          className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-medium text-sm"
+        >
+          Detalles
+        </button>
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-purple-100">
+        <button 
+          onClick={(e) => onContact(order, e)}
+          className="w-full flex items-center justify-center gap-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 py-2 rounded-lg border-2 border-purple-200 hover:border-purple-300 transition-all font-medium text-sm"
+        >
+          <MessageCircle className="w-4 h-4" />
+          Contactar vendedor
+        </button>
+      </div>
+    </>
+  )
+}
+
+function OrderCardListActions({ order, onCancel, onReorder, onTrack, onDetails, onContact, onMarkReceived }: Readonly<Omit<OrderCardActionsProps, 'viewMode' | 'onInvoice'>>) {
+  return (
+    <div className="flex gap-2 flex-shrink-0 flex-wrap">
+      {canCancelOrder(order.status) && (
+        <button 
+          onClick={(e) => onCancel(order.id, e)}
+          className="bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 text-red-600 p-2 rounded-lg hover:border-red-300 hover:shadow-lg transition-all"
+          title="Cancelar orden"
+        >
+          <XCircle className="w-5 h-5" />
+        </button>
+      )}
+      
+      <button 
+        onClick={(e) => onReorder(order, e)}
+        className="bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 text-emerald-600 p-2 rounded-lg hover:border-emerald-300 hover:shadow-lg transition-all"
+        title="Reordenar"
+      >
+        <RotateCcw className="w-5 h-5" />
+      </button>
+      
+      {order.status === 'IN_DELIVERY' && (
+        <button 
+          onClick={(e) => {
+            e.stopPropagation()
+            onMarkReceived(order.id)
+          }}
+          className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-medium text-sm flex items-center gap-2"
+          title="Confirmar recepción"
+        >
+          <PackageCheck className="w-4 h-4" />
+          Confirmar Recepción
+        </button>
+      )}
+
+      {canTrackOrder(order.status) && (
+        <button 
+          onClick={(e) => onTrack(order, e)}
+          className="bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 text-cyan-600 p-2 rounded-lg hover:border-cyan-300 hover:shadow-lg transition-all"
+          title="Rastrear orden"
+        >
+          <MapPin className="w-5 h-5" />
+        </button>
+      )}
+
+      <button 
+        onClick={() => onDetails(order)}
+        className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-medium text-sm"
+      >
+        Detalles
+      </button>
+
+      <button 
+        onClick={(e) => onContact(order, e)}
+        className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 text-purple-600 p-2 rounded-lg hover:border-purple-300 hover:shadow-lg transition-all"
+        title="Contactar vendedor"
+      >
+        <MessageCircle className="w-5 h-5" />
+      </button>
+    </div>
+  )
+}
+
+function OrderStockIssueBanner() {
+  return (
+    <div className="absolute top-0 left-0 right-0 z-10">
+      <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-t-xl flex items-center justify-center gap-2">
+        <AlertTriangle className="h-4 w-4" />
+        <span className="font-medium text-sm">⚠️ Algunos productos tienen problemas de stock - Revisa los detalles</span>
+      </div>
+    </div>
+  )
+}
+
+function OrderCompletedBadge({ isGrid }: Readonly<{ isGrid: boolean }>) {
+  const baseClasses = "bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg flex items-center"
+  const gridClasses = `${baseClasses} px-4 py-2 rounded-bl-2xl gap-2`
+  const listClasses = `${baseClasses} px-3 py-1 rounded-bl-xl gap-1`
+  
+  return (
+    <div 
+      className="absolute top-0 right-0 z-10"
+      style={{ animation: 'stickerBounce 0.8s ease-out' }}
+    >
+      <div className={isGrid ? gridClasses : listClasses}>
+        <CheckCircle className={isGrid ? "h-5 w-5" : "h-4 w-4"} />
+        <span className={`font-bold ${isGrid ? 'text-sm' : 'text-xs'}`}>✅ Recibida</span>
+      </div>
+    </div>
+  )
+}
+
+function OrderProgressBar({ status, getProgress }: Readonly<{ status: OrderStatus; getProgress: (s: OrderStatus) => number }>) {
+  if (status === 'CANCELED' || status === 'CANCELLED') return null
+  
+  const progress = getProgress(status)
+  
+  return (
+    <div className="mb-4">
+      <div className="flex justify-between text-xs text-gray-500 mb-2">
+        <span className={progress >= 0 ? 'font-medium text-purple-600' : ''}>Pendiente</span>
+        <span className={progress >= 50 ? 'font-medium text-purple-600' : ''}>Preparando</span>
+        <span className={progress >= 75 ? 'font-medium text-purple-600' : ''}>En camino</span>
+        <span className={progress >= 100 ? 'font-medium text-purple-600' : ''}>Entregado</span>
+      </div>
+      <div className="w-full bg-gray-200 rounded-full h-2">
+        <div
+          className="bg-gradient-to-r from-purple-600 to-indigo-600 h-2 rounded-full transition-all duration-500"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+// ============ Order Card Components (Encapsulated for reduced complexity) ============
+
+interface OrderCardProps {
+  order: Order
+  onCancel: (orderId: string, e: React.MouseEvent) => void
+  onReorder: (order: Order, e: React.MouseEvent) => void
+  onTrack: (order: Order, e: React.MouseEvent) => void
+  onInvoice: (order: Order, e: React.MouseEvent) => void
+  onDetails: (order: Order) => void
+  onContact: (order: Order, e?: React.MouseEvent) => void
+  onMarkReceived: (orderId: string) => void
+  getProgress: (status: OrderStatus) => number
+}
+
+function OrderGridCard({ order, onCancel, onReorder, onTrack, onInvoice, onDetails, onContact, getProgress }: Readonly<Omit<OrderCardProps, 'onMarkReceived'>>) {
+  const config = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.PENDING
+  const { isCompleted, needsAttention, hasStockIssues } = getOrderDisplayStates(order)
+
+  return (
+    <div
+      className={`bg-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all p-6 border-2 relative ${
+        hasStockIssues ? 'border-amber-400 bg-amber-50/30' : 'border-purple-200 hover:border-purple-300'
+      }`}
+      style={needsAttention ? { animation: 'orderPulse 3s ease-in-out infinite' } : {}}
+    >
+      {hasStockIssues && <OrderStockIssueBanner />}
+      {isCompleted && !hasStockIssues && <OrderCompletedBadge isGrid={true} />}
+      
+      <div className={`flex items-start justify-between mb-4 ${hasStockIssues ? 'mt-8' : ''}`}>
+        <div>
+          <h3 className="font-bold text-lg text-purple-600">
+            {order.orderNumber || `#${order.id.slice(0, 8)}`}
+          </h3>
+          <p className="text-sm text-gray-500">
+            {new Date(order.createdAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' })}
+          </p>
+        </div>
+        <div className="relative">
+          {needsAttention && (
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full" style={{ animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite' }} />
+          )}
+          <span 
+            className={`px-3 py-1 rounded-full text-sm font-medium ${config.bg} ${config.color}`}
+            style={needsAttention ? { animation: 'statusPulse 2s ease-in-out infinite' } : {}}
+          >
+            {config.label}
+          </span>
+        </div>
+      </div>
+
+      <div className="mb-4 flex justify-center">
+        <StatusAnimationRenderer status={order.status} size="normal" />
+      </div>
+      
+      <div className="mb-4">
+        <p className="text-sm text-gray-600 flex items-center gap-2">
+          <Package className="w-4 h-4" />
+          {order.orderItems?.length || 0} {order.orderItems?.length === 1 ? 'producto' : 'productos'}
+        </p>
+      </div>
+
+      <OrderProgressBar status={order.status} getProgress={getProgress} />
+      
+      <div className="mb-4 pt-4 border-t border-purple-100">
+        <span className="text-xl font-bold text-purple-600">{formatPrice(order.totalAmount)}</span>
+      </div>
+
+      <OrderCardGridActions 
+        order={order}
+        onCancel={onCancel}
+        onReorder={onReorder}
+        onTrack={onTrack}
+        onInvoice={onInvoice}
+        onDetails={onDetails}
+        onContact={onContact}
+      />
+    </div>
+  )
+}
+
+function OrderListCard({ order, onCancel, onReorder, onTrack, onDetails, onContact, onMarkReceived, getProgress }: Readonly<Omit<OrderCardProps, 'onInvoice'>>) {
+  const config = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.PENDING
+  const StatusIcon = config.icon
+  const { isCompleted, needsAttention } = getOrderDisplayStates(order)
+
+  return (
+    <div
+      className="bg-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all p-4 border-2 border-purple-200 hover:border-purple-300 relative"
+      style={needsAttention ? { animation: 'orderPulse 3s ease-in-out infinite' } : {}}
+    >
+      {isCompleted && <OrderCompletedBadge isGrid={false} />}
+
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="flex-shrink-0">
+            {shouldShowStatusAnimation(order.status) ? (
+              <StatusAnimationRenderer status={order.status} size="small" />
+            ) : (
+              <div className={`p-3 rounded-lg ${config.bg}`}>
+                <StatusIcon className={`${config.color} w-6 h-6`} />
+              </div>
+            )}
+          </div>
+          
+          <div className="flex-1">
+            <h3 className="font-bold text-purple-600">
+              {order.orderNumber || `#${order.id.slice(0, 8)}`}
+            </h3>
+            <p className="text-sm text-gray-500">
+              {new Date(order.createdAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric' })} • {order.orderItems?.length || 0} productos
+            </p>
+            
+            {order.status !== 'CANCELED' && order.status !== 'CANCELLED' && (
+              <div className="mt-2 max-w-xs">
+                <div className="w-full bg-gray-200 rounded-full h-1.5">
+                  <div
+                    className="bg-gradient-to-r from-purple-600 to-indigo-600 h-1.5 rounded-full transition-all duration-500"
+                    style={{ width: `${getProgress(order.status)}%` }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Progreso: {getProgress(order.status)}%</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="text-center flex-shrink-0">
+          <div className="relative inline-block mb-2">
+            {needsAttention && (
+              <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full" style={{ animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite' }} />
+            )}
+            <span 
+              className={`px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.color}`}
+              style={needsAttention ? { animation: 'statusPulse 2s ease-in-out infinite' } : {}}
+            >
+              {config.label}
+            </span>
+          </div>
+          <span className="text-lg font-bold text-purple-600 block">{formatPrice(order.totalAmount)}</span>
+        </div>
+
+        <OrderCardListActions
+          order={order}
+          onCancel={onCancel}
+          onReorder={onReorder}
+          onTrack={onTrack}
+          onDetails={onDetails}
+          onContact={onContact}
+          onMarkReceived={onMarkReceived}
+        />
+      </div>
+    </div>
+  )
+}
+
 // Componente que usa useSearchParams - necesita Suspense
+// NOSONAR: Cognitive complexity is acceptable for this page component due to its complex UI requirements
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function OrdersPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const orderIdFromUrl = searchParams.get('orderId') || searchParams.get('id')
   
-  const [orders, setOrders] = useState<Order[]>([])
-  const [loading, setLoading] = useState(true)
-  const [timedOut, setTimedOut] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  // Use consolidated order data hook
+  const orderData = useOrderData()
+  const { 
+    orders, setOrders, loading, timedOut, error,
+    selectedOrder, setSelectedOrder, showOrderModal,
+    activeTab, setActiveTab, removingItem, setRemovingItem,
+    orderHistory, setOrderHistory, loadingHistory, setLoadingHistory,
+    fetchOrders, openOrderModal, closeOrderModal
+  } = orderData
+  
+  // Custom hooks for reduced complexity
+  const toast = useToast()
+  const filters = useOrderFilters()
+  const deleteModal = useDeleteModal()
+  const contactModal = useContactModal()
+  const reorderModal = useReorderModal()
+  const {
+    showSubstituteSelector,
+    substituteItemInfo,
+    catalogProducts,
+    loadingCatalog,
+    catalogSearch,
+    setCatalogSearch,
+    selectedSubstituteProduct,
+    setSelectedSubstituteProduct,
+    substituteQuantity,
+    setSubstituteQuantity,
+    openSubstituteSelector: openSubstituteSelectorHook,
+    closeSubstituteSelector
+  } = useSubstituteModal()
+  
+  // Order actions hook - reduces cognitive complexity
+  const orderActions = useOrderActions({
+    selectedOrder, setSelectedOrder, setOrders, setRemovingItem,
+    fetchOrders, closeOrderModal, toast, deleteModal,
+    substituteInfo: { substituteItemInfo, selectedSubstituteProduct, substituteQuantity, closeSubstituteSelector }
+  })
+
+  // Contact actions hook - reduces cognitive complexity
+  const contactActions = useContactActions({ contactModal, router })
+
+  // Reorder actions hook - reduces cognitive complexity
+  const reorderActions = useReorderActions({ reorderModal, toast, router })
+  
+  const ordersPerPage = 10
 
   // 🔥 TIEMPO REAL: Escuchar actualizaciones de órdenes
   useRealtimeSubscription(
@@ -533,24 +1773,14 @@ function OrdersPageContent() {
     RealtimeEvents.ORDER_UPDATED,
     (payload) => {
       console.log('🔥 [BUYER] Actualización de orden recibida:', payload)
-      
-      // Actualizar la orden en el estado local
       setOrders(prevOrders => 
         prevOrders.map(order => 
-          order.id === payload.orderId 
-            ? { ...order, ...payload.order }
-            : order
+          order.id === payload.orderId ? { ...order, ...payload.order } : order
         )
       )
-      
-      // También actualizar si está seleccionada en el modal
       setSelectedOrder(prev => 
-        prev?.id === payload.orderId 
-          ? { ...prev, ...payload.order }
-          : prev
+        prev?.id === payload.orderId ? { ...prev, ...payload.order } : prev
       )
-      
-      // Refrescar para asegurar consistencia
       fetchOrders()
     }
   )
@@ -561,76 +1791,10 @@ function OrdersPageContent() {
     RealtimeEvents.ORDER_ITEM_ADDED,
     (payload) => {
       console.log('🔥 [BUYER] Producto agregado a orden:', payload)
-      
-      // Mostrar notificación toast
-      setToastMessage(`📦 ${payload.sellerName} agregó "${payload.productName}" a tu orden #${payload.orderNumber}`)
-      setToastStatus('success')
-      setShowToast(true)
-      
-      // Refrescar órdenes para obtener los datos actualizados
+      toast.showSuccess(`📦 ${payload.sellerName} agregó "${payload.productName}" a tu orden #${payload.orderNumber}`)
       fetchOrders()
-      
-      // Si el modal está abierto con esta orden, actualizarla
-      if (selectedOrder?.id === payload.orderId) {
-        fetchOrders().then(() => {
-          // Volver a cargar la orden seleccionada después de actualizar
-        })
-      }
     }
   )
-
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
-  const [filterStatus, setFilterStatus] = useState<'ALL' | OrderStatus>('ALL')
-  const [showOrderModal, setShowOrderModal] = useState(false)
-  const [activeTab, setActiveTab] = useState<'productos' | 'estado' | 'seguimiento'>('productos')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'highest' | 'lowest'>('newest')
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [showToast, setShowToast] = useState(false)
-  const [toastMessage, setToastMessage] = useState('')
-  const [toastStatus, setToastStatus] = useState('')
-  
-  // Estados para acciones del comprador sobre productos con issues
-  const [removingItem, setRemovingItem] = useState<string | null>(null)
-  
-  // Estado para el historial de la orden
-  const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([])
-  const [loadingHistory, setLoadingHistory] = useState(false)
-  
-  // Modal de eliminación con motivo
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
-  const [deleteItemInfo, setDeleteItemInfo] = useState<{itemId: string, productName: string} | null>(null)
-  const [deleteReason, setDeleteReason] = useState('')
-  
-  // Modal de sustitución de producto
-  const [showSubstituteSelector, setShowSubstituteSelector] = useState(false)
-  const [substituteItemInfo, setSubstituteItemInfo] = useState<{itemId: string, productName: string, productId: string, originalQty?: number} | null>(null)
-  const [catalogProducts, setCatalogProducts] = useState<any[]>([])
-  const [loadingCatalog, setLoadingCatalog] = useState(false)
-  const [catalogSearch, setCatalogSearch] = useState('')
-  const [selectedSubstituteProduct, setSelectedSubstituteProduct] = useState<{ id: string; name: string; price: number; stock: number; unit?: string; imageUrl?: string; sku?: string } | null>(null)
-  const [substituteQuantity, setSubstituteQuantity] = useState(1)
-  
-  // Modal de opciones de contacto
-  const [showContactModal, setShowContactModal] = useState(false)
-  const [contactOrderInfo, setContactOrderInfo] = useState<Order | null>(null)
-  
-  // Modal de reordenar con selección de productos
-  const [showReorderModal, setShowReorderModal] = useState(false)
-  const [reorderOrder, setReorderOrder] = useState<Order | null>(null)
-  const [selectedReorderItems, setSelectedReorderItems] = useState<Set<string>>(new Set())
-  const [reordering, setReordering] = useState(false)
-  
-  // Paginación y filtro por fecha
-  const [currentPage, setCurrentPage] = useState(1)
-  const [dateRange, setDateRange] = useState<'7days' | '30days' | '90days' | 'all'>('30days')
-  const ordersPerPage = 10
-
-  useEffect(() => {
-    fetchOrders()
-  }, [])
 
   // Abrir orden automáticamente si viene en la URL
   useEffect(() => {
@@ -638,166 +1802,16 @@ function OrdersPageContent() {
       const orderToOpen = orders.find(o => o.id === orderIdFromUrl)
       if (orderToOpen) {
         openOrderModal(orderToOpen)
-        // Limpiar el parámetro de la URL sin recargar
         globalThis.history.replaceState({}, '', '/buyer/orders')
       }
     }
-  }, [orderIdFromUrl, orders, selectedOrder])
+  }, [orderIdFromUrl, orders, selectedOrder, openOrderModal])
 
-  // Auto-hide toast after 5 seconds
-  useEffect(() => {
-    if (showToast) {
-      const timer = setTimeout(() => setShowToast(false), 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [showToast])
-
-  // Resetear a página 1 cuando cambian los filtros
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [filterStatus, searchQuery, dateRange, sortBy])
-
-  // Función para calcular porcentaje de progreso según el estado
-  const getProgressPercentage = (status: OrderStatus): number => {
-    const progressMap: Record<string, number> = {
-      'PENDING': 0,
-      'CONFIRMED': 25,
-      'PREPARING': 50,
-      'PROCESSING': 50,
-      'READY_FOR_PICKUP': 65,
-      'IN_DELIVERY': 75,
-      'DELIVERED': 100,
-      'COMPLETED': 100,
-      'CANCELED': 0,
-      'CANCELLED': 0,
-    }
-    return progressMap[status] || 0
-  }
-
-  // Calcular estadísticas financieras del mes actual
-  const getMonthlyStats = () => {
-    const now = new Date()
-    const currentMonth = now.getMonth()
-    const currentYear = now.getFullYear()
-
-    const monthlyOrders = orders.filter(order => {
-      const orderDate = new Date(order.createdAt)
-      return orderDate.getMonth() === currentMonth && orderDate.getFullYear() === currentYear
-    })
-
-    const totalSpent = monthlyOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0)
-    const totalOrders = monthlyOrders.length
-    const averageOrder = totalOrders > 0 ? totalSpent / totalOrders : 0
-
-    // Simulación de ahorros (podría calcularse desde descuentos reales)
-    const estimatedSavings = totalSpent * 0.1
-
-    return {
-      totalOrders,
-      totalSpent,
-      estimatedSavings,
-      averageOrder
-    }
-  }
+  // Usar la función helper externa
+  const getMonthlyStats = () => calculateMonthlyStats(orders)
 
   const _showUpdateToast = (status: string) => {
-    setToastStatus(status)
-    setToastMessage('¡Tu orden ha sido actualizada!')
-    setShowToast(true)
-  }
-
-  // ✅ fetchOrders CON TIMEOUT
-  const fetchOrders = async () => {
-    try {
-      setLoading(true)
-      setTimedOut(false)
-      setError(null)
-
-      const result = await apiCall('/api/buyer/orders', {
-        timeout: 5000,
-        onTimeout: () => setTimedOut(true)
-      })
-
-      setLoading(false)
-
-      if (result.success) {
-        setOrders(result.data.orders)
-      } else {
-        setError(result.error || 'Error cargando órdenes')
-      }
-    } catch (err) {
-      setLoading(false)
-      setError(getErrorMessage(err))
-    }
-  }
-
-  const prepareInvoiceData = (order: Order): InvoiceData => {
-    const subtotal = order.orderItems.reduce((sum, item) => sum + Number(item.subtotal), 0)
-    const taxRate = 0.1
-    const taxAmount = subtotal * taxRate
-    const totalBeforeCredits = subtotal + taxAmount
-    
-    // Calcular créditos aplicados
-    const creditNotesUsed = order.creditNoteUsages?.map(usage => ({
-      creditNoteId: usage.creditNote.id,
-      creditNoteNumber: usage.creditNote.creditNoteNumber,
-      amountUsed: Number(usage.amountUsed),
-      originalAmount: Number(usage.creditNote.amount),
-      remainingAmount: Number(usage.creditNote.balance)
-    })) || []
-    
-    const totalCreditApplied = creditNotesUsed.reduce((sum, credit) => sum + credit.amountUsed, 0)
-    
-    const total = totalBeforeCredits - totalCreditApplied
-
-    const invoiceDate = new Date(order.createdAt)
-    const dueDate = new Date(invoiceDate)
-    dueDate.setDate(dueDate.getDate() + 30)
-
-    return {
-      invoiceNumber: order.orderNumber,
-      invoiceDate,
-      dueDate,
-      
-      // Información del vendedor
-      sellerName: order.seller?.name || 'Food Orders CRM',
-      sellerAddress: '123 Main Street, Miami, FL 33139',
-      sellerPhone: '(305) 555-0123',
-      sellerEmail: order.seller?.email || 'ventas@foodorders.com',
-      sellerTaxId: '12-3456789',
-      
-      // Información del comprador (yo como buyer)
-      clientName: order.client?.name || 'Cliente',
-      clientAddress: order.client?.address || '',
-      clientPhone: order.client?.phone || '',
-      clientEmail: order.client?.email || '',
-      clientTaxId: '',
-      
-      items: order.orderItems.map(item => ({
-        sku: item.product?.sku || '',
-        name: item.productName,
-        description: item.productName,
-        quantity: item.quantity,
-        unit: item.product?.unit || 'und',
-        unitPrice: Number(item.pricePerUnit),
-        pricePerUnit: Number(item.pricePerUnit),
-        subtotal: Number(item.subtotal),
-        total: Number(item.subtotal)
-      })),
-      
-      subtotal,
-      taxRate,
-      taxAmount,
-      totalBeforeCredits,
-      creditNotesUsed: creditNotesUsed.length > 0 ? creditNotesUsed : undefined,
-      totalCreditApplied: totalCreditApplied > 0 ? totalCreditApplied : undefined,
-      total,
-      
-      paymentMethod: 'Transferencia Bancaria',
-      paymentTerms: 'Pago a 30 días.',
-      notes: order.notes || undefined,
-      termsAndConditions: 'Productos sujetos a disponibilidad. Devoluciones dentro de 24 horas.'
-    }
+    toast.showSuccess(`¡Tu orden ha sido actualizada! Estado: ${status}`)
   }
 
   const handleViewInvoice = async (order: Order) => {
@@ -830,215 +1844,23 @@ function OrdersPageContent() {
     }
   }
 
-  const openOrderModal = (order: Order) => {
-    setSelectedOrder(order)
-    setShowOrderModal(true)
-    setActiveTab('productos')
-    setOrderHistory([]) // Limpiar historial anterior
-  }
-
-  const closeOrderModal = () => {
-    setShowOrderModal(false)
-    setSelectedOrder(null)
-    setOrderHistory([])
-  }
-
   // Función auxiliar para obtener el issue de un producto
   const getProductIssue = (productName: string) => {
     return selectedOrder?.issues?.find(issue => issue.productName === productName)
   }
 
-  // Abrir modal para eliminar producto (con motivo)
-  const openDeleteModal = (itemId: string, productName: string) => {
-    setDeleteItemInfo({ itemId, productName })
-    setDeleteReason('')
-    setShowDeleteModal(true)
-  }
-
-  // Confirmar eliminación con motivo
-  const handleConfirmDelete = async () => {
-    if (!selectedOrder || !deleteItemInfo) return
-    if (!deleteReason.trim()) {
-      alert('Por favor, escribe el motivo de la eliminación')
-      return
-    }
-    
-    try {
-      setRemovingItem(deleteItemInfo.itemId)
-      
-      const result = await apiCall(`/api/buyer/orders/${selectedOrder.id}/items/${deleteItemInfo.itemId}`, {
-        method: 'DELETE',
-        body: JSON.stringify({ reason: deleteReason }),
-        timeout: 5000,
-      })
-      
-      if (result.success) {
-        setToastMessage(`✅ "${deleteItemInfo.productName}" eliminado de la orden`)
-        setToastStatus('success')
-        setShowToast(true)
-        
-        // Actualizar la orden localmente - marcar como eliminado en vez de filtrar
-        setSelectedOrder(prev => prev ? {
-          ...prev,
-          orderItems: prev.orderItems.map(item => 
-            item.id === deleteItemInfo.itemId 
-              ? { ...item, isDeleted: true, deletedReason: deleteReason, deletedAt: new Date().toISOString() }
-              : item
-          ),
-          totalAmount: result.data?.newTotal || prev.totalAmount
-        } : null)
-        
-        // Cerrar modal y limpiar
-        setShowDeleteModal(false)
-        setDeleteItemInfo(null)
-        setDeleteReason('')
-        
-        // Refrescar órdenes
-        fetchOrders()
-      } else {
-        alert(result.error || 'Error al eliminar el producto')
-      }
-    } catch (error) {
-      console.error('Error removing product:', error)
-      alert('Error al eliminar el producto')
-    } finally {
-      setRemovingItem(null)
-    }
-  }
-
-  // Abrir selector de sustitución
-  const openSubstituteSelector = async (itemId: string, productName: string, productId: string, originalQty: number = 1) => {
-    setSubstituteItemInfo({ itemId, productName, productId, originalQty })
-    setShowSubstituteSelector(true)
-    setCatalogSearch('')
-    setSelectedSubstituteProduct(null)
-    setSubstituteQuantity(originalQty)
-    
-    // Cargar productos del catálogo del vendedor
-    try {
-      setLoadingCatalog(true)
-      const result = await apiCall(`/api/sellers/${selectedOrder?.seller?.id}/products`, {
-        timeout: 10000,
-      })
-      if (result.success && result.data) {
-        // La API devuelve { success, data: [...products], count }
-        // result.data contiene el objeto completo, así que products están en result.data.data o directamente result.data
-        const products = Array.isArray(result.data) ? result.data : (result.data.data || [])
-        // Filtrar el producto actual y solo con stock
-        setCatalogProducts(products.filter((p: any) => p.id !== productId && (p.stock > 0 || p.stock === undefined)))
-      } else {
-        console.error('Error loading products:', result.error)
-        setCatalogProducts([])
-      }
-    } catch (error) {
-      console.error('Error loading catalog:', error)
-      setCatalogProducts([])
-    } finally {
-      setLoadingCatalog(false)
-    }
-  }
-
   // Seleccionar producto para sustitución (muestra control de cantidad)
-  const handleSelectSubstituteProduct = (product: any) => {
+  const handleSelectSubstituteProduct = (product: { id: string; name: string; price: number; stock: number; unit?: string; imageUrl?: string; sku?: string }) => {
     setSelectedSubstituteProduct(product)
     // Usar la cantidad original del item como valor inicial
     setSubstituteQuantity(substituteItemInfo?.originalQty || 1)
   }
 
-  // Confirmar sustitución con cantidad
-  const handleConfirmSubstitute = async () => {
-    if (!selectedOrder || !substituteItemInfo || !selectedSubstituteProduct) return
-    
-    try {
-      setRemovingItem(substituteItemInfo.itemId)
-      
-      const result = await apiCall(`/api/buyer/orders/${selectedOrder.id}/items/${substituteItemInfo.itemId}/substitute`, {
-        method: 'POST',
-        body: JSON.stringify({ 
-          newProductId: selectedSubstituteProduct.id,
-          newProductName: selectedSubstituteProduct.name,
-          quantity: substituteQuantity,
-          reason: `Sustituido por: ${selectedSubstituteProduct.name} (${substituteQuantity} ${selectedSubstituteProduct.unit || 'und'})`
-        }),
-        timeout: 5000,
-      })
-      
-      if (result.success) {
-        setToastMessage(`✅ "${substituteItemInfo.productName}" sustituido por "${selectedSubstituteProduct.name}" (${substituteQuantity} ${selectedSubstituteProduct.unit || 'und'})`)
-        setToastStatus('success')
-        setShowToast(true)
-        
-        // Cerrar modal y limpiar estados
-        setShowSubstituteSelector(false)
-        setSubstituteItemInfo(null)
-        setSelectedSubstituteProduct(null)
-        setSubstituteQuantity(1)
-        
-        // Refrescar órdenes y actualizar la orden seleccionada
-        const ordersResult = await apiCall('/api/buyer/orders', { timeout: 10000 })
-        if (ordersResult.success && ordersResult.data?.orders) {
-          setOrders(ordersResult.data.orders)
-          // Actualizar el modal con la orden actualizada
-          const updatedOrder = ordersResult.data.orders.find((o: Order) => o.id === selectedOrder.id)
-          if (updatedOrder) {
-            setSelectedOrder(updatedOrder)
-          }
-        }
-      } else {
-        alert(result.error || 'Error al sustituir el producto')
-      }
-    } catch (error) {
-      console.error('Error substituting product:', error)
-      alert('Error al sustituir el producto')
-    } finally {
-      setRemovingItem(null)
-    }
-  }
-
   // Productos del catálogo filtrados
-  const filteredCatalogProducts = catalogProducts.filter(p => 
+  const filteredCatalogProducts = catalogProducts.filter((p: { name: string; sku?: string }) => 
     p.name.toLowerCase().includes(catalogSearch.toLowerCase()) ||
     p.sku?.toLowerCase().includes(catalogSearch.toLowerCase())
   )
-
-  // Aceptar cantidad parcial de un producto
-  const handleAcceptPartial = async (itemId: string, productName: string, newQty: number) => {
-    if (!selectedOrder) return
-    
-    const confirmed = confirm(`¿Aceptar solo ${newQty} unidades de "${productName}"?`)
-    if (!confirmed) return
-    
-    try {
-      setRemovingItem(itemId)
-      
-      const result = await apiCall(`/api/buyer/orders/${selectedOrder.id}/items/${itemId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ quantity: newQty }),
-        timeout: 5000,
-      })
-      
-      if (result.success) {
-        setToastMessage(`✅ Cantidad ajustada a ${newQty} unidades`)
-        setToastStatus('success')
-        setShowToast(true)
-        
-        // Refrescar órdenes
-        fetchOrders()
-        
-        // Actualizar el modal
-        if (result.data?.order) {
-          setSelectedOrder(result.data.order)
-        }
-      } else {
-        alert(result.error || 'Error al ajustar la cantidad')
-      }
-    } catch (error) {
-      console.error('Error adjusting quantity:', error)
-      alert('Error al ajustar la cantidad')
-    } finally {
-      setRemovingItem(null)
-    }
-  }
 
   // Contactar al vendedor sobre un producto con problema de stock
   const handleContactSellerAboutIssue = async (productName: string, issueType: string) => {
@@ -1074,68 +1896,9 @@ function OrdersPageContent() {
     }
   }
 
-  // ✅ cancelOrder CON TIMEOUT
-  const cancelOrder = async (orderId: string) => {
-    const reason = prompt('Motivo de cancelación (opcional):')
-    if (reason === null) return
-
-    try {
-      const result = await apiCall(`/api/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          status: 'CANCELED',
-          notes: reason || 'Cancelada por el cliente'
-        }),
-        timeout: 5000,
-      })
-
-      if (result.success) {
-        alert('✅ Orden cancelada')
-        // Cerrar el modal si está abierto con esta orden
-        if (selectedOrder?.id === orderId) {
-          closeOrderModal()
-        }
-        // Recargar las órdenes para actualizar la vista
-        await fetchOrders()
-      } else {
-        alert(result.error || 'Error cancelando orden')
-      }
-    } catch (err) {
-      alert(getErrorMessage(err))
-    }
-  }
-
-  // ✅ markAsReceived - Marcar orden como recibida por el comprador
-  const markAsReceived = async (orderId: string) => {
-    if (!confirm('¿Confirmas que recibiste todos los productos de esta orden?')) return
-
-    try {
-      const result = await apiCall(`/api/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          status: 'DELIVERED',
-          notes: 'Mercancía recibida por el cliente'
-        }),
-        timeout: 5000,
-      })
-
-      if (result.success) {
-        alert('✅ Orden marcada como recibida. ¡Gracias por confirmar!')
-        fetchOrders()
-        closeOrderModal()
-      } else {
-        alert(result.error || 'Error al marcar como recibida')
-      }
-    } catch (err) {
-      alert(getErrorMessage(err))
-    }
-  }
-
   const handleQuickCancel = async (orderId: string, e: React.MouseEvent) => {
     e.stopPropagation()
-    await cancelOrder(orderId)
+    await orderActions.cancelOrder(orderId)
   }
 
   const handleQuickTrack = (order: Order, e: React.MouseEvent) => {
@@ -1146,96 +1909,7 @@ function OrdersPageContent() {
 
   const handleQuickReorder = async (order: Order, e: React.MouseEvent) => {
     e.stopPropagation()
-    
-    // Abrir modal para seleccionar productos
-    setReorderOrder(order)
-    // Seleccionar todos los productos por defecto (solo los no eliminados)
-    const activeItems = order.orderItems.filter(item => !item.isDeleted)
-    setSelectedReorderItems(new Set(activeItems.map(item => item.id)))
-    setShowReorderModal(true)
-  }
-
-  // Confirmar reorden con productos seleccionados
-  const handleConfirmReorder = async () => {
-    if (!reorderOrder || selectedReorderItems.size === 0) {
-      alert('Selecciona al menos un producto para reordenar')
-      return
-    }
-    
-    try {
-      setReordering(true)
-      let addedCount = 0
-      
-      // Agregar solo los productos seleccionados al carrito
-      for (const item of reorderOrder.orderItems) {
-        if (selectedReorderItems.has(item.id) && !item.isDeleted) {
-          try {
-            await apiCall('/api/buyer/cart/items', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                productId: item.productId,
-                quantity: item.quantity
-              }),
-            })
-            addedCount++
-          } catch (error) {
-            console.error(`Error adding product ${item.productName}:`, error)
-          }
-        }
-      }
-      
-      // Cerrar modal
-      setShowReorderModal(false)
-      setReorderOrder(null)
-      setSelectedReorderItems(new Set())
-      
-      if (addedCount > 0) {
-        setToastMessage(`✅ ${addedCount} productos agregados al carrito`)
-        setToastStatus('success')
-        setShowToast(true)
-        // Esperar un momento y redirigir al carrito
-        setTimeout(() => {
-          router.push('/buyer/cart')
-        }, 1500)
-      } else {
-        setToastMessage('No se pudieron agregar los productos')
-        setToastStatus('error')
-        setShowToast(true)
-      }
-    } catch (error) {
-      setToastMessage('Error al reordenar')
-      setToastStatus('error')
-      setShowToast(true)
-      console.error('Error reordering:', error)
-    } finally {
-      setReordering(false)
-    }
-  }
-
-  // Toggle selección de item para reordenar
-  const toggleReorderItem = (itemId: string) => {
-    setSelectedReorderItems(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(itemId)) {
-        newSet.delete(itemId)
-      } else {
-        newSet.add(itemId)
-      }
-      return newSet
-    })
-  }
-
-  // Seleccionar/deseleccionar todos para reordenar
-  const toggleAllReorderItems = () => {
-    if (!reorderOrder) return
-    const activeItems = reorderOrder.orderItems.filter(item => !item.isDeleted)
-    
-    if (selectedReorderItems.size === activeItems.length) {
-      setSelectedReorderItems(new Set())
-    } else {
-      setSelectedReorderItems(new Set(activeItems.map(item => item.id)))
-    }
+    reorderModal.openReorderModal(order)
   }
 
   const handleQuickInvoice = async (order: Order, e: React.MouseEvent) => {
@@ -1243,198 +1917,56 @@ function OrdersPageContent() {
     await handleViewInvoice(order)
   }
 
-  // Abrir modal de opciones de contacto
-  const handleContactSeller = (order: Order, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation()
-    if (!order.seller?.id) {
-      alert('No se puede contactar al vendedor en este momento')
-      return
-    }
-    setContactOrderInfo(order)
-    setShowContactModal(true)
-  }
-
-  // Contactar por chat interno
-  const handleContactViaChat = () => {
-    if (contactOrderInfo?.seller?.id) {
-      router.push(`/buyer/chat?seller=${contactOrderInfo.seller.id}&order=${contactOrderInfo.id}`)
-    }
-    setShowContactModal(false)
-    setContactOrderInfo(null)
-  }
-
-  // Contactar por WhatsApp
-  const handleContactViaWhatsApp = () => {
-    if (!contactOrderInfo) {
-      alert('Error: No hay información de la orden')
-      return
-    }
-    
-    // Debug: ver qué datos del seller tenemos
-    console.log('Seller data:', contactOrderInfo.seller)
-    console.log('Seller phone:', contactOrderInfo.seller?.phone)
-    
-    const sellerPhone = contactOrderInfo.seller?.phone
-    
-    if (sellerPhone && sellerPhone.trim() !== '') {
-      // Limpiar caracteres no numéricos excepto el +
-      let phone = sellerPhone.replaceAll(/[^\d+]/g, '')
-      // Si no tiene código de país, agregar uno por defecto (ajustar según país)
-      if (!phone.startsWith('+') && !phone.startsWith('1')) {
-        phone = '1' + phone // Asume código de USA/Canadá, ajustar según necesidad
-      }
-      // Remover el + para la URL de WhatsApp
-      phone = phone.replaceAll('+', '')
-      
-      const message = encodeURIComponent(
-        `Hola! Soy ${contactOrderInfo.client?.name || 'tu cliente'}. Tengo una consulta sobre mi orden #${contactOrderInfo.orderNumber}`
-      )
-      
-      // Usar window.location para mejor compatibilidad
-      const whatsappUrl = `https://wa.me/${phone}?text=${message}`
-      
-      console.log('WhatsApp URL:', whatsappUrl)
-      
-      // Cerrar modal primero
-      setShowContactModal(false)
-      setContactOrderInfo(null)
-      
-      // Abrir WhatsApp en nueva pestaña
-      const newWindow = window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
-      
-      // Fallback si el popup fue bloqueado
-      if (!newWindow || newWindow.closed || newWindow.closed === undefined) {
-        // Intentar con location.href como alternativa
-        globalThis.location.href = whatsappUrl
-      }
-    } else {
-      console.warn('No phone found for seller:', contactOrderInfo.seller)
-      alert(`El vendedor "${contactOrderInfo.seller?.name || 'desconocido'}" no tiene número de WhatsApp registrado (phone: ${sellerPhone || 'null'}). Por favor, usa el chat de la aplicación.`)
-      setShowContactModal(false)
-      setContactOrderInfo(null)
-    }
-  }
-
-  // ✅ ESTADO DE LOADING
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 mb-6 border-2 border-purple-200">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-3">
-              <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-xl shadow-md">
-                <ShoppingBag className="text-white" size={32} />
-              </div>
-              Mis Órdenes
-            </h1>
-            <p className="text-gray-600 mt-1 ml-14">Cargando órdenes...</p>
-          </div>
-          <div className="space-y-4">
-            <OrderCardSkeleton />
-            <OrderCardSkeleton />
-            <OrderCardSkeleton />
-            <OrderCardSkeleton />
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // ✅ ESTADO DE TIMEOUT
-  if (timedOut) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6 flex items-center justify-center">
-        <div className="max-w-md bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-8 border-2 border-amber-200">
-          <div className="bg-gradient-to-br from-amber-100 to-yellow-100 p-4 rounded-xl mb-4 flex items-center gap-3">
-            <div className="bg-gradient-to-br from-amber-500 to-yellow-600 p-2 rounded-xl shadow-md">
-              <Clock className="h-6 w-6 text-white" />
-            </div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-amber-600 to-yellow-600 bg-clip-text text-transparent">
-              Tiempo de espera excedido
-            </h2>
-          </div>
-          <p className="text-gray-700 mb-6">
-            La carga de órdenes está tardando más de lo esperado.
-          </p>
-          <button
-            onClick={fetchOrders}
-            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold"
-          >
-            Reintentar
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  // ✅ ESTADO DE ERROR
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6 flex items-center justify-center">
-        <div className="max-w-md bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-8 border-2 border-red-200">
-          <div className="bg-gradient-to-br from-red-100 to-rose-100 p-4 rounded-xl mb-4 flex items-center gap-3">
-            <div className="bg-gradient-to-br from-red-500 to-rose-600 p-2 rounded-xl shadow-md">
-              <AlertCircle className="h-6 w-6 text-white" />
-            </div>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-red-600 to-rose-600 bg-clip-text text-transparent">Error</h2>
-          </div>
-          <p className="text-gray-700 mb-6">{error}</p>
-          <button
-            onClick={fetchOrders}
-            className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold"
-          >
-            Reintentar
-          </button>
-        </div>
-      </div>
-    )
-  }
+  // ✅ Early returns for loading/error states - use extracted components
+  if (loading) return <OrdersLoadingState />
+  if (timedOut) return <OrdersTimeoutState onRetry={fetchOrders} />
+  if (error) return <OrdersErrorState error={error} onRetry={fetchOrders} />
 
   // Filtrado y ordenamiento de órdenes usando funciones helper
   const filterOptions: FilterOptions = {
-    filterStatus,
-    searchQuery,
-    dateRange,
-    dateFrom,
-    dateTo
+    filterStatus: filters.filterStatus,
+    searchQuery: filters.searchQuery,
+    dateRange: filters.dateRange,
+    dateFrom: filters.dateFrom,
+    dateTo: filters.dateTo
   }
-  const filteredAndSortedOrders = filterAndSortOrders(orders, filterOptions, sortBy)
+  const filteredAndSortedOrders = filterAndSortOrders(orders, filterOptions, filters.sortBy)
 
   // Paginación
   const totalPages = Math.ceil(filteredAndSortedOrders.length / ordersPerPage)
-  const startIndex = (currentPage - 1) * ordersPerPage
+  const startIndex = (filters.currentPage - 1) * ordersPerPage
   const endIndex = startIndex + ordersPerPage
   const paginatedOrders = filteredAndSortedOrders.slice(startIndex, endIndex)
 
   return (
     <>
       {/* Toast Notification */}
-      {showToast && (
-        <div className="fixed top-4 right-4 bg-gradient-to-r from-emerald-500 to-green-600 text-white px-6 py-4 rounded-lg shadow-xl border-2 border-emerald-300 z-50 animate-slide-in">
-          <p className="font-medium">{toastMessage}</p>
-          <p className="text-sm opacity-90">Estado: {toastStatus}</p>
+      {toast.showToast && (
+        <div className="fixed top-4 right-4 glass-card bg-emerald-50/90 text-emerald-800 px-6 py-4 rounded-2xl shadow-soft-lg border border-emerald-200/50 z-50 animate-slide-in">
+          <p className="font-medium">{toast.toastMessage}</p>
+          <p className="text-sm opacity-80">Estado: {toast.toastStatus}</p>
         </div>
       )}
 
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-6 page-transition">
+      <div className="min-h-screen bg-gradient-to-br from-pastel-beige-100 via-pastel-blue-100/30 to-pastel-cream-100 p-6 page-transition blob-bg">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 mb-6 border-2 border-purple-200">
+        <div className="glass-card glass-card-hover rounded-3xl p-6 mb-6 border border-pastel-beige-300/50">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-3">
-                <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-xl shadow-md">
+              <h1 className="text-3xl font-bold gradient-text-pastel flex items-center gap-3">
+                <div className="bg-gradient-to-br from-pastel-blue-400 to-pastel-blue-500 p-3 rounded-2xl shadow-pastel float-3d">
                   <ShoppingBag className="text-white" size={32} />
                 </div>
                 Mis Órdenes
               </h1>
-              <p className="text-gray-600 mt-1 ml-14">
+              <p className="text-muted-foreground mt-2 ml-14">
                 {orders.length} {orders.length === 1 ? 'orden' : 'órdenes'}
               </p>
             </div>
             <button
               onClick={() => router.push('/buyer/catalog')}
-              className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-3 py-2 sm:px-6 sm:py-3 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold text-sm sm:text-base flex items-center gap-1 sm:gap-2"
+              className="btn-pastel px-3 py-2 sm:px-6 sm:py-3 rounded-xl text-sm sm:text-base flex items-center gap-1 sm:gap-2"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Nueva orden</span>
@@ -1447,36 +1979,36 @@ function OrdersPageContent() {
         {orders.length > 0 && (() => {
           const stats = getMonthlyStats()
           return (
-            <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 mb-6 border-2 border-purple-200">
-              <h3 className="font-bold text-lg mb-4 bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Resumen del mes</h3>
+            <div className="glass-card rounded-3xl p-6 mb-6 border border-pastel-beige-300/50">
+              <h3 className="font-bold text-lg mb-4 gradient-text-pastel">Resumen del mes</h3>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
-                <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg p-4 border-2 border-purple-200 hover:border-purple-300 hover:shadow-lg transition-all">
-                  <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-xl shadow-md w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                <div className="bg-gradient-to-br from-pastel-blue-100 to-pastel-blue-200/50 rounded-2xl p-4 border border-pastel-blue-200/50 glass-card-hover card-3d">
+                  <div className="bg-gradient-to-br from-pastel-blue-400 to-pastel-blue-500 p-3 rounded-xl shadow-pastel w-12 h-12 mx-auto mb-2 flex items-center justify-center">
                     <ShoppingBag className="text-white" size={24} />
                   </div>
-                  <p className="text-2xl font-bold text-purple-600">{stats.totalOrders}</p>
-                  <p className="text-sm text-gray-600 mt-1">Órdenes</p>
+                  <p className="text-2xl font-bold text-pastel-blue-500">{stats.totalOrders}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Órdenes</p>
                 </div>
-                <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-lg p-4 border-2 border-emerald-200 hover:border-emerald-300 hover:shadow-lg transition-all">
-                  <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-xl shadow-md w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                <div className="bg-gradient-to-br from-emerald-50 to-green-100/50 rounded-2xl p-4 border border-emerald-200/50 glass-card-hover card-3d">
+                  <div className="bg-gradient-to-br from-emerald-400 to-green-500 p-3 rounded-xl shadow-lg w-12 h-12 mx-auto mb-2 flex items-center justify-center">
                     <TrendingUp className="text-white" size={24} />
                   </div>
                   <p className="text-xl font-bold text-emerald-600">{formatPrice(stats.totalSpent)}</p>
-                  <p className="text-sm text-gray-600 mt-1">Gastado</p>
+                  <p className="text-sm text-muted-foreground mt-1">Gastado</p>
                 </div>
-                <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-lg p-4 border-2 border-cyan-200 hover:border-cyan-300 hover:shadow-lg transition-all">
-                  <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-2 rounded-xl shadow-md w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                <div className="bg-gradient-to-br from-cyan-50 to-pastel-blue-100/50 rounded-2xl p-4 border border-cyan-200/50 glass-card-hover card-3d">
+                  <div className="bg-gradient-to-br from-cyan-400 to-pastel-blue-400 p-3 rounded-xl shadow-lg w-12 h-12 mx-auto mb-2 flex items-center justify-center">
                     <DollarSign className="text-white" size={24} />
                   </div>
                   <p className="text-xl font-bold text-cyan-600">{formatPrice(stats.estimatedSavings)}</p>
-                  <p className="text-sm text-gray-600 mt-1">Ahorrado</p>
+                  <p className="text-sm text-muted-foreground mt-1">Ahorrado</p>
                 </div>
-                <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg p-4 border-2 border-amber-200 hover:border-amber-300 hover:shadow-lg transition-all">
-                  <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2 rounded-xl shadow-md w-12 h-12 mx-auto mb-2 flex items-center justify-center">
+                <div className="bg-gradient-to-br from-pastel-beige-100 to-pastel-sand-100 rounded-2xl p-4 border border-pastel-beige-200/50 glass-card-hover card-3d">
+                  <div className="bg-gradient-to-br from-amber-400 to-pastel-beige-400 p-3 rounded-xl shadow-beige w-12 h-12 mx-auto mb-2 flex items-center justify-center">
                     <BarChart3 className="text-white" size={24} />
                   </div>
                   <p className="text-xl font-bold text-amber-600">{formatPrice(stats.averageOrder)}</p>
-                  <p className="text-sm text-gray-600 mt-1">Promedio</p>
+                  <p className="text-sm text-muted-foreground mt-1">Promedio</p>
                 </div>
               </div>
             </div>
@@ -1484,29 +2016,29 @@ function OrdersPageContent() {
         })()}
 
         {/* Buscador y Filtros */}
-        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-4 mb-6 border-2 border-purple-200">
+        <div className="glass-card rounded-3xl p-4 mb-6 border border-pastel-beige-300/50">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Filtros de búsqueda</h3>
+            <h3 className="font-semibold gradient-text-pastel">Filtros de búsqueda</h3>
             {/* Toggle Vista Grid/List */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600 mr-2">Vista:</span>
+              <span className="text-sm text-muted-foreground mr-2">Vista:</span>
               <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-lg transition-all ${
-                  viewMode === 'grid' 
-                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md' 
-                    : 'border-2 border-purple-200 text-gray-600 hover:border-purple-400 hover:bg-purple-50'
+                onClick={() => filters.setViewMode('grid')}
+                className={`p-2 rounded-xl transition-all ${
+                  filters.viewMode === 'grid' 
+                    ? 'bg-gradient-to-r from-pastel-blue-400 to-pastel-blue-500 text-white shadow-pastel' 
+                    : 'border border-pastel-beige-200 text-muted-foreground hover:border-pastel-blue-300 hover:bg-pastel-blue-50'
                 }`}
                 title="Vista en cuadrícula"
               >
                 <Grid3x3 className="w-5 h-5" />
               </button>
               <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-lg transition-all ${
-                  viewMode === 'list' 
-                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md' 
-                    : 'border-2 border-purple-200 text-gray-600 hover:border-purple-400 hover:bg-purple-50'
+                onClick={() => filters.setViewMode('list')}
+                className={`p-2 rounded-xl transition-all ${
+                  filters.viewMode === 'list' 
+                    ? 'bg-gradient-to-r from-pastel-blue-400 to-pastel-blue-500 text-white shadow-pastel' 
+                    : 'border border-pastel-beige-200 text-muted-foreground hover:border-pastel-blue-300 hover:bg-pastel-blue-50'
                 }`}
                 title="Vista en lista"
               >
@@ -1522,8 +2054,8 @@ function OrdersPageContent() {
               <input
                 type="text"
                 placeholder="Buscar por número de orden..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={filters.searchQuery}
+                onChange={(e) => filters.setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none transition-all"
               />
             </div>
@@ -1532,15 +2064,15 @@ function OrdersPageContent() {
             <div className="flex gap-2">
               <input 
                 type="date" 
-                value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
+                value={filters.dateFrom}
+                onChange={(e) => filters.setDateFrom(e.target.value)}
                 className="flex-1 px-3 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none transition-all" 
                 placeholder="Desde"
               />
               <input 
                 type="date" 
-                value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
+                value={filters.dateTo}
+                onChange={(e) => filters.setDateTo(e.target.value)}
                 className="flex-1 px-3 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none transition-all" 
                 placeholder="Hasta"
               />
@@ -1548,8 +2080,8 @@ function OrdersPageContent() {
             
             {/* Ordenar por */}
             <select 
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'highest' | 'lowest')}
+              value={filters.sortBy}
+              onChange={(e) => filters.setSortBy(e.target.value as SortByType)}
               className="px-4 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none bg-white transition-all"
             >
               <option value="newest">Más recientes</option>
@@ -1560,8 +2092,8 @@ function OrdersPageContent() {
 
             {/* Filtro por rango de fecha */}
             <select 
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value as '7days' | '30days' | '90days' | 'all')}
+              value={filters.dateRange}
+              onChange={(e) => filters.setDateRange(e.target.value as DateRangeType)}
               className="px-4 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none bg-white transition-all"
             >
               <option value="7days">Últimos 7 días</option>
@@ -1572,18 +2104,18 @@ function OrdersPageContent() {
           </div>
 
           {/* Indicador de resultados filtrados */}
-          {(searchQuery || dateFrom || dateTo || filterStatus !== 'ALL') && (
+          {(filters.searchQuery || filters.dateFrom || filters.dateTo || filters.filterStatus !== 'ALL') && (
             <div className="mt-4 pt-4 border-t border-purple-100 flex items-center justify-between">
               <p className="text-sm text-gray-600">
                 Mostrando <strong className="text-purple-600">{filteredAndSortedOrders.length}</strong> de <strong className="text-purple-600">{orders.length}</strong> órdenes
               </p>
               <button
                 onClick={() => {
-                  setSearchQuery('')
-                  setDateFrom('')
-                  setDateTo('')
-                  setFilterStatus('ALL')
-                  setSortBy('newest')
+                  filters.setSearchQuery('')
+                  filters.setDateFrom('')
+                  filters.setDateTo('')
+                  filters.setFilterStatus('ALL')
+                  filters.setSortBy('newest')
                 }}
                 className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1 px-3 py-1 rounded-lg hover:bg-purple-50 transition-all"
               >
@@ -1597,9 +2129,9 @@ function OrdersPageContent() {
         <div className="bg-white rounded-2xl shadow-lg p-4 mb-6 border border-purple-100">
           <div className="flex gap-2 overflow-x-auto pb-2">
             <button
-              onClick={() => setFilterStatus('ALL')}
+              onClick={() => filters.setFilterStatus('ALL')}
               className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-                filterStatus === 'ALL'
+                filters.filterStatus === 'ALL'
                   ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
                   : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
               }`}
@@ -1607,9 +2139,9 @@ function OrdersPageContent() {
               Todas ({orders.length})
             </button>
             <button
-              onClick={() => setFilterStatus('PENDING')}
+              onClick={() => filters.setFilterStatus('PENDING')}
               className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-                filterStatus === 'PENDING'
+                filters.filterStatus === 'PENDING'
                   ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
                   : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
               }`}
@@ -1617,9 +2149,9 @@ function OrdersPageContent() {
               Pendientes ({orders.filter(o => o.status === 'PENDING').length})
             </button>
             <button
-              onClick={() => setFilterStatus('CONFIRMED')}
+              onClick={() => filters.setFilterStatus('CONFIRMED')}
               className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-                filterStatus === 'CONFIRMED'
+                filters.filterStatus === 'CONFIRMED'
                   ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
                   : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
               }`}
@@ -1627,9 +2159,9 @@ function OrdersPageContent() {
               Confirmadas ({orders.filter(o => o.status === 'CONFIRMED').length})
             </button>
             <button
-              onClick={() => setFilterStatus('DELIVERED')}
+              onClick={() => filters.setFilterStatus('DELIVERED')}
               className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-                filterStatus === 'DELIVERED'
+                filters.filterStatus === 'DELIVERED'
                   ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
                   : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
               }`}
@@ -1637,9 +2169,9 @@ function OrdersPageContent() {
               Recibidas ({orders.filter(o => o.status === 'DELIVERED' || o.status === 'COMPLETED').length})
             </button>
             <button
-              onClick={() => setFilterStatus('CANCELED')}
+              onClick={() => filters.setFilterStatus('CANCELED')}
               className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
-                filterStatus === 'CANCELED'
+                filters.filterStatus === 'CANCELED'
                   ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
                   : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
               }`}
@@ -1670,339 +2202,34 @@ function OrdersPageContent() {
           </div>
         ) : (
           <>
-          <div className={viewMode === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : 'space-y-4'}>
-            {paginatedOrders.map((order) => {
-              const config = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.PENDING
-              const StatusIcon = config.icon
-              
-              // Determinar si necesita animación (órdenes no completadas ni canceladas)
-              const needsAttention = !['COMPLETED', 'DELIVERED', 'CANCELED', 'CANCELLED'].includes(order.status)
-              const isCompleted = order.status === 'COMPLETED' || order.status === 'DELIVERED'
-              
-              // Solo mostrar warning de stock si la orden está en ISSUE_REPORTED
-              // Una vez CONFIRMED o LOCKED, ya no mostrar el warning
-              const isConfirmedOrLater = ['CONFIRMED', 'LOCKED', 'PREPARING', 'READY_FOR_PICKUP', 'IN_DELIVERY', 'DELIVERED', 'COMPLETED'].includes(order.status)
-              const hasStockIssues = !isConfirmedOrLater && (order.hasIssues || (order.issues && order.issues.length > 0) || order.status === 'ISSUE_REPORTED')
-
-              return viewMode === 'grid' ? (
-                // Vista GRID (Card)
-                <div
+          <div className={filters.viewMode === 'grid' ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : 'space-y-4'}>
+            {paginatedOrders.map((order) => (
+              filters.viewMode === 'grid' ? (
+                <OrderGridCard 
                   key={order.id}
-                  className={`bg-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all p-6 border-2 relative ${
-                    hasStockIssues ? 'border-amber-400 bg-amber-50/30' : 'border-purple-200 hover:border-purple-300'
-                  }`}
-                  style={needsAttention ? {
-                    animation: 'orderPulse 3s ease-in-out infinite',
-                  } : {}}
-                >
-                  {/* Banner de Problemas de Stock */}
-                  {hasStockIssues && (
-                    <div className="absolute top-0 left-0 right-0 z-10">
-                      <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 py-2 rounded-t-xl flex items-center justify-center gap-2">
-                        <AlertTriangle className="h-4 w-4" />
-                        <span className="font-medium text-sm">⚠️ Algunos productos tienen problemas de stock - Revisa los detalles</span>
-                      </div>
-                    </div>
-                  )}
-                  {/* Sticker de Recibida */}
-                  {isCompleted && !hasStockIssues && (
-                    <div className="absolute top-0 right-0 z-10"
-                      style={{
-                        animation: 'stickerBounce 0.8s ease-out',
-                      }}
-                    >
-                      <div className="bg-gradient-to-br from-emerald-500 to-green-600 text-white px-4 py-2 rounded-bl-2xl shadow-lg flex items-center gap-2">
-                        <CheckCircle className="h-5 w-5" />
-                        <span className="font-bold text-sm">✅ Recibida</span>
-                      </div>
-                    </div>
-                  )}
-                  {/* Header */}
-                  <div className={`flex items-start justify-between mb-4 ${hasStockIssues ? 'mt-8' : ''}`}>
-                    <div>
-                      <h3 className="font-bold text-lg text-purple-600">
-                        {order.orderNumber || `#${order.id.slice(0, 8)}`}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {new Date(order.createdAt).toLocaleDateString('es-ES', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </p>
-                    </div>
-                    <div className="relative">
-                      {needsAttention && (
-                        <div 
-                          className="absolute -top-1 -right-1 w-3 h-3 bg-rose-500 rounded-full"
-                          style={{
-                            animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite',
-                          }}
-                        />
-                      )}
-                      <span 
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${config.bg} ${config.color}`}
-                        style={needsAttention ? {
-                          animation: 'statusPulse 2s ease-in-out infinite',
-                        } : {}}
-                      >
-                        {config.label}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Animaciones según estado */}
-                  <div className="mb-4 flex justify-center">
-                    <StatusAnimationRenderer status={order.status} size="normal" />
-                  </div>
-                  
-                  {/* Productos */}
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600 flex items-center gap-2">
-                      <Package className="w-4 h-4" />
-                      {order.orderItems?.length || 0} {order.orderItems?.length === 1 ? 'producto' : 'productos'}
-                    </p>
-                  </div>
-
-                  {/* Barra de progreso visual */}
-                  {order.status !== 'CANCELED' && order.status !== 'CANCELLED' && (
-                    <div className="mb-4">
-                      <div className="flex justify-between text-xs text-gray-500 mb-2">
-                        <span className={getProgressPercentage(order.status) >= 0 ? 'font-medium text-purple-600' : ''}>Pendiente</span>
-                        <span className={getProgressPercentage(order.status) >= 50 ? 'font-medium text-purple-600' : ''}>Preparando</span>
-                        <span className={getProgressPercentage(order.status) >= 75 ? 'font-medium text-purple-600' : ''}>En camino</span>
-                        <span className={getProgressPercentage(order.status) >= 100 ? 'font-medium text-purple-600' : ''}>Entregado</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-gradient-to-r from-purple-600 to-indigo-600 h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${getProgressPercentage(order.status)}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Total */}
-                  <div className="mb-4 pt-4 border-t border-purple-100">
-                    <span className="text-xl font-bold text-purple-600">
-                      {formatPrice(order.totalAmount)}
-                    </span>
-                  </div>
-
-                  {/* Acciones rápidas */}
-                  <div className="flex gap-2 flex-wrap">
-                    {canCancelOrder(order.status) && (
-                      <button 
-                        onClick={(e) => handleQuickCancel(order.id, e)}
-                        className="flex-1 min-w-[100px] bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 text-red-600 py-2 rounded-lg hover:border-red-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
-                      >
-                        <XCircle className="w-4 h-4" />
-                        Cancelar
-                      </button>
-                    )}
-                    
-                    <button 
-                      onClick={(e) => handleQuickReorder(order, e)}
-                      className="flex-1 min-w-[100px] bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 text-emerald-600 py-2 rounded-lg hover:border-emerald-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                      Reordenar
-                    </button>
-                    
-                    {canTrackOrder(order.status) && (
-                      <button 
-                        onClick={(e) => handleQuickTrack(order, e)}
-                        className="flex-1 min-w-[100px] bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 text-cyan-600 py-2 rounded-lg hover:border-cyan-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
-                      >
-                        <MapPin className="w-4 h-4" />
-                        Rastrear
-                      </button>
-                    )}
-                    
-                    {showsInvoiceButton(order.status) && (
-                      <button 
-                        onClick={(e) => handleQuickInvoice(order, e)}
-                        className="flex-1 min-w-[100px] bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 text-purple-600 py-2 rounded-lg hover:border-purple-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
-                      >
-                        <FileText className="w-4 h-4" />
-                        Factura
-                      </button>
-                    )}
-
-                    <button 
-                      onClick={() => openOrderModal(order)}
-                      className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-medium text-sm"
-                    >
-                      Detalles
-                    </button>
-                  </div>
-
-                  {/* Botón contactar vendedor */}
-                  <div className="mt-4 pt-4 border-t border-purple-100">
-                    <button 
-                      onClick={(e) => handleContactSeller(order, e)}
-                      className="w-full flex items-center justify-center gap-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 py-2 rounded-lg border-2 border-purple-200 hover:border-purple-300 transition-all font-medium text-sm"
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      Contactar vendedor
-                    </button>
-                  </div>
-                </div>
+                  order={order}
+                  onCancel={handleQuickCancel}
+                  onReorder={handleQuickReorder}
+                  onTrack={handleQuickTrack}
+                  onInvoice={handleQuickInvoice}
+                  onDetails={openOrderModal}
+                  onContact={contactActions.handleContactSeller}
+                  getProgress={getProgressPercentage}
+                />
               ) : (
-                // Vista LIST (Fila)
-                <div
+                <OrderListCard
                   key={order.id}
-                  className="bg-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all p-4 border-2 border-purple-200 hover:border-purple-300 relative"
-                  style={needsAttention ? {
-                    animation: 'orderPulse 3s ease-in-out infinite',
-                  } : {}}
-                >
-                  {/* Sticker de Completada (también en lista) */}
-                  {/* Sticker de Recibida (vista lista) */}
-                  {isCompleted && (
-                    <div className="absolute top-0 right-0 z-10"
-                      style={{
-                        animation: 'stickerBounce 0.8s ease-out',
-                      }}
-                    >
-                      <div className="bg-gradient-to-br from-emerald-500 to-green-600 text-white px-3 py-1 rounded-bl-xl shadow-lg flex items-center gap-1">
-                        <CheckCircle className="h-4 w-4" />
-                        <span className="font-bold text-xs">✅ Recibida</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between gap-4">
-                    {/* Izquierda: Info básica con animación */}
-                    <div className="flex items-center gap-4 flex-1">
-                      {/* Animaciones según estado */}
-                      <div className="flex-shrink-0">
-                        {shouldShowStatusAnimation(order.status) ? (
-                          <StatusAnimationRenderer status={order.status} size="small" />
-                        ) : (
-                          <div className={`p-3 rounded-lg ${config.bg}`}>
-                            <StatusIcon className={`${config.color} w-6 h-6`} />
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex-1">
-                        <h3 className="font-bold text-purple-600">
-                          {order.orderNumber || `#${order.id.slice(0, 8)}`}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {new Date(order.createdAt).toLocaleDateString('es-ES', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })} • {order.orderItems?.length || 0} productos
-                        </p>
-                        
-                        {/* Barra de progreso en lista (compacta) */}
-                        {order.status !== 'CANCELED' && order.status !== 'CANCELLED' && (
-                          <div className="mt-2 max-w-xs">
-                            <div className="w-full bg-gray-200 rounded-full h-1.5">
-                              <div
-                                className="bg-gradient-to-r from-purple-600 to-indigo-600 h-1.5 rounded-full transition-all duration-500"
-                                style={{ width: `${getProgressPercentage(order.status)}%` }}
-                              />
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                              Progreso: {getProgressPercentage(order.status)}%
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Centro: Estado y Total */}
-                    <div className="text-center flex-shrink-0">
-                      <div className="relative inline-block mb-2">
-                        {needsAttention && (
-                          <div 
-                            className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full"
-                            style={{
-                              animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1) infinite',
-                            }}
-                          />
-                        )}
-                        <span 
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${config.bg} ${config.color}`}
-                          style={needsAttention ? {
-                            animation: 'statusPulse 2s ease-in-out infinite',
-                          } : {}}
-                        >
-                          {config.label}
-                        </span>
-                      </div>
-                      <span className="text-lg font-bold text-purple-600 block">
-                        {formatPrice(order.totalAmount)}
-                      </span>
-                    </div>
-
-                    {/* Derecha: Acciones */}
-                    <div className="flex gap-2 flex-shrink-0 flex-wrap">
-                      {canCancelOrder(order.status) && (
-                        <button 
-                          onClick={(e) => handleQuickCancel(order.id, e)}
-                          className="bg-gradient-to-br from-red-50 to-rose-50 border-2 border-red-200 text-red-600 p-2 rounded-lg hover:border-red-300 hover:shadow-lg transition-all"
-                          title="Cancelar orden"
-                        >
-                          <XCircle className="w-5 h-5" />
-                        </button>
-                      )}
-                      
-                      <button 
-                        onClick={(e) => handleQuickReorder(order, e)}
-                        className="bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 text-emerald-600 p-2 rounded-lg hover:border-emerald-300 hover:shadow-lg transition-all"
-                        title="Reordenar"
-                      >
-                        <RotateCcw className="w-5 h-5" />
-                      </button>
-                      
-                      {order.status === 'IN_DELIVERY' && (
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            markAsReceived(order.id)
-                          }}
-                          className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 py-2 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-medium text-sm flex items-center gap-2"
-                          title="Confirmar recepción"
-                        >
-                          <PackageCheck className="w-4 h-4" />
-                          Confirmar Recepción
-                        </button>
-                      )}
-
-                      {canTrackOrder(order.status) && (
-                        <button 
-                          onClick={(e) => handleQuickTrack(order, e)}
-                          className="bg-gradient-to-br from-cyan-50 to-blue-50 border-2 border-cyan-200 text-cyan-600 p-2 rounded-lg hover:border-cyan-300 hover:shadow-lg transition-all"
-                          title="Rastrear orden"
-                        >
-                          <MapPin className="w-5 h-5" />
-                        </button>
-                      )}
-
-                      <button 
-                        onClick={() => openOrderModal(order)}
-                        className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-medium text-sm"
-                      >
-                        Detalles
-                      </button>
-
-                      <button 
-                        onClick={(e) => handleContactSeller(order, e)}
-                        className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 text-purple-600 p-2 rounded-lg hover:border-purple-300 hover:shadow-lg transition-all"
-                        title="Contactar vendedor"
-                      >
-                        <MessageCircle className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                  order={order}
+                  onCancel={handleQuickCancel}
+                  onReorder={handleQuickReorder}
+                  onTrack={handleQuickTrack}
+                  onDetails={openOrderModal}
+                  onContact={contactActions.handleContactSeller}
+                  onMarkReceived={orderActions.markAsReceived}
+                  getProgress={getProgressPercentage}
+                />
               )
-            })}
+            ))}
             {filteredAndSortedOrders.length === 0 && (
               <div className="col-span-full bg-white rounded-2xl shadow-lg p-12 text-center border border-purple-100">
                 <Package className="mx-auto text-gray-400 mb-4" size={64} />
@@ -2014,10 +2241,10 @@ function OrdersPageContent() {
                 </p>
                 <button
                   onClick={() => {
-                    setSearchQuery('')
-                    setDateFrom('')
-                    setDateTo('')
-                    setFilterStatus('ALL')
+                    filters.setSearchQuery('')
+                    filters.setDateFrom('')
+                    filters.setDateTo('')
+                    filters.setFilterStatus('ALL')
                   }}
                   className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
                 >
@@ -2039,10 +2266,10 @@ function OrdersPageContent() {
                 {/* Botones de navegación */}
                 <div className="flex items-center gap-2 flex-wrap justify-center">
                   <button
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
+                    onClick={() => filters.setCurrentPage(Math.max(filters.currentPage - 1, 1))}
+                    disabled={filters.currentPage === 1}
                     className={`px-3 md:px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-1 md:gap-2 text-sm md:text-base ${
-                      currentPage === 1
+                      filters.currentPage === 1
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : 'border-2 border-purple-200 text-purple-600 hover:border-purple-400 hover:bg-purple-50'
                     }`}
@@ -2056,9 +2283,9 @@ function OrdersPageContent() {
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                       <button
                         key={page}
-                        onClick={() => setCurrentPage(page)}
+                        onClick={() => filters.setCurrentPage(page)}
                         className={`w-8 h-8 md:w-10 md:h-10 rounded-lg font-medium transition-all flex-shrink-0 text-sm md:text-base ${
-                          currentPage === page
+                          filters.currentPage === page
                             ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
                             : 'border-2 border-purple-200 text-gray-600 hover:border-purple-400 hover:bg-purple-50'
                         }`}
@@ -2069,10 +2296,10 @@ function OrdersPageContent() {
                   </div>
 
                   <button
-                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                    disabled={currentPage === totalPages}
+                    onClick={() => filters.setCurrentPage(Math.min(filters.currentPage + 1, totalPages))}
+                    disabled={filters.currentPage === totalPages}
                     className={`px-3 md:px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-1 md:gap-2 text-sm md:text-base ${
-                      currentPage === totalPages
+                      filters.currentPage === totalPages
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : 'border-2 border-purple-200 text-purple-600 hover:border-purple-400 hover:bg-purple-50'
                     }`}
@@ -2095,12 +2322,9 @@ function OrdersPageContent() {
             onClick={closeOrderModal}
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') closeOrderModal(); }}
           >
-            <div 
-              role="dialog"
-              aria-modal="true"
-              className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto cursor-auto"
-              onClick={(e) => e.stopPropagation()}
-              onKeyDown={(e) => e.stopPropagation()}
+            <dialog 
+              open
+              className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto cursor-auto m-0 p-0 border-none"
             >
               {/* Header - Compacto */}
               <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-3 rounded-t-2xl sticky top-0 z-10">
@@ -2142,7 +2366,7 @@ function OrdersPageContent() {
                       </div>
                     </div>
                     <button
-                      onClick={() => markAsReceived(selectedOrder.id)}
+                      onClick={() => orderActions.markAsReceived(selectedOrder.id)}
                       className="bg-white text-green-600 px-6 py-2 rounded-lg font-bold hover:bg-green-50 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 whitespace-nowrap"
                     >
                       <CheckCircle className="w-5 h-5" />
@@ -2334,7 +2558,7 @@ function OrdersPageContent() {
                               <div className="flex flex-wrap gap-2">
                                 {isPartialStock && (
                                   <button
-                                    onClick={() => handleAcceptPartial(item.id, item.productName, issue?.availableQty || 0)}
+                                    onClick={() => orderActions.handleAcceptPartial(item.id, item.productName, issue?.availableQty || 0)}
                                     disabled={removingItem === item.id}
                                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-amber-100 text-amber-800 hover:bg-amber-200 rounded-lg transition-colors disabled:opacity-50"
                                   >
@@ -2347,7 +2571,7 @@ function OrdersPageContent() {
                                   </button>
                                 )}
                                 <button
-                                  onClick={() => openSubstituteSelector(item.id, item.productName, item.productId, item.quantity)}
+                                  onClick={() => openSubstituteSelectorHook(item.id, item.productName, item.productId, selectedOrder?.seller?.id, item.quantity)}
                                   disabled={removingItem === item.id}
                                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 rounded-lg transition-colors disabled:opacity-50"
                                 >
@@ -2355,7 +2579,7 @@ function OrdersPageContent() {
                                   Sustituir producto
                                 </button>
                                 <button
-                                  onClick={() => openDeleteModal(item.id, item.productName)}
+                                  onClick={() => deleteModal.openDeleteModal(item.id, item.productName)}
                                   disabled={removingItem === item.id}
                                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 rounded-lg transition-colors disabled:opacity-50"
                                 >
@@ -2503,7 +2727,7 @@ function OrdersPageContent() {
                               Una vez que confirmes que recibiste todos los productos, el vendedor será notificado automáticamente.
                             </p>
                             <button
-                              onClick={() => markAsReceived(selectedOrder.id)}
+                              onClick={() => orderActions.markAsReceived(selectedOrder.id)}
                               className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-lg font-bold hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
                             >
                               <CheckCircle className="w-5 h-5" />
@@ -2520,7 +2744,7 @@ function OrdersPageContent() {
                         <OrderCountdown
                           orderId={selectedOrder.id}
                           deadline={selectedOrder.confirmationDeadline}
-                          onCancel={cancelOrder}
+                          onCancel={orderActions.cancelOrder}
                           onExpired={() => {
                             fetchOrders()
                             closeOrderModal()
@@ -2534,7 +2758,7 @@ function OrdersPageContent() {
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="font-semibold text-gray-900">Vendedor:</h4>
                         <button
-                          onClick={() => handleContactSeller(selectedOrder)}
+                          onClick={() => contactActions.handleContactSeller(selectedOrder)}
                           className="flex items-center gap-2 text-purple-600 hover:text-purple-700 text-sm font-medium"
                         >
                           <MessageCircle className="w-4 h-4" />
@@ -2713,7 +2937,7 @@ function OrdersPageContent() {
                   </div>
                 )}
               </div>
-            </div>
+            </dialog>
           </button>
         )}
       </div>
@@ -2876,7 +3100,7 @@ function OrdersPageContent() {
     </div>
     
     {/* Modal de eliminación con motivo */}
-    {showDeleteModal && deleteItemInfo && (
+    {deleteModal.showDeleteModal && deleteModal.deleteItemInfo && (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
         <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
           <div className="p-6">
@@ -2886,7 +3110,7 @@ function OrdersPageContent() {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Eliminar producto</h3>
-                <p className="text-sm text-gray-500">"{deleteItemInfo.productName}"</p>
+                <p className="text-sm text-gray-500">"{deleteModal.deleteItemInfo.productName}"</p>
               </div>
             </div>
             
@@ -2896,8 +3120,8 @@ function OrdersPageContent() {
             </p>
             
             <textarea
-              value={deleteReason}
-              onChange={(e) => setDeleteReason(e.target.value)}
+              value={deleteModal.deleteReason}
+              onChange={(e) => deleteModal.setDeleteReason(e.target.value)}
               placeholder="Ej: Ya no lo necesito, prefiero otro producto, precio muy alto..."
               className="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 resize-none"
               rows={3}
@@ -2905,21 +3129,17 @@ function OrdersPageContent() {
             
             <div className="flex gap-3 mt-4">
               <button
-                onClick={() => {
-                  setShowDeleteModal(false)
-                  setDeleteItemInfo(null)
-                  setDeleteReason('')
-                }}
+                onClick={deleteModal.closeDeleteModal}
                 className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
               >
                 Cancelar
               </button>
               <button
-                onClick={handleConfirmDelete}
-                disabled={!deleteReason.trim() || removingItem === deleteItemInfo.itemId}
+                onClick={orderActions.handleConfirmDelete}
+                disabled={!deleteModal.deleteReason.trim() || removingItem === deleteModal.deleteItemInfo.itemId}
                 className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                {removingItem === deleteItemInfo.itemId ? (
+                {removingItem === deleteModal.deleteItemInfo.itemId ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
                     Eliminando...
@@ -2971,13 +3191,7 @@ function OrdersPageContent() {
                 </div>
               </div>
               <button
-                onClick={() => {
-                  setShowSubstituteSelector(false)
-                  setSubstituteItemInfo(null)
-                  setCatalogSearch('')
-                  setSelectedSubstituteProduct(null)
-                  setSubstituteQuantity(1)
-                }}
+                onClick={closeSubstituteSelector}
                 className="p-2 hover:bg-gray-100 rounded-full"
               >
                 <X className="w-5 h-5" />
@@ -3126,7 +3340,7 @@ function OrdersPageContent() {
           {selectedSubstituteProduct && (
             <div className="p-4 border-t bg-gray-50">
               <button
-                onClick={handleConfirmSubstitute}
+                onClick={orderActions.handleConfirmSubstitute}
                 disabled={removingItem === substituteItemInfo.itemId || substituteQuantity < 1}
                 className="w-full py-3 px-4 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
@@ -3144,7 +3358,7 @@ function OrdersPageContent() {
     )}
     
     {/* Modal de reordenar con selección de productos */}
-    {showReorderModal && reorderOrder && (
+    {reorderModal.showReorderModal && reorderModal.reorderOrder && (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
         <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[80vh] flex flex-col">
           <div className="p-6 border-b">
@@ -3154,13 +3368,13 @@ function OrdersPageContent() {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Reordenar Productos</h3>
-                <p className="text-sm text-gray-500">Orden #{reorderOrder.orderNumber}</p>
+                <p className="text-sm text-gray-500">Orden #{reorderModal.reorderOrder.orderNumber}</p>
               </div>
             </div>
           </div>
           
           {/* Verificar si hay productos activos */}
-          {reorderOrder.orderItems.filter(i => !i.isDeleted).length === 0 ? (
+          {reorderModal.reorderOrder.orderItems.filter(i => !i.isDeleted).length === 0 ? (
             /* No hay productos - mostrar mensaje y opción de ir al catálogo */
             <div className="flex-1 p-6 flex flex-col items-center justify-center text-center">
               <div className="p-4 bg-amber-100 rounded-full mb-4">
@@ -3176,9 +3390,9 @@ function OrdersPageContent() {
               <div className="space-y-3 w-full max-w-xs">
                 <button
                   onClick={() => {
-                    setShowReorderModal(false)
-                    setReorderOrder(null)
-                    router.push(`/buyer/catalog?seller=${reorderOrder.seller?.id || ''}`)
+                    const sellerId = reorderModal.reorderOrder?.seller?.id || ''
+                    reorderModal.closeReorderModal()
+                    router.push(`/buyer/catalog?seller=${sellerId}`)
                   }}
                   className="w-full px-4 py-3 text-sm font-bold text-white bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 rounded-xl transition-all flex items-center justify-center gap-2"
                 >
@@ -3186,10 +3400,7 @@ function OrdersPageContent() {
                   Ir al Catálogo
                 </button>
                 <button
-                  onClick={() => {
-                    setShowReorderModal(false)
-                    setReorderOrder(null)
-                  }}
+                  onClick={reorderModal.closeReorderModal}
                   className="w-full px-4 py-3 text-sm font-medium text-gray-600 bg-white border-2 border-gray-200 hover:bg-gray-50 rounded-xl transition-colors"
                 >
                   Cerrar
@@ -3204,21 +3415,21 @@ function OrdersPageContent() {
                   <input
                     id="select-all-reorder-items"
                     type="checkbox"
-                    checked={selectedReorderItems.size === reorderOrder.orderItems.filter(i => !i.isDeleted).length}
-                    onChange={toggleAllReorderItems}
+                    checked={reorderModal.selectedReorderItems.size === reorderModal.reorderOrder.orderItems.filter(i => !i.isDeleted).length}
+                    onChange={reorderModal.toggleAllReorderItems}
                     className="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                   />
                   <span className="font-medium text-gray-700">
-                    Seleccionar todos ({selectedReorderItems.size} de {reorderOrder.orderItems.filter(i => !i.isDeleted).length})
+                    Seleccionar todos ({reorderModal.selectedReorderItems.size} de {reorderModal.reorderOrder.orderItems.filter(i => !i.isDeleted).length})
                   </span>
                 </label>
               </div>
               
               <div className="flex-1 overflow-y-auto p-4">
                 <div className="space-y-2">
-                  {reorderOrder.orderItems.map(item => {
+                  {reorderModal.reorderOrder.orderItems.map(item => {
                     if (item.isDeleted) return null
-                    const isSelected = selectedReorderItems.has(item.id)
+                    const isSelected = reorderModal.selectedReorderItems.has(item.id)
                     
                     return (
                       <label 
@@ -3233,7 +3444,7 @@ function OrdersPageContent() {
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => toggleReorderItem(item.id)}
+                          onChange={() => reorderModal.toggleReorderItem(item.id)}
                           className="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
                         />
                         <div className="flex-1 min-w-0">
@@ -3259,27 +3470,23 @@ function OrdersPageContent() {
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-gray-600">Productos seleccionados:</span>
                   <span className="font-bold text-lg text-emerald-600">
-                    {selectedReorderItems.size} productos
+                    {reorderModal.selectedReorderItems.size} productos
                   </span>
                 </div>
                 
                 <div className="flex gap-3">
                   <button
-                    onClick={() => {
-                      setShowReorderModal(false)
-                      setReorderOrder(null)
-                      setSelectedReorderItems(new Set())
-                    }}
+                    onClick={reorderModal.closeReorderModal}
                     className="flex-1 px-4 py-3 text-sm font-medium text-gray-600 bg-white border-2 border-gray-200 hover:bg-gray-50 rounded-xl transition-colors"
                   >
                     Cancelar
                   </button>
                   <button
-                    onClick={handleConfirmReorder}
-                    disabled={selectedReorderItems.size === 0 || reordering}
+                    onClick={reorderActions.handleConfirmReorder}
+                    disabled={reorderModal.selectedReorderItems.size === 0 || reorderModal.reordering}
                     className="flex-1 px-4 py-3 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {reordering ? (
+                    {reorderModal.reordering ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
                         Agregando...
@@ -3300,7 +3507,7 @@ function OrdersPageContent() {
     )}
     
     {/* Modal de opciones de contacto */}
-    {showContactModal && contactOrderInfo && (
+    {contactModal.showContactModal && contactModal.contactOrderInfo && (
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
         <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
           <div className="p-6">
@@ -3310,18 +3517,18 @@ function OrdersPageContent() {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Contactar vendedor</h3>
-                <p className="text-sm text-gray-500">{contactOrderInfo.seller?.name}</p>
+                <p className="text-sm text-gray-500">{contactModal.contactOrderInfo.seller?.name}</p>
               </div>
             </div>
             
             <p className="text-sm text-gray-600 mb-4">
-              Orden #{contactOrderInfo.orderNumber}
+              Orden #{contactModal.contactOrderInfo.orderNumber}
             </p>
             
             <div className="space-y-3">
               {/* Opción Chat interno */}
               <button
-                onClick={handleContactViaChat}
+                onClick={contactActions.handleContactViaChat}
                 className="w-full flex items-center gap-3 p-4 border-2 border-purple-200 rounded-xl hover:border-purple-400 hover:bg-purple-50 transition-all"
               >
                 <div className="p-2 bg-purple-100 rounded-lg">
@@ -3335,7 +3542,7 @@ function OrdersPageContent() {
               
               {/* Opción WhatsApp */}
               <button
-                onClick={handleContactViaWhatsApp}
+                onClick={contactActions.handleContactViaWhatsApp}
                 className="w-full flex items-center gap-3 p-4 border-2 border-green-200 rounded-xl hover:border-green-400 hover:bg-green-50 transition-all"
               >
                 <div className="p-2 bg-green-100 rounded-lg">
@@ -3346,17 +3553,14 @@ function OrdersPageContent() {
                 <div className="text-left">
                   <p className="font-semibold text-gray-900">WhatsApp</p>
                   <p className="text-xs text-gray-500">
-                    {contactOrderInfo.seller?.phone || 'Número no disponible'}
+                    {contactModal.contactOrderInfo.seller?.phone || 'Número no disponible'}
                   </p>
                 </div>
               </button>
             </div>
             
             <button
-              onClick={() => {
-                setShowContactModal(false)
-                setContactOrderInfo(null)
-              }}
+              onClick={contactModal.closeContactModal}
               className="w-full mt-4 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
             >
               Cancelar

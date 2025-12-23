@@ -41,7 +41,7 @@ export const viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#7c3aed',
+  themeColor: '#a8d5e5', // Updated to pastel blue
 }
 
 interface RootLayoutProps {
@@ -54,7 +54,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="es" suppressHydrationWarning>
-        <body className={inter.className}>
+        <body className={`${inter.className} bg-background text-foreground antialiased`}>
           <QueryProvider>
             <PendingRedirectHandler />
             <NotificationInitializer />

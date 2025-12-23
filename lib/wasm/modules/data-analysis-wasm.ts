@@ -471,7 +471,7 @@ export class DataAnalysisWASM {
     iterations: number
     inertia: number
   } {
-    const centroids = Array(k).fill(0).map(() => 
+    const centroids = new Array(k).fill(0).map(() => 
       data[Math.floor(Math.random() * data.length)]
     )
     

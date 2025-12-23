@@ -156,7 +156,7 @@ export default function BulkStatusChangeModal({
 }: OrderReviewModalProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [_step, setStep] = useState<'review' | 'issues' | 'confirm'>('review')
+  const [_step, setStep] = useState<'review' | 'issues' | 'confirm'>('review') // NOSONAR - step tracking for multi-step workflow
   
   // Estado para problemas de stock
   const [productIssues, setProductIssues] = useState<Map<string, ProductIssue>>(new Map())

@@ -54,7 +54,7 @@ export async function GET() {
     }
 
     // Verificar roles basados en relaciones reales
-    const hasSeller = authUser.sellers.length > 0 && authUser.sellers.some(s => s.isActive)
+    const hasSeller = authUser.sellers.some(s => s.isActive)
     const hasClient = authUser.clients.length > 0
 
     const roles: string[] = []

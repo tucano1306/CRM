@@ -129,6 +129,109 @@ function getCartLabel(cartCount: number): string {
   return `${cartCount} ${label}`
 }
 
+// ============ Alert Components - Reduce Cognitive Complexity ============
+
+interface OrderAlertProps {
+  order: RecentOrder
+  type: 'payment' | 'pickup'
+}
+
+function OrderAlert({ order, type }: Readonly<OrderAlertProps>) {
+  const isPayment = type === 'payment'
+  const bgClass = isPayment 
+    ? 'bg-gradient-to-r from-amber-50 to-yellow-50 border-l-4 border-amber-500'
+    : 'bg-gradient-to-r from-emerald-50 to-green-50 border-l-4 border-emerald-500'
+  const iconBgClass = isPayment
+    ? 'bg-gradient-to-br from-amber-500 to-yellow-600'
+    : 'bg-gradient-to-br from-emerald-500 to-green-600'
+  const textClass = isPayment ? 'text-amber-900' : 'text-emerald-900'
+  const subtextClass = isPayment ? 'text-amber-700' : 'text-emerald-700'
+  const buttonClass = isPayment
+    ? 'bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700'
+    : 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700'
+  
+  const title = isPayment ? 'Orden pendiente de pago' : '¡Tu orden está lista!'
+  const subtitle = isPayment 
+    ? `Orden #${order.orderNumber} - ${formatPrice(Number(order.totalAmount))}`
+    : `Orden #${order.orderNumber} - Puedes recogerla hoy`
+  const buttonText = isPayment ? 'Pagar ahora' : 'Ver detalles'
+  const IconComponent = isPayment ? AlertCircle : CheckCircle
+
+  return (
+    <div className={`${bgClass} p-4 rounded-xl flex items-start gap-3 shadow-lg hover:shadow-xl transition-all`}>
+      <div className={`${iconBgClass} p-2 rounded-xl shadow-md`}>
+        <IconComponent className="w-5 h-5 text-white" />
+      </div>
+      <div className="flex-1">
+        <p className={`font-bold ${textClass}`}>{title}</p>
+        <p className={`text-sm ${subtextClass} font-medium`}>{subtitle}</p>
+      </div>
+      <Link href="/buyer/orders">
+        <button className={`${buttonClass} text-white px-4 py-2 rounded-lg transition-all font-semibold shadow-md`}>
+          {buttonText}
+        </button>
+      </Link>
+    </div>
+  )
+}
+
+function ImportantAlerts({ orders }: Readonly<{ orders: RecentOrder[] }>) {
+  const paymentPending = orders.filter(o => o.status === 'PAYMENT_PENDING').slice(0, 2)
+  const readyForPickup = orders.filter(o => o.status === 'READY_FOR_PICKUP').slice(0, 2)
+  
+  if (paymentPending.length === 0 && readyForPickup.length === 0) return null
+  
+  return (
+    <div className="space-y-3">
+      {paymentPending.map(order => (
+        <OrderAlert key={order.id} order={order} type="payment" />
+      ))}
+      {readyForPickup.map(order => (
+        <OrderAlert key={order.id} order={order} type="pickup" />
+      ))}
+    </div>
+  )
+}
+
+function StatValue({ value, fallback }: Readonly<{ value: number | undefined; fallback: string }>) {
+  return value && value > 0 ? `↗️ ${fallback}` : fallback
+}
+
+// ============ Stat Card Component ============
+
+interface StatCardProps {
+  href: string
+  borderColor: string
+  iconBgClass: string
+  icon: React.ReactNode
+  arrowColor: string
+  title: string
+  value: number | string
+  hint: string
+}
+
+function StatCard({ href, borderColor, iconBgClass, icon, arrowColor, title, value, hint }: Readonly<StatCardProps>) {
+  return (
+    <Link href={href}>
+      <div className={`bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 ${borderColor} cursor-pointer`}>
+        <div className="flex items-center justify-between mb-2">
+          <div className={`${iconBgClass} p-2 rounded-xl shadow-md`}>
+            {icon}
+          </div>
+          <ArrowUpRight className={`w-4 h-4 ${arrowColor}`} />
+        </div>
+        <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">{title}</p>
+        <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{value}</p>
+        <p className="text-xs text-gray-500 font-medium">{hint}</p>
+      </div>
+    </Link>
+  )
+}
+
+function getStatHint(value: number | undefined, positiveText: string, zeroText: string): string {
+  return value && value > 0 ? positiveText : zeroText
+}
+
 // ============ Main Component ============
 
 export default function BuyerDashboardPage() {
@@ -256,11 +359,6 @@ export default function BuyerDashboardPage() {
     )
   }
 
-  const hasImportantAlerts = recentOrders.some(
-    order => order.status === 'PAYMENT_PENDING' || order.status === 'READY_FOR_PICKUP'
-  )
-
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50">
       {/* Header */}
@@ -290,121 +388,53 @@ export default function BuyerDashboardPage() {
 
       <div className="container mx-auto px-6 py-8 space-y-8">
         {/* Notificaciones/Alertas Importantes */}
-        {hasImportantAlerts && (
-          <div className="space-y-3">
-            {/* Órdenes pendientes de pago */}
-            {recentOrders
-              .filter(order => order.status === 'PAYMENT_PENDING')
-              .slice(0, 2)
-              .map(order => (
-                <div key={order.id} className="bg-gradient-to-r from-amber-50 to-yellow-50 border-l-4 border-amber-500 p-4 rounded-xl flex items-start gap-3 shadow-lg hover:shadow-xl transition-all">
-                  <div className="bg-gradient-to-br from-amber-500 to-yellow-600 p-2 rounded-xl shadow-md">
-                    <AlertCircle className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-amber-900">Orden pendiente de pago</p>
-                    <p className="text-sm text-amber-700 font-medium">
-                      Orden #{order.orderNumber} - {formatPrice(Number(order.totalAmount))}
-                    </p>
-                  </div>
-                  <Link href={`/buyer/orders`}>
-                    <button className="bg-gradient-to-r from-amber-600 to-yellow-600 text-white px-4 py-2 rounded-lg hover:from-amber-700 hover:to-yellow-700 transition-all font-semibold shadow-md">
-                      Pagar ahora
-                    </button>
-                  </Link>
-                </div>
-              ))}
-
-            {/* Órdenes listas para recoger */}
-            {recentOrders
-              .filter(order => order.status === 'READY_FOR_PICKUP')
-              .slice(0, 2)
-              .map(order => (
-                <div key={order.id} className="bg-gradient-to-r from-emerald-50 to-green-50 border-l-4 border-emerald-500 p-4 rounded-xl flex items-start gap-3 shadow-lg hover:shadow-xl transition-all">
-                  <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-xl shadow-md">
-                    <CheckCircle className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-bold text-emerald-900">¡Tu orden está lista!</p>
-                    <p className="text-sm text-emerald-700 font-medium">
-                      Orden #{order.orderNumber} - Puedes recogerla hoy
-                    </p>
-                  </div>
-                  <Link href={`/buyer/orders`}>
-                    <button className="bg-gradient-to-r from-emerald-600 to-green-600 text-white px-4 py-2 rounded-lg hover:from-emerald-700 hover:to-green-700 transition-all font-semibold shadow-md">
-                      Ver detalles
-                    </button>
-                  </Link>
-                </div>
-              ))}
-          </div>
-        )}
+        <ImportantAlerts orders={recentOrders} />
 
         {/* Stats Cards Interactivas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <Link href="/buyer/orders?status=all">
-            <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-purple-500 cursor-pointer">
-              <div className="flex items-center justify-between mb-2">
-                <div className="bg-gradient-to-br from-purple-500 to-purple-700 p-2 rounded-xl shadow-md">
-                  <Package className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-                <ArrowUpRight className="w-4 h-4 text-purple-400" />
-              </div>
-              <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Total Órdenes</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stats?.totalOrders || 0}</p>
-              <p className="text-xs text-gray-500 font-medium">
-                {stats?.totalOrders && stats.totalOrders > 0 ? `↗️ Ver todas` : 'Aún no tienes órdenes'}
-              </p>
-            </div>
-          </Link>
+          <StatCard
+            href="/buyer/orders?status=all"
+            borderColor="border-purple-500"
+            iconBgClass="bg-gradient-to-br from-purple-500 to-purple-700"
+            icon={<Package className="h-5 w-5 sm:h-6 sm:w-6 text-white" />}
+            arrowColor="text-purple-400"
+            title="Total Órdenes"
+            value={stats?.totalOrders || 0}
+            hint={getStatHint(stats?.totalOrders, '↗️ Ver todas', 'Aún no tienes órdenes')}
+          />
 
-          <Link href="/buyer/orders?status=PENDING">
-            <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-amber-500 cursor-pointer">
-              <div className="flex items-center justify-between mb-2">
-                <div className="bg-gradient-to-br from-amber-500 to-amber-700 p-2 rounded-xl shadow-md">
-                  <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-                <ArrowUpRight className="w-4 h-4 text-amber-400" />
-              </div>
-              <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">En Proceso</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stats?.pendingOrders || 0}</p>
-              <p className="text-xs text-gray-500 font-medium">
-                {stats?.pendingOrders && stats.pendingOrders > 0 ? `↗️ ${stats.pendingOrders} pendientes` : 'Todo al día'}
-              </p>
-            </div>
-          </Link>
+          <StatCard
+            href="/buyer/orders?status=PENDING"
+            borderColor="border-amber-500"
+            iconBgClass="bg-gradient-to-br from-amber-500 to-amber-700"
+            icon={<Clock className="h-5 w-5 sm:h-6 sm:w-6 text-white" />}
+            arrowColor="text-amber-400"
+            title="En Proceso"
+            value={stats?.pendingOrders || 0}
+            hint={getStatHint(stats?.pendingOrders, `↗️ ${stats?.pendingOrders} pendientes`, 'Todo al día')}
+          />
 
-          <Link href="/buyer/orders?status=COMPLETED">
-            <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-emerald-500 cursor-pointer">
-              <div className="flex items-center justify-between mb-2">
-                <div className="bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-xl shadow-md">
-                  <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-                <ArrowUpRight className="w-4 h-4 text-emerald-400" />
-              </div>
-              <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Completadas</p>
-              <p className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">{stats?.completedOrders || 0}</p>
-              <p className="text-xs text-gray-500 font-medium">
-                {stats?.completedOrders && stats.completedOrders > 0 ? `↗️ ${stats.completedOrders} exitosas` : 'Sin completar aún'}
-              </p>
-            </div>
-          </Link>
+          <StatCard
+            href="/buyer/orders?status=COMPLETED"
+            borderColor="border-emerald-500"
+            iconBgClass="bg-gradient-to-br from-emerald-500 to-green-600"
+            icon={<CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 text-white" />}
+            arrowColor="text-emerald-400"
+            title="Completadas"
+            value={stats?.completedOrders || 0}
+            hint={getStatHint(stats?.completedOrders, `↗️ ${stats?.completedOrders} exitosas`, 'Sin completar aún')}
+          />
 
-          <Link href="/buyer/orders">
-            <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-cyan-500 cursor-pointer">
-              <div className="flex items-center justify-between mb-2">
-                <div className="bg-gradient-to-br from-cyan-500 to-blue-600 p-2 rounded-xl shadow-md">
-                  <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                </div>
-                <ArrowUpRight className="w-4 h-4 text-cyan-400" />
-              </div>
-              <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Total Gastado</p>
-              <p className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">{formatPrice(stats?.totalSpent || 0)}</p>
-              <p className="text-xs text-gray-500 font-medium">
-                {stats?.totalSpent && stats.totalSpent > 0 ? `↗️ Ver detalles` : 'Comienza a comprar'}
-              </p>
-            </div>
-          </Link>
+          <StatCard
+            href="/buyer/orders"
+            borderColor="border-cyan-500"
+            iconBgClass="bg-gradient-to-br from-cyan-500 to-blue-600"
+            icon={<DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-white" />}
+            arrowColor="text-cyan-400"
+            title="Total Gastado"
+            value={formatPrice(stats?.totalSpent || 0)}
+            hint={getStatHint(stats?.totalSpent, '↗️ Ver detalles', 'Comienza a comprar')}
+          />
         </div>
 
         {/* Gráfico de Gastos Mensuales */}

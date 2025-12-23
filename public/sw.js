@@ -2,19 +2,19 @@
 const CACHE_NAME = 'bargain-v1'
 
 // Instalar service worker
-self.addEventListener('install', (event) => {
+globalThis.addEventListener('install', (event) => {
   console.log('🔧 Service Worker instalado')
-  self.skipWaiting()
+  globalThis.skipWaiting()
 })
 
 // Activar service worker
-self.addEventListener('activate', (event) => {
+globalThis.addEventListener('activate', (event) => {
   console.log('✅ Service Worker activado')
   event.waitUntil(clients.claim())
 })
 
 // Manejar notificaciones push
-self.addEventListener('push', (event) => {
+globalThis.addEventListener('push', (event) => {
   console.log('📬 Push recibido:', event)
   
   let data = {
@@ -29,7 +29,8 @@ self.addEventListener('push', (event) => {
   if (event.data) {
     try {
       data = { ...data, ...event.data.json() }
-    } catch (e) {
+    } catch {
+      // Fallback to text if JSON parsing fails
       data.body = event.data.text()
     }
   }
@@ -47,12 +48,12 @@ self.addEventListener('push', (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(data.title, options)
+    globalThis.registration.showNotification(data.title, options)
   )
 })
 
 // Manejar click en notificación
-self.addEventListener('notificationclick', (event) => {
+globalThis.addEventListener('notificationclick', (event) => {
   console.log('👆 Notificación clickeada:', event)
   
   event.notification.close()
@@ -64,7 +65,7 @@ self.addEventListener('notificationclick', (event) => {
       .then((windowClients) => {
         // Buscar si ya hay una ventana abierta
         for (const client of windowClients) {
-          if (client.url.includes(self.location.origin) && 'focus' in client) {
+          if (client.url.includes(globalThis.location.origin) && 'focus' in client) {
             client.navigate(urlToOpen)
             return client.focus()
           }
@@ -78,7 +79,7 @@ self.addEventListener('notificationclick', (event) => {
 })
 
 // Manejar mensajes desde la app
-self.addEventListener('message', (event) => {
+globalThis.addEventListener('message', (event) => {
   console.log('💬 Mensaje recibido en SW:', event.data)
   
   if (event.data.type === 'SET_BADGE') {

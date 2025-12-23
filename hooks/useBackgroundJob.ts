@@ -109,6 +109,17 @@ export function useBackgroundJob(options: UseBackgroundJobOptions = {}) {
   }, [])
 
   /**
+   * Eliminar un job del estado
+   */
+  const removeJobFromState = useCallback((jobId: string) => {
+    setJobs(prev => {
+      const newMap = new Map(prev)
+      newMap.delete(jobId)
+      return newMap
+    })
+  }, [])
+
+  /**
    * Iniciar polling para un trabajo
    */
   const startPolling = useCallback((jobId: string) => {
@@ -154,14 +165,7 @@ export function useBackgroundJob(options: UseBackgroundJobOptions = {}) {
             onComplete?.(updatedJob)
             
             if (autoCleanup) {
-              const removeJob = () => {
-                setJobs(prev => {
-                  const newMap = new Map(prev)
-                  newMap.delete(jobId)
-                  return newMap
-                })
-              }
-              setTimeout(removeJob, 5000) // Limpiar después de 5 segundos
+              setTimeout(() => removeJobFromState(jobId), 5000) // Limpiar después de 5 segundos
             }
           } else if (updatedJob.status === 'failed') {
             stopPolling(jobId)

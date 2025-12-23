@@ -1,10 +1,11 @@
 const { PrismaClient } = require('@prisma/client');
 
 // Conectar a la base de datos de PRODUCCIÓN
+// IMPORTANTE: Usar variable de entorno DATABASE_URL
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: 'postgresql://neondb_owner:npg_0dqOPGfJ7CVx@ep-spring-night-adj6vmii-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require'
+      url: process.env.DATABASE_URL
     }
   }
 });
@@ -36,6 +37,6 @@ async function main() {
   console.log('👉 Deberías ver el panel naranja con la solicitud!');
 }
 
-main()
+await main()
   .catch(console.error)
   .finally(() => prisma.$disconnect());

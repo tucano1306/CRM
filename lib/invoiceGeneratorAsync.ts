@@ -134,7 +134,7 @@ export async function generateInvoiceAsync(
   const result = await generateInvoice(data, { ...options, async: true })
   
   if (Buffer.isBuffer(result)) {
-    throw new Error('Unexpected synchronous result')
+    throw new TypeError('Unexpected synchronous result')
   }
   
   return result

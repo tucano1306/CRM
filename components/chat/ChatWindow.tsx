@@ -47,10 +47,12 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
   const [error, setError] = useState<string | null>(null)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [uploadingFile, setUploadingFile] = useState(false)
-  const [_uploadProgress, setUploadProgress] = useState(0)
+  // Upload progress tracked for future upload UI
+  const [_uploadProgress, setUploadProgress] = useState(0) // NOSONAR - value will be used when upload UI is implemented
   const [showSearch, setShowSearch] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [_isTyping, setIsTyping] = useState(false)
+  // Typing indicator tracked for future UI
+  const [_isTyping, setIsTyping] = useState(false) // NOSONAR - value will be used when typing indicator UI is implemented
   const [otherUserTyping, setOtherUserTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)

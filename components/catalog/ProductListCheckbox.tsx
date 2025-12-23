@@ -327,12 +327,9 @@ export default function ProductListCheckbox({
 
                     {/* Control de cantidad */}
                     {isSelected && showQuantityInput && (
-                      <div 
-                        role="group"
+                      <fieldset 
                         aria-label="Control de cantidad"
-                        className="flex items-center gap-2"
-                        onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => e.stopPropagation()}
+                        className="flex items-center gap-2 border-0 p-0 m-0"
                       >
                         <Button
                           variant="outline"
@@ -365,7 +362,7 @@ export default function ProductListCheckbox({
                         <span className="text-sm font-medium text-gray-600 ml-2">
                           = {formatPrice(product.price * quantity)}
                         </span>
-                      </div>
+                      </fieldset>
                     )}
                   </div>
                 </div>

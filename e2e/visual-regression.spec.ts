@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test'
 
 // ⚠️ TESTS DESHABILITADOS: Requieren autenticación con Clerk
 // Issue: El componente <SignIn /> de Clerk no carga en Playwright
-// TODO: Resolver integración Clerk + Playwright antes de habilitar
+// Pendiente: Resolver integración Clerk + Playwright antes de habilitar
 
 test.describe.skip('Visual Regression Tests - Estilos UI', () => {
   test('buyer dashboard visual snapshot', async ({ page }) => {
@@ -91,7 +91,7 @@ test.describe.skip('Visual Regression Tests - Estilos UI', () => {
     const primaryButton = page.locator('button').first()
     if (await primaryButton.isVisible()) {
       const styles = await primaryButton.evaluate((el) => {
-        const computed = window.getComputedStyle(el)
+        const computed = globalThis.getComputedStyle(el)
         return {
           backgroundColor: computed.backgroundColor,
           color: computed.color,
@@ -115,7 +115,7 @@ test.describe.skip('Visual Regression Tests - Estilos UI', () => {
     const h1 = page.locator('h1').first()
     if (await h1.isVisible()) {
       const fontSize = await h1.evaluate((el) => 
-        window.getComputedStyle(el).fontSize
+        globalThis.getComputedStyle(el).fontSize
       )
       
       // H1 debe ser mayor a 20px
@@ -133,7 +133,7 @@ test.describe.skip('Visual Regression Tests - Estilos UI', () => {
     
     if (await firstText.isVisible()) {
       const contrast = await firstText.evaluate((el) => {
-        const style = window.getComputedStyle(el)
+        const style = globalThis.getComputedStyle(el)
         const color = style.color
         const bgColor = style.backgroundColor
         
@@ -180,7 +180,7 @@ test.describe.skip('Visual Regression Tests - Estilos UI', () => {
       let count = 0
       
       elements.forEach((el) => {
-        const style = window.getComputedStyle(el)
+        const style = globalThis.getComputedStyle(el)
         if (style.transition !== 'all 0s ease 0s' && style.transition !== 'none') {
           count++
         }
@@ -222,7 +222,7 @@ test.describe.skip('Component Visual Tests', () => {
     
     if (await firstInput.isVisible()) {
       const styles = await firstInput.evaluate((el) => {
-        const computed = window.getComputedStyle(el)
+        const computed = globalThis.getComputedStyle(el)
         return {
           border: computed.border,
           padding: computed.padding,
@@ -247,7 +247,7 @@ test.describe.skip('Component Visual Tests', () => {
     
     if (await firstCard.isVisible()) {
       const styles = await firstCard.evaluate((el) => {
-        const computed = window.getComputedStyle(el)
+        const computed = globalThis.getComputedStyle(el)
         return {
           boxShadow: computed.boxShadow,
           margin: computed.margin,

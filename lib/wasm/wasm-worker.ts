@@ -65,9 +65,7 @@ export class WASMWorkerInstance extends EventEmitter {
    * Lazily triggers capability check on first call.
    */
   public async ensureInitialized(): Promise<void> {
-    if (this.initPromise === null) {
-      this.initPromise = this.checkWASMCapability()
-    }
+    this.initPromise ??= this.checkWASMCapability()
     await this.initPromise
   }
 

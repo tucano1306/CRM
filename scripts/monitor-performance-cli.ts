@@ -6,8 +6,7 @@
 
 import { performanceProfiler, PerformanceProfiler } from '../lib/monitoring/performance-profiler'
 import { workerPoolManager } from '../lib/workers/worker-pool'
-import * as fs from 'fs'
-import * as path from 'path'
+import * as fs from 'node:fs'
 
 interface MonitoringOptions {
   duration?: number
@@ -70,12 +69,21 @@ class PerformanceMonitorCLI {
   }
 
   private displaySystemMetrics(metrics: any): void {
-    const eventLoopStatus = metrics.eventLoopLag > 10 ? '🔴' : 
-                           metrics.eventLoopLag > 5 ? '🟡' : '🟢'
+    const getEventLoopStatus = (lag: number): string => {
+      if (lag > 10) return '🔴'
+      if (lag > 5) return '🟡'
+      return '🟢'
+    }
     
+    const getMemoryStatus = (mb: number): string => {
+      if (mb > 512) return '🔴'
+      if (mb > 256) return '🟡'
+      return '🟢'
+    }
+    
+    const eventLoopStatus = getEventLoopStatus(metrics.eventLoopLag)
     const memoryMB = metrics.memoryUsage.heapUsed / 1024 / 1024
-    const memoryStatus = memoryMB > 512 ? '🔴' : 
-                        memoryMB > 256 ? '🟡' : '🟢'
+    const memoryStatus = getMemoryStatus(memoryMB)
 
     console.log('\n📊 System Metrics:')
     console.log(`   Event Loop Lag: ${eventLoopStatus} ${metrics.eventLoopLag.toFixed(2)}ms`)
@@ -112,7 +120,7 @@ class PerformanceMonitorCLI {
       console.log(`   Tasks Executed: ${stats.totalTasksExecuted}`)
       console.log(`   Avg Execution Time: ${stats.averageExecutionTime.toFixed(2)}ms`)
       console.log(`   Avg Queue Time: ${stats.averageQueueTime.toFixed(2)}ms`)
-    } catch (error) {
+    } catch {
       console.log('\n👷 Worker Pool: Not initialized')
     }
   }
@@ -234,20 +242,22 @@ const command = args[0]
 const cli = new PerformanceMonitorCLI()
 
 switch (command) {
-  case 'monitor':
+  case 'monitor': {
     const duration = args.includes('--duration') ? Number.parseInt(args[args.indexOf('--duration') + 1]) : undefined
     const interval = args.includes('--interval') ? Number.parseInt(args[args.indexOf('--interval') + 1]) : 1000
     const output = args.includes('--output') ? args[args.indexOf('--output') + 1] : undefined
     
     cli.startMonitoring({ duration, interval, output })
     break
+  }
 
-  case 'report':
+  case 'report': {
     const reportOutput = args.includes('--output') ? args[args.indexOf('--output') + 1] : undefined
     const format = args.includes('--json') ? 'json' : 'text'
     
     cli.generateReport(reportOutput, format)
     break
+  }
 
   case 'stats':
     cli.displayQuickStats()

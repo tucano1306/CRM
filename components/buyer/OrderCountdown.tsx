@@ -23,7 +23,7 @@ export default function OrderCountdown({
 
   useEffect(() => {
     const calculateTimeLeft = () => {
-      const now = new Date().getTime()
+      const now = Date.now()
       const deadlineTime = new Date(deadline).getTime()
       const difference = deadlineTime - now
 

@@ -107,23 +107,23 @@ const nextConfig = {
       syncWebAssembly: true,
     };
 
-    // Add WASM file loader
-    config.module.rules.push({
-      test: /\.wasm$/,
-      type: 'webassembly/async',
-    });
-
-    // Add WebWorker support for WASM workers
-    config.module.rules.push({
-      test: /\.worker\.(js|ts)$/,
-      use: {
-        loader: 'worker-loader',
-        options: {
-          name: 'static/[hash].worker.js',
-          publicPath: '/_next/',
-        },
+    // Add WASM file loader and WebWorker support
+    config.module.rules.push(
+      {
+        test: /\.wasm$/,
+        type: 'webassembly/async',
       },
-    });
+      {
+        test: /\.worker\.(js|ts)$/,
+        use: {
+          loader: 'worker-loader',
+          options: {
+            name: 'static/[hash].worker.js',
+            publicPath: '/_next/',
+          },
+        },
+      }
+    );
 
     return config;
   },

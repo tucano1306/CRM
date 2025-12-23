@@ -162,7 +162,7 @@ export default function CreateRecurringOrderModal({
   }
 
   const addProduct = (product: Product) => {
-    if (selectedItems.find(item => item.productId === product.id)) return
+    if (selectedItems.some(item => item.productId === product.id)) return
 
     setSelectedItems([...selectedItems, {
       productId: product.id,

@@ -6,16 +6,39 @@
 import { z } from 'zod'
 
 // ============================================================================
+// CUSTOM VALIDATORS (evitar métodos deprecated de Zod v4)
+// ============================================================================
+
+// Regex patterns para validación
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const URL_REGEX = /^https?:\/\/[^\s/$.?#].[^\s]*$/i
+const ISO_DATETIME_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?(Z|[+-]\d{2}:\d{2})?$/
+
+// Helper functions para crear validadores reutilizables
+const emailString = (errorMsg = 'Email inválido') => 
+  z.string().regex(EMAIL_REGEX, errorMsg)
+
+const uuidString = (errorMsg = 'Debe ser un UUID válido') => 
+  z.string().regex(UUID_REGEX, errorMsg)
+
+const urlString = (errorMsg = 'URL inválida') => 
+  z.string().regex(URL_REGEX, errorMsg)
+
+const datetimeString = (errorMsg = 'Debe ser formato ISO datetime') => 
+  z.string().regex(ISO_DATETIME_REGEX, errorMsg)
+
+// ============================================================================
 // SCHEMAS DE AUTENTICACIÓN
 // ============================================================================
 
 export const signInSchema = z.object({
-  email: z.string().email('Email inválido'),
+  email: emailString(),
   password: z.string().min(8, 'Password debe tener al menos 8 caracteres'),
 })
 
 export const signUpSchema = z.object({
-  email: z.string().email('Email inválido'),
+  email: emailString(),
   password: z.string().min(8, 'Password debe tener al menos 8 caracteres'),
   name: z.string().min(2, 'Nombre debe tener al menos 2 caracteres'),
   phone: z.string().optional(),
@@ -36,8 +59,8 @@ export const createClientSchema = z.object({
   phone: z.string()
     .min(8, 'Teléfono es requerido (mínimo 8 dígitos)')
     .regex(/^[0-9+\-\s()]+$/, 'Teléfono debe contener solo números, +, -, (), espacios'),
-  email: z.string().email('Email inválido'),
-  sellerId: z.string().uuid('Seller ID debe ser un UUID válido').optional(),
+  email: emailString(),
+  sellerId: uuidString().optional(),
   orderConfirmationEnabled: z.boolean().default(true),
   orderConfirmationMethod: z.enum(['MANUAL', 'AUTOMATIC']).default('MANUAL'),
   notificationsEnabled: z.boolean().default(true),
@@ -76,7 +99,7 @@ export const createProductSchema = z.object({
     .min(0, 'Stock no puede ser negativo')
     .max(999999, 'Stock máximo: 999,999'),
   sku: z.string().optional(),
-  imageUrl: z.string().url('URL de imagen inválida').optional().or(z.literal('')),
+  imageUrl: urlString().optional().or(z.literal('')),
   isActive: z.boolean().default(true),
 })
 
@@ -87,10 +110,10 @@ export const updateProductSchema = createProductSchema.partial()
 // ============================================================================
 
 export const createOrderSchema = z.object({
-  clientId: z.string().uuid('Client ID debe ser un UUID válido').optional(),
-  sellerId: z.string().uuid('Seller ID debe ser un UUID válido').optional(),
+  clientId: uuidString().optional(),
+  sellerId: uuidString().optional(),
   notes: z.string().max(500, 'Notas no pueden exceder 500 caracteres').optional(),
-  idempotencyKey: z.string().uuid('Idempotency key debe ser un UUID válido').optional(),
+  idempotencyKey: uuidString().optional(),
 })
 
 export const updateOrderStatusSchema = z.object({
@@ -98,7 +121,7 @@ export const updateOrderStatusSchema = z.object({
     message: 'Status inválido'
   }),
   notes: z.string().max(500).optional(),
-  idempotencyKey: z.string().uuid().optional(),
+  idempotencyKey: uuidString().optional(),
 })
 
 export const cancelOrderSchema = z.object({
@@ -112,7 +135,7 @@ export const cancelOrderSchema = z.object({
 // ============================================================================
 
 export const addToCartSchema = z.object({
-  productId: z.string().uuid('Product ID debe ser un UUID válido'),
+  productId: uuidString(),
   quantity: z.number()
     .int('Cantidad debe ser un número entero')
     .positive('Cantidad debe ser mayor a 0')
@@ -138,12 +161,12 @@ export const sendChatMessageSchema = z.object({
     .min(1, 'Mensaje no puede estar vacío')
     .max(1000, 'Mensaje no puede exceder 1,000 caracteres')
     .trim(),
-  orderId: z.string().uuid('Order ID debe ser un UUID válido').optional(),
-  idempotencyKey: z.string().uuid('Idempotency key debe ser un UUID válido').optional(),
+  orderId: uuidString().optional(),
+  idempotencyKey: uuidString().optional(),
 })
 
 export const markMessagesReadSchema = z.object({
-  messageIds: z.array(z.string().uuid('Message ID debe ser un UUID válido'))
+  messageIds: z.array(uuidString())
     .min(1, 'Debe proporcionar al menos un message ID'),
 })
 
@@ -152,7 +175,7 @@ export const markMessagesReadSchema = z.object({
 // ============================================================================
 
 export const createChatScheduleSchema = z.object({
-  sellerId: z.string().uuid('Seller ID debe ser un UUID válido'),
+  sellerId: uuidString(),
   dayOfWeek: z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'], {
     message: 'Día de la semana inválido'
   }),
@@ -169,7 +192,7 @@ export const createChatScheduleSchema = z.object({
 export const updateChatScheduleSchema = createChatScheduleSchema.partial()
 
 export const createOrderScheduleSchema = z.object({
-  sellerId: z.string().uuid('Seller ID debe ser un UUID válido'),
+  sellerId: uuidString(),
   dayOfWeek: z.enum(['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'], {
     message: 'Día de la semana inválido'
   }),
@@ -260,7 +283,7 @@ export const updateUserRoleSchema = z.object({
 
 export const createBuyerOrderSchema = z.object({
   items: z.array(z.object({
-    productId: z.string().uuid('Product ID debe ser un UUID válido'),
+    productId: uuidString(),
     quantity: z.number()
       .int('Cantidad debe ser un número entero')
       .positive('Cantidad debe ser mayor a 0')
@@ -294,7 +317,7 @@ export const updateOrderItemSchema = z.object({
 // ============================================================================
 
 export const createQuoteSchema = z.object({
-  clientId: z.string().uuid('Client ID debe ser un UUID válido'),
+  clientId: uuidString(),
   title: z.string()
     .min(5, 'Título debe tener al menos 5 caracteres')
     .max(200, 'Título no puede exceder 200 caracteres'),
@@ -302,7 +325,7 @@ export const createQuoteSchema = z.object({
     .max(1000, 'Descripción no puede exceder 1,000 caracteres')
     .optional(),
   items: z.array(z.object({
-    productId: z.string().uuid('Product ID debe ser un UUID válido'),
+    productId: uuidString(),
     productName: z.string()
       .min(1, 'Nombre del producto es requerido')
       .max(200, 'Nombre del producto no puede exceder 200 caracteres'),
@@ -324,9 +347,7 @@ export const createQuoteSchema = z.object({
       .max(500, 'Notas del item no pueden exceder 500 caracteres')
       .optional()
   })).min(1, 'Debe haber al menos un item'),
-  validUntil: z.string()
-    .datetime('Fecha de validez debe ser formato ISO datetime')
-    .optional(),
+  validUntil: datetimeString().optional(),
   notes: z.string()
     .max(1000, 'Notas no pueden exceder 1,000 caracteres')
     .optional(),
@@ -364,7 +385,7 @@ export const rejectQuoteSchema = z.object({
 // ============================================================================
 
 export const createReturnSchema = z.object({
-  orderId: z.string().uuid('Order ID debe ser un UUID válido'),
+  orderId: uuidString(),
   reason: z.enum([
     'DAMAGED', 'EXPIRED', 'WRONG_PRODUCT', 'QUALITY_ISSUE', 
     'NOT_AS_DESCRIBED', 'OTHER', 'DAMAGED_PRODUCT', 'INCORRECT_PRODUCT',
@@ -381,7 +402,7 @@ export const createReturnSchema = z.object({
     message: 'Tipo de reembolso debe ser: REFUND, CREDIT, o REPLACEMENT'
   }),
   items: z.array(z.object({
-    orderItemId: z.string().uuid('Order Item ID debe ser un UUID válido'),
+    orderItemId: uuidString(),
     quantityReturned: z.number()
       .int('Cantidad debe ser un número entero')
       .positive('Cantidad debe ser mayor a 0'),
@@ -417,12 +438,12 @@ export const rejectReturnSchema = z.object({
 // ============================================================================
 
 export const createRecurringOrderSchema = z.object({
-  clientId: z.string().uuid('Client ID debe ser un UUID válido'),
+  clientId: uuidString(),
   name: z.string()
     .min(3, 'Nombre debe tener al menos 3 caracteres')
     .max(200, 'Nombre no puede exceder 200 caracteres'),
   items: z.array(z.object({
-    productId: z.string().uuid('Product ID debe ser un UUID válido'),
+    productId: uuidString(),
     productName: z.string().min(1, 'Nombre del producto es requerido'),
     quantity: z.number()
       .int('Cantidad debe ser un número entero')
@@ -450,11 +471,8 @@ export const createRecurringOrderSchema = z.object({
     .min(1, 'Día del mes debe estar entre 1-31')
     .max(31, 'Día del mes debe estar entre 1-31')
     .optional(),
-  startDate: z.string()
-    .datetime('Fecha de inicio debe ser formato ISO datetime'),
-  endDate: z.string()
-    .datetime('Fecha de fin debe ser formato ISO datetime')
-    .optional(),
+  startDate: datetimeString(),
+  endDate: datetimeString().optional(),
   isActive: z.boolean().default(true),
   notes: z.string()
     .max(500, 'Notas no pueden exceder 500 caracteres')
@@ -474,26 +492,24 @@ export const updateRecurringOrderSchema = createRecurringOrderSchema.partial()
 // ============================================================================
 
 export const createCreditNoteSchema = z.object({
-  clientId: z.string().uuid('Client ID debe ser un UUID válido'),
+  clientId: uuidString(),
   amount: z.number()
     .positive('Monto debe ser mayor a 0')
     .max(999999, 'Monto máximo: 999,999'),
   reason: z.string()
     .min(10, 'Razón debe tener al menos 10 caracteres')
     .max(500, 'Razón no puede exceder 500 caracteres'),
-  orderId: z.string().uuid('Order ID debe ser un UUID válido').optional(),
-  returnId: z.string().uuid('Return ID debe ser un UUID válido').optional(),
-  expiresAt: z.string()
-    .datetime('Fecha de expiración debe ser formato ISO datetime')
-    .optional()
+  orderId: uuidString().optional(),
+  returnId: uuidString().optional(),
+  expiresAt: datetimeString().optional()
 }).refine(
   (data) => !data.expiresAt || new Date(data.expiresAt) > new Date(),
   { message: 'Fecha de expiración debe ser futura', path: ['expiresAt'] }
 )
 
 export const useCreditNoteSchema = z.object({
-  creditNoteId: z.string().uuid('Credit Note ID debe ser un UUID válido'),
-  orderId: z.string().uuid('Order ID debe ser un UUID válido'),
+  creditNoteId: uuidString(),
+  orderId: uuidString(),
   amountUsed: z.number()
     .positive('Monto usado debe ser mayor a 0')
     .max(999999, 'Monto máximo: 999,999')
@@ -533,15 +549,15 @@ export const createNotificationSchema = z.object({
   link: z.string()
     .max(500, 'Link no puede exceder 500 caracteres')
     .optional(),
-  clientId: z.string().uuid('Client ID debe ser un UUID válido').optional(),
-  sellerId: z.string().uuid('Seller ID debe ser un UUID válido').optional()
+  clientId: uuidString().optional(),
+  sellerId: uuidString().optional()
 }).refine(
   (data) => data.clientId || data.sellerId,
   { message: 'Debe especificar clientId o sellerId' }
 )
 
 export const markNotificationReadSchema = z.object({
-  notificationId: z.string().uuid('Notification ID debe ser un UUID válido')
+  notificationId: uuidString()
 })
 
 // ============================================================================
@@ -549,7 +565,7 @@ export const markNotificationReadSchema = z.object({
 // ============================================================================
 
 export const bulkUpdateOrdersSchema = z.object({
-  orderIds: z.array(z.string().uuid('Order ID debe ser un UUID válido'))
+  orderIds: z.array(uuidString())
     .min(1, 'Debe proporcionar al menos un Order ID')
     .max(100, 'Máximo 100 órdenes por operación masiva'),
   status: z.enum(['PENDING', 'CONFIRMED', 'PREPARING', 'READY_FOR_PICKUP', 'IN_DELIVERY', 

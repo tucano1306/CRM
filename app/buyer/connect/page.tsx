@@ -24,8 +24,8 @@ function ConnectPageContent() {
     email: string
     phone?: string
   } | null>(null)
-  const [requestInfo, setRequestInfo] = useState<{ requestId?: string; createdAt?: string } | null>(null)
-  void requestInfo // Suppress unused variable warning - value tracked for future use
+  // Request info tracked for future use (e.g., displaying request details)
+  const [_requestInfo, setRequestInfo] = useState<{ requestId?: string; createdAt?: string } | null>(null) // NOSONAR - value will be used for request display
   
   // Campo de teléfono para el formulario
   const [phoneNumber, setPhoneNumber] = useState('')

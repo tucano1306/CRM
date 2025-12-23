@@ -39,13 +39,15 @@ export function formatPrice(value: number | string, currency: string = '$'): str
  */
 type DateInput = Date | string | null | undefined
 
+const DEFAULT_DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric' }
+
 /**
  * Formatea una fecha en formato legible
  * Ejemplo: "12/12/2025" o "12 dic 2025"
  */
 export function formatDate(
   date: DateInput, 
-  options: Intl.DateTimeFormatOptions = { day: '2-digit', month: '2-digit', year: 'numeric' }
+  options: Intl.DateTimeFormatOptions = DEFAULT_DATE_FORMAT_OPTIONS
 ): string {
   if (!date) return '-'
   const dateObj = typeof date === 'string' ? new Date(date) : date

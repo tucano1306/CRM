@@ -286,7 +286,14 @@ function sanitizeObject(data: Record<string, unknown>): Record<string, unknown> 
  */
 function transformProductFields(data: Record<string, unknown>): void {
   if (data.price !== undefined && data.price !== null) {
-    data.price = Number.parseFloat(String(data.price))
+    if (typeof data.price === 'number') {
+      // Already a number, keep as is
+    } else if (typeof data.price === 'string') {
+      data.price = Number.parseFloat(data.price)
+    } else if (typeof data.price === 'object') {
+      // Handle unexpected object by converting to string representation
+      data.price = Number.parseFloat(JSON.stringify(data.price))
+    }
   }
 }
 
@@ -302,7 +309,14 @@ function transformOrderFields(data: Record<string, unknown>): void {
     }
   }
   if (data.totalAmount !== undefined && data.totalAmount !== null) {
-    data.totalAmount = Number.parseFloat(String(data.totalAmount))
+    if (typeof data.totalAmount === 'number') {
+      // Already a number, keep as is
+    } else if (typeof data.totalAmount === 'string') {
+      data.totalAmount = Number.parseFloat(data.totalAmount)
+    } else if (typeof data.totalAmount === 'object') {
+      // Handle unexpected object by converting to string representation
+      data.totalAmount = Number.parseFloat(JSON.stringify(data.totalAmount))
+    }
   }
 }
 

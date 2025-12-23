@@ -51,7 +51,7 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
-  const modalRef = useRef<HTMLDivElement>(null)
+  const modalRef = useRef<HTMLDialogElement>(null)
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
 
@@ -321,18 +321,15 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
           onClick={closeModal}
           onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') closeModal(); }}
         >
-          <div 
+          <dialog 
             ref={modalRef}
-            role="dialog"
-            aria-modal="true"
+            open
             aria-labelledby="notification-modal-title"
             style={role === 'seller' && window.innerWidth >= 768 && modalPosition.x 
               ? { position: 'fixed', left: modalPosition.x, top: modalPosition.y }
               : {}
             }
-            className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-2xl w-full sm:w-[90vw] sm:max-w-md max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-right-4 duration-500 ring-0 sm:ring-4 sm:ring-blue-500/50 cursor-auto text-left"
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-2xl w-full sm:w-[90vw] sm:max-w-md max-h-[90vh] sm:max-h-[85vh] overflow-hidden flex flex-col animate-in slide-in-from-bottom sm:slide-in-from-right-4 duration-500 ring-0 sm:ring-4 sm:ring-blue-500/50 cursor-auto text-left m-0 p-0 border-none"
           >
             {/* New Badge */}
             {newNotification?.id === selectedNotification.id && (
@@ -341,10 +338,13 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
               </div>
             )}
             
-            {/* Header */}
-            <div 
-              role="banner"
-              onMouseDown={handleMouseDown}
+            {/* Header - Draggable area for sellers */}
+            <header 
+              role={role === 'seller' ? 'button' : undefined}
+              tabIndex={role === 'seller' ? 0 : undefined}
+              aria-label={role === 'seller' ? 'Arrastra para mover la notificación' : undefined}
+              onMouseDown={role === 'seller' ? handleMouseDown : undefined}
+              onKeyDown={role === 'seller' ? (e) => { if (e.key === 'Enter') handleMouseDown(e as unknown as React.MouseEvent); } : undefined}
               className={`flex items-start justify-between p-4 sm:p-5 border-b border-gray-200 dark:border-gray-700 select-none bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 ${(() => {
                 if (role === 'seller' && !isDragging) return 'sm:cursor-grab cursor-default'
                 if (isDragging) return 'cursor-grabbing'
@@ -368,7 +368,7 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
               >
                 <X size={22} />
               </button>
-            </div>
+            </header>
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-5 sm:p-6 bg-white dark:bg-gray-800">
@@ -395,7 +395,7 @@ export default function UnifiedNotificationBell({ role = 'buyer', className = ''
                 Cerrar
               </button>
             </div>
-          </div>
+          </dialog>
         </button>,
         document.body
       )}

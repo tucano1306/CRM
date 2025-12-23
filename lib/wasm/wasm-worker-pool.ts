@@ -52,9 +52,7 @@ class WASMWorkerPool extends WorkerPool {
    * Lazily triggers capability check on first call.
    */
   public async ensureInitialized(): Promise<void> {
-    if (this.initPromise === null) {
-      this.initPromise = this.checkWorkersWASMCapability()
-    }
+    this.initPromise ??= this.checkWorkersWASMCapability()
     await this.initPromise
   }
 

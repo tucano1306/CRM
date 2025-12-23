@@ -67,4 +67,4 @@ async function clearSeedData() {
   await prisma.$disconnect()
 }
 
-clearSeedData()
+await clearSeedData()
