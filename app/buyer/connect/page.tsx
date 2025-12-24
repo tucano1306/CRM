@@ -139,33 +139,11 @@ function ConnectPageContent() {
         throw new Error(response.error || 'Error al conectar con el vendedor')
       }
 
-      // Obtener el estado de la respuesta (viene en response.data o directamente)
-      const connectionStatus = (response as any).status || response.data?.status || 'REQUEST_SENT'
-
-      // Manejar diferentes estados de respuesta
-      switch (connectionStatus) {
-        case 'ALREADY_CONNECTED':
-          setStatus('already_connected')
-          setTimeout(() => {
-            router.push('/buyer/dashboard')
-          }, 2000)
-          break
-          
-        case 'PENDING':
-          setStatus('pending')
-          setRequestInfo({
-            requestId: response.data?.requestId,
-            createdAt: response.data?.createdAt
-          })
-          break
-          
-        case 'REQUEST_SENT':
-        default:
-          setStatus('request_sent')
-          setRequestInfo({
-            requestId: response.data?.requestId
-          })
-      }
+      // Conexión exitosa - ir al dashboard
+      setStatus('already_connected')
+      setTimeout(() => {
+        router.push('/buyer/dashboard')
+      }, 1500)
 
     } catch (err: any) {
       console.error('Error conectando con vendedor:', err)

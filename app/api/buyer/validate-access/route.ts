@@ -6,6 +6,8 @@ export async function GET() {
   try {
     const { userId } = await auth()
 
+    console.log('🔍 [validate-access] userId:', userId)
+
     if (!userId) {
       return NextResponse.json({ hasAccess: false, reason: 'No autenticado' })
     }
@@ -22,31 +24,31 @@ export async function GET() {
       }
     })
 
+    console.log('🔍 [validate-access] authUser:', authUser?.id, 'clients:', authUser?.clients?.length)
+
     if (!authUser) {
       // Verificar si hay una solicitud de conexión pendiente
       try {
-        const pendingRequest = await prisma.connectionRequest.findFirst({
+        const pendingRequest = await (prisma as any).connectionRequest.findFirst({
           where: { 
             buyerClerkId: userId,
             status: 'PENDING'
-          },
-          include: {
-            seller: true
           }
         })
+
+        console.log('🔍 [validate-access] pendingRequest:', pendingRequest?.id)
 
         if (pendingRequest) {
           return NextResponse.json({ 
             hasAccess: false, 
-            reason: `Tu solicitud de conexión con ${pendingRequest.seller?.name || 'el vendedor'} está pendiente de aprobación. Te notificaremos cuando sea aceptada.`,
+            reason: 'Tu solicitud de conexión está pendiente de aprobación. Te notificaremos cuando sea aceptada.',
             pendingRequest: {
-              sellerName: pendingRequest.seller?.name,
               createdAt: pendingRequest.createdAt
             }
           })
         }
-      } catch (reqError) {
-        console.log('No se pudo verificar solicitudes pendientes:', reqError)
+      } catch (reqError: any) {
+        console.log('⚠️ [validate-access] Error verificando solicitudes:', reqError.message)
       }
 
       return NextResponse.json({ 
@@ -61,28 +63,26 @@ export async function GET() {
     if (!client) {
       // Verificar si hay una solicitud de conexión pendiente
       try {
-        const pendingRequest = await prisma.connectionRequest.findFirst({
+        const pendingRequest = await (prisma as any).connectionRequest.findFirst({
           where: { 
             buyerClerkId: userId,
             status: 'PENDING'
-          },
-          include: {
-            seller: true
           }
         })
+
+        console.log('🔍 [validate-access] pendingRequest (no client):', pendingRequest?.id)
 
         if (pendingRequest) {
           return NextResponse.json({ 
             hasAccess: false, 
-            reason: `Tu solicitud de conexión con ${pendingRequest.seller?.name || 'el vendedor'} está pendiente de aprobación. Te notificaremos cuando sea aceptada.`,
+            reason: 'Tu solicitud de conexión está pendiente de aprobación. Te notificaremos cuando sea aceptada.',
             pendingRequest: {
-              sellerName: pendingRequest.seller?.name,
               createdAt: pendingRequest.createdAt
             }
           })
         }
-      } catch (reqError) {
-        console.log('No se pudo verificar solicitudes pendientes:', reqError)
+      } catch (reqError: any) {
+        console.log('⚠️ [validate-access] Error verificando solicitudes:', reqError.message)
       }
 
       return NextResponse.json({ 
@@ -99,6 +99,8 @@ export async function GET() {
       })
     }
 
+    console.log('✅ [validate-access] Acceso concedido para cliente:', client.id)
+
     // Cliente válido con vendedor
     return NextResponse.json({ 
       hasAccess: true,
@@ -109,8 +111,8 @@ export async function GET() {
       }
     })
 
-  } catch (error) {
-    console.error('Error validando acceso de cliente:', error)
+  } catch (error: any) {
+    console.error('❌ [validate-access] Error:', error.message)
     return NextResponse.json(
       { hasAccess: false, reason: 'Error interno del servidor' },
       { status: 500 }
