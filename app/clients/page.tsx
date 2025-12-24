@@ -23,7 +23,10 @@ import {
   Copy,
   CheckCircle,
   History,
-  Download
+  Download,
+  Phone,
+  MessageCircle,
+  Mail
 } from 'lucide-react'
 import { exportClientHistory } from '@/lib/excelExport'
 
@@ -40,6 +43,15 @@ interface ClientWithStats {
     totalOrders: number
     totalSpent: number
   }
+}
+
+interface PendingInvitation {
+  id: string
+  contactValue: string
+  contactName: string | null
+  channel: 'EMAIL' | 'WHATSAPP' | 'SMS'
+  status: 'PENDING' | 'REGISTERED' | 'EXPIRED'
+  createdAt: string
 }
 
 // ============ Helper Components ============
@@ -838,17 +850,32 @@ function useClientData() {
     }
   }, [])
 
+  const fetchPendingInvitations = useCallback(async () => {
+    try {
+      const result = await apiCall('/api/seller/pending-invitations', {
+        method: 'GET',
+        timeout: 5000
+      })
+      if (result.success && result.data?.data) {
+        return result.data.data
+      }
+      return []
+    } catch {
+      return []
+    }
+  }, [])
+
   useEffect(() => {
     fetchClients()
   }, [fetchClients])
 
-  return { clients, loading, error, timedOut, fetchClients, sellerName }
+  return { clients, loading, error, timedOut, fetchClients, fetchPendingInvitations, sellerName }
 }
 
 // ============ Main Component ============
 
 export default function ClientsPage() {
-  const { clients, loading, error, timedOut, fetchClients, sellerName } = useClientData()
+  const { clients, loading, error, timedOut, fetchClients, fetchPendingInvitations, sellerName } = useClientData()
 
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -861,6 +888,12 @@ export default function ClientsPage() {
   const [sendingInvitation, setSendingInvitation] = useState(false)
   const [invitationMethod, setInvitationMethod] = useState<InvitationMethod>('email')
   const [invitationValue, setInvitationValue] = useState('')
+  const [pendingInvitations, setPendingInvitations] = useState<PendingInvitation[]>([])
+
+  // Cargar invitaciones pendientes al montar
+  useEffect(() => {
+    fetchPendingInvitations().then(setPendingInvitations)
+  }, [fetchPendingInvitations])
   
   const [showHistoryModal, setShowHistoryModal] = useState(false)
   const [historyClientName, setHistoryClientName] = useState<string>('')
@@ -1000,7 +1033,9 @@ export default function ClientsPage() {
     setLinkCopied(false)
     setInvitationMethod('email')
     setInvitationValue('')
-  }, [])
+    // Refrescar invitaciones pendientes
+    fetchPendingInvitations().then(setPendingInvitations)
+  }, [fetchPendingInvitations])
 
   const sendInvitation = useCallback(async () => {
     if (!invitationLink || !invitationValue.trim()) {
@@ -1008,6 +1043,30 @@ export default function ClientsPage() {
         alert('Por favor ingresa un valor para el método seleccionado')
       }
       return
+    }
+
+    // Extraer token del link de invitación
+    const tokenRegex = /token=([^&]+)/
+    const tokenMatch = tokenRegex.exec(invitationLink)
+    const invitationToken = tokenMatch ? tokenMatch[1] : invitationLink
+
+    // Guardar invitación para WhatsApp y SMS
+    if (invitationMethod === 'whatsapp' || invitationMethod === 'sms') {
+      try {
+        await apiCall('/api/seller/pending-invitations', {
+          method: 'POST',
+          body: JSON.stringify({
+            contactValue: invitationValue,
+            contactName: null,
+            channel: invitationMethod.toUpperCase(),
+            invitationToken,
+            invitationLink
+          })
+        })
+        console.log('✅ Invitación guardada en base de datos')
+      } catch (err) {
+        console.error('Error guardando invitación:', err)
+      }
     }
 
     if (invitationMethod === 'whatsapp') {
@@ -1164,6 +1223,58 @@ export default function ClientsPage() {
           <Suspense fallback={null}>
             <ConnectionRequestsPanel onRequestAccepted={() => fetchClients()} />
           </Suspense>
+        </div>
+      )}
+
+      {/* Panel de Invitaciones Pendientes */}
+      {pendingInvitations.length > 0 && (
+        <div className="mb-6 bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Clock className="w-5 h-5 text-amber-600" />
+            <h3 className="font-semibold text-amber-800">
+              Invitaciones Enviadas ({pendingInvitations.length})
+            </h3>
+          </div>
+          <div className="space-y-2">
+            {pendingInvitations.map((inv) => (
+              <div 
+                key={inv.id} 
+                className="flex items-center justify-between bg-white rounded-lg p-3 shadow-sm"
+              >
+                <div className="flex items-center gap-3">
+                  {inv.channel === 'WHATSAPP' && (
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <MessageCircle className="w-4 h-4 text-green-600" />
+                    </div>
+                  )}
+                  {inv.channel === 'SMS' && (
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Phone className="w-4 h-4 text-blue-600" />
+                    </div>
+                  )}
+                  {inv.channel === 'EMAIL' && (
+                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                      <Mail className="w-4 h-4 text-purple-600" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-medium text-gray-800">{inv.contactValue}</p>
+                    <p className="text-xs text-gray-500">
+                      Enviado el {new Date(inv.createdAt).toLocaleDateString('es-ES', {
+                        day: 'numeric',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                </div>
+                <span className="px-2 py-1 text-xs font-medium bg-amber-100 text-amber-700 rounded-full">
+                  Pendiente
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

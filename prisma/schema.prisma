@@ -85,6 +85,7 @@ model Seller {
   returns             Return[]
   creditNotes         CreditNote[]
   notifications       Notification[]
+  pendingInvitations  PendingInvitation[]
 
   @@index([email])
   @@index([isActive])
@@ -404,7 +405,53 @@ enum NotificationType {
   CONNECTION_REJECTED    // Vendedor → Comprador (conexión rechazada)
 }
 
-// 🔗 Solicitudes de conexión Buyer → Seller
+// � Invitaciones pendientes enviadas por el vendedor
+enum InvitationStatus {
+  PENDING    // Enviada, esperando que el cliente se registre
+  REGISTERED // El cliente se registró
+  EXPIRED    // Expiró sin registro
+}
+
+enum InvitationChannel {
+  EMAIL
+  WHATSAPP
+  SMS
+}
+
+model PendingInvitation {
+  id              String            @id @default(uuid())
+  
+  // Vendedor que envía la invitación
+  sellerId        String
+  
+  // Datos de contacto del invitado
+  contactValue    String            // Email, número de WhatsApp o SMS
+  contactName     String?           // Nombre opcional del invitado
+  channel         InvitationChannel // Canal usado para enviar
+  
+  // Token de invitación
+  invitationToken String            @unique
+  invitationLink  String            // Link completo de invitación
+  
+  // Estado
+  status          InvitationStatus  @default(PENDING)
+  
+  // Auditoría
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  expiresAt       DateTime?         // Fecha de expiración opcional
+  
+  // Relación
+  seller          Seller            @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([sellerId])
+  @@index([contactValue])
+  @@index([invitationToken])
+  @@index([status])
+  @@map("pending_invitations")
+}
+
+// �🔗 Solicitudes de conexión Buyer → Seller
 enum ConnectionRequestStatus {
   PENDING   // Esperando respuesta del vendedor
   ACCEPTED  // Vendedor aceptó
