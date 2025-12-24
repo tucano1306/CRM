@@ -17,7 +17,9 @@ export function getSupabaseClient() {
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     if (!url || !key) {
-      console.warn('⚠️ Supabase Realtime not configured')
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️ Supabase Realtime not configured')
+      }
       return null
     }
 
@@ -84,7 +86,9 @@ export function useRealtimeSubscription(
 
     const client = getSupabaseClient()
     if (!client) {
-      console.warn('⚠️ Supabase client not available')
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️ Supabase client not available')
+      }
       return
     }
 

@@ -1033,7 +1033,10 @@ export default function ClientsPage() {
         alert(`✅ Invitación enviada por Email a ${invitationValue}`)
         closeInvitationModal()
       } else {
-        alert(apiData?.error || result.error || 'Error al enviar la invitación')
+        const errorMsg = apiData?.error || result.error || 'Error al enviar la invitación'
+        const errorDetails = apiData?.details || ''
+        console.error('❌ Error de API:', { errorMsg, errorDetails, apiData })
+        alert(`Error: ${errorMsg}${errorDetails ? `\n${errorDetails}` : ''}`)
       }
     } catch (err) {
       console.error('Error enviando invitación:', err)
