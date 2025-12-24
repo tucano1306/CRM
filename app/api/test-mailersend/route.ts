@@ -77,8 +77,8 @@ export async function GET(req: NextRequest) {
         success: false,
         configured: true,
         apiKeyValid: false,
-        error: data.message || 'API key inválida',
-        statusCode: response.status
+        error: domainsData.message || 'API key inválida',
+        statusCode: domainsResponse.status
       })
     }
   } catch (error: any) {
