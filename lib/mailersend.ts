@@ -86,13 +86,20 @@ export async function sendEmail(params: EmailParams): Promise<MailersendResponse
     const errorData = await response.json().catch(() => ({}))
     console.error('❌ [MAILERSEND] Error:', response.status, errorData)
     console.error('❌ [MAILERSEND] Response completo:', JSON.stringify(errorData, null, 2))
+    console.error('❌ [MAILERSEND] Headers:', Object.fromEntries(response.headers.entries()))
     
     // Mensaje de error más específico
     let errorMessage = errorData.message || `HTTP ${response.status}`
+    
     if (response.status === 422) {
-      errorMessage = `El email remitente "${payload.from.email}" no está verificado en Mailersend. Dominio correcto: test-zxk54v8vq11ljy6v.mlsender.net. ENV: ${process.env.MAILERSEND_FROM_EMAIL || 'no definido'}`
+      // Error de validación - probablemente email no verificado
+      const validationErrors = errorData.errors || {}
+      const errorDetails = JSON.stringify(validationErrors, null, 2)
+      errorMessage = `Email remitente no verificado. From: "${payload.from.email}". ENV: ${process.env.MAILERSEND_FROM_EMAIL || 'no definido'}. Errores: ${errorDetails}`
     } else if (response.status === 401) {
       errorMessage = 'API key inválida o expirada'
+    } else if (response.status === 403) {
+      errorMessage = 'Acceso denegado. Verifica permisos de la API key'
     } else if (errorData.errors) {
       errorMessage = JSON.stringify(errorData.errors)
     }
