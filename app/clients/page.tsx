@@ -1093,25 +1093,25 @@ export default function ClientsPage() {
             <button
               onClick={generateInvitationLink}
               disabled={generatingLink}
-              className="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 flex items-center gap-2 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 px-4 py-2.5 rounded-lg hover:from-blue-200 hover:to-purple-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
             >
               {generatingLink ? (
                 <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700" />
                   Generando...
                 </>
               ) : (
                 <>
-                  <Link2 size={20} />
+                  <Link2 size={18} />
                   Invitar Comprador
                 </>
               )}
             </button>
             <button
               onClick={() => setShowForm(true)}
-              className="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 flex items-center gap-2 shadow-lg hover:shadow-xl transition-all"
+              className="bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-700 px-4 py-2.5 rounded-lg hover:from-emerald-200 hover:to-teal-200 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all font-medium text-sm"
             >
-              <Plus size={20} />
+              <Plus size={18} />
               Nuevo Cliente
             </button>
           </div>
