@@ -1,121 +1,46 @@
-import { NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
-import { prisma } from '@/lib/prisma'
+import { auth } from "@clerk/nextjs/server";
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const { userId } = await auth()
-
-    console.log('🔍 [validate-access] userId:', userId)
-
+    const { userId } = await auth();
+    
     if (!userId) {
-      return NextResponse.json({ hasAccess: false, reason: 'No autenticado' })
+      return NextResponse.json(
+        { hasAccess: false, reason: "No autenticado" },
+        { status: 401 }
+      );
     }
 
-    // Buscar el usuario autenticado con sus clientes
+    // Buscar authenticated_user y sus clientes
     const authUser = await prisma.authenticated_users.findUnique({
       where: { authId: userId },
-      include: {
-        clients: {
-          include: {
-            seller: true
-          }
-        }
-      }
-    })
+      include: { clients: true }
+    });
 
-    console.log('🔍 [validate-access] authUser:', authUser?.id, 'clients:', authUser?.clients?.length)
+    console.log("validate-access - userId:", userId);
+    console.log("validate-access - authUser:", authUser?.id);
+    console.log("validate-access - clients count:", authUser?.clients?.length || 0);
 
-    if (!authUser) {
-      // Verificar si hay una solicitud de conexión pendiente
-      try {
-        const pendingRequest = await (prisma as any).connectionRequest.findFirst({
-          where: { 
-            buyerClerkId: userId,
-            status: 'PENDING'
-          }
-        })
-
-        console.log('🔍 [validate-access] pendingRequest:', pendingRequest?.id)
-
-        if (pendingRequest) {
-          return NextResponse.json({ 
-            hasAccess: false, 
-            reason: 'Tu solicitud de conexión está pendiente de aprobación. Te notificaremos cuando sea aceptada.',
-            pendingRequest: {
-              createdAt: pendingRequest.createdAt
-            }
-          })
-        }
-      } catch (reqError: any) {
-        console.log('⚠️ [validate-access] Error verificando solicitudes:', reqError.message)
-      }
-
-      return NextResponse.json({ 
-        hasAccess: false, 
-        reason: 'Usuario no encontrado en el sistema. Necesitas un link de invitación de un vendedor.' 
-      })
+    if (!authUser || authUser.clients.length === 0) {
+      return NextResponse.json(
+        { hasAccess: false, reason: "Sin cliente asociado" },
+        { status: 200 }
+      );
     }
 
-    // Verificar si el usuario tiene un cliente asociado
-    const client = authUser.clients[0]
-    
-    if (!client) {
-      // Verificar si hay una solicitud de conexión pendiente
-      try {
-        const pendingRequest = await (prisma as any).connectionRequest.findFirst({
-          where: { 
-            buyerClerkId: userId,
-            status: 'PENDING'
-          }
-        })
-
-        console.log('🔍 [validate-access] pendingRequest (no client):', pendingRequest?.id)
-
-        if (pendingRequest) {
-          return NextResponse.json({ 
-            hasAccess: false, 
-            reason: 'Tu solicitud de conexión está pendiente de aprobación. Te notificaremos cuando sea aceptada.',
-            pendingRequest: {
-              createdAt: pendingRequest.createdAt
-            }
-          })
-        }
-      } catch (reqError: any) {
-        console.log('⚠️ [validate-access] Error verificando solicitudes:', reqError.message)
-      }
-
-      return NextResponse.json({ 
-        hasAccess: false, 
-        reason: 'Tu cuenta de cliente no existe en el sistema. Necesitas un link de invitación de un vendedor.' 
-      })
-    }
-
-    // Verificar si tiene vendedor asignado
-    if (!client.sellerId || !client.seller) {
-      return NextResponse.json({ 
-        hasAccess: false, 
-        reason: 'No estás conectado con ningún vendedor activo' 
-      })
-    }
-
-    console.log('✅ [validate-access] Acceso concedido para cliente:', client.id)
-
-    // Cliente válido con vendedor
-    return NextResponse.json({ 
+    return NextResponse.json({
       hasAccess: true,
-      client: {
-        id: client.id,
-        name: client.name,
-        sellerName: client.seller.name
-      }
-    })
+      clientId: authUser.clients[0].id,
+      sellerId: authUser.clients[0].sellerId
+    });
 
-  } catch (error: any) {
-    console.error('❌ [validate-access] Error:', error.message)
+  } catch (error) {
+    console.error("Error en validate-access:", error);
     return NextResponse.json(
-      { hasAccess: false, reason: 'Error interno del servidor' },
+      { hasAccess: false, reason: "Error interno" },
       { status: 500 }
-    )
+    );
   }
 }
