@@ -29,9 +29,6 @@ const nextConfig = {
   
   // Experimental features
   experimental: {
-    serverActions: {
-      allowedOrigins: ['localhost:3000'],
-    },
     // ⚡ Performance optimization: Optimize package imports
     optimizePackageImports: [
       '@clerk/nextjs',

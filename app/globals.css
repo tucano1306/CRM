@@ -97,6 +97,7 @@
     width: 100%;
     max-width: 100vw;
     scroll-behavior: smooth;
+    scroll-snap-type: y proximity;
   }
   
   body {
@@ -121,11 +122,6 @@
   img, video, canvas, svg {
     max-width: 100%;
     height: auto;
-  }
-
-  /* Smooth scrolling for scrollytelling */
-  html {
-    scroll-snap-type: y proximity;
   }
 
   /* Selection color */

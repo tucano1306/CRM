@@ -146,7 +146,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Route segment config for App Router (Next.js 14+)
-export const maxDuration = 60 // seconds
+// Route segment config for App Router
 export const dynamic = 'force-dynamic'
 

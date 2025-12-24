@@ -17,9 +17,6 @@ import { NextRequest, NextResponse } from 'next/server'
 // Enable Edge Runtime
 export const runtime = 'edge'
 
-// Cache feature flags for 5 minutes
-export const revalidate = 300
-
 interface FeatureFlag {
   name: string
   enabled: boolean

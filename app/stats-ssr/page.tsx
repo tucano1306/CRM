@@ -21,7 +21,6 @@ import { Badge } from '@/components/ui/badge'
 
 // 🚀 SSR Configuration with Longer Cache (Stats change less frequently)
 export const dynamic = 'force-dynamic'
-export const revalidate = false
 
 export const metadata: Metadata = {
   title: 'Estadísticas SSR - Food Orders CRM',

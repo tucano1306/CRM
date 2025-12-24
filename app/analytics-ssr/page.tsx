@@ -17,7 +17,6 @@ import { Badge } from '@/components/ui/badge'
 
 // 🚀 SSR Configuration with Smart Caching
 export const dynamic = 'force-dynamic'
-export const revalidate = false
 
 export const metadata: Metadata = {
   title: 'Analytics SSR - Food Orders CRM',

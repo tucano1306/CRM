@@ -17,8 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 // 🚀 SSR Configuration with Smart Caching
-export const dynamic = 'force-dynamic' // Fuerza SSR
-export const revalidate = false // No usar ISR, solo SSR + Edge Cache
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Dashboard SSR - Food Orders CRM',

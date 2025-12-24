@@ -17,9 +17,6 @@ import { NextRequest, NextResponse } from 'next/server'
 // Enable Edge Runtime
 export const runtime = 'edge'
 
-// Cache geolocation data for 1 hour
-export const revalidate = 3600
-
 interface GeoLocation {
   country: string
   region: string

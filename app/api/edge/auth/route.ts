@@ -17,9 +17,6 @@ import { auth } from '@clerk/nextjs/server'
 // Enable Edge Runtime for this function
 export const runtime = 'edge'
 
-// Cache at edge for 30 seconds for non-sensitive data
-export const revalidate = 30
-
 interface AuthResponse {
   authenticated: boolean
   userId?: string
