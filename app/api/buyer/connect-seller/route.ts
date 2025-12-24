@@ -106,7 +106,6 @@ export async function POST(request: NextRequest) {
     const firstName = clerkUser.first_name || ''
     const lastName = clerkUser.last_name || ''
     const fullName = `${firstName} ${lastName}`.trim() || email.split('@')[0]
-    // Preferir teléfono del formulario, luego el de Clerk
     const phone = phoneFromForm || clerkUser.phone_numbers?.[0]?.phone_number || ''
 
     // Crear o actualizar authenticated_user
@@ -131,25 +130,19 @@ export async function POST(request: NextRequest) {
     console.log('📝 [connect-seller] Creando solicitud de conexión...')
     console.log('📝 [connect-seller] Datos:', { buyerClerkId: userId, buyerName: fullName, buyerEmail: email, sellerId })
     
-    let connectionRequest
-    try {
-      connectionRequest = await (prisma as any).connectionRequest.create({
-        data: {
-          buyerClerkId: userId,
-          buyerName: fullName,
-          buyerEmail: email,
-          buyerPhone: phone || null,
-          sellerId,
-          invitationToken: token,
-          status: 'PENDING',
-          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Expira en 7 días
-        }
-      })
-      console.log('✅ [connect-seller] Solicitud creada:', connectionRequest.id)
-    } catch (createError: any) {
-      console.error('❌ [connect-seller] Error creando solicitud:', createError.message)
-      throw createError
-    }
+    const connectionRequest = await prisma.connectionRequest.create({
+      data: {
+        buyerClerkId: userId,
+        buyerName: fullName,
+        buyerEmail: email,
+        buyerPhone: phone || null,
+        sellerId,
+        invitationToken: token,
+        status: 'PENDING',
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      }
+    })
+    console.log('✅ [connect-seller] Solicitud creada:', connectionRequest.id)
 
     // Crear notificación para el vendedor
     console.log('📧 [connect-seller] Creando notificación para vendedor:', seller.id)
@@ -172,11 +165,7 @@ export async function POST(request: NextRequest) {
       console.log('✅ [connect-seller] Notificación creada:', notification.id)
     } catch (notifError: any) {
       console.error('❌ [connect-seller] Error creando notificación:', notifError.message)
-      // No lanzamos error, la solicitud ya se creó
     }
-
-    console.log('✅ Solicitud de conexión creada:', connectionRequest.id)
-    console.log('📧 Notificación enviada al vendedor:', seller.id, seller.name)
 
     return NextResponse.json({
       success: true,

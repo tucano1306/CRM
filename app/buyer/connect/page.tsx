@@ -160,14 +160,11 @@ function ConnectPageContent() {
           break
           
         case 'REQUEST_SENT':
+        default:
           setStatus('request_sent')
           setRequestInfo({
             requestId: response.data?.requestId
           })
-          break
-          
-        default:
-          setStatus('request_sent')
       }
 
     } catch (err: any) {
