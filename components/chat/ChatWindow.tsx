@@ -589,9 +589,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
                           <div className={`mb-2 p-3 rounded-lg flex items-center gap-2 ${
                             isOwn ? 'bg-pastel-blue' : 'bg-gray-100'
                           }`}>
-                            <FileText className={`h-8 w-8 flex-shrink-0 ${
-                              isOwn ? 'text-gray-600' : 'text-gray-600'
-                            }`} />
+                            <FileText className="h-8 w-8 flex-shrink-0 text-gray-600" />
                             <div className="flex-1 min-w-0">
                               <p className={`text-sm font-medium truncate ${
                                 isOwn ? 'text-white' : 'text-gray-900'
@@ -628,9 +626,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
                         )}
                         
                         {/* Hora y estado */}
-                        <div className={`flex items-center gap-1 mt-1 justify-end text-xs ${
-                          isOwn ? 'text-gray-500' : 'text-gray-500'
-                        }`}>
+                        <div className="flex items-center gap-1 mt-1 justify-end text-xs text-gray-500">
                           <span className="text-[10px] sm:text-xs">{formatTime(msg.createdAt)}</span>
                           {isOwn && (
                             msg.isRead ? (
