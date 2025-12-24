@@ -1035,12 +1035,16 @@ export default function ClientsPage() {
       } else {
         const errorMsg = apiData?.error || result.error || 'Error al enviar la invitación'
         const errorDetails = apiData?.details || ''
-        console.error('❌ Error de API:', { errorMsg, errorDetails, apiData })
+        console.error('❌ Error de API completo:', result)
+        console.error('❌ API Data:', apiData)
+        console.error('❌ Data.data:', apiData?.data)
+        console.error('❌ Errors array:', apiData?.data?.errors)
+        
         const fullError = errorDetails ? `Error: ${errorMsg}\n${errorDetails}` : `Error: ${errorMsg}`
         alert(fullError)
       }
     } catch (err) {
-      console.error('Error enviando invitación:', err)
+      console.error('❌ Error enviando invitación:', err)
       alert('Error al enviar la invitación')
     } finally {
       setSendingInvitation(false)

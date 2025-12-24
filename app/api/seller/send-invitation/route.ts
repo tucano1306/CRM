@@ -123,6 +123,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: results.emailSent || results.whatsappSent || results.smsSent,
       data: results,
+      error: results.errors.length > 0 ? results.errors.join(', ') : undefined,
       message: results.errors.length > 0 
         ? `Errores: ${results.errors.join(', ')}`
         : 'Invitación enviada exitosamente'
