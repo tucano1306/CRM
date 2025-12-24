@@ -351,7 +351,7 @@ function ClientFormModal({ show, editingId, formData, onFormChange, onSave, onCa
   )
 }
 
-type InvitationMethod = 'email' | 'whatsapp' | 'sms'
+type InvitationMethod = 'email' | 'whatsapp'
 
 interface InvitationModalProps {
   readonly show: boolean
@@ -384,20 +384,17 @@ function InvitationModal({
 
   const getMethodLabel = () => {
     if (invitationMethod === 'email') return 'Correo electrónico'
-    if (invitationMethod === 'whatsapp') return 'Número de WhatsApp'
-    return 'Número de teléfono'
+    return 'Número de WhatsApp'
   }
 
   const getPlaceholder = () => {
     if (invitationMethod === 'email') return 'ejemplo@correo.com'
-    if (invitationMethod === 'whatsapp') return '7862585427'
-    return '786 2585427'
+    return '+1 786 258 5427'
   }
 
   const getSendButtonLabel = () => {
     if (invitationMethod === 'email') return 'Email'
-    if (invitationMethod === 'whatsapp') return 'WhatsApp'
-    return 'SMS'
+    return 'WhatsApp'
   }
 
   return (
@@ -442,7 +439,6 @@ function InvitationModal({
                     >
                       <option value="email">📧 Email</option>
                       <option value="whatsapp">💬 WhatsApp</option>
-                      <option value="sms">📱 SMS</option>
                     </select>
                   </div>
 
@@ -765,33 +761,6 @@ function sendWhatsAppInvitation(
   alert('✅ Se abrió WhatsApp con el mensaje. Solo presiona enviar.')
 }
 
-function sendSmsInvitation(
-  invitationValue: string,
-  sellerName: string,
-  invitationLink: string
-): void {
-  const cleanNumber = invitationValue.replaceAll(/\D/g, '')
-  const message = `${sellerName} te invita a conectarte: ${invitationLink}`
-  
-  // Detectar si está en móvil
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
-  
-  if (isMobile) {
-    // En móvil, abrir la app de SMS
-    const encodedMessage = encodeURIComponent(message)
-    window.open(`sms:${cleanNumber}?body=${encodedMessage}`, '_blank')
-    alert('✅ Se abrió la app de mensajes. Solo presiona enviar.')
-  } else {
-    // En desktop, copiar al portapapeles
-    navigator.clipboard.writeText(message).then(() => {
-      alert(`✅ Mensaje copiado al portapapeles:\n\n"${message}"\n\nEnvíalo por WhatsApp u otro medio al número: ${invitationValue}`)
-    }).catch(() => {
-      // Fallback si no se puede copiar
-      alert(`📱 Envía este mensaje al número ${invitationValue}:\n\n"${message}"`)
-    })
-  }
-}
-
 // ============ Custom Hook for Client Data ============
 
 function useClientData() {
@@ -1050,8 +1019,8 @@ export default function ClientsPage() {
     const tokenMatch = tokenRegex.exec(invitationLink)
     const invitationToken = tokenMatch ? tokenMatch[1] : invitationLink
 
-    // Guardar invitación para WhatsApp y SMS
-    if (invitationMethod === 'whatsapp' || invitationMethod === 'sms') {
+    // Guardar invitación para WhatsApp
+    if (invitationMethod === 'whatsapp') {
       try {
         await apiCall('/api/seller/pending-invitations', {
           method: 'POST',
@@ -1071,12 +1040,6 @@ export default function ClientsPage() {
 
     if (invitationMethod === 'whatsapp') {
       sendWhatsAppInvitation(invitationValue, sellerName, invitationLink)
-      setTimeout(closeInvitationModal, 500)
-      return
-    }
-
-    if (invitationMethod === 'sms') {
-      sendSmsInvitation(invitationValue, sellerName, invitationLink)
       setTimeout(closeInvitationModal, 500)
       return
     }

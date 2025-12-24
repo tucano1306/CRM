@@ -5,7 +5,6 @@ import { sendEmail, getInvitationEmailTemplate } from '@/lib/mailersend'
 interface InvitationResults {
   emailSent: boolean
   whatsappSent: boolean
-  smsSent: boolean
   errors: string[]
 }
 
@@ -65,21 +64,6 @@ function sendWhatsAppInvitation(
   }
 }
 
-function sendSmsInvitation(
-  sms: string,
-  invitationLink: string,
-  results: InvitationResults
-) {
-  try {
-    console.log(`📱 SMS simulado a: ${sms}`)
-    console.log(`Link: ${invitationLink}`)
-    // NOTE: Future integration point for Twilio SMS
-    results.smsSent = true
-  } catch (err) {
-    console.error('Error enviando SMS:', err)
-  }
-}
-
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth()
@@ -92,7 +76,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { invitationLink, email, whatsapp, sms, sellerName } = body
+    const { invitationLink, email, whatsapp, sellerName } = body
 
     if (!invitationLink) {
       return NextResponse.json(
@@ -104,7 +88,6 @@ export async function POST(req: NextRequest) {
     const results: InvitationResults = {
       emailSent: false,
       whatsappSent: false,
-      smsSent: false,
       errors: []
     }
 
@@ -116,12 +99,8 @@ export async function POST(req: NextRequest) {
       sendWhatsAppInvitation(whatsapp, invitationLink, results)
     }
 
-    if (sms) {
-      sendSmsInvitation(sms, invitationLink, results)
-    }
-
     return NextResponse.json({
-      success: results.emailSent || results.whatsappSent || results.smsSent,
+      success: results.emailSent || results.whatsappSent,
       data: results,
       error: results.errors.length > 0 ? results.errors.join(', ') : undefined,
       message: results.errors.length > 0 
