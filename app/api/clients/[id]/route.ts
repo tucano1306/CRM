@@ -158,28 +158,60 @@ export async function DELETE(
 ) {
   try {
     const { id: clientId } = await params
-    // Verificar si tiene órdenes
-    const ordersCount = await prisma.order.count({
-      where: { clientId: clientId }
+    
+    // Verificar que el cliente existe
+    const client = await prisma.client.findUnique({
+      where: { id: clientId }
     })
 
-   if (ordersCount > 0) {
+    if (!client) {
       return NextResponse.json(
         { 
           success: false,
-          error: 'No se puede eliminar un cliente con órdenes existentes' 
+          error: 'Cliente no encontrado' 
         },
-        { status: 400 }
+        { status: 404 }
       )
     }
 
+    // Eliminar todo en orden para respetar foreign keys
+    // 1. Eliminar items de órdenes
+    await prisma.orderItem.deleteMany({
+      where: {
+        order: {
+          clientId
+        }
+      }
+    })
+
+    // 2. Eliminar órdenes
+    await prisma.order.deleteMany({
+      where: { clientId }
+    })
+
+    // 3. Eliminar mensajes de chat
+    await prisma.chatMessage.deleteMany({
+      where: {
+        OR: [
+          { senderId: clientId },
+          { recipientId: clientId }
+        ]
+      }
+    })
+
+    // 4. Eliminar conexiones
+    await prisma.connection.deleteMany({
+      where: { clientId }
+    })
+
+    // 5. Eliminar el cliente
     await prisma.client.delete({
       where: { id: clientId }
     })
 
     return NextResponse.json({
       success: true,
-      message: 'Cliente eliminado exitosamente'
+      message: 'Cliente y todos sus datos eliminados exitosamente'
     })
   } catch (error) {
     console.error('Error:', error)

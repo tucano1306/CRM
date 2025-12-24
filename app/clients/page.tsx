@@ -929,15 +929,26 @@ export default function ClientsPage() {
   }, [editingId, formData, fetchClients, cancelEdit])
 
   const deleteClient = useCallback(async (id: string) => {
-    if (!confirm('¿Eliminar este cliente?')) return
+    const client = clients.find(c => c.id === id)
+    if (!client) return
+    
+    const confirmMessage = `⚠️ ¿Eliminar a ${client.name}?\n\n` +
+      `Esto eliminará:\n` +
+      `• ${client.stats?.totalOrders || 0} órdenes\n` +
+      `• Todos los mensajes de chat\n` +
+      `• La conexión con este cliente\n\n` +
+      `Esta acción NO se puede deshacer.`
+    
+    if (!confirm(confirmMessage)) return
 
     try {
       const result = await apiCall(`/api/clients/${id}`, {
         method: 'DELETE',
-        timeout: 5000,
+        timeout: 10000,
       })
 
       if (result.success) {
+        alert(`✅ Cliente ${client.name} eliminado exitosamente`)
         fetchClients()
       } else {
         alert(result.error || 'Error al eliminar cliente')
@@ -946,7 +957,7 @@ export default function ClientsPage() {
       console.error('Failed to delete client:', err)
       alert('Error al eliminar cliente')
     }
-  }, [fetchClients])
+  }, [fetchClients, clients])
 
   const generateInvitationLink = useCallback(async () => {
     setShowInvitationModal(true)
@@ -1001,13 +1012,13 @@ export default function ClientsPage() {
 
     if (invitationMethod === 'whatsapp') {
       sendWhatsAppInvitation(invitationValue, sellerName, invitationLink)
-      closeInvitationModal()
+      setTimeout(closeInvitationModal, 500)
       return
     }
 
     if (invitationMethod === 'sms') {
       sendSmsInvitation(invitationValue, sellerName, invitationLink)
-      closeInvitationModal()
+      setTimeout(closeInvitationModal, 500)
       return
     }
 

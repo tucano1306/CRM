@@ -47,7 +47,7 @@ export async function sendEmail(params: EmailParams): Promise<MailersendResponse
   
   const payload = {
     from: {
-      email: params.from?.email || 'MS_JgPwI3@trial-7dnvo4d86z94z850.mlsender.net',
+      email: params.from?.email || 'noreply@test-zxk54v8vq11ljy6v.mlsender.net',
       name: params.from?.name || 'Food Orders CRM'
     },
     to: recipients.map(email => ({ email })),
