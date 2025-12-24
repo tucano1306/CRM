@@ -194,7 +194,7 @@ export async function DELETE(
       where: {
         OR: [
           { senderId: clientId },
-          { recipientId: clientId }
+          { receiverId: clientId }
         ]
       }
     })
