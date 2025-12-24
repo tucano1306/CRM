@@ -161,7 +161,10 @@ export async function DELETE(
     
     // Verificar que el cliente existe
     const client = await prisma.client.findUnique({
-      where: { id: clientId }
+      where: { id: clientId },
+      include: {
+        authenticated_users: true
+      }
     })
 
     if (!client) {
@@ -199,9 +202,9 @@ export async function DELETE(
       }
     })
 
-    // 4. Eliminar conexiones
-    await prisma.connection.deleteMany({
-      where: { clientId }
+    // 4. Eliminar solicitudes de conexión relacionadas
+    await prisma.connectionRequest.deleteMany({
+      where: { buyerClerkId: client.authenticated_users[0]?.authId || '' }
     })
 
     // 5. Eliminar el cliente
