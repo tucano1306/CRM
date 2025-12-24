@@ -759,9 +759,25 @@ function sendSmsInvitation(
   invitationLink: string
 ): void {
   const cleanNumber = invitationValue.replaceAll(/\D/g, '')
-  const message = encodeURIComponent(`${sellerName} te invita a conectarte: ${invitationLink}`)
-  window.open(`sms:${cleanNumber}?body=${message}`, '_blank')
-  alert('✅ Se abrió la app de mensajes. Solo presiona enviar.')
+  const message = `${sellerName} te invita a conectarte: ${invitationLink}`
+  
+  // Detectar si está en móvil
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  
+  if (isMobile) {
+    // En móvil, abrir la app de SMS
+    const encodedMessage = encodeURIComponent(message)
+    window.open(`sms:${cleanNumber}?body=${encodedMessage}`, '_blank')
+    alert('✅ Se abrió la app de mensajes. Solo presiona enviar.')
+  } else {
+    // En desktop, copiar al portapapeles
+    navigator.clipboard.writeText(message).then(() => {
+      alert(`✅ Mensaje copiado al portapapeles:\n\n"${message}"\n\nEnvíalo por WhatsApp u otro medio al número: ${invitationValue}`)
+    }).catch(() => {
+      // Fallback si no se puede copiar
+      alert(`📱 Envía este mensaje al número ${invitationValue}:\n\n"${message}"`)
+    })
+  }
 }
 
 // ============ Custom Hook for Client Data ============
