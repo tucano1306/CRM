@@ -2,6 +2,84 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { sendEmail, getInvitationEmailTemplate } from '@/lib/mailersend'
 
+interface InvitationResults {
+  emailSent: boolean
+  whatsappSent: boolean
+  smsSent: boolean
+  errors: string[]
+}
+
+async function sendEmailInvitation(
+  email: string,
+  invitationLink: string,
+  sellerName: string,
+  results: InvitationResults
+) {
+  try {
+    console.log(`📧 =================================`)
+    console.log(`📧 ENVIANDO EMAIL CON MAILERSEND`)
+    console.log(`📧 Destinatario: ${email}`)
+    console.log(`📧 Vendedor: ${sellerName}`)
+    console.log(`📧 Link: ${invitationLink}`)
+    console.log(`📧 API Key configurada: ${process.env.MAILERSEND_API_KEY ? 'SI' : 'NO'}`)
+    console.log(`📧 =================================`)
+
+    const html = getInvitationEmailTemplate({
+      sellerName: sellerName || 'Un vendedor',
+      invitationLink,
+    })
+
+    const result = await sendEmail({
+      to: email,
+      subject: `${sellerName || 'Un vendedor'} te invita a conectarte`,
+      html,
+    })
+
+    console.log('📧 Resultado de sendEmail:', result)
+
+    if (result.success) {
+      console.log('✅ Email enviado exitosamente. ID:', result.messageId)
+      results.emailSent = true
+    } else {
+      console.error('❌ Error de Mailersend:', result.error)
+      results.errors.push(`Email: ${result.error}`)
+    }
+  } catch (err: any) {
+    console.error('❌ Error enviando email:', err)
+    results.errors.push(`Email: ${err.message}`)
+  }
+}
+
+function sendWhatsAppInvitation(
+  whatsapp: string,
+  invitationLink: string,
+  results: InvitationResults
+) {
+  try {
+    console.log(`📱 WhatsApp simulado a: ${whatsapp}`)
+    console.log(`Link: ${invitationLink}`)
+    // NOTE: Future integration point for Twilio WhatsApp API
+    results.whatsappSent = true
+  } catch (err) {
+    console.error('Error enviando WhatsApp:', err)
+  }
+}
+
+function sendSmsInvitation(
+  sms: string,
+  invitationLink: string,
+  results: InvitationResults
+) {
+  try {
+    console.log(`📱 SMS simulado a: ${sms}`)
+    console.log(`Link: ${invitationLink}`)
+    // NOTE: Future integration point for Twilio SMS
+    results.smsSent = true
+  } catch (err) {
+    console.error('Error enviando SMS:', err)
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth()
@@ -23,74 +101,23 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const results = {
+    const results: InvitationResults = {
       emailSent: false,
       whatsappSent: false,
       smsSent: false,
-      errors: [] as string[]
+      errors: []
     }
 
-    // Enviar por Email con Mailersend
     if (email) {
-      try {
-        console.log(`📧 =================================`)
-        console.log(`📧 ENVIANDO EMAIL CON MAILERSEND`)
-        console.log(`📧 Destinatario: ${email}`)
-        console.log(`📧 Vendedor: ${sellerName}`)
-        console.log(`📧 Link: ${invitationLink}`)
-        console.log(`📧 API Key configurada: ${process.env.MAILERSEND_API_KEY ? 'SI' : 'NO'}`)
-        console.log(`📧 =================================`)
-
-        const html = getInvitationEmailTemplate({
-          sellerName: sellerName || 'Un vendedor',
-          invitationLink,
-        })
-
-        const result = await sendEmail({
-          to: email,
-          subject: `${sellerName || 'Un vendedor'} te invita a conectarte`,
-          html,
-        })
-
-        console.log('📧 Resultado de sendEmail:', result)
-
-        if (result.success) {
-          console.log('✅ Email enviado exitosamente. ID:', result.messageId)
-          results.emailSent = true
-        } else {
-          console.error('❌ Error de Mailersend:', result.error)
-          results.errors.push(`Email: ${result.error}`)
-        }
-      } catch (err: any) {
-        console.error('❌ Error enviando email:', err)
-        results.errors.push(`Email: ${err.message}`)
-      }
+      await sendEmailInvitation(email, invitationLink, sellerName, results)
     }
 
-    // Enviar por WhatsApp (simulado - requiere Twilio)
     if (whatsapp) {
-      try {
-        console.log(`📱 WhatsApp simulado a: ${whatsapp}`)
-        console.log(`Link: ${invitationLink}`)
-        
-        // NOTE: Future integration point for Twilio WhatsApp API
-        results.whatsappSent = true // Simulated for now
-      } catch (err) {
-        console.error('Error enviando WhatsApp:', err)
-      }
+      sendWhatsAppInvitation(whatsapp, invitationLink, results)
     }
 
-    // Enviar por SMS (simulado - requiere Twilio)
     if (sms) {
-      try {
-        console.log(`📱 SMS simulado a: ${sms}`)
-        console.log(`Link: ${invitationLink}`)
-        
-        // NOTE: Future integration point for Twilio SMS
-        results.smsSent = true // Simulated for now
-      } catch (err) {
-        console.error('Error enviando SMS:', err)
-      }
+      sendSmsInvitation(sms, invitationLink, results)
     }
 
     return NextResponse.json({
