@@ -2316,16 +2316,17 @@ function OrdersPageContent() {
 
         {/* Order Detail Modal */}
         {showOrderModal && selectedOrder && (
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={closeOrderModal}
-            onKeyDown={(e) => { if (e.key === 'Escape') closeOrderModal(); }}
-            role="dialog"
-            aria-modal="true"
-          >
-            <div 
-              className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
+          <>
+            <button 
+              type="button"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 w-full h-full border-none cursor-default"
+              onClick={closeOrderModal}
+              aria-label="Cerrar modal"
+            />
+            <dialog 
+              open
+              className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl shadow-2xl max-w-3xl w-[calc(100%-2rem)] max-h-[90vh] overflow-y-auto m-0 p-0 border-none"
+              aria-labelledby="order-modal-title"
             >
               {/* Header - Compacto */}
               <div className="bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800 px-4 py-3 rounded-t-2xl sticky top-0 z-10">
@@ -2333,7 +2334,7 @@ function OrdersPageContent() {
                   <div className="flex items-center gap-3">
                     <span className="text-xl">📦</span>
                     <div>
-                      <h2 className="text-base font-bold text-gray-800">
+                      <h2 id="order-modal-title" className="text-base font-bold text-gray-800">
                         #{selectedOrder.orderNumber?.replace('ORD-', '').slice(-6) || selectedOrder.id.slice(0, 6)}
                       </h2>
                       <p className="text-xs text-gray-600">
@@ -2939,8 +2940,8 @@ function OrdersPageContent() {
                   </div>
                 )}
               </div>
-            </div>
-          </div>
+            </dialog>
+          </>
         )}
       </div>
 
