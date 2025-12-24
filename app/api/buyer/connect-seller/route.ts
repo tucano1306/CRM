@@ -36,22 +36,18 @@ export async function POST(request: NextRequest) {
     const phoneNumber = phone || clerkUser.phone_numbers?.[0]?.phone_number || ''
 
     // Crear authenticated_user si no existe
-    let authUser = await prisma.authenticated_users.findUnique({
+    const authUser = await prisma.authenticated_users.findUnique({
       where: { authId: userId }
+    }) ?? await prisma.authenticated_users.create({
+      data: {
+        id: userId,
+        authId: userId,
+        email,
+        name,
+        role: 'CLIENT',
+        updatedAt: new Date()
+      }
     })
-
-    if (!authUser) {
-      authUser = await prisma.authenticated_users.create({
-        data: {
-          id: userId,
-          authId: userId,
-          email,
-          name,
-          role: 'CLIENT',
-          updatedAt: new Date()
-        }
-      })
-    }
 
     // Verificar si ya existe cliente con este vendedor
     let client = await prisma.client.findFirst({
