@@ -12,7 +12,7 @@ interface LoadingFallbackProps {
 function LoadingFallback({ message = 'Cargando...' }: LoadingFallbackProps) {
   return (
     <div className="flex items-center justify-center p-8">
-      <Loader2 className="animate-spin h-8 w-8 text-blue-600 mr-3" />
+      <Loader2 className="animate-spin h-8 w-8 text-pastel-blue mr-3" />
       <span className="text-gray-600">{message}</span>
     </div>
   )

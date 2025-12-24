@@ -451,7 +451,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
   return (
     <Card className="flex flex-col h-[600px] md:h-[700px] overflow-hidden rounded-xl shadow-xl border-2 border-purple-200">
       {/* Header estilo WhatsApp */}
-      <CardHeader className="border-b-2 border-purple-300 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 md:p-4">
+      <CardHeader className="border-b-2 border-pastel-blue/30 bg-gradient-to-r from-pastel-blue to-pastel-beige text-white p-3 md:p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
             {/* Avatar */}
@@ -517,7 +517,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
             if (loading && messages.length === 0) {
               return (
                 <div className="flex justify-center items-center h-full">
-                  <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 rounded-xl shadow-md">
+                  <div className="bg-gradient-to-br from-pastel-blue to-pastel-beige p-4 rounded-xl shadow-md">
                     <div className="animate-spin rounded-full h-8 w-8 border-4 border-white border-t-transparent" />
                   </div>
                 </div>
@@ -526,8 +526,8 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
             if (messages.length === 0 && !searchQuery) {
               return (
                 <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                  <div className="bg-gradient-to-br from-purple-100 to-indigo-100 p-4 rounded-full mb-3">
-                    <Send className="h-12 w-12 text-purple-600" />
+                  <div className="bg-gradient-to-br from-pastel-blue/30 to-pastel-beige/30 p-4 rounded-full mb-3">
+                    <Send className="h-12 w-12 text-pastel-blue" />
                   </div>
                   <p className="font-semibold text-gray-600">¡Inicia la conversación!</p>
                   <p className="text-sm">Envía el primer mensaje a {receiverName}</p>
@@ -537,8 +537,8 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
             if (filteredMessages.length === 0) {
               return (
                 <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                  <div className="bg-gradient-to-br from-purple-100 to-indigo-100 p-4 rounded-full mb-3">
-                    <Search className="h-12 w-12 text-purple-600" />
+                  <div className="bg-gradient-to-br from-pastel-blue/30 to-pastel-beige/30 p-4 rounded-full mb-3">
+                    <Search className="h-12 w-12 text-pastel-blue" />
                   </div>
                   <p className="font-semibold text-gray-600">No se encontraron mensajes</p>
                   <p className="text-sm">Intenta con otra búsqueda</p>
@@ -566,7 +566,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
                       <div
                         className={`max-w-[85%] sm:max-w-[75%] rounded-2xl px-3 py-2 md:px-4 md:py-2 shadow-sm ${
                           isOwn
-                            ? 'bg-purple-600 text-white rounded-br-sm'
+                            ? 'bg-gradient-to-r from-pastel-blue to-pastel-beige text-white rounded-br-sm'
                             : 'bg-white text-gray-900 rounded-bl-sm'
                         }`}
                       >
@@ -587,10 +587,10 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
                         {/* Archivo adjunto - Documento */}
                         {msg.attachmentUrl && msg.attachmentType === 'file' && (
                           <div className={`mb-2 p-3 rounded-lg flex items-center gap-2 ${
-                            isOwn ? 'bg-purple-700' : 'bg-gray-100'
+                            isOwn ? 'bg-pastel-blue' : 'bg-gray-100'
                           }`}>
                             <FileText className={`h-8 w-8 flex-shrink-0 ${
-                              isOwn ? 'text-purple-200' : 'text-gray-600'
+                              isOwn ? 'text-gray-600' : 'text-gray-600'
                             }`} />
                             <div className="flex-1 min-w-0">
                               <p className={`text-sm font-medium truncate ${
@@ -599,7 +599,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
                                 {msg.attachmentName || 'Archivo'}
                               </p>
                               <p className={`text-xs ${
-                                isOwn ? 'text-purple-200' : 'text-gray-500'
+                                isOwn ? 'text-gray-600' : 'text-gray-500'
                               }`}>
                                 {msg.attachmentSize ? `${(msg.attachmentSize / 1024).toFixed(1)} KB` : 'Archivo'}
                               </p>
@@ -609,7 +609,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
                               variant="ghost"
                               onClick={() => window.open(msg.attachmentUrl, '_blank')}
                               className={`flex-shrink-0 ${
-                                isOwn ? 'text-white hover:bg-purple-800' : 'text-gray-600 hover:bg-gray-200'
+                                isOwn ? 'text-white hover:bg-pastel-blue/80' : 'text-gray-600 hover:bg-gray-200'
                               }`}
                             >
                               <Download className="h-4 w-4" />
@@ -629,7 +629,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
                         
                         {/* Hora y estado */}
                         <div className={`flex items-center gap-1 mt-1 justify-end text-xs ${
-                          isOwn ? 'text-purple-100' : 'text-gray-500'
+                          isOwn ? 'text-gray-500' : 'text-gray-500'
                         }`}>
                           <span className="text-[10px] sm:text-xs">{formatTime(msg.createdAt)}</span>
                           {isOwn && (
@@ -692,7 +692,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
             <button
               type="button"
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="p-2 md:p-2.5 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-all mb-1 flex-shrink-0"
+              className="p-2 md:p-2.5 text-pastel-blue hover:text-gray-700 hover:bg-pastel-blue/10 rounded-lg transition-all mb-1 flex-shrink-0"
               title="Emoji"
               disabled={uploadingFile}
             >
@@ -703,11 +703,11 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
             {showEmojiPicker && (
               <div className="emoji-picker-container absolute bottom-full left-0 mb-2 bg-white rounded-xl shadow-2xl border-2 border-purple-200 p-3 md:p-4 z-10 w-64 md:w-72">
                 <div className="flex items-center justify-between mb-3 pb-3 border-b-2 border-purple-100">
-                  <h4 className="text-xs md:text-sm font-semibold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">Selecciona un emoji</h4>
+                  <h4 className="text-xs md:text-sm font-semibold bg-gradient-to-r from-pastel-blue to-pastel-beige bg-clip-text text-transparent">Selecciona un emoji</h4>
                   <button
                     type="button"
                     onClick={() => setShowEmojiPicker(false)}
-                    className="text-gray-400 hover:text-purple-600 hover:bg-purple-50 p-1 rounded-lg transition-all"
+                    className="text-gray-400 hover:text-pastel-blue hover:bg-pastel-blue/10 p-1 rounded-lg transition-all"
                   >
                     <X className="h-4 w-4 md:h-5 md:w-5" />
                   </button>
@@ -718,7 +718,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
                       key={emoji}
                       type="button"
                       onClick={() => insertEmoji(emoji)}
-                      className="text-xl md:text-2xl hover:bg-purple-50 rounded-lg p-1 md:p-1.5 transition-all"
+                      className="text-xl md:text-2xl hover:bg-pastel-blue/10 rounded-lg p-1 md:p-1.5 transition-all"
                     >
                       {emoji}
                     </button>
@@ -731,7 +731,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="p-2 md:p-2.5 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-all mb-1 flex-shrink-0 hidden sm:block disabled:opacity-50"
+              className="p-2 md:p-2.5 text-pastel-blue hover:text-gray-700 hover:bg-pastel-blue/10 rounded-lg transition-all mb-1 flex-shrink-0 hidden sm:block disabled:opacity-50"
               title="Adjuntar archivo"
               disabled={uploadingFile}
             >
@@ -758,7 +758,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
                 }}
                 placeholder="Escribe un mensaje..."
                 disabled={sending}
-                className="rounded-full bg-white border-2 border-purple-200 focus:border-purple-300 text-sm md:text-base h-10 md:h-11"
+                className="rounded-full bg-white border-2 border-purple-200 focus:border-pastel-blue/30 text-sm md:text-base h-10 md:h-11"
               />
             </div>
 
@@ -766,7 +766,7 @@ export default function ChatWindow({ receiverId, receiverName, orderId, orderCon
             <Button 
               type="submit" 
               disabled={sending || uploadingFile || !newMessage.trim()}
-              className="rounded-full h-10 w-10 md:h-11 md:w-11 p-0 bg-gradient-to-br from-purple-600 to-indigo-600 hover:shadow-lg transition-all flex-shrink-0 border-0"
+              className="rounded-full h-10 w-10 md:h-11 md:w-11 p-0 bg-gradient-to-br from-pastel-blue to-pastel-beige hover:shadow-lg transition-all flex-shrink-0 border-0"
               title="Enviar"
             >
               {sending ? (

@@ -140,16 +140,16 @@ export default function ProductListCheckbox({
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-pastel-blue" />
         <span className="ml-2 text-gray-600">Cargando productos...</span>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+    <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden border border-pastel-blue/20">
       {/* Header con búsqueda y filtros */}
-      <div className="p-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50">
+      <div className="p-4 border-b bg-gradient-to-r from-pastel-blue/20 to-pastel-beige/20">
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Buscador */}
           <div className="relative flex-1">
@@ -159,7 +159,7 @@ export default function ProductListCheckbox({
               placeholder="Buscar productos..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-pastel-blue focus:border-transparent"
             />
             {search && (
               <button
@@ -224,14 +224,14 @@ export default function ProductListCheckbox({
 
         {/* Resumen de selección */}
         {selectedCount > 0 && (
-          <div className="mt-3 flex items-center justify-between p-3 bg-purple-100 rounded-lg">
+          <div className="mt-3 flex items-center justify-between p-3 bg-pastel-blue/30 rounded-lg">
             <div className="flex items-center gap-2">
-              <CheckSquare className="w-5 h-5 text-purple-600" />
-              <span className="font-medium text-purple-900">
+              <CheckSquare className="w-5 h-5 text-pastel-blue" />
+              <span className="font-medium text-gray-800">
                 {selectedCount} producto(s) seleccionado(s)
               </span>
             </div>
-            <span className="font-bold text-purple-900">
+            <span className="font-bold text-gray-800">
               Total: {formatPrice(totalAmount)}
             </span>
           </div>
@@ -257,7 +257,7 @@ export default function ProductListCheckbox({
                 key={product.id}
                 className={`
                   w-full flex items-center gap-4 p-4 transition-colors cursor-pointer bg-transparent border-0 text-left
-                  ${isSelected ? 'bg-purple-50 border-l-4 border-purple-500' : 'hover:bg-gray-50'}
+                  ${isSelected ? 'bg-pastel-blue/20 border-l-4 border-pastel-blue' : 'hover:bg-gray-50'}
                   ${outOfStock ? 'opacity-50' : ''}
                 `}
                 onClick={() => !outOfStock && toggleProduct(product)}
@@ -266,7 +266,7 @@ export default function ProductListCheckbox({
                 {/* Checkbox */}
                 <div className="flex-shrink-0">
                   {isSelected ? (
-                    <CheckSquare className="w-6 h-6 text-purple-600" />
+                    <CheckSquare className="w-6 h-6 text-pastel-blue" />
                   ) : (
                     <Square className={`w-6 h-6 ${outOfStock ? 'text-gray-300' : 'text-gray-400'}`} />
                   )}
@@ -306,7 +306,7 @@ export default function ProductListCheckbox({
                       )}
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-purple-600">
+                      <p className="font-bold text-pastel-blue">
                         {formatPrice(product.price)}
                       </p>
                       <p className="text-xs text-gray-500">
@@ -374,7 +374,7 @@ export default function ProductListCheckbox({
 
       {/* Footer con total */}
       {selectedCount > 0 && (
-        <div className="p-4 border-t bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
+        <div className="p-4 border-t bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm opacity-90">{selectedCount} productos</p>

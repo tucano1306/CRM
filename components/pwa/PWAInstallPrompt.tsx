@@ -96,10 +96,10 @@ export default function PWAInstallPrompt() {
     <>
       {/* Banner de instalación */}
       <div className="fixed bottom-4 left-4 right-4 z-50 animate-slide-up">
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl shadow-2xl p-4 mx-auto max-w-md">
+        <div className="bg-gradient-to-r from-pastel-blue to-pastel-beige rounded-2xl shadow-2xl p-4 mx-auto max-w-md">
           <button
             onClick={handleDismiss}
-            className="absolute top-2 right-2 p-1 text-white/70 hover:text-white transition-colors"
+            className="absolute top-2 right-2 p-1 text-gray-600/70 hover:text-gray-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -110,8 +110,8 @@ export default function PWAInstallPrompt() {
             </div>
             
             <div className="flex-1 min-w-0">
-              <h3 className="text-white font-bold text-lg">Instalar Bargain</h3>
-              <p className="text-purple-100 text-sm">
+              <h3 className="text-gray-800 font-bold text-lg">Instalar Bargain</h3>
+              <p className="text-gray-600 text-sm">
                 Accede más rápido desde tu {isIOS ? 'pantalla de inicio' : 'escritorio'}
               </p>
             </div>
@@ -119,7 +119,7 @@ export default function PWAInstallPrompt() {
           
           <button
             onClick={handleInstall}
-            className="mt-3 w-full bg-white text-purple-700 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-purple-50 transition-colors shadow-lg"
+            className="mt-3 w-full bg-white text-gray-700 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-pastel-cream transition-colors shadow-lg"
           >
             {isIOS ? (
               <>
@@ -148,29 +148,29 @@ export default function PWAInstallPrompt() {
             </button>
             
             <div className="text-center mb-4">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <Smartphone className="w-8 h-8 text-purple-600" />
+              <div className="w-16 h-16 bg-pastel-blue/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Smartphone className="w-8 h-8 text-pastel-blue" />
               </div>
               <h3 className="text-xl font-bold text-gray-900">Instalar en iPhone/iPad</h3>
             </div>
             
             <ol className="space-y-4 text-left">
               <li className="flex gap-3">
-                <span className="flex-shrink-0 w-7 h-7 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm">1</span>
+                <span className="flex-shrink-0 w-7 h-7 bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-700 rounded-full flex items-center justify-center font-bold text-sm">1</span>
                 <div>
                   <p className="text-gray-900 font-medium">Toca el botón compartir</p>
                   <p className="text-gray-500 text-sm">El ícono de cuadrado con flecha hacia arriba</p>
                 </div>
               </li>
               <li className="flex gap-3">
-                <span className="flex-shrink-0 w-7 h-7 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm">2</span>
+                <span className="flex-shrink-0 w-7 h-7 bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-700 rounded-full flex items-center justify-center font-bold text-sm">2</span>
                 <div>
                   <p className="text-gray-900 font-medium">Desplázate hacia abajo</p>
                   <p className="text-gray-500 text-sm">Busca &ldquo;Añadir a pantalla de inicio&rdquo;</p>
                 </div>
               </li>
               <li className="flex gap-3">
-                <span className="flex-shrink-0 w-7 h-7 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold text-sm">3</span>
+                <span className="flex-shrink-0 w-7 h-7 bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-700 rounded-full flex items-center justify-center font-bold text-sm">3</span>
                 <div>
                   <p className="text-gray-900 font-medium">Toca &ldquo;Añadir&rdquo;</p>
                   <p className="text-gray-500 text-sm">¡Listo! La app aparecerá en tu pantalla</p>
@@ -180,7 +180,7 @@ export default function PWAInstallPrompt() {
             
             <button
               onClick={handleDismiss}
-              className="mt-6 w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-xl hover:bg-purple-700 transition-colors"
+              className="mt-6 w-full bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-700 font-bold py-3 px-4 rounded-xl hover:opacity-90 transition-colors"
             >
               Entendido
             </button>

@@ -138,14 +138,14 @@ export default async function DashboardSSRPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+          <Card className="bg-gradient-to-r from-pastel-blue to-pastel-beige text-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Productos</CardTitle>
               <Package className="h-4 w-4" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatNumber(overview.totalProducts)}</div>
-              <p className="text-xs text-purple-100">
+              <p className="text-xs text-gray-600">
                 {overview.lowStockProducts} con stock bajo
               </p>
             </CardContent>

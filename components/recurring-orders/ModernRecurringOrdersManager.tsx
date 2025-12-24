@@ -78,8 +78,8 @@ function LoadingState() {
   return (
     <div className="flex items-center justify-center py-20">
       <div className="text-center">
-        <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 rounded-xl shadow-md w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-          <RefreshCw className="h-8 w-8 animate-spin text-white" />
+        <div className="bg-gradient-to-br from-pastel-blue to-pastel-beige p-4 rounded-xl shadow-md w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+          <RefreshCw className="h-8 w-8 animate-spin text-gray-700" />
         </div>
         <p className="text-gray-600 font-medium">Cargando tus órdenes recurrentes...</p>
       </div>
@@ -95,11 +95,11 @@ interface HeaderSectionProps {
 
 function HeaderSection({ userRole, onRefresh, onCreateNew }: HeaderSectionProps) {
   return (
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 border-2 border-purple-200">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 border-2 border-pastel-blue/30">
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-3">
-          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-xl shadow-md">
-            <Repeat className="w-6 h-6 text-white" />
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-pastel-blue to-pastel-beige bg-clip-text text-transparent flex items-center gap-3">
+          <div className="bg-gradient-to-br from-pastel-blue to-pastel-beige p-2 rounded-xl shadow-md">
+            <Repeat className="w-6 h-6 text-gray-700" />
           </div>
           {userRole === 'SELLER' ? 'Órdenes Recurrentes de Clientes' : 'Órdenes Recurrentes'}
         </h1>
@@ -114,16 +114,16 @@ function HeaderSection({ userRole, onRefresh, onCreateNew }: HeaderSectionProps)
       <div className="flex gap-3">
         <button
           onClick={onRefresh}
-          className="px-4 py-2 border-2 border-purple-200 rounded-xl hover:border-purple-400 hover:bg-purple-50 transition-all flex items-center gap-2"
+          className="px-4 py-2 border-2 border-pastel-blue/50 rounded-xl hover:border-pastel-blue hover:bg-pastel-blue/20 transition-all flex items-center gap-2"
         >
-          <RefreshCw className="h-4 w-4 text-purple-600" />
+          <RefreshCw className="h-4 w-4 text-pastel-blue" />
           Actualizar
         </button>
         
         {userRole === 'CLIENT' && (
           <button
             onClick={onCreateNew}
-            className="px-3 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center gap-1 sm:gap-2 font-semibold text-sm sm:text-base"
+            className="px-3 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center gap-1 sm:gap-2 font-semibold text-sm sm:text-base"
           >
             <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
             <span className="hidden sm:inline">Nueva Orden Recurrente</span>
@@ -143,16 +143,16 @@ interface StatsCardsProps {
 function StatsCards({ stats, userRole }: StatsCardsProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-      <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-2 border-purple-200">
+      <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-2 border-pastel-blue/30">
         <div className="flex items-center justify-between mb-2">
-          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-xl shadow-md">
-            <Repeat className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
+          <div className="bg-gradient-to-br from-pastel-blue to-pastel-beige p-2 rounded-xl shadow-md">
+            <Repeat className="w-6 h-6 sm:w-8 sm:h-8 text-gray-700" />
           </div>
         </div>
         <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">
           {userRole === 'SELLER' ? 'Total de Órdenes' : 'Mis Órdenes'}
         </p>
-        <p className="text-2xl sm:text-4xl font-bold text-purple-600">{stats.total}</p>
+        <p className="text-2xl sm:text-4xl font-bold text-pastel-blue">{stats.total}</p>
       </div>
 
       <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-2 border-emerald-200">
@@ -217,11 +217,11 @@ function SingleOrderDetails({ nextOrder, nextInfo, formattedDate, userRole }: Re
   const showClientName = userRole === 'SELLER' && nextOrder.client
   return (
     <>
-      <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">{nextOrder.name}</p>
+      <p className="text-2xl font-bold bg-gradient-to-r from-pastel-blue to-pastel-beige bg-clip-text text-transparent">{nextOrder.name}</p>
       <p className="text-gray-600 mt-1">
         {showClientName && (
           <>
-            <span className="font-semibold text-purple-600">{nextOrder.client.name}</span>
+            <span className="font-semibold text-pastel-blue">{nextOrder.client.name}</span>
             {' · '}
           </>
         )}
@@ -240,7 +240,7 @@ function MultipleOrdersDetails({ nextInfo, formattedDate, orderCount }: Readonly
 }>) {
   return (
     <>
-      <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+      <p className="text-2xl font-bold bg-gradient-to-r from-pastel-blue to-pastel-beige bg-clip-text text-transparent">
         Próxima: {nextInfo.text}
       </p>
       <p className="text-gray-600 mt-1">
@@ -267,14 +267,14 @@ function UpcomingOrdersPanel({ stats, userRole }: UpcomingOrdersPanelProps) {
   const totalAmount = stats.upcomingOrders.reduce((sum, order) => sum + Number(order.totalAmount), 0)
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 border-2 border-purple-200">
+    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 border-2 border-pastel-blue/30">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-md">
-            <CalendarCheck className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 bg-gradient-to-br from-pastel-blue to-pastel-beige rounded-2xl flex items-center justify-center shadow-md">
+            <CalendarCheck className="w-8 h-8 text-gray-700" />
           </div>
           <div>
-            <p className="text-sm font-medium text-purple-600 mb-1">{getUpcomingLabel(userRole, orderCount)}</p>
+            <p className="text-sm font-medium text-pastel-blue mb-1">{getUpcomingLabel(userRole, orderCount)}</p>
             
             {isSingleOrder ? (
               <SingleOrderDetails 
@@ -315,13 +315,13 @@ function UpcomingOrdersPanel({ stats, userRole }: UpcomingOrdersPanelProps) {
 type FilterStatus = 'all' | 'active' | 'paused'
 
 const BUTTON_ACTIVE_STYLES: Record<FilterStatus, string> = {
-  all: 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg',
+  all: 'bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800 shadow-lg',
   active: 'bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-lg',
   paused: 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-lg'
 }
 
 const BUTTON_INACTIVE_STYLES: Record<FilterStatus, string> = {
-  all: 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50',
+  all: 'border-2 border-pastel-blue/50 text-gray-700 hover:border-pastel-blue hover:bg-pastel-blue/20',
   active: 'border-2 border-emerald-200 text-gray-700 hover:border-emerald-400 hover:bg-emerald-50',
   paused: 'border-2 border-amber-200 text-gray-700 hover:border-amber-400 hover:bg-amber-50'
 }
@@ -408,19 +408,19 @@ function EmptyState({ filterStatus, userRole, onCreateNew }: EmptyStateProps) {
   const showCreateButton = userRole === 'CLIENT' && filterStatus === 'all'
 
   return (
-    <div className="text-center py-16 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all border-2 border-purple-200">
+    <div className="text-center py-16 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all border-2 border-pastel-blue/30">
       <div className="max-w-md mx-auto">
-        <div className="bg-gradient-to-br from-purple-100 to-indigo-100 p-6 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6">
-          <Repeat className="h-16 w-16 text-purple-400" />
+        <div className="bg-gradient-to-br from-pastel-blue/30 to-pastel-beige/30 p-6 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-6">
+          <Repeat className="h-16 w-16 text-pastel-blue" />
         </div>
-        <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3">
+        <h3 className="text-2xl font-bold bg-gradient-to-r from-pastel-blue to-pastel-beige bg-clip-text text-transparent mb-3">
           {title}
         </h3>
         <p className="text-gray-600 mb-6 text-lg">{description}</p>
         {showCreateButton && (
           <button
             onClick={onCreateNew}
-            className="px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold text-lg inline-flex items-center gap-3"
+            className="px-8 py-4 bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-700 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold text-lg inline-flex items-center gap-3"
           >
             <Zap className="h-6 w-6" />
             Crear Mi Primera Orden Recurrente
@@ -494,12 +494,12 @@ function OrderCard({ order, userRole, isProcessing, index, onToggle, onDelete, o
       {/* Contenido */}
       <div className="p-6 space-y-4">
         {/* Próxima Ejecución */}
-        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-4 border-2 border-purple-200">
+        <div className="bg-gradient-to-br from-pastel-blue/20 to-pastel-beige/20 rounded-xl p-4 border-2 border-pastel-blue/30">
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="w-4 h-4 text-purple-600" />
-            <p className="text-xs font-medium text-purple-600">Próxima Orden</p>
+            <Clock className="w-4 h-4 text-pastel-blue" />
+            <p className="text-xs font-medium text-pastel-blue">Próxima Orden</p>
           </div>
-          <p className={`text-2xl font-bold mb-1 ${nextInfo.urgent ? 'text-red-600' : 'text-purple-600'}`}>
+          <p className={`text-2xl font-bold mb-1 ${nextInfo.urgent ? 'text-red-600' : 'text-pastel-blue'}`}>
             {nextInfo.text}
           </p>
           <p className="text-sm text-gray-600">
@@ -532,14 +532,14 @@ function OrderCard({ order, userRole, isProcessing, index, onToggle, onDelete, o
 
         {/* Cliente (solo para vendedor) */}
         {userRole === 'SELLER' && order.client && (
-          <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-3 border-2 border-purple-200">
+          <div className="bg-gradient-to-br from-pastel-blue/20 to-pastel-beige/20 rounded-xl p-3 border-2 border-pastel-blue/30">
             <div className="flex items-center gap-2 mb-1">
-              <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-pastel-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              <p className="text-xs font-medium text-purple-600">Cliente</p>
+              <p className="text-xs font-medium text-pastel-blue">Cliente</p>
             </div>
-            <p className="text-base font-bold text-purple-700 truncate">{order.client.name}</p>
+            <p className="text-base font-bold text-gray-700 truncate">{order.client.name}</p>
           </div>
         )}
 
@@ -567,10 +567,10 @@ function OrderCard({ order, userRole, isProcessing, index, onToggle, onDelete, o
       </div>
 
       {/* Acciones */}
-      <div className="border-t-2 border-purple-100 p-4 bg-gradient-to-br from-slate-50 to-purple-50 flex gap-2">
+      <div className="border-t-2 border-pastel-blue/20 p-4 bg-gradient-to-br from-slate-50 to-pastel-blue/10 flex gap-2">
         <button
           onClick={() => onViewDetails(order)}
-          className="flex-1 px-4 py-2.5 bg-white border-2 border-purple-200 rounded-xl hover:border-purple-400 hover:bg-purple-50 transition-all font-semibold text-sm flex items-center justify-center gap-2"
+          className="flex-1 px-4 py-2.5 bg-white border-2 border-pastel-blue/30 rounded-xl hover:border-pastel-blue hover:bg-pastel-blue/10 transition-all font-semibold text-sm flex items-center justify-center gap-2"
         >
           <Eye className="h-4 w-4" />
           Ver Detalles

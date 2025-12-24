@@ -98,7 +98,7 @@ export default async function AnalyticsSSRPage() {
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-              <BarChart3 className="text-purple-600" />
+              <BarChart3 className="text-pastel-blue" />
               Analytics SSR
             </h1>
             <p className="text-gray-600 mt-1">
@@ -149,7 +149,7 @@ export default async function AnalyticsSSRPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+          <Card className="bg-gradient-to-r from-pastel-blue to-pastel-beige text-white">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
@@ -158,7 +158,7 @@ export default async function AnalyticsSSRPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{clientStats.active_clients}</div>
-              <p className="text-purple-100">Promedio pedido: ${Number(clientStats.avg_order_value || 0).toFixed(2)}</p>
+              <p className="text-gray-600">Promedio pedido: ${Number(clientStats.avg_order_value || 0).toFixed(2)}</p>
             </CardContent>
           </Card>
         </div>
@@ -289,12 +289,12 @@ export default async function AnalyticsSSRPage() {
         <Card className="bg-purple-50 border-purple-200">
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
+              <div className="w-3 h-3 bg-pastel-blue rounded-full animate-pulse"></div>
               <div>
-                <p className="font-medium text-purple-800">
+                <p className="font-medium text-gray-700">
                   🚀 Analytics optimizado con SSR
                 </p>
-                <p className="text-purple-700 text-sm mt-1">
+                <p className="text-gray-600 text-sm mt-1">
                   Datos pre-procesados en el servidor con cache de 5 minutos + stale-while-revalidate
                 </p>
               </div>

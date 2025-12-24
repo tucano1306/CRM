@@ -674,7 +674,7 @@ export default function BulkStatusChangeModal({
                         type="checkbox"
                         checked={selectedItems.size === filteredOrderItems.length && filteredOrderItems.length > 0}
                         onChange={toggleAllSelection}
-                        className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        className="w-5 h-5 rounded border-gray-300 text-pastel-blue focus:ring-pastel-blue"
                       />
                       <span className="text-sm sm:text-base font-medium text-gray-700">Todos</span>
                     </label>
@@ -694,7 +694,7 @@ export default function BulkStatusChangeModal({
                     )}
                     <button
                       onClick={openAddProductModal}
-                      className="px-3 sm:px-4 py-2 bg-purple-500 text-white rounded-lg text-sm font-bold hover:bg-purple-600 transition-all flex items-center gap-1.5 shadow-sm"
+                      className="px-3 sm:px-4 py-2 bg-gradient-to-r from-pastel-blue to-pastel-beige text-white rounded-lg text-sm font-bold hover:bg-gradient-to-r from-pastel-blue to-pastel-beige transition-all flex items-center gap-1.5 shadow-sm"
                     >
                       <Plus className="w-4 h-4" />
                       Agregar
@@ -813,7 +813,7 @@ export default function BulkStatusChangeModal({
                       className={`p-4 sm:p-5 transition-colors ${(() => {
                         if (isAccepted) return 'bg-green-50';
                         if (hasIssue) return 'bg-red-50';
-                        if (isSelected) return 'bg-purple-50';
+                        if (isSelected) return 'bg-pastel-blue/10';
                         return 'hover:bg-gray-50';
                       })()}`}
                     >
@@ -825,7 +825,7 @@ export default function BulkStatusChangeModal({
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => toggleItemSelection(item.id)}
-                            className="w-5 h-5 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                            className="w-5 h-5 rounded border-gray-300 text-pastel-blue focus:ring-pastel-blue"
                           />
                         </div>
                         
@@ -987,7 +987,7 @@ export default function BulkStatusChangeModal({
                       {singleOrder.client?.email && (
                         <a 
                           href={`mailto:${singleOrder.client.email}?subject=Pedido ${singleOrder.orderNumber} - Productos no disponibles`}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-sm hover:bg-purple-200 transition-colors font-medium"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-pastel-blue/20 text-gray-700 rounded-lg text-sm hover:bg-purple-200 transition-colors font-medium"
                         >
                           <Mail className="w-4 h-4" />
                           Email
@@ -1173,8 +1173,8 @@ export default function BulkStatusChangeModal({
           <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full max-h-[80vh] flex flex-col">
             <div className="p-4 border-b flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-full">
-                  <Plus className="w-5 h-5 text-purple-600" />
+                <div className="p-2 bg-pastel-blue/20 rounded-full">
+                  <Plus className="w-5 h-5 text-pastel-blue" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">Agregar Producto</h3>
@@ -1198,7 +1198,7 @@ export default function BulkStatusChangeModal({
                   placeholder="Buscar producto..."
                   value={productSearch}
                   onChange={(e) => setProductSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-200 focus:border-purple-400"
+                  className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-200 focus:border-pastel-blue"
                 />
               </div>
             </div>
@@ -1209,7 +1209,7 @@ export default function BulkStatusChangeModal({
                 if (loadingProducts) {
                   return (
                     <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+                      <Loader2 className="w-8 h-8 animate-spin text-pastel-blue" />
                     </div>
                   );
                 }
@@ -1234,7 +1234,7 @@ export default function BulkStatusChangeModal({
                         disabled={wasAdded}
                         className={`w-full text-left p-3 rounded-lg border-2 transition-all ${(() => {
                           if (wasAdded) return 'border-green-300 bg-green-50 cursor-not-allowed';
-                          if (isSelected) return 'border-purple-400 bg-purple-50';
+                          if (isSelected) return 'border-pastel-blue bg-pastel-blue/10';
                           return 'border-gray-200 hover:border-purple-200 hover:bg-gray-50';
                         })()}`}
                       >
@@ -1262,11 +1262,11 @@ export default function BulkStatusChangeModal({
 
             {/* Formulario de cantidad */}
             {selectedProduct && (
-              <div className="p-4 border-t bg-purple-50">
+              <div className="p-4 border-t bg-pastel-blue/10">
                 <div className="flex items-center gap-4 mb-3">
                   <div className="flex-1">
-                    <p className="font-medium text-purple-900">{selectedProduct.name}</p>
-                    <p className="text-sm text-purple-600">{formatPrice(selectedProduct.price)} / {selectedProduct.unit || 'unid.'}</p>
+                    <p className="font-medium text-gray-800">{selectedProduct.name}</p>
+                    <p className="text-sm text-pastel-blue">{formatPrice(selectedProduct.price)} / {selectedProduct.unit || 'unid.'}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <label htmlFor="add-product-quantity-input" className="text-sm text-gray-600">Cantidad:</label>
@@ -1288,13 +1288,13 @@ export default function BulkStatusChangeModal({
                   className="w-full px-3 py-2 border rounded-lg text-sm mb-3"
                 />
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-purple-800">
+                  <span className="text-sm font-medium text-gray-700">
                     Subtotal: {formatPrice(selectedProduct.price * addQuantity)}
                   </span>
                   <button
                     onClick={handleAddProduct}
                     disabled={addingProduct}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center gap-2"
+                    className="px-4 py-2 bg-gradient-to-r from-pastel-blue to-pastel-beige text-white rounded-lg hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
                   >
                     {addingProduct ? (
                       <>

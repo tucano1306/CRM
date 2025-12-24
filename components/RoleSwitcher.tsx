@@ -8,15 +8,15 @@ export default function RoleSwitcher() {
 
   return (
     <div className="fixed bottom-6 right-6 z-50">
-      <div className="bg-white rounded-xl shadow-2xl border-2 border-purple-200 p-4 min-w-[280px]">
+      <div className="bg-white rounded-xl shadow-2xl border-2 border-pastel-blue/30 p-4 min-w-[280px]">
         {/* Header */}
         <div className="flex items-center gap-2 mb-3 pb-3 border-b border-gray-200">
-          <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-lg">
-            <UserCog className="h-4 w-4 text-white" />
+          <div className="bg-gradient-to-br from-pastel-blue to-pastel-beige p-2 rounded-lg">
+            <UserCog className="h-4 w-4 text-gray-700" />
           </div>
           <div>
             <h3 className="font-bold text-gray-900 text-sm">Cambiar Vista</h3>
-            <p className="text-xs text-gray-500">Rol actual: <span className="font-semibold text-purple-600">{currentRole}</span></p>
+            <p className="text-xs text-gray-500">Rol actual: <span className="font-semibold text-pastel-blue">{currentRole}</span></p>
           </div>
         </div>
 
@@ -40,8 +40,8 @@ export default function RoleSwitcher() {
             disabled={switching || currentRole === 'CLIENT'}
             className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
               currentRole === 'CLIENT'
-                ? 'bg-purple-100 text-purple-600 cursor-default'
-                : 'bg-gradient-to-r from-purple-50 to-indigo-50 text-purple-700 hover:from-purple-100 hover:to-indigo-100 border border-purple-200'
+                ? 'bg-pastel-blue/30 text-pastel-blue cursor-default'
+                : 'bg-gradient-to-r from-pastel-blue/20 to-pastel-beige/20 text-gray-700 hover:from-pastel-blue/30 hover:to-pastel-beige/30 border border-pastel-blue/30'
             }`}
           >
             <span>🛒 Vista Comprador</span>
@@ -57,8 +57,8 @@ export default function RoleSwitcher() {
             disabled={switching || currentRole === 'SELLER'}
             className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-semibold transition-all ${
               currentRole === 'SELLER'
-                ? 'bg-blue-100 text-blue-600 cursor-default'
-                : 'bg-gradient-to-r from-blue-50 to-cyan-50 text-blue-700 hover:from-blue-100 hover:to-cyan-100 border border-blue-200'
+                ? 'bg-pastel-beige/30 text-pastel-blue cursor-default'
+                : 'bg-gradient-to-r from-pastel-beige/20 to-pastel-sand/20 text-gray-700 hover:from-pastel-beige/30 hover:to-pastel-sand/30 border border-pastel-beige/30'
             }`}
           >
             <span>📊 Vista Vendedor</span>
@@ -78,7 +78,7 @@ export default function RoleSwitcher() {
           <button
             onClick={() => switchRoleWithReauth(currentRole === 'CLIENT' ? 'SELLER' : 'CLIENT')}
             disabled={switching}
-            className="w-full flex items-center justify-center gap-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 py-1 px-2 rounded transition-colors"
+            className="w-full flex items-center justify-center gap-1 text-xs text-pastel-blue hover:text-gray-700 hover:bg-pastel-blue/10 py-1 px-2 rounded transition-colors"
           >
             <RefreshCw className="h-3 w-3" />
             <span>Cambiar con re-login (más seguro)</span>

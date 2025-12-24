@@ -149,7 +149,7 @@ export default async function StatsSSRPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+          <Card className="bg-gradient-to-r from-pastel-blue to-pastel-beige text-white">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-sm">
                 <Users className="w-4 h-4" />
@@ -158,7 +158,7 @@ export default async function StatsSSRPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{summary.unique_clients}</div>
-              <div className="text-sm text-purple-100 mt-1">
+              <div className="text-sm text-gray-600 mt-1">
                 {clients.active_clients} activos ({((clients.active_clients / summary.unique_clients) * 100).toFixed(1)}%)
               </div>
             </CardContent>
@@ -225,7 +225,7 @@ export default async function StatsSSRPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-purple-600" />
+                <Calendar className="w-5 h-5 text-pastel-blue" />
                 Patrones Semanales
               </CardTitle>
               <CardDescription>Días de la semana más activos</CardDescription>

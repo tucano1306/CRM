@@ -63,7 +63,7 @@ function getStatusIconBgClass(status: string): string {
   const statusMap: Record<string, string> = {
     'PENDING': 'bg-yellow-100 text-yellow-600',
     'CONFIRMED': 'bg-green-100 text-green-600',
-    'IN_DELIVERY': 'bg-purple-100 text-purple-600',
+    'IN_DELIVERY': 'bg-pastel-blue/20 text-pastel-blue',
     'DELIVERED': 'bg-emerald-100 text-emerald-600',
     'COMPLETED': 'bg-emerald-100 text-emerald-600',
     'CANCELED': 'bg-red-100 text-red-600',
@@ -76,7 +76,7 @@ function getStatusBadgeClass(status: string): string {
   const statusMap: Record<string, string> = {
     'PENDING': 'bg-yellow-100 text-yellow-700',
     'CONFIRMED': 'bg-green-100 text-green-700',
-    'IN_DELIVERY': 'bg-purple-100 text-purple-700',
+    'IN_DELIVERY': 'bg-pastel-blue/20 text-pastel-blue',
     'DELIVERED': 'bg-emerald-100 text-emerald-700',
     'COMPLETED': 'bg-emerald-100 text-emerald-700',
     'CANCELED': 'bg-red-100 text-red-700',
@@ -102,7 +102,7 @@ function getTimelineIconClass(status: string): string {
   const statusMap: Record<string, string> = {
     'PENDING': 'bg-yellow-500 text-white',
     'CONFIRMED': 'bg-green-500 text-white',
-    'IN_DELIVERY': 'bg-purple-500 text-white',
+    'IN_DELIVERY': 'bg-pastel-blue text-gray-700',
     'DELIVERED': 'bg-emerald-500 text-white',
     'COMPLETED': 'bg-emerald-500 text-white',
     'CANCELED': 'bg-red-500 text-white',

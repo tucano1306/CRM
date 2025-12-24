@@ -20,7 +20,7 @@ export default function ImportProductsPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-4">
       <Card className="max-w-md w-full shadow-xl">
         <CardContent className="pt-6 text-center">
-          <div className="flex items-center justify-center gap-2 text-purple-600">
+          <div className="flex items-center justify-center gap-2 text-pastel-blue">
             <Loader2 className="w-5 h-5 animate-spin" />
             <span className="text-sm">Redirigiendo a Clientes...</span>
           </div>

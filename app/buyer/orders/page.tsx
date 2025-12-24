@@ -200,9 +200,9 @@ const statusConfig = {
     label: 'En Entrega',
     description: 'Tu pedido está en camino',
     icon: Truck,
-    color: 'text-purple-600',
+    color: 'text-pastel-blue',
     bg: 'bg-purple-50',
-    border: 'border-purple-200',
+    border: 'border-pastel-blue/30',
   },
   DELIVERED: {
     label: 'Recibida',
@@ -1415,7 +1415,7 @@ function OrderCardGridActions({ order, onCancel, onReorder, onTrack, onInvoice, 
         {showsInvoiceButton(order.status) && (
           <button 
             onClick={(e) => onInvoice(order, e)}
-            className="flex-1 min-w-[100px] bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 text-purple-600 py-2 rounded-lg hover:border-purple-300 hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
+            className="flex-1 min-w-[100px] bg-gradient-to-br from-pastel-blue/30 to-pastel-beige/30 border-2 border-pastel-blue/40 text-pastel-blue py-2 rounded-lg hover:border-pastel-blue hover:shadow-lg transition-all font-medium text-sm flex items-center justify-center gap-2"
           >
             <FileText className="w-4 h-4" />
             Factura
@@ -1424,16 +1424,16 @@ function OrderCardGridActions({ order, onCancel, onReorder, onTrack, onInvoice, 
 
         <button 
           onClick={() => onDetails(order)}
-          className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-medium text-sm"
+          className="bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800 px-4 py-2 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-medium text-sm"
         >
           Detalles
         </button>
       </div>
 
-      <div className="mt-4 pt-4 border-t border-purple-100">
+      <div className="mt-4 pt-4 border-t border-pastel-blue/30">
         <button 
           onClick={(e) => onContact(order, e)}
-          className="w-full flex items-center justify-center gap-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 py-2 rounded-lg border-2 border-purple-200 hover:border-purple-300 transition-all font-medium text-sm"
+          className="w-full flex items-center justify-center gap-2 text-pastel-blue hover:text-pastel-blue/80 hover:bg-pastel-blue/10 py-2 rounded-lg border-2 border-pastel-blue/40 hover:border-pastel-blue transition-all font-medium text-sm"
         >
           <MessageCircle className="w-4 h-4" />
           Contactar vendedor
@@ -1490,14 +1490,14 @@ function OrderCardListActions({ order, onCancel, onReorder, onTrack, onDetails, 
 
       <button 
         onClick={() => onDetails(order)}
-        className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-medium text-sm"
+        className="bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800 px-4 py-2 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-medium text-sm"
       >
         Detalles
       </button>
 
       <button 
         onClick={(e) => onContact(order, e)}
-        className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 text-purple-600 p-2 rounded-lg hover:border-purple-300 hover:shadow-lg transition-all"
+        className="bg-gradient-to-br from-pastel-blue/30 to-pastel-beige/30 border-2 border-pastel-blue/40 text-pastel-blue p-2 rounded-lg hover:border-pastel-blue hover:shadow-lg transition-all"
         title="Contactar vendedor"
       >
         <MessageCircle className="w-5 h-5" />
@@ -1543,14 +1543,14 @@ function OrderProgressBar({ status, getProgress }: Readonly<{ status: OrderStatu
   return (
     <div className="mb-4">
       <div className="flex justify-between text-xs text-gray-500 mb-2">
-        <span className={progress >= 0 ? 'font-medium text-purple-600' : ''}>Pendiente</span>
-        <span className={progress >= 50 ? 'font-medium text-purple-600' : ''}>Preparando</span>
-        <span className={progress >= 75 ? 'font-medium text-purple-600' : ''}>En camino</span>
-        <span className={progress >= 100 ? 'font-medium text-purple-600' : ''}>Entregado</span>
+        <span className={progress >= 0 ? 'font-medium text-pastel-blue' : ''}>Pendiente</span>
+        <span className={progress >= 50 ? 'font-medium text-pastel-blue' : ''}>Preparando</span>
+        <span className={progress >= 75 ? 'font-medium text-pastel-blue' : ''}>En camino</span>
+        <span className={progress >= 100 ? 'font-medium text-pastel-blue' : ''}>Entregado</span>
       </div>
       <div className="w-full bg-gray-200 rounded-full h-2">
         <div
-          className="bg-gradient-to-r from-purple-600 to-indigo-600 h-2 rounded-full transition-all duration-500"
+          className="bg-gradient-to-r from-pastel-blue to-pastel-beige h-2 rounded-full transition-all duration-500"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -1578,8 +1578,8 @@ function OrderGridCard({ order, onCancel, onReorder, onTrack, onInvoice, onDetai
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all p-6 border-2 relative ${
-        hasStockIssues ? 'border-amber-400 bg-amber-50/30' : 'border-purple-200 hover:border-purple-300'
+      className={`bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all p-6 border-2 relative ${
+        hasStockIssues ? 'border-amber-400 bg-amber-50/30' : 'border-pastel-blue/30 hover:border-pastel-blue'
       }`}
       style={needsAttention ? { animation: 'orderPulse 3s ease-in-out infinite' } : {}}
     >
@@ -1588,7 +1588,7 @@ function OrderGridCard({ order, onCancel, onReorder, onTrack, onInvoice, onDetai
       
       <div className={`flex items-start justify-between mb-4 ${hasStockIssues ? 'mt-8' : ''}`}>
         <div>
-          <h3 className="font-bold text-lg text-purple-600">
+          <h3 className="font-bold text-lg text-pastel-blue">
             {order.orderNumber || `#${order.id.slice(0, 8)}`}
           </h3>
           <p className="text-sm text-gray-500">
@@ -1621,8 +1621,8 @@ function OrderGridCard({ order, onCancel, onReorder, onTrack, onInvoice, onDetai
 
       <OrderProgressBar status={order.status} getProgress={getProgress} />
       
-      <div className="mb-4 pt-4 border-t border-purple-100">
-        <span className="text-xl font-bold text-purple-600">{formatPrice(order.totalAmount)}</span>
+      <div className="mb-4 pt-4 border-t border-pastel-blue/30">
+        <span className="text-xl font-bold text-pastel-blue">{formatPrice(order.totalAmount)}</span>
       </div>
 
       <OrderCardGridActions 
@@ -1645,7 +1645,7 @@ function OrderListCard({ order, onCancel, onReorder, onTrack, onDetails, onConta
 
   return (
     <div
-      className="bg-white rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all p-4 border-2 border-purple-200 hover:border-purple-300 relative"
+      className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all p-4 border-2 border-pastel-blue/30 hover:border-pastel-blue relative"
       style={needsAttention ? { animation: 'orderPulse 3s ease-in-out infinite' } : {}}
     >
       {isCompleted && <OrderCompletedBadge isGrid={false} />}
@@ -1663,7 +1663,7 @@ function OrderListCard({ order, onCancel, onReorder, onTrack, onDetails, onConta
           </div>
           
           <div className="flex-1">
-            <h3 className="font-bold text-purple-600">
+            <h3 className="font-bold text-pastel-blue">
               {order.orderNumber || `#${order.id.slice(0, 8)}`}
             </h3>
             <p className="text-sm text-gray-500">
@@ -1674,7 +1674,7 @@ function OrderListCard({ order, onCancel, onReorder, onTrack, onDetails, onConta
               <div className="mt-2 max-w-xs">
                 <div className="w-full bg-gray-200 rounded-full h-1.5">
                   <div
-                    className="bg-gradient-to-r from-purple-600 to-indigo-600 h-1.5 rounded-full transition-all duration-500"
+                    className="bg-gradient-to-r from-pastel-blue to-pastel-beige h-1.5 rounded-full transition-all duration-500"
                     style={{ width: `${getProgress(order.status)}%` }}
                   />
                 </div>
@@ -1696,7 +1696,7 @@ function OrderListCard({ order, onCancel, onReorder, onTrack, onDetails, onConta
               {config.label}
             </span>
           </div>
-          <span className="text-lg font-bold text-purple-600 block">{formatPrice(order.totalAmount)}</span>
+          <span className="text-lg font-bold text-pastel-blue block">{formatPrice(order.totalAmount)}</span>
         </div>
 
         <OrderCardListActions
@@ -2050,13 +2050,13 @@ function OrdersPageContent() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Búsqueda */}
             <div className="relative">
-              <Search className="absolute left-3 top-3 w-5 h-5 text-purple-400" />
+              <Search className="absolute left-3 top-3 w-5 h-5 text-pastel-blue/70" />
               <input
                 type="text"
                 placeholder="Buscar por número de orden..."
                 value={filters.searchQuery}
                 onChange={(e) => filters.setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none transition-all"
+                className="w-full pl-10 pr-4 py-2 border-2 border-pastel-blue/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none transition-all"
               />
             </div>
             
@@ -2066,14 +2066,14 @@ function OrdersPageContent() {
                 type="date" 
                 value={filters.dateFrom}
                 onChange={(e) => filters.setDateFrom(e.target.value)}
-                className="flex-1 px-3 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none transition-all" 
+                className="flex-1 px-3 py-2 border-2 border-pastel-blue/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none transition-all" 
                 placeholder="Desde"
               />
               <input 
                 type="date" 
                 value={filters.dateTo}
                 onChange={(e) => filters.setDateTo(e.target.value)}
-                className="flex-1 px-3 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none transition-all" 
+                className="flex-1 px-3 py-2 border-2 border-pastel-blue/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none transition-all" 
                 placeholder="Hasta"
               />
             </div>
@@ -2082,7 +2082,7 @@ function OrdersPageContent() {
             <select 
               value={filters.sortBy}
               onChange={(e) => filters.setSortBy(e.target.value as SortByType)}
-              className="px-4 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none bg-white transition-all"
+              className="px-4 py-2 border-2 border-pastel-blue/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none bg-white transition-all"
             >
               <option value="newest">Más recientes</option>
               <option value="oldest">Más antiguos</option>
@@ -2094,7 +2094,7 @@ function OrdersPageContent() {
             <select 
               value={filters.dateRange}
               onChange={(e) => filters.setDateRange(e.target.value as DateRangeType)}
-              className="px-4 py-2 border-2 border-purple-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none bg-white transition-all"
+              className="px-4 py-2 border-2 border-pastel-blue/30 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-400 outline-none bg-white transition-all"
             >
               <option value="7days">Últimos 7 días</option>
               <option value="30days">Últimos 30 días</option>
@@ -2107,7 +2107,7 @@ function OrdersPageContent() {
           {(filters.searchQuery || filters.dateFrom || filters.dateTo || filters.filterStatus !== 'ALL') && (
             <div className="mt-4 pt-4 border-t border-purple-100 flex items-center justify-between">
               <p className="text-sm text-gray-600">
-                Mostrando <strong className="text-purple-600">{filteredAndSortedOrders.length}</strong> de <strong className="text-purple-600">{orders.length}</strong> órdenes
+                Mostrando <strong className="text-pastel-blue">{filteredAndSortedOrders.length}</strong> de <strong className="text-pastel-blue">{orders.length}</strong> órdenes
               </p>
               <button
                 onClick={() => {
@@ -2117,7 +2117,7 @@ function OrdersPageContent() {
                   filters.setFilterStatus('ALL')
                   filters.setSortBy('newest')
                 }}
-                className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1 px-3 py-1 rounded-lg hover:bg-purple-50 transition-all"
+                className="text-sm text-pastel-blue hover:text-gray-700 font-medium flex items-center gap-1 px-3 py-1 rounded-lg hover:bg-pastel-blue/10 transition-all"
               >
                 Limpiar filtros
               </button>
@@ -2132,8 +2132,8 @@ function OrdersPageContent() {
               onClick={() => filters.setFilterStatus('ALL')}
               className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
                 filters.filterStatus === 'ALL'
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
-                  : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
+                  ? 'bg-gradient-to-r from-pastel-blue to-pastel-beige text-white shadow-lg'
+                  : 'border-2 border-pastel-blue/30 text-gray-700 hover:border-pastel-blue hover:bg-pastel-blue/10'
               }`}
             >
               Todas ({orders.length})
@@ -2142,8 +2142,8 @@ function OrdersPageContent() {
               onClick={() => filters.setFilterStatus('PENDING')}
               className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
                 filters.filterStatus === 'PENDING'
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
-                  : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
+                  ? 'bg-gradient-to-r from-pastel-blue to-pastel-beige text-white shadow-lg'
+                  : 'border-2 border-pastel-blue/30 text-gray-700 hover:border-pastel-blue hover:bg-pastel-blue/10'
               }`}
             >
               Pendientes ({orders.filter(o => o.status === 'PENDING').length})
@@ -2152,8 +2152,8 @@ function OrdersPageContent() {
               onClick={() => filters.setFilterStatus('CONFIRMED')}
               className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
                 filters.filterStatus === 'CONFIRMED'
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
-                  : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
+                  ? 'bg-gradient-to-r from-pastel-blue to-pastel-beige text-white shadow-lg'
+                  : 'border-2 border-pastel-blue/30 text-gray-700 hover:border-pastel-blue hover:bg-pastel-blue/10'
               }`}
             >
               Confirmadas ({orders.filter(o => o.status === 'CONFIRMED').length})
@@ -2162,8 +2162,8 @@ function OrdersPageContent() {
               onClick={() => filters.setFilterStatus('DELIVERED')}
               className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
                 filters.filterStatus === 'DELIVERED'
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
-                  : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
+                  ? 'bg-gradient-to-r from-pastel-blue to-pastel-beige text-white shadow-lg'
+                  : 'border-2 border-pastel-blue/30 text-gray-700 hover:border-pastel-blue hover:bg-pastel-blue/10'
               }`}
             >
               Recibidas ({orders.filter(o => o.status === 'DELIVERED' || o.status === 'COMPLETED').length})
@@ -2172,8 +2172,8 @@ function OrdersPageContent() {
               onClick={() => filters.setFilterStatus('CANCELED')}
               className={`px-6 py-3 rounded-lg font-medium transition-all whitespace-nowrap ${
                 filters.filterStatus === 'CANCELED'
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg'
-                  : 'border-2 border-purple-200 text-gray-700 hover:border-purple-400 hover:bg-purple-50'
+                  ? 'bg-gradient-to-r from-pastel-blue to-pastel-beige text-white shadow-lg'
+                  : 'border-2 border-pastel-blue/30 text-gray-700 hover:border-pastel-blue hover:bg-pastel-blue/10'
               }`}
             >
               Canceladas ({orders.filter(o => o.status === 'CANCELED' || o.status === 'CANCELLED').length})
@@ -2183,18 +2183,18 @@ function OrdersPageContent() {
 
         {/* Lista de órdenes */}
         {orders.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all border-2 border-purple-200">
-            <div className="bg-gradient-to-br from-purple-100 to-indigo-100 p-6 rounded-full w-32 h-32 mx-auto mb-6 flex items-center justify-center">
-              <ShoppingBag className="w-16 h-16 text-purple-400" />
+          <div className="text-center py-16 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all border-2 border-pastel-blue/30">
+            <div className="bg-gradient-to-br from-pastel-blue/30 to-pastel-beige/30 p-6 rounded-full w-32 h-32 mx-auto mb-6 flex items-center justify-center">
+              <ShoppingBag className="w-16 h-16 text-pastel-blue/70" />
             </div>
-            <h3 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+            <h3 className="text-2xl font-bold bg-gradient-to-r from-pastel-blue to-pastel-beige bg-clip-text text-transparent mb-2">
               No tienes órdenes aún
             </h3>
             <p className="text-gray-500 mb-6">
               Explora el catálogo y realiza tu primera compra
             </p>
             <Link href="/buyer/catalog">
-              <button className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-8 py-3 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold inline-flex items-center gap-2">
+              <button className="bg-gradient-to-r from-pastel-blue to-pastel-beige text-white px-8 py-3 rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all font-semibold inline-flex items-center gap-2">
                 <ShoppingBag className="w-5 h-5" />
                 Ir al Catálogo
               </button>
@@ -2246,7 +2246,7 @@ function OrdersPageContent() {
                     filters.setDateTo('')
                     filters.setFilterStatus('ALL')
                   }}
-                  className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
+                  className="bg-gradient-to-r from-pastel-blue to-pastel-beige text-white px-8 py-3 rounded-lg hover:opacity-90 transition-colors font-semibold"
                 >
                   Limpiar filtros
                 </button>
@@ -2256,11 +2256,11 @@ function OrdersPageContent() {
 
           {/* Controles de paginación */}
           {filteredAndSortedOrders.length > ordersPerPage && (
-            <div className="mt-8 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-4 md:p-6 border-2 border-purple-200">
+            <div className="mt-8 bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-4 md:p-6 border-2 border-pastel-blue/30">
               <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                 {/* Info de página */}
                 <div className="text-sm text-gray-600 text-center md:text-left">
-                  Mostrando <strong className="text-purple-600">{startIndex + 1}</strong> - <strong className="text-purple-600">{Math.min(endIndex, filteredAndSortedOrders.length)}</strong> de <strong className="text-purple-600">{filteredAndSortedOrders.length}</strong> órdenes
+                  Mostrando <strong className="text-pastel-blue">{startIndex + 1}</strong> - <strong className="text-pastel-blue">{Math.min(endIndex, filteredAndSortedOrders.length)}</strong> de <strong className="text-pastel-blue">{filteredAndSortedOrders.length}</strong> órdenes
                 </div>
 
                 {/* Botones de navegación */}
@@ -2271,7 +2271,7 @@ function OrdersPageContent() {
                     className={`px-3 md:px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-1 md:gap-2 text-sm md:text-base ${
                       filters.currentPage === 1
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'border-2 border-purple-200 text-purple-600 hover:border-purple-400 hover:bg-purple-50'
+                        : 'border-2 border-pastel-blue/30 text-pastel-blue hover:border-pastel-blue hover:bg-pastel-blue/10'
                     }`}
                   >
                     <ChevronLeft className="w-4 h-4" />
@@ -2286,8 +2286,8 @@ function OrdersPageContent() {
                         onClick={() => filters.setCurrentPage(page)}
                         className={`w-8 h-8 md:w-10 md:h-10 rounded-lg font-medium transition-all flex-shrink-0 text-sm md:text-base ${
                           filters.currentPage === page
-                            ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
-                            : 'border-2 border-purple-200 text-gray-600 hover:border-purple-400 hover:bg-purple-50'
+                            ? 'bg-gradient-to-r from-pastel-blue to-pastel-beige text-white shadow-md'
+                            : 'border-2 border-pastel-blue/30 text-gray-600 hover:border-pastel-blue hover:bg-pastel-blue/10'
                         }`}
                       >
                         {page}
@@ -2301,7 +2301,7 @@ function OrdersPageContent() {
                     className={`px-3 md:px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-1 md:gap-2 text-sm md:text-base ${
                       filters.currentPage === totalPages
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'border-2 border-purple-200 text-purple-600 hover:border-purple-400 hover:bg-purple-50'
+                        : 'border-2 border-pastel-blue/30 text-pastel-blue hover:border-pastel-blue hover:bg-pastel-blue/10'
                     }`}
                   >
                     <span className="hidden sm:inline">Siguiente</span>
@@ -2382,7 +2382,7 @@ function OrdersPageContent() {
                   onClick={() => setActiveTab('productos')}
                   className={`px-6 py-3 font-medium transition-colors ${
                     activeTab === 'productos' 
-                      ? 'border-b-2 border-purple-600 text-purple-600' 
+                      ? 'border-b-2 border-purple-600 text-pastel-blue' 
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -2392,7 +2392,7 @@ function OrdersPageContent() {
                   onClick={() => setActiveTab('estado')}
                   className={`px-6 py-3 font-medium transition-colors ${
                     activeTab === 'estado' 
-                      ? 'border-b-2 border-purple-600 text-purple-600' 
+                      ? 'border-b-2 border-purple-600 text-pastel-blue' 
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -2407,7 +2407,7 @@ function OrdersPageContent() {
                   }}
                   className={`px-6 py-3 font-medium transition-colors ${
                     activeTab === 'seguimiento' 
-                      ? 'border-b-2 border-purple-600 text-purple-600' 
+                      ? 'border-b-2 border-purple-600 text-pastel-blue' 
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
@@ -2510,7 +2510,7 @@ function OrdersPageContent() {
                               return 'bg-purple-100'
                             })()}`}>
                               {(() => {
-                                if (!hasIssue) return <Package className="w-8 h-8 text-purple-600" />;
+                                if (!hasIssue) return <Package className="w-8 h-8 text-pastel-blue" />;
                                 if (isOutOfStock) return <XCircle className="w-8 h-8 text-red-600" />;
                                 return <AlertTriangle className="w-8 h-8 text-amber-600" />;
                               })()}
@@ -2542,7 +2542,7 @@ function OrdersPageContent() {
                               )}
                             </div>
                             <div className="text-right">
-                              <p className={`font-bold text-sm ${hasIssue ? 'text-gray-400 line-through' : 'text-purple-600'}`}>
+                              <p className={`font-bold text-sm ${hasIssue ? 'text-gray-400 line-through' : 'text-pastel-blue'}`}>
                                 {formatPrice(item.subtotal)}
                               </p>
                               {!hasIssue && (
@@ -2650,7 +2650,7 @@ function OrdersPageContent() {
                         </>
                       )}
                       
-                      <div className="flex justify-between text-lg font-bold text-purple-600 pt-2 border-t">
+                      <div className="flex justify-between text-lg font-bold text-pastel-blue pt-2 border-t">
                         <span>Total {selectedOrder.creditNoteUsages && selectedOrder.creditNoteUsages.length > 0 ? 'a Pagar' : ''}:</span>
                         <span>{formatPrice(selectedOrder.totalAmount)}</span>
                       </div>
@@ -2759,7 +2759,7 @@ function OrdersPageContent() {
                         <h4 className="font-semibold text-gray-900">Vendedor:</h4>
                         <button
                           onClick={() => contactActions.handleContactSeller(selectedOrder)}
-                          className="flex items-center gap-2 text-purple-600 hover:text-purple-700 text-sm font-medium"
+                          className="flex items-center gap-2 text-pastel-blue hover:text-gray-700 text-sm font-medium"
                         >
                           <MessageCircle className="w-4 h-4" />
                           Contactar
@@ -2780,7 +2780,7 @@ function OrdersPageContent() {
                       </h3>
                       <button
                         onClick={() => fetchOrderHistory(selectedOrder.id)}
-                        className="text-sm text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                        className="text-sm text-pastel-blue hover:text-gray-700 flex items-center gap-1"
                         disabled={loadingHistory}
                       >
                         <RefreshCw className={`w-4 h-4 ${loadingHistory ? 'animate-spin' : ''}`} />
@@ -2891,7 +2891,7 @@ function OrdersPageContent() {
                                     <span>•</span>
                                     <span className={`px-2 py-0.5 rounded-full text-xs ${(() => {
                                       if (event.changedByRole === 'SELLER') return 'bg-blue-100 text-blue-700'
-                                      if (event.changedByRole === 'CLIENT' || event.changedByRole === 'BUYER') return 'bg-purple-100 text-purple-700'
+                                      if (event.changedByRole === 'CLIENT' || event.changedByRole === 'BUYER') return 'bg-purple-100 text-gray-700'
                                       return 'bg-gray-100 text-gray-700'
                                     })()}`}>
                                       {(() => {
@@ -3513,7 +3513,7 @@ function OrdersPageContent() {
           <div className="p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="p-3 bg-purple-100 rounded-full">
-                <MessageCircle className="w-6 h-6 text-purple-600" />
+                <MessageCircle className="w-6 h-6 text-pastel-blue" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Contactar vendedor</h3>
@@ -3529,10 +3529,10 @@ function OrdersPageContent() {
               {/* Opción Chat interno */}
               <button
                 onClick={contactActions.handleContactViaChat}
-                className="w-full flex items-center gap-3 p-4 border-2 border-purple-200 rounded-xl hover:border-purple-400 hover:bg-purple-50 transition-all"
+                className="w-full flex items-center gap-3 p-4 border-2 border-pastel-blue/30 rounded-xl hover:border-pastel-blue hover:bg-pastel-blue/10 transition-all"
               >
                 <div className="p-2 bg-purple-100 rounded-lg">
-                  <MessageCircle className="w-5 h-5 text-purple-600" />
+                  <MessageCircle className="w-5 h-5 text-pastel-blue" />
                 </div>
                 <div className="text-left">
                   <p className="font-semibold text-gray-900">Chat dentro de la app</p>

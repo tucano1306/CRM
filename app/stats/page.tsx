@@ -219,7 +219,7 @@ export default function StatsPage() {
 
           <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-purple-500">
             <div className="flex items-center justify-between mb-2">
-              <div className="bg-gradient-to-br from-purple-500 to-purple-700 p-2 rounded-xl shadow-md">
+              <div className="bg-gradient-to-br from-pastel-blue to-pastel-beige p-2 rounded-xl shadow-md">
                 <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
               </div>
             </div>
@@ -293,7 +293,7 @@ export default function StatsPage() {
           <Card className="shadow-lg border-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5 text-purple-600" />
+                <Package className="h-5 w-5 text-pastel-blue" />
                 Top 5 Productos Más Vendidos
               </CardTitle>
               <CardDescription>

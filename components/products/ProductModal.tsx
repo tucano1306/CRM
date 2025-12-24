@@ -62,7 +62,7 @@ export default function ProductModal({ product, isOpen, onClose, onTagsUpdate }:
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header con gradiente */}
-        <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-6 text-white">
+        <div className="bg-gradient-to-r from-pastel-blue to-pastel-beige p-6 text-gray-800">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <h2 className="text-2xl font-bold mb-2">{product.name}</h2>
@@ -91,7 +91,7 @@ export default function ProductModal({ product, isOpen, onClose, onTagsUpdate }:
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex-1 px-6 py-4 font-medium transition-all flex items-center justify-center gap-2 ${
                   activeTab === tab.id
-                    ? 'text-purple-600 border-b-2 border-purple-600 bg-white'
+                    ? 'text-pastel-blue border-b-2 border-pastel-blue bg-white'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
@@ -216,14 +216,14 @@ export default function ProductModal({ product, isOpen, onClose, onTagsUpdate }:
           {/* Tab: Ventas */}
           {activeTab === 'sales' && (
             <div className="space-y-6">
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 border border-purple-200">
+              <div className="bg-gradient-to-br from-pastel-blue/30 to-pastel-beige/30 rounded-lg p-6 border border-pastel-blue/40">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-purple-100 p-3 rounded-lg">
-                    <TrendingUp className="h-8 w-8 text-purple-600" />
+                  <div className="bg-pastel-blue/40 p-3 rounded-lg">
+                    <TrendingUp className="h-8 w-8 text-pastel-blue" />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900">Ventas Registradas</h3>
-                    <p className="text-3xl font-bold text-purple-600">
+                    <p className="text-3xl font-bold text-pastel-blue">
                       {product.sales || 0} unidades
                     </p>
                   </div>
@@ -319,7 +319,7 @@ export default function ProductModal({ product, isOpen, onClose, onTagsUpdate }:
           <Button onClick={onClose} variant="outline">
             Cerrar
           </Button>
-          <Button className="bg-purple-600 hover:bg-purple-700">
+          <Button className="bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800 hover:opacity-90">
             Editar Producto
           </Button>
         </div>

@@ -77,7 +77,7 @@ function EmptyState({ searchTerm, onCreateClick }: Readonly<{ searchTerm: string
       </p>
       <Button
         onClick={onCreateClick}
-        className="bg-purple-600 hover:bg-purple-700"
+        className="bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-700 hover:opacity-90"
       >
         <Plus className="w-4 h-4 mr-2" />
         Crear Primer Producto
@@ -160,8 +160,8 @@ function ImportFileSelected({ file, onClear }: Readonly<{ file: File; onClear: (
 function ImportFileEmpty({ onSelectClick }: Readonly<{ onSelectClick: () => void }>) {
   return (
     <div className="space-y-3">
-      <div className="w-14 h-14 mx-auto bg-purple-100 rounded-full flex items-center justify-center">
-        <Upload className="w-7 h-7 text-purple-600" />
+      <div className="w-14 h-14 mx-auto bg-pastel-blue/30 rounded-full flex items-center justify-center">
+        <Upload className="w-7 h-7 text-pastel-blue" />
       </div>
       <div>
         <p className="font-semibold text-gray-900">Arrastra tu archivo Excel aquí</p>
@@ -209,9 +209,9 @@ function ImportResultDisplay({
       </div>
 
       {result.stats.associatedToClient !== undefined && result.stats.associatedToClient > 0 && (
-        <div className="bg-purple-100 rounded-lg p-3 mb-3 text-center">
-          <p className="text-2xl font-bold text-purple-700">{result.stats.associatedToClient}</p>
-          <p className="text-sm text-purple-600 font-medium">Productos agregados al catálogo de {clientName}</p>
+        <div className="bg-pastel-blue/20 rounded-lg p-3 mb-3 text-center">
+          <p className="text-2xl font-bold text-pastel-blue">{result.stats.associatedToClient}</p>
+          <p className="text-sm text-gray-600 font-medium">Productos agregados al catálogo de {clientName}</p>
         </div>
       )}
 
@@ -246,7 +246,7 @@ function ImportResultDisplay({
         <Button variant="outline" size="sm" onClick={onImportAnother}>
           Importar otro archivo
         </Button>
-        <Button size="sm" onClick={onViewCatalog} className="bg-purple-600 hover:bg-purple-700">
+        <Button size="sm" onClick={onViewCatalog} className="bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-700 hover:opacity-90">
           Ver catálogo
         </Button>
       </div>
@@ -622,11 +622,11 @@ export default function ManageCatalogModal({
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-700 p-4 sm:p-6 text-white">
+        <div className="bg-gradient-to-r from-pastel-blue to-pastel-beige p-4 sm:p-6 text-gray-700">
           <div className="flex items-center justify-between">
             <div className="min-w-0">
               <h2 className="text-xl sm:text-2xl font-bold truncate">Catálogo de Productos</h2>
-              <p className="text-purple-100 mt-1 text-sm sm:text-base truncate">Cliente: {clientName}</p>
+              <p className="text-gray-600 mt-1 text-sm sm:text-base truncate">Cliente: {clientName}</p>
             </div>
             <button
               onClick={onClose}
@@ -642,8 +642,8 @@ export default function ManageCatalogModal({
               onClick={handleTabCatalog}
               className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base ${
                 activeTab === 'catalog'
-                  ? 'bg-white text-purple-600'
-                  : 'bg-white/20 text-white hover:bg-white/30'
+                  ? 'bg-white text-gray-700'
+                  : 'bg-white/40 text-gray-600 hover:bg-white/60'
               }`}
             >
               📦 Catálogo ({clientProducts.length})
@@ -652,8 +652,8 @@ export default function ManageCatalogModal({
               onClick={handleTabCreate}
               className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base ${
                 activeTab === 'create'
-                  ? 'bg-white text-purple-600'
-                  : 'bg-white/20 text-white hover:bg-white/30'
+                  ? 'bg-white text-gray-700'
+                  : 'bg-white/40 text-gray-600 hover:bg-white/60'
               }`}
             >
               <Plus className="w-4 h-4 inline mr-1" />
@@ -664,8 +664,8 @@ export default function ManageCatalogModal({
               onClick={handleTabImport}
               className={`px-3 sm:px-6 py-2 rounded-lg font-semibold transition-colors text-sm sm:text-base ${
                 activeTab === 'import'
-                  ? 'bg-white text-purple-600'
-                  : 'bg-white/20 text-white hover:bg-white/30'
+                  ? 'bg-white text-gray-700'
+                  : 'bg-white/40 text-gray-600 hover:bg-white/60'
               }`}
             >
               <Upload className="w-4 h-4 inline mr-1" />
@@ -689,7 +689,7 @@ export default function ManageCatalogModal({
                     placeholder="Buscar por nombre o SKU..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all text-sm sm:text-base"
+                    className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pastel-blue focus:border-pastel-blue transition-all text-sm sm:text-base"
                   />
                 </div>
                 <Button
@@ -751,7 +751,7 @@ export default function ManageCatalogModal({
                                     {product.sku}
                                   </span>
                                 )}
-                                <span className="text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded">
+                                <span className="text-xs text-pastel-blue bg-pastel-blue/20 px-2 py-0.5 rounded">
                                   {product.category}
                                 </span>
                               </div>
@@ -864,11 +864,11 @@ export default function ManageCatalogModal({
           {activeTab === 'create' && (
             // TAB: Crear nuevo producto
             <div>
-              <div className="bg-purple-50 border-2 border-purple-200 rounded-xl p-4 mb-6">
-                <h3 className="font-bold text-purple-800 mb-1">
+              <div className="bg-pastel-blue/20 border-2 border-pastel-blue/30 rounded-xl p-4 mb-6">
+                <h3 className="font-bold text-gray-700 mb-1">
                   ✨ Crear Producto para {clientName}
                 </h3>
-                <p className="text-sm text-purple-600">
+                <p className="text-sm text-gray-600">
                   Este producto será exclusivo para este cliente con el precio que definas.
                 </p>
               </div>
@@ -885,7 +885,7 @@ export default function ManageCatalogModal({
                     value={newProduct.name}
                     onChange={(e) => setNewProduct(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Ej: Manzana Roja Premium"
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pastel-blue focus:border-pastel-blue"
                   />
                 </div>
 
@@ -900,7 +900,7 @@ export default function ManageCatalogModal({
                     onChange={(e) => setNewProduct(prev => ({ ...prev, description: e.target.value }))}
                     placeholder="Descripción del producto..."
                     rows={2}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pastel-blue focus:border-pastel-blue resize-none"
                   />
                 </div>
 
@@ -919,7 +919,7 @@ export default function ManageCatalogModal({
                         value={newProduct.price}
                         onChange={(e) => setNewProduct(prev => ({ ...prev, price: e.target.value }))}
                         placeholder="0.00"
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pastel-blue focus:border-pastel-blue"
                       />
                     </div>
                   </div>
@@ -933,7 +933,7 @@ export default function ManageCatalogModal({
                       value={newProduct.stock}
                       onChange={(e) => setNewProduct(prev => ({ ...prev, stock: e.target.value }))}
                       placeholder="100"
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pastel-blue focus:border-pastel-blue"
                     />
                   </div>
                 </div>
@@ -948,7 +948,7 @@ export default function ManageCatalogModal({
                       id="new-product-category-select"
                       value={newProduct.category}
                       onChange={(e) => setNewProduct(prev => ({ ...prev, category: e.target.value }))}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pastel-blue focus:border-pastel-blue bg-white"
                     >
                       {CATEGORIES.map(cat => (
                         <option key={cat} value={cat}>{cat}</option>
@@ -963,7 +963,7 @@ export default function ManageCatalogModal({
                       id="new-product-unit-select"
                       value={newProduct.unit}
                       onChange={(e) => setNewProduct(prev => ({ ...prev, unit: e.target.value }))}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pastel-blue focus:border-pastel-blue bg-white"
                     >
                       {UNITS.map(unit => (
                         <option key={unit.value} value={unit.value}>{unit.label}</option>
@@ -984,7 +984,7 @@ export default function ManageCatalogModal({
                       value={newProduct.sku}
                       onChange={(e) => setNewProduct(prev => ({ ...prev, sku: e.target.value }))}
                       placeholder="Ej: MANZ-001"
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pastel-blue focus:border-pastel-blue"
                     />
                   </div>
                   <div>
@@ -999,7 +999,7 @@ export default function ManageCatalogModal({
                         value={newProduct.imageUrl}
                         onChange={(e) => setNewProduct(prev => ({ ...prev, imageUrl: e.target.value }))}
                         placeholder="https://..."
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-pastel-blue focus:border-pastel-blue"
                       />
                     </div>
                   </div>
@@ -1010,7 +1010,7 @@ export default function ManageCatalogModal({
                   <Button
                     onClick={handleCreateProduct}
                     disabled={saving || !newProduct.name || !newProduct.price}
-                    className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 py-3 text-lg font-semibold"
+                    className="w-full bg-gradient-to-r from-pastel-blue to-pastel-beige hover:opacity-90 py-3 text-lg font-semibold text-gray-700"
                   >
                     {saving ? (
                       <>
@@ -1031,8 +1031,8 @@ export default function ManageCatalogModal({
           {activeTab === 'import' && (
             // TAB: Importar desde Excel
             <div className="space-y-6">
-              <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-4">
-                <h4 className="font-bold text-purple-800 mb-2 flex items-center gap-2">
+              <div className="bg-gradient-to-br from-pastel-blue/20 to-pastel-beige/20 border-2 border-pastel-blue/30 rounded-xl p-4">
+                <h4 className="font-bold text-gray-700 mb-2 flex items-center gap-2">
                   <FileSpreadsheet className="w-5 h-5" />
                   Importar productos desde Excel
                 </h4>
@@ -1057,7 +1057,7 @@ export default function ManageCatalogModal({
                       console.error('Error descargando plantilla:', err)
                     }
                   }}
-                  className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                  className="border-pastel-blue/50 text-gray-700 hover:bg-pastel-blue/20"
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Descargar plantilla
@@ -1123,7 +1123,7 @@ export default function ManageCatalogModal({
                     }
                   }}
                   disabled={importing}
-                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 py-3 text-lg font-semibold"
+                  className="w-full bg-gradient-to-r from-pastel-blue to-pastel-beige hover:opacity-90 py-3 text-lg font-semibold text-gray-700"
                 >
                   {importing ? (
                     <>

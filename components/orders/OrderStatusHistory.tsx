@@ -64,7 +64,7 @@ const statusConfig: Record<OrderStatus, { label: string; icon: any; color: strin
   CONFIRMED: { label: 'En Proceso', icon: CheckCircle, color: 'text-blue-600' },
   PREPARING: { label: 'Preparando', icon: Box, color: 'text-indigo-600' },
   READY_FOR_PICKUP: { label: 'Listo para Recoger', icon: Package, color: 'text-cyan-600' },
-  IN_DELIVERY: { label: 'En Entrega', icon: Truck, color: 'text-purple-600' },
+  IN_DELIVERY: { label: 'En Entrega', icon: Truck, color: 'text-pastel-blue' },
   DELIVERED: { label: 'Recibida', icon: CheckCircle, color: 'text-green-600' },
   PARTIALLY_DELIVERED: { label: 'Entrega Parcial', icon: AlertCircle, color: 'text-orange-600' },
   COMPLETED: { label: 'Completada', icon: CheckCircle, color: 'text-green-600' },
@@ -114,7 +114,7 @@ function getIconBgClass(isProductDeleted: boolean, isProductAction: boolean, isF
 
 function getRoleBadge(role: string) {
   const roleMap: Record<string, { label: string; color: string }> = {
-    SELLER: { label: 'Vendedor', color: 'bg-purple-100 text-purple-800' },
+    SELLER: { label: 'Vendedor', color: 'bg-pastel-blue/20 text-gray-700' },
     ADMIN: { label: 'Admin', color: 'bg-red-100 text-red-800' },
     CLIENT: { label: 'Cliente', color: 'bg-blue-100 text-blue-800' },
     BUYER: { label: 'Comprador', color: 'bg-green-100 text-green-800' },

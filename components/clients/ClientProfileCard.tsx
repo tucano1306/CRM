@@ -62,52 +62,52 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
 
   const colors = [
     { 
-      bg: 'from-violet-500 via-purple-500 to-fuchsia-500', 
-      border: 'border-purple-200',
-      light: 'bg-purple-50',
-      accent: 'text-purple-600',
-      button: 'from-purple-500 to-purple-600',
-      glow: 'shadow-purple-200'
+      bg: 'from-pastel-blue via-pastel-blue to-pastel-beige', 
+      border: 'border-pastel-blue/30',
+      light: 'bg-pastel-blue/20',
+      accent: 'text-pastel-blue',
+      button: 'from-pastel-blue to-pastel-beige',
+      glow: 'shadow-pastel-blue/30'
     },
     { 
-      bg: 'from-blue-500 via-cyan-500 to-teal-500', 
-      border: 'border-blue-200',
-      light: 'bg-blue-50',
-      accent: 'text-blue-600',
-      button: 'from-blue-500 to-blue-600',
-      glow: 'shadow-blue-200'
+      bg: 'from-pastel-beige via-pastel-sand to-pastel-cream', 
+      border: 'border-pastel-beige/30',
+      light: 'bg-pastel-beige/20',
+      accent: 'text-amber-600',
+      button: 'from-pastel-beige to-pastel-sand',
+      glow: 'shadow-pastel-beige/30'
     },
     { 
-      bg: 'from-emerald-500 via-green-500 to-lime-500', 
+      bg: 'from-emerald-200 via-green-200 to-teal-200', 
       border: 'border-green-200',
       light: 'bg-green-50',
       accent: 'text-green-600',
-      button: 'from-green-500 to-green-600',
+      button: 'from-emerald-300 to-green-300',
       glow: 'shadow-green-200'
     },
     { 
-      bg: 'from-orange-500 via-amber-500 to-yellow-500', 
+      bg: 'from-amber-200 via-orange-200 to-yellow-200', 
       border: 'border-orange-200',
       light: 'bg-orange-50',
       accent: 'text-orange-600',
-      button: 'from-orange-500 to-orange-600',
+      button: 'from-amber-300 to-orange-300',
       glow: 'shadow-orange-200'
     },
     { 
-      bg: 'from-pink-500 via-rose-500 to-red-500', 
+      bg: 'from-pink-200 via-rose-200 to-red-200', 
       border: 'border-pink-200',
       light: 'bg-pink-50',
       accent: 'text-pink-600',
-      button: 'from-pink-500 to-pink-600',
+      button: 'from-pink-300 to-rose-300',
       glow: 'shadow-pink-200'
     },
     { 
-      bg: 'from-indigo-500 via-blue-500 to-violet-500', 
-      border: 'border-indigo-200',
-      light: 'bg-indigo-50',
-      accent: 'text-indigo-600',
-      button: 'from-indigo-500 to-indigo-600',
-      glow: 'shadow-indigo-200'
+      bg: 'from-pastel-blue via-sky-200 to-cyan-200', 
+      border: 'border-pastel-blue/30',
+      light: 'bg-pastel-blue/10',
+      accent: 'text-cyan-600',
+      button: 'from-pastel-blue to-sky-200',
+      glow: 'shadow-pastel-blue/20'
     },
   ]
 
@@ -122,10 +122,10 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
   }
 
   const getClientLevel = (totalSpent: number) => {
-    if (totalSpent >= 1000) return { label: '⭐ VIP', color: 'bg-gradient-to-r from-yellow-400 to-amber-500 text-white', emoji: '👑' }
-    if (totalSpent >= 500) return { label: '💎 Premium', color: 'bg-gradient-to-r from-purple-400 to-pink-500 text-white', emoji: '💎' }
-    if (totalSpent >= 200) return { label: '🌟 Regular', color: 'bg-gradient-to-r from-blue-400 to-cyan-500 text-white', emoji: '🌟' }
-    return { label: '🌱 Nuevo', color: 'bg-gradient-to-r from-green-400 to-emerald-500 text-white', emoji: '🌱' }
+    if (totalSpent >= 1000) return { label: '⭐ VIP', color: 'bg-gradient-to-r from-yellow-200 to-amber-200 text-amber-700', emoji: '👑' }
+    if (totalSpent >= 500) return { label: '💎 Premium', color: 'bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-700', emoji: '💎' }
+    if (totalSpent >= 200) return { label: '🌟 Regular', color: 'bg-gradient-to-r from-pastel-blue/70 to-pastel-beige/70 text-gray-700', emoji: '🌟' }
+    return { label: '🌱 Nuevo', color: 'bg-gradient-to-r from-green-200 to-emerald-200 text-green-700', emoji: '🌱' }
   }
 
   const clientLevel = getClientLevel(client.stats?.totalSpent || 0)
@@ -214,7 +214,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
                 console.log('📦 Abriendo catálogo para:', client.name)
                 onManageCatalog()
               }}
-              className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl sm:hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+              className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-emerald-200 to-green-200 text-green-700 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl sm:hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
             >
               <Package className="w-4 h-4 sm:w-5 sm:h-5" />
               <span className="hidden sm:inline">Catálogo</span>
@@ -231,7 +231,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
               console.log('✏️ Editando cliente:', client.name)
               onEdit(client)
             }}
-            className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-blue-500 to-cyan-600 text-white rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl sm:hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+            className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-700 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl sm:hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
           >
             <Edit className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>Editar</span>
@@ -246,7 +246,7 @@ export default function ClientProfileCard({ client, onEdit, onDelete, onSelect, 
               console.log('🗑️ Eliminando cliente:', client.name)
               onDelete(client.id)
             }}
-            className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl sm:hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+            className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-3 bg-gradient-to-r from-pink-200 to-rose-200 text-rose-700 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm shadow-lg hover:shadow-xl sm:hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
           >
             <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
             <span className="hidden sm:inline">Eliminar</span>

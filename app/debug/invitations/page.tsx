@@ -122,7 +122,7 @@ export default function DebugInvitationsPage() {
         {instructions?.howToTest && (
           <Card className="mt-6 border-2 border-purple-200 bg-purple-50">
             <CardHeader>
-              <CardTitle className="text-purple-900">
+              <CardTitle className="text-gray-800">
                 🚀 Pasos para Probar
               </CardTitle>
             </CardHeader>
@@ -130,10 +130,10 @@ export default function DebugInvitationsPage() {
               <ol className="space-y-3">
                 {instructions.howToTest.map((step: string, i: number) => (
                   <li key={step} className="flex gap-3">
-                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-purple-600 text-white text-sm flex items-center justify-center font-bold">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-r from-pastel-blue to-pastel-beige text-white text-sm flex items-center justify-center font-bold">
                       {i + 1}
                     </span>
-                    <span className="text-purple-900 pt-0.5">{step}</span>
+                    <span className="text-gray-800 pt-0.5">{step}</span>
                   </li>
                 ))}
               </ol>

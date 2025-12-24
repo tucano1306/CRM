@@ -237,8 +237,8 @@ export function QuickActionsModal({ show, onClose, router }: QuickActionsModalPr
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-60 z-[10000] flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="bg-gradient-to-br from-white to-purple-50 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border-2 border-purple-200">
-        <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 sm:p-4 flex items-center justify-between rounded-t-2xl">
+      <div className="bg-gradient-to-br from-white to-pastel-cream rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border-2 border-pastel-blue/30">
+        <div className="sticky top-0 bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-700 p-3 sm:p-4 flex items-center justify-between rounded-t-2xl">
           <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
             <span className="text-xl">+</span>{' '}
             Acciones Rápidas

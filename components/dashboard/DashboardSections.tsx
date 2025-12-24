@@ -38,7 +38,7 @@ export function getOrderStatusStyle(status: string): string {
     IN_PROGRESS: 'bg-blue-100 text-blue-800',
     CONFIRMED: 'bg-green-100 text-green-800',
     COMPLETED: 'bg-green-100 text-green-800',
-    IN_DELIVERY: 'bg-purple-100 text-purple-800',
+    IN_DELIVERY: 'bg-pastel-blue/30 text-pastel-blue',
     DELIVERED: 'bg-emerald-100 text-emerald-800',
     CANCELED: 'bg-red-100 text-red-800',
     CANCELLED: 'bg-red-100 text-red-800',
@@ -51,7 +51,7 @@ export function getOrderStatusColorClasses(status: string): string {
   const colorMap: Record<string, string> = {
     PENDING: 'bg-yellow-100 text-yellow-600',
     CONFIRMED: 'bg-green-100 text-green-600',
-    IN_DELIVERY: 'bg-purple-100 text-purple-600',
+    IN_DELIVERY: 'bg-pastel-blue/30 text-pastel-blue',
     DELIVERED: 'bg-emerald-100 text-emerald-600',
     COMPLETED: 'bg-emerald-100 text-emerald-600',
     CANCELED: 'bg-red-100 text-red-600',
@@ -307,13 +307,13 @@ export function DailyActivityStats({ orders }: DailyActivityStatsProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg p-5 text-white">
+      <div className="bg-gradient-to-br from-pastel-blue to-pastel-beige rounded-lg p-5 text-gray-700">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-purple-100 text-sm">Órdenes Hoy</p>
+            <p className="text-gray-600 text-sm">Órdenes Hoy</p>
             <p className="text-3xl font-bold mt-1">{todaysOrders.length}</p>
           </div>
-          <ShoppingCart className="text-purple-200" size={40} />
+          <ShoppingCart className="text-gray-500" size={40} />
         </div>
       </div>
 

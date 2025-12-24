@@ -33,7 +33,7 @@ function LoadingScreen() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-50 via-purple-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="text-center">
-        <Loader2 className="animate-spin h-12 w-12 text-purple-600 mx-auto mb-4" />
+        <Loader2 className="animate-spin h-12 w-12 text-pastel-blue mx-auto mb-4" />
         <p className="text-gray-600">Verificando permisos...</p>
       </div>
     </div>
