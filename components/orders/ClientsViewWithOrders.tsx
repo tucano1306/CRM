@@ -385,26 +385,26 @@ export default function ClientsViewWithOrders({
             </p>
           </div>
 
-          <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-4 text-white">
+          <div className="bg-gradient-to-br from-emerald-100 to-teal-100 rounded-lg p-4 text-emerald-800">
             <div className="flex items-center justify-between mb-2">
-              <DollarSign className="h-5 w-5 opacity-80" />
+              <DollarSign className="h-5 w-5 text-emerald-600" />
             </div>
             <p className="text-2xl font-bold">
               {formatPrice(filteredStats.totalRevenue)}
             </p>
-            <p className="text-sm opacity-90">
+            <p className="text-sm text-emerald-600">
               {searchTerm ? 'Ingresos del Cliente' : 'Ventas Totales'}
             </p>
           </div>
 
-          <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg p-4 text-white">
+          <div className="bg-gradient-to-br from-rose-100 to-pink-100 rounded-lg p-4 text-rose-800">
             <div className="flex items-center justify-between mb-2">
-              <Calendar className="h-5 w-5 opacity-80" />
+              <Calendar className="h-5 w-5 text-rose-500" />
             </div>
             <p className="text-2xl font-bold">
               {formatPrice(filteredStats.averagePerClient)}
             </p>
-            <p className="text-sm opacity-90">Promedio/Cliente</p>
+            <p className="text-sm text-rose-600">Promedio/Cliente</p>
           </div>
         </div>
 

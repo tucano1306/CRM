@@ -100,7 +100,7 @@ export default function Sidebar() {
       <div className={`
         hidden lg:flex lg:flex-col lg:fixed lg:left-0 lg:top-0 lg:h-full 
         bg-gradient-to-b from-pastel-blue/80 via-pastel-cream to-pastel-beige/60 dark:bg-gray-900 border-r border-pastel-sand/30 dark:border-gray-700 
-        shadow-lg backdrop-blur-xl transition-all duration-300 ease-in-out z-40
+        shadow-lg backdrop-blur-xl transition-[width] duration-150 ease-out z-40
         ${isCollapsed ? 'lg:w-16' : 'lg:w-64'}
       `}>
         {/* Desktop Header - Clean design */}
@@ -163,21 +163,26 @@ export default function Sidebar() {
             const isChatItem = item.href === '/chat'
             const showBadge = isChatItem && unreadCount > 0
             
+            // Estilos según estado activo y colapsado
+            const getActiveStyles = () => {
+              if (!isActive) return 'text-gray-700 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+              if (isCollapsed) return 'bg-pastel-blue/20 dark:bg-blue-900/50 text-pastel-blue dark:text-blue-300 shadow-sm'
+              return 'bg-white/80 dark:bg-blue-900/50 text-pastel-blue dark:text-blue-300 border border-pastel-blue/30 dark:border-blue-700 shadow-md'
+            }
+            
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                title={isCollapsed ? item.title : undefined}
                 className={`
-                  flex items-center px-4 py-3 rounded-xl transition-all duration-200 font-medium relative
-                  ${isActive 
-                    ? 'bg-white/80 dark:bg-blue-900/50 text-pastel-blue dark:text-blue-300 border border-pastel-blue/30 dark:border-blue-700 shadow-md' 
-                    : 'text-gray-700 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
-                  }
-                  ${isCollapsed ? 'justify-center' : 'space-x-3'}
+                  flex items-center rounded-xl transition-all duration-150 font-medium relative
+                  ${isCollapsed ? 'justify-center px-2 py-3 mx-1' : 'px-4 py-3 space-x-3'}
+                  ${getActiveStyles()}
                 `}
               >
-                <div className="relative">
-                  <Icon className="h-5 w-5 flex-shrink-0" />
+                <div className="relative flex-shrink-0">
+                  <Icon className={`flex-shrink-0 ${isCollapsed ? 'h-6 w-6' : 'h-5 w-5'}`} />
                   {showBadge && isCollapsed && (
                     <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                       {unreadCount > 9 ? '9+' : unreadCount}
