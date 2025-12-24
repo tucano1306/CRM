@@ -65,6 +65,8 @@ export async function sendEmail(params: EmailParams): Promise<MailersendResponse
     console.log('📧 [MAILERSEND] Enviando email...')
     console.log('📧 [MAILERSEND] Destinatarios:', recipients)
     console.log('📧 [MAILERSEND] From:', payload.from.email)
+    console.log('📧 [MAILERSEND] ENV MAILERSEND_FROM_EMAIL:', process.env.MAILERSEND_FROM_EMAIL || '(no definido)')
+    console.log('📧 [MAILERSEND] DEFAULT_FROM_EMAIL:', DEFAULT_FROM_EMAIL)
     
     const response = await fetch(MAILERSEND_API_URL, {
       method: 'POST',
@@ -88,7 +90,7 @@ export async function sendEmail(params: EmailParams): Promise<MailersendResponse
     // Mensaje de error más específico
     let errorMessage = errorData.message || `HTTP ${response.status}`
     if (response.status === 422) {
-      errorMessage = `El email remitente no está verificado en Mailersend. Usa el dominio trial correcto.    test-zxk54v8vq11ljy6v.mlsender.net`
+      errorMessage = `El email remitente "${payload.from.email}" no está verificado en Mailersend. Dominio correcto: test-zxk54v8vq11ljy6v.mlsender.net. ENV: ${process.env.MAILERSEND_FROM_EMAIL || 'no definido'}`
     } else if (response.status === 401) {
       errorMessage = 'API key inválida o expirada'
     } else if (errorData.errors) {
