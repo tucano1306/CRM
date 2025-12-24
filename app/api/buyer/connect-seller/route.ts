@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     const phone = phoneFromForm || clerkUser.phone_numbers?.[0]?.phone_number || ''
 
     // Crear o actualizar authenticated_user
-    await prisma.authenticated_users.upsert({
+    const authUser = await prisma.authenticated_users.upsert({
       where: { authId: userId },
       update: {
         email,
@@ -87,6 +87,16 @@ export async function POST(request: NextRequest) {
     })
 
     if (existingClient) {
+      // Conectar el cliente existente al authenticated_user si no lo está
+      await prisma.authenticated_users.update({
+        where: { id: authUser.id },
+        data: {
+          clients: {
+            connect: { id: existingClient.id }
+          }
+        }
+      })
+      
       return NextResponse.json({
         success: true,
         status: 'ALREADY_CONNECTED',
@@ -99,14 +109,17 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // CREAR CLIENTE DIRECTAMENTE
+    // CREAR CLIENTE Y CONECTARLO AL AUTHENTICATED_USER
     const client = await prisma.client.create({
       data: {
         name: fullName,
         email,
         phone: phone || '',
         address: '',
-        sellerId: seller.id
+        sellerId: seller.id,
+        authenticated_users: {
+          connect: { id: authUser.id }
+        }
       }
     })
 
