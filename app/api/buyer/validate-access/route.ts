@@ -23,9 +23,31 @@ export async function GET() {
     })
 
     if (!authUser) {
+      // Verificar si hay una solicitud de conexión pendiente
+      const pendingRequest = await prisma.connectionRequest.findFirst({
+        where: { 
+          buyerClerkId: userId,
+          status: 'PENDING'
+        },
+        include: {
+          seller: true
+        }
+      })
+
+      if (pendingRequest) {
+        return NextResponse.json({ 
+          hasAccess: false, 
+          reason: `Tu solicitud de conexión con ${pendingRequest.seller?.name || 'el vendedor'} está pendiente de aprobación. Te notificaremos cuando sea aceptada.`,
+          pendingRequest: {
+            sellerName: pendingRequest.seller?.name,
+            createdAt: pendingRequest.createdAt
+          }
+        })
+      }
+
       return NextResponse.json({ 
         hasAccess: false, 
-        reason: 'Usuario no encontrado en el sistema' 
+        reason: 'Usuario no encontrado en el sistema. Necesitas un link de invitación de un vendedor.' 
       })
     }
 
@@ -33,9 +55,31 @@ export async function GET() {
     const client = authUser.clients[0]
     
     if (!client) {
+      // Verificar si hay una solicitud de conexión pendiente
+      const pendingRequest = await prisma.connectionRequest.findFirst({
+        where: { 
+          buyerClerkId: userId,
+          status: 'PENDING'
+        },
+        include: {
+          seller: true
+        }
+      })
+
+      if (pendingRequest) {
+        return NextResponse.json({ 
+          hasAccess: false, 
+          reason: `Tu solicitud de conexión con ${pendingRequest.seller?.name || 'el vendedor'} está pendiente de aprobación. Te notificaremos cuando sea aceptada.`,
+          pendingRequest: {
+            sellerName: pendingRequest.seller?.name,
+            createdAt: pendingRequest.createdAt
+          }
+        })
+      }
+
       return NextResponse.json({ 
         hasAccess: false, 
-        reason: 'Tu cuenta de cliente no existe en el sistema' 
+        reason: 'Tu cuenta de cliente no existe en el sistema. Necesitas un link de invitación de un vendedor.' 
       })
     }
 

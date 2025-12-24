@@ -2,12 +2,15 @@
 
 import { SignIn, useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { AlertCircle, ArrowLeft, Lock, Loader2 } from 'lucide-react';
 
 export default function BuyerSignInPage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectUrl = searchParams.get('redirect_url');
+  
   const [roleConflict, setRoleConflict] = useState<{
     hasConflict: boolean;
     message: string;
@@ -15,12 +18,19 @@ export default function BuyerSignInPage() {
   } | null>(null);
   const [checking, setChecking] = useState(false);
 
+  // Si ya está logueado y hay redirect_url, redirigir
+  useEffect(() => {
+    if (isLoaded && isSignedIn && redirectUrl) {
+      router.push(redirectUrl);
+    }
+  }, [isLoaded, isSignedIn, redirectUrl, router]);
+
   // Verificar conflicto de roles después del login
   useEffect(() => {
-    if (isLoaded && isSignedIn && user) {
+    if (isLoaded && isSignedIn && user && !redirectUrl) {
       checkRoleConflict();
     }
-  }, [isLoaded, isSignedIn, user]);
+  }, [isLoaded, isSignedIn, user, redirectUrl]);
 
   const checkRoleConflict = async () => {
     setChecking(true);
@@ -125,8 +135,9 @@ export default function BuyerSignInPage() {
               card: "shadow-xl"
             }
           }}
+          forceRedirectUrl={redirectUrl || undefined}
           fallbackRedirectUrl="/buyer/catalog"
-          signUpUrl="/buyer/sign-up"
+          signUpUrl={redirectUrl ? `/buyer/sign-up?redirect_url=${encodeURIComponent(redirectUrl)}` : "/buyer/sign-up"}
         />
       </div>
     </div>
