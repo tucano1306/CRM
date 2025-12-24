@@ -78,10 +78,10 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Verificar si ya existe un cliente con este vendedor
+    // Verificar si ya existe un cliente con este email y vendedor
     const existingClient = await prisma.client.findFirst({
       where: {
-        authenticatedUserId: authUser.id,
+        email: email,
         sellerId: seller.id
       }
     })
@@ -104,11 +104,9 @@ export async function POST(request: NextRequest) {
       data: {
         name: fullName,
         email,
-        phone: phone || null,
+        phone: phone || '',
         address: '',
-        sellerId: seller.id,
-        clerkUserId: userId,
-        authenticatedUserId: authUser.id
+        sellerId: seller.id
       }
     })
 
