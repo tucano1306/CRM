@@ -86,6 +86,7 @@ model Seller {
   creditNotes         CreditNote[]
   notifications       Notification[]
   pendingInvitations  PendingInvitation[]
+  connectionRequests  ConnectionRequest[]
 
   @@index([email])
   @@index([isActive])
@@ -486,6 +487,9 @@ model ConnectionRequest {
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
   expiresAt       DateTime?               // Fecha de expiración opcional
+
+  // Relación con vendedor
+  seller          Seller                  @relation(fields: [sellerId], references: [id], onDelete: Cascade)
 
   @@index([sellerId])
   @@index([buyerClerkId])

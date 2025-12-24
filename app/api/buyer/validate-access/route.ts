@@ -24,25 +24,29 @@ export async function GET() {
 
     if (!authUser) {
       // Verificar si hay una solicitud de conexión pendiente
-      const pendingRequest = await (prisma as any).connectionRequest.findFirst({
-        where: { 
-          buyerClerkId: userId,
-          status: 'PENDING'
-        },
-        include: {
-          seller: true
-        }
-      })
-
-      if (pendingRequest) {
-        return NextResponse.json({ 
-          hasAccess: false, 
-          reason: `Tu solicitud de conexión con ${pendingRequest.seller?.name || 'el vendedor'} está pendiente de aprobación. Te notificaremos cuando sea aceptada.`,
-          pendingRequest: {
-            sellerName: pendingRequest.seller?.name,
-            createdAt: pendingRequest.createdAt
+      try {
+        const pendingRequest = await prisma.connectionRequest.findFirst({
+          where: { 
+            buyerClerkId: userId,
+            status: 'PENDING'
+          },
+          include: {
+            seller: true
           }
         })
+
+        if (pendingRequest) {
+          return NextResponse.json({ 
+            hasAccess: false, 
+            reason: `Tu solicitud de conexión con ${pendingRequest.seller?.name || 'el vendedor'} está pendiente de aprobación. Te notificaremos cuando sea aceptada.`,
+            pendingRequest: {
+              sellerName: pendingRequest.seller?.name,
+              createdAt: pendingRequest.createdAt
+            }
+          })
+        }
+      } catch (reqError) {
+        console.log('No se pudo verificar solicitudes pendientes:', reqError)
       }
 
       return NextResponse.json({ 
@@ -56,25 +60,29 @@ export async function GET() {
     
     if (!client) {
       // Verificar si hay una solicitud de conexión pendiente
-      const pendingRequest = await (prisma as any).connectionRequest.findFirst({
-        where: { 
-          buyerClerkId: userId,
-          status: 'PENDING'
-        },
-        include: {
-          seller: true
-        }
-      })
-
-      if (pendingRequest) {
-        return NextResponse.json({ 
-          hasAccess: false, 
-          reason: `Tu solicitud de conexión con ${pendingRequest.seller?.name || 'el vendedor'} está pendiente de aprobación. Te notificaremos cuando sea aceptada.`,
-          pendingRequest: {
-            sellerName: pendingRequest.seller?.name,
-            createdAt: pendingRequest.createdAt
+      try {
+        const pendingRequest = await prisma.connectionRequest.findFirst({
+          where: { 
+            buyerClerkId: userId,
+            status: 'PENDING'
+          },
+          include: {
+            seller: true
           }
         })
+
+        if (pendingRequest) {
+          return NextResponse.json({ 
+            hasAccess: false, 
+            reason: `Tu solicitud de conexión con ${pendingRequest.seller?.name || 'el vendedor'} está pendiente de aprobación. Te notificaremos cuando sea aceptada.`,
+            pendingRequest: {
+              sellerName: pendingRequest.seller?.name,
+              createdAt: pendingRequest.createdAt
+            }
+          })
+        }
+      } catch (reqError) {
+        console.log('No se pudo verificar solicitudes pendientes:', reqError)
       }
 
       return NextResponse.json({ 
