@@ -977,10 +977,10 @@ export default function DashboardPage() {
       {/* Botón flotante de acciones rápidas */}
       <button
         onClick={() => setShowQuickActionsModal(true)}
-        className="fixed bottom-8 right-8 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-full shadow-2xl hover:from-purple-700 hover:to-indigo-700 transition-all hover:scale-110 z-50 ring-4 ring-purple-200"
+        className="fixed bottom-8 right-8 bg-gradient-to-br from-blue-100 to-purple-100 text-blue-600 p-4 rounded-full shadow-lg hover:shadow-xl hover:from-blue-200 hover:to-purple-200 transition-all duration-200 ease-out hover:scale-105 z-50 border-2 border-blue-200/50"
         title="Acciones rápidas"
       >
-        <Plus size={28} />
+        <Plus size={28} className="transition-transform" />
       </button>
 
       {/* Modal de Productos Agotados */}
@@ -1098,16 +1098,16 @@ export default function DashboardPage() {
 
       {/* Modal de Acciones Rápidas */}
       {showQuickActionsModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-60 z-[10000] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-gradient-to-br from-white to-purple-50 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border-2 border-purple-200">
-            <div className="sticky top-0 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 sm:p-4 flex items-center justify-between rounded-t-2xl">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-[10000] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-gradient-to-br from-white to-blue-50 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl border-2 border-blue-100 animate-in slide-in-from-bottom-4 duration-200">
+            <div className="sticky top-0 bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 p-3 sm:p-4 flex items-center justify-between rounded-t-2xl border-b border-blue-200">
               <h3 className="text-base sm:text-lg font-bold flex items-center gap-2">
-                <Plus size={20} />
+                <Plus size={20} className="text-blue-600" />
                 Acciones Rápidas
               </h3>
               <button
                 onClick={() => setShowQuickActionsModal(false)}
-                className="text-white hover:bg-white/20 rounded-full p-1 transition-colors"
+                className="text-blue-700 hover:bg-blue-200/50 rounded-full p-1 transition-colors"
               >
                 <X size={20} className="sm:w-6 sm:h-6" />
               </button>
