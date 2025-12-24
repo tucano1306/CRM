@@ -351,16 +351,13 @@ function ClientFormModal({ show, editingId, formData, onFormChange, onSave, onCa
   )
 }
 
-type InvitationMethod = 'email' | 'whatsapp'
+type InvitationMethod = 'whatsapp'
 
 interface InvitationModalProps {
   readonly show: boolean
   readonly invitationLink: string | null
-  readonly invitationMethod: InvitationMethod
   readonly invitationValue: string
   readonly linkCopied: boolean
-  readonly sendingInvitation: boolean
-  readonly onMethodChange: (method: InvitationMethod) => void
   readonly onValueChange: (value: string) => void
   readonly onCopyLink: () => void
   readonly onSendInvitation: () => void
@@ -370,32 +367,14 @@ interface InvitationModalProps {
 function InvitationModal({
   show,
   invitationLink,
-  invitationMethod,
   invitationValue,
   linkCopied,
-  sendingInvitation,
-  onMethodChange,
   onValueChange,
   onCopyLink,
   onSendInvitation,
   onClose
 }: InvitationModalProps) {
   if (!show) return null
-
-  const getMethodLabel = () => {
-    if (invitationMethod === 'email') return 'Correo electrónico'
-    return 'Número de WhatsApp'
-  }
-
-  const getPlaceholder = () => {
-    if (invitationMethod === 'email') return 'ejemplo@correo.com'
-    return '+1 786 258 5427'
-  }
-
-  const getSendButtonLabel = () => {
-    if (invitationMethod === 'email') return 'Email'
-    return 'WhatsApp'
-  }
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -419,55 +398,34 @@ function InvitationModal({
 
             <div className="space-y-4">
               <p className="text-gray-600 text-lg font-medium">
-                Selecciona el método de envío y completa la información del comprador.
+                Ingresa el número de WhatsApp del comprador para enviarle la invitación.
               </p>
 
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border-2 border-blue-200">
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border-2 border-green-200">
                 <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2 text-lg">
-                  📤 Método de envío
+                  💬 Enviar por WhatsApp
                 </h4>
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="invitation-method-select" className="block text-sm font-medium text-gray-700 mb-2">
-                      Selecciona el método de envío
-                    </label>
-                    <select
-                      id="invitation-method-select"
-                      value={invitationMethod}
-                      onChange={(e) => onMethodChange(e.target.value as InvitationMethod)}
-                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base bg-white"
-                    >
-                      <option value="email">📧 Email</option>
-                      <option value="whatsapp">💬 WhatsApp</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {getMethodLabel()}
+                    <label htmlFor="whatsapp-number" className="block text-sm font-medium text-gray-700 mb-2">
+                      Número de WhatsApp
                     </label>
                     <input
-                      type={invitationMethod === 'email' ? 'email' : 'tel'}
-                      placeholder={getPlaceholder()}
+                      id="whatsapp-number"
+                      type="tel"
+                      placeholder="+1 786 258 5427"
                       value={invitationValue}
                       onChange={(e) => onValueChange(e.target.value)}
-                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-base"
+                      className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all text-base"
                     />
                   </div>
 
                   <button
                     onClick={onSendInvitation}
-                    disabled={sendingInvitation || !invitationValue.trim()}
+                    disabled={!invitationValue.trim()}
                     className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white px-6 py-3 rounded-xl hover:from-green-600 hover:to-green-700 font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
-                    {sendingInvitation ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
-                        Enviando...
-                      </>
-                    ) : (
-                      <>✉️ Enviar Invitación por {getSendButtonLabel()}</>
-                    )}
+                    💬 Enviar Invitación por WhatsApp
                   </button>
                 </div>
               </div>
@@ -854,8 +812,6 @@ export default function ClientsPage() {
   const [invitationLink, setInvitationLink] = useState<string | null>(null)
   const [generatingLink, setGeneratingLink] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
-  const [sendingInvitation, setSendingInvitation] = useState(false)
-  const [invitationMethod, setInvitationMethod] = useState<InvitationMethod>('email')
   const [invitationValue, setInvitationValue] = useState('')
   const [pendingInvitations, setPendingInvitations] = useState<PendingInvitation[]>([])
 
@@ -1000,7 +956,6 @@ export default function ClientsPage() {
     setShowInvitationModal(false)
     setInvitationLink(null)
     setLinkCopied(false)
-    setInvitationMethod('email')
     setInvitationValue('')
     // Refrescar invitaciones pendientes
     fetchPendingInvitations().then(setPendingInvitations)
@@ -1009,7 +964,7 @@ export default function ClientsPage() {
   const sendInvitation = useCallback(async () => {
     if (!invitationLink || !invitationValue.trim()) {
       if (!invitationValue.trim()) {
-        alert('Por favor ingresa un valor para el método seleccionado')
+        alert('Por favor ingresa el número de WhatsApp')
       }
       return
     }
@@ -1019,70 +974,27 @@ export default function ClientsPage() {
     const tokenMatch = tokenRegex.exec(invitationLink)
     const invitationToken = tokenMatch ? tokenMatch[1] : invitationLink
 
-    // Guardar invitación para WhatsApp
-    if (invitationMethod === 'whatsapp') {
-      try {
-        await apiCall('/api/seller/pending-invitations', {
-          method: 'POST',
-          body: JSON.stringify({
-            contactValue: invitationValue,
-            contactName: null,
-            channel: invitationMethod.toUpperCase(),
-            invitationToken,
-            invitationLink
-          })
-        })
-        console.log('✅ Invitación guardada en base de datos')
-      } catch (err) {
-        console.error('Error guardando invitación:', err)
-      }
-    }
-
-    if (invitationMethod === 'whatsapp') {
-      sendWhatsAppInvitation(invitationValue, sellerName, invitationLink)
-      setTimeout(closeInvitationModal, 500)
-      return
-    }
-
+    // Guardar invitación en base de datos
     try {
-      setSendingInvitation(true)
-      
-      const result = await apiCall('/api/seller/send-invitation', {
+      await apiCall('/api/seller/pending-invitations', {
         method: 'POST',
         body: JSON.stringify({
-          invitationLink,
-          sellerName,
-          email: invitationValue,
-          whatsapp: null,
-          sms: null
-        }),
-        timeout: 15000
+          contactValue: invitationValue,
+          contactName: null,
+          channel: 'WHATSAPP',
+          invitationToken,
+          invitationLink
+        })
       })
-
-      const apiData = result.data
-      const isSuccess = result.success && apiData?.success
-
-      if (isSuccess) {
-        alert(`✅ Invitación enviada por Email a ${invitationValue}`)
-        closeInvitationModal()
-      } else {
-        const errorMsg = apiData?.error || result.error || 'Error al enviar la invitación'
-        const errorDetails = apiData?.details || ''
-        console.error('❌ Error de API completo:', result)
-        console.error('❌ API Data:', apiData)
-        console.error('❌ Data.data:', apiData?.data)
-        console.error('❌ Errors array:', apiData?.data?.errors)
-        
-        const fullError = errorDetails ? `Error: ${errorMsg}\n${errorDetails}` : `Error: ${errorMsg}`
-        alert(fullError)
-      }
+      console.log('✅ Invitación guardada en base de datos')
     } catch (err) {
-      console.error('❌ Error enviando invitación:', err)
-      alert('Error al enviar la invitación')
-    } finally {
-      setSendingInvitation(false)
+      console.error('Error guardando invitación:', err)
     }
-  }, [invitationLink, invitationValue, invitationMethod, sellerName, closeInvitationModal])
+
+    // Enviar por WhatsApp
+    sendWhatsAppInvitation(invitationValue, sellerName, invitationLink)
+    setTimeout(closeInvitationModal, 500)
+  }, [invitationLink, invitationValue, sellerName, closeInvitationModal])
 
   const closeHistoryModal = useCallback(() => {
     setShowHistoryModal(false)
@@ -1119,11 +1031,6 @@ export default function ClientsPage() {
 
   const handleBackToList = useCallback(() => {
     setSelectedClientId(null)
-  }, [])
-
-  const handleMethodChange = useCallback((method: InvitationMethod) => {
-    setInvitationMethod(method)
-    setInvitationValue('')
   }, [])
 
   // ============ Render States ============
@@ -1316,11 +1223,8 @@ export default function ClientsPage() {
       <InvitationModal
         show={showInvitationModal}
         invitationLink={invitationLink}
-        invitationMethod={invitationMethod}
         invitationValue={invitationValue}
         linkCopied={linkCopied}
-        sendingInvitation={sendingInvitation}
-        onMethodChange={handleMethodChange}
         onValueChange={setInvitationValue}
         onCopyLink={copyInvitationLink}
         onSendInvitation={sendInvitation}
