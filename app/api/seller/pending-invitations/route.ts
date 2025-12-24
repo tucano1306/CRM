@@ -86,10 +86,23 @@ export async function POST(req: NextRequest) {
       message: 'Invitación guardada'
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error guardando invitación:', error)
+    
+    // Detectar si la tabla no existe
+    if (error?.code === 'P2021' || error?.message?.includes('does not exist')) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'La tabla pending_invitations no existe. Ejecuta: npx prisma db push',
+          needsMigration: true
+        },
+        { status: 500 }
+      )
+    }
+    
     return NextResponse.json(
-      { success: false, error: 'Error interno del servidor' },
+      { success: false, error: error?.message || 'Error interno del servidor' },
       { status: 500 }
     )
   }
@@ -135,10 +148,20 @@ export async function GET(req: NextRequest) {
       data: invitations
     })
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error obteniendo invitaciones:', error)
+    
+    // Detectar si la tabla no existe
+    if (error?.code === 'P2021' || error?.message?.includes('does not exist')) {
+      return NextResponse.json({
+        success: true,
+        data: [],
+        warning: 'Tabla no migrada aún'
+      })
+    }
+    
     return NextResponse.json(
-      { success: false, error: 'Error interno del servidor' },
+      { success: false, error: error?.message || 'Error interno del servidor' },
       { status: 500 }
     )
   }

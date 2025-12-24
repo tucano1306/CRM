@@ -3,9 +3,15 @@
  * 
  * Plan gratuito: 3,000 emails/mes
  * Documentación: https://developers.mailersend.com/
+ * 
+ * IMPORTANTE: Configura MAILERSEND_FROM_EMAIL en Vercel con tu dominio trial verificado
+ * Ejemplo: noreply@trial-xxxxx.mlsender.net
  */
 
 const MAILERSEND_API_URL = 'https://api.mailersend.com/v1/email'
+
+// Dominio por defecto - CAMBIA esto o usa MAILERSEND_FROM_EMAIL
+const DEFAULT_FROM_EMAIL = process.env.MAILERSEND_FROM_EMAIL || 'noreply@test-zxk54v8vq11ljy6v.mlsender.net'
 
 interface EmailParams {
   to: string | string[]
@@ -47,7 +53,7 @@ export async function sendEmail(params: EmailParams): Promise<MailersendResponse
   
   const payload = {
     from: {
-      email: params.from?.email || 'noreply@test-zxk54v8vq11ljy6v.mlsender.net',
+      email: params.from?.email || DEFAULT_FROM_EMAIL,
       name: params.from?.name || 'Food Orders CRM'
     },
     to: recipients.map(email => ({ email })),
@@ -58,7 +64,7 @@ export async function sendEmail(params: EmailParams): Promise<MailersendResponse
   try {
     console.log('📧 [MAILERSEND] Enviando email...')
     console.log('📧 [MAILERSEND] Destinatarios:', recipients)
-    console.log('📧 [MAILERSEND] From:', payload.from)
+    console.log('📧 [MAILERSEND] From:', payload.from.email)
     
     const response = await fetch(MAILERSEND_API_URL, {
       method: 'POST',
@@ -82,7 +88,7 @@ export async function sendEmail(params: EmailParams): Promise<MailersendResponse
     // Mensaje de error más específico
     let errorMessage = errorData.message || `HTTP ${response.status}`
     if (response.status === 422) {
-      errorMessage = 'El email remitente no está verificado en Mailersend. Usa el dominio trial correcto.'
+      errorMessage = `El email remitente no está verificado en Mailersend. Usa el dominio trial correcto.    test-zxk54v8vq11ljy6v.mlsender.net`
     } else if (response.status === 401) {
       errorMessage = 'API key inválida o expirada'
     } else if (errorData.errors) {
