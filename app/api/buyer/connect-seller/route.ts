@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     const phone = phoneFromForm || clerkUser.phone_numbers?.[0]?.phone_number || ''
 
     // Crear o actualizar authenticated_user
-    const authUser = await prisma.authenticated_users.upsert({
+    await prisma.authenticated_users.upsert({
       where: { authId: userId },
       update: {
         email,
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       await prisma.notification.create({
         data: {
           sellerId: seller.id,
-          type: 'NEW_CLIENT',
+          type: 'CONNECTION_ACCEPTED',
           title: '🎉 Nuevo cliente',
           message: `${fullName} se ha conectado como tu cliente`,
           relatedId: client.id
