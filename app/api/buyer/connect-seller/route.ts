@@ -128,35 +128,52 @@ export async function POST(request: NextRequest) {
     })
 
     // Crear la solicitud de conexión
-    const connectionRequest = await prisma.connectionRequest.create({
-      data: {
-        buyerClerkId: userId,
-        buyerName: fullName,
-        buyerEmail: email,
-        buyerPhone: phone || null,
-        sellerId,
-        invitationToken: token,
-        status: 'PENDING',
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Expira en 7 días
-      }
-    })
-
-    // Crear notificación para el vendedor
-    await prisma.notification.create({
-      data: {
-        sellerId: seller.id,
-        type: 'CONNECTION_REQUEST',
-        title: '🔔 Nueva solicitud de conexión',
-        message: `${fullName} (${email}) quiere conectarse contigo como cliente`,
-        relatedId: connectionRequest.id,
-        metadata: {
-          requestId: connectionRequest.id,
+    console.log('📝 [connect-seller] Creando solicitud de conexión...')
+    console.log('📝 [connect-seller] Datos:', { buyerClerkId: userId, buyerName: fullName, buyerEmail: email, sellerId })
+    
+    let connectionRequest
+    try {
+      connectionRequest = await (prisma as any).connectionRequest.create({
+        data: {
+          buyerClerkId: userId,
           buyerName: fullName,
           buyerEmail: email,
-          buyerPhone: phone
+          buyerPhone: phone || null,
+          sellerId,
+          invitationToken: token,
+          status: 'PENDING',
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // Expira en 7 días
         }
-      }
-    })
+      })
+      console.log('✅ [connect-seller] Solicitud creada:', connectionRequest.id)
+    } catch (createError: any) {
+      console.error('❌ [connect-seller] Error creando solicitud:', createError.message)
+      throw createError
+    }
+
+    // Crear notificación para el vendedor
+    console.log('📧 [connect-seller] Creando notificación para vendedor:', seller.id)
+    try {
+      const notification = await prisma.notification.create({
+        data: {
+          sellerId: seller.id,
+          type: 'CONNECTION_REQUEST',
+          title: '🔔 Nueva solicitud de conexión',
+          message: `${fullName} (${email}) quiere conectarse contigo como cliente`,
+          relatedId: connectionRequest.id,
+          metadata: {
+            requestId: connectionRequest.id,
+            buyerName: fullName,
+            buyerEmail: email,
+            buyerPhone: phone
+          }
+        }
+      })
+      console.log('✅ [connect-seller] Notificación creada:', notification.id)
+    } catch (notifError: any) {
+      console.error('❌ [connect-seller] Error creando notificación:', notifError.message)
+      // No lanzamos error, la solicitud ya se creó
+    }
 
     console.log('✅ Solicitud de conexión creada:', connectionRequest.id)
     console.log('📧 Notificación enviada al vendedor:', seller.id, seller.name)
