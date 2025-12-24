@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
         where: {
           clientId: userId,
           status: {
-            notIn: ['COMPLETED', 'CANCELED', 'CANCELLED']
+            notIn: ['COMPLETED', 'CANCELED']
           }
         }
       })
