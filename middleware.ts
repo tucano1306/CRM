@@ -428,7 +428,8 @@ function handleClientRouteMapping(
 
 export const config = {
   matcher: [
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // NOSONAR - String.raw causes Next.js 16 build error "Unsupported node type TaggedTemplateExpression"
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)', // NOSONAR
     '/(api|trpc)(.*)',
   ],
 }
