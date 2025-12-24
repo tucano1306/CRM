@@ -158,7 +158,7 @@ export default function OrderDetailModal({
       <div className="absolute right-0 top-0 h-full w-full max-w-2xl">
         <Card className="h-full rounded-none shadow-2xl">
           {/* Header - Compacto */}
-          <div className="flex items-center justify-between border-b px-4 py-3 bg-gradient-to-r from-purple-50 to-blue-50">
+          <div className="flex items-center justify-between border-b px-4 py-3 bg-gradient-to-r from-pastel-blue/20 to-pastel-beige/20">
             <div className="flex items-center gap-3">
               <span className="text-xl">📦</span>
               <div>
@@ -203,7 +203,7 @@ export default function OrderDetailModal({
                     className={`
                       flex flex-col items-center gap-1 px-2 py-2 font-medium transition-colors rounded-lg text-xs
                       ${activeTab === tab.id
-                        ? 'text-purple-600 bg-purple-100'
+                        ? 'text-pastel-blue bg-pastel-blue/20'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                       }
                     `}
@@ -458,12 +458,12 @@ export default function OrderDetailModal({
             {activeTab === 'history' && (
               <div className="space-y-4">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
-                  <h3 className="text-lg font-semibold text-purple-900 mb-1 flex items-center gap-2">
+                <div className="bg-gradient-to-r from-pastel-blue/10 to-pastel-blue/20 rounded-lg p-4 border border-pastel-blue/30">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-1 flex items-center gap-2">
                     <History className="h-5 w-5" />
                     Historial de Cambios de Estado
                   </h3>
-                  <p className="text-sm text-purple-700">
+                  <p className="text-sm text-gray-700">
                     Seguimiento completo de todos los cambios realizados en esta orden
                   </p>
                 </div>
@@ -482,7 +482,7 @@ export default function OrderDetailModal({
                 <div className="bg-white rounded-lg shadow-sm p-4 border">
                   <div className="flex items-center justify-between mb-3">
                     <p className="font-medium text-gray-700">Estado actual:</p>
-                    <p className="text-base font-bold text-purple-600 capitalize">
+                    <p className="text-base font-bold text-pastel-blue capitalize">
                       {order.status.replaceAll('_', ' ').toLowerCase()}
                     </p>
                   </div>

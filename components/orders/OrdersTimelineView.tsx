@@ -69,7 +69,7 @@ const statusConfig = {
   REVIEWING: {
     label: 'En Revisión',
     icon: Eye,
-    color: 'text-blue-500',
+    color: 'text-pastel-blue',
     bg: 'bg-blue-50',
     border: 'border-blue-200'
   },
@@ -90,7 +90,7 @@ const statusConfig = {
   PLACED: {
     label: 'Colocada',
     icon: Package,
-    color: 'text-blue-600',
+    color: 'text-pastel-blue',
     bg: 'bg-blue-50',
     border: 'border-blue-200'
   },
@@ -104,9 +104,9 @@ const statusConfig = {
   IN_DELIVERY: {
     label: 'En Entrega',
     icon: Truck,
-    color: 'text-purple-600',
-    bg: 'bg-purple-50',
-    border: 'border-purple-200'
+    color: 'text-pastel-blue',
+    bg: 'bg-pastel-blue/10',
+    border: 'border-pastel-blue/30'
   },
   COMPLETED: {
     label: 'Completada',
@@ -125,7 +125,7 @@ const statusConfig = {
   PREPARING: {
     label: 'Preparando',
     icon: Package,
-    color: 'text-blue-600',
+    color: 'text-pastel-blue',
     bg: 'bg-blue-50',
     border: 'border-blue-200'
   },
@@ -285,20 +285,20 @@ export default function OrdersTimelineView({
         groupedOrders.map(([groupLabel, groupOrders]) => (
           <div key={groupLabel} className="space-y-3">
             {/* Header del Grupo */}
-            <div className="sticky top-0 bg-gradient-to-r from-purple-50 to-purple-100 backdrop-blur-sm z-10 px-4 py-2 rounded-lg border border-purple-200">
+            <div className="sticky top-0 bg-gradient-to-r from-pastel-blue/10 to-pastel-blue/20 backdrop-blur-sm z-10 px-4 py-2 rounded-lg border border-pastel-blue/30">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-purple-600" />
-                  <h3 className="font-semibold text-purple-900">{groupLabel}</h3>
+                  <Calendar className="h-4 w-4 text-pastel-blue" />
+                  <h3 className="font-semibold text-gray-800">{groupLabel}</h3>
                 </div>
-                <span className="text-xs bg-purple-600 text-white px-2 py-1 rounded-full font-medium">
+                <span className="text-xs bg-pastel-blue text-white px-2 py-1 rounded-full font-medium">
                   {groupOrders.length} {groupOrders.length === 1 ? 'orden' : 'órdenes'}
                 </span>
               </div>
             </div>
 
             {/* Timeline de Órdenes */}
-            <div className="space-y-2 pl-4 border-l-2 border-purple-200 ml-2">
+            <div className="space-y-2 pl-4 border-l-2 border-pastel-blue/30 ml-2">
               {groupOrders.map((order, index) => {
                 const config = statusConfig[order.status as keyof typeof statusConfig] || statusConfig.PENDING
                 const StatusIcon = config.icon
@@ -311,13 +311,13 @@ export default function OrdersTimelineView({
                   >
                     {/* Punto en la línea de tiempo */}
                     <div className={`
-                      absolute -left-[21px] top-4 w-3 h-3 rounded-full border-2 border-purple-200
-                      ${isFirst ? 'bg-purple-600 animate-pulse' : 'bg-white'}
+                      absolute -left-[21px] top-4 w-3 h-3 rounded-full border-2 border-pastel-blue/30
+                      ${isFirst ? 'bg-pastel-blue animate-pulse' : 'bg-white'}
                     `} />
 
                     {/* Card de Orden */}
                     <div
-                      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-200 hover:border-purple-300 group ml-4"
+                      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all border border-gray-200 hover:border-pastel-blue/50 group ml-4"
                     >
                       <div className="p-3 sm:p-4">
                         {/* Layout responsive: columna en móvil, fila en desktop */}
@@ -336,8 +336,8 @@ export default function OrdersTimelineView({
                               >
                                 <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
                                   isSelected(order.id)
-                                    ? 'bg-purple-600 border-purple-600'
-                                    : 'border-gray-300 hover:border-purple-400'
+                                    ? 'bg-pastel-blue border-pastel-blue'
+                                    : 'border-gray-300 hover:border-pastel-blue'
                                 }`}>
                                   {isSelected(order.id) && (
                                     <Check className="h-3 w-3 text-white" />
@@ -372,7 +372,7 @@ export default function OrdersTimelineView({
                                   {config.label}
                                 </span>
                                 {isFirst && (
-                                  <span className="text-xs bg-gradient-to-r from-purple-600 to-purple-700 text-white px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex items-center gap-1 whitespace-nowrap">
+                                  <span className="text-xs bg-gradient-to-r from-pastel-blue to-pastel-beige text-white px-1.5 sm:px-2 py-0.5 rounded-full font-medium flex items-center gap-1 whitespace-nowrap">
                                     <TrendingUp className="h-3 w-3" />
                                     <span className="hidden sm:inline">Reciente</span>
                                   </span>
@@ -400,13 +400,13 @@ export default function OrdersTimelineView({
                           <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-3 sm:flex-shrink-0">
                             {/* Precio */}
                             <button type="button" className="text-left sm:text-right cursor-pointer bg-transparent border-0 p-0" onClick={() => onOrderClick(order)}>
-                              <p className="text-lg sm:text-xl font-bold text-purple-600">
+                              <p className="text-lg sm:text-xl font-bold text-pastel-blue">
                                 ${Number(order.totalAmount).toFixed(2)}
                               </p>
                             </button>
 
                             {/* Flecha */}
-                            <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-purple-600 transition-colors flex-shrink-0" />
+                            <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-pastel-blue transition-colors flex-shrink-0" />
                           </div>
                         </div>
                       </div>

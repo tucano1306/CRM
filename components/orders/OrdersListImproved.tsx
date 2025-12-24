@@ -54,20 +54,20 @@ const statusConfig: Record<string, { label: string; color: string; bg: string; i
   },
   CONFIRMED: { 
     label: 'Confirmada', 
-    color: 'text-blue-600', 
+    color: 'text-pastel-blue', 
     bg: 'bg-blue-50',
     icon: CheckCircle 
   },
   PREPARING: { 
     label: 'Preparando', 
-    color: 'text-indigo-600', 
-    bg: 'bg-indigo-50',
+    color: 'text-pastel-blue', 
+    bg: 'bg-pastel-blue/10',
     icon: Package 
   },
   IN_DELIVERY: { 
     label: 'En Entrega', 
-    color: 'text-purple-600', 
-    bg: 'bg-purple-50',
+    color: 'text-pastel-blue', 
+    bg: 'bg-pastel-blue/10',
     icon: Truck 
   },
   DELIVERED: { 
@@ -197,8 +197,8 @@ export default function OrdersListImproved({
                     >
                       <div className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
                         isSelected(order.id)
-                          ? 'bg-purple-600 border-purple-600'
-                          : 'border-gray-300 hover:border-purple-400'
+                          ? 'bg-pastel-blue border-pastel-blue'
+                          : 'border-gray-300 hover:border-pastel-blue'
                       }`}>
                         {isSelected(order.id) && (
                           <Check className="h-4 w-4 text-white" />
@@ -320,7 +320,7 @@ export default function OrdersListImproved({
                           e.stopPropagation()
                           onOrderClick(order)
                         }}
-                        className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                        className="w-full bg-gradient-to-r from-pastel-blue to-pastel-beige hover:opacity-90 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                       >
                         Ver Detalles Completos
                       </button>
