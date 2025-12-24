@@ -24,9 +24,7 @@ import {
   CheckCircle,
   History,
   Download,
-  Phone,
-  MessageCircle,
-  Mail
+  MessageCircle
 } from 'lucide-react'
 import { exportClientHistory } from '@/lib/excelExport'
 
@@ -49,7 +47,7 @@ interface PendingInvitation {
   id: string
   contactValue: string
   contactName: string | null
-  channel: 'EMAIL' | 'WHATSAPP' | 'SMS'
+  channel: 'WHATSAPP'
   status: 'PENDING' | 'REGISTERED' | 'EXPIRED'
   createdAt: string
 }
@@ -470,7 +468,7 @@ function InvitationModal({
                 <ul className="space-y-2 text-sm text-blue-800">
                   <li className="flex items-start gap-2">
                     <span className="font-bold mt-0.5">1.</span>
-                    <span>El comprador recibe el link por email, WhatsApp o SMS</span>
+                    <span>El comprador recibe el link por WhatsApp</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="font-bold mt-0.5">2.</span>
@@ -1115,16 +1113,6 @@ export default function ClientsPage() {
                   {inv.channel === 'WHATSAPP' && (
                     <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                       <MessageCircle className="w-4 h-4 text-green-600" />
-                    </div>
-                  )}
-                  {inv.channel === 'SMS' && (
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Phone className="w-4 h-4 text-blue-600" />
-                    </div>
-                  )}
-                  {inv.channel === 'EMAIL' && (
-                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                      <Mail className="w-4 h-4 text-purple-600" />
                     </div>
                   )}
                   <div>

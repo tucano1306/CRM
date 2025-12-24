@@ -1,12 +1,10 @@
 /**
  * Servicio de notificaciones multicanal
- * Soporta: Email (Mailersend), SMS (Twilio), WhatsApp (Twilio), Notificaciones App
+ * Soporta: WhatsApp (Twilio), Notificaciones App
  * 
  * Configuración requerida en .env:
- * - MAILERSEND_API_KEY: Para envío de emails via Mailersend
- * - TWILIO_ACCOUNT_SID: Para SMS y WhatsApp
+ * - TWILIO_ACCOUNT_SID: Para WhatsApp
  * - TWILIO_AUTH_TOKEN: Token de autenticación Twilio
- * - TWILIO_PHONE_NUMBER: Número de teléfono Twilio para SMS
  * - TWILIO_WHATSAPP_NUMBER: Número de WhatsApp Business (ej: +14155238886)
  * - NEXT_PUBLIC_APP_URL: URL base de la aplicación
  */
@@ -153,34 +151,16 @@ const MESSAGE_TEMPLATES: Record<NotificationType, {
 }
 
 /**
- * Envía notificación por Email usando Mailersend
+ * Envía notificación por Email (deshabilitado)
  */
 async function sendEmailNotification(
   to: string,
   subject: string,
   htmlBody: string
 ): Promise<NotificationResult> {
-  try {
-    // Importar dinámicamente para evitar problemas de circular dependency
-    const { sendEmail } = await import('@/lib/mailersend')
-    
-    const result = await sendEmail({
-      to,
-      subject,
-      html: htmlBody
-    })
-
-    if (result.success) {
-      return { success: true, channel: 'EMAIL', messageId: result.messageId }
-    } else {
-      console.error('Error enviando email:', result.error)
-      return { success: false, channel: 'EMAIL', error: result.error }
-    }
-
-  } catch (error) {
-    console.error('Error en sendEmailNotification:', error)
-    return { success: false, channel: 'EMAIL', error: String(error) }
-  }
+  // Email deshabilitado - usar WhatsApp
+  console.log('📧 [EMAIL] Deshabilitado. Destinatario:', to, 'Asunto:', subject)
+  return { success: false, channel: 'EMAIL', error: 'Email deshabilitado - usar WhatsApp' }
 }
 
 /**

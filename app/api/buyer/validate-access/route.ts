@@ -24,7 +24,7 @@ export async function GET() {
 
     if (!authUser) {
       // Verificar si hay una solicitud de conexión pendiente
-      const pendingRequest = await prisma.connectionRequest.findFirst({
+      const pendingRequest = await (prisma as any).connectionRequest.findFirst({
         where: { 
           buyerClerkId: userId,
           status: 'PENDING'
@@ -56,7 +56,7 @@ export async function GET() {
     
     if (!client) {
       // Verificar si hay una solicitud de conexión pendiente
-      const pendingRequest = await prisma.connectionRequest.findFirst({
+      const pendingRequest = await (prisma as any).connectionRequest.findFirst({
         where: { 
           buyerClerkId: userId,
           status: 'PENDING'

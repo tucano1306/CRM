@@ -441,7 +441,7 @@ function ConnectPageContent() {
                   className="w-full"
                 />
                 <p className="text-xs text-gray-500">
-                  Recibirás notificaciones por SMS y WhatsApp sobre tus pedidos
+                  Recibirás notificaciones por WhatsApp sobre tus pedidos
                 </p>
               </div>
 

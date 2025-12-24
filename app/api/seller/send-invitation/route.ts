@@ -1,52 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
-import { sendEmail, getInvitationEmailTemplate } from '@/lib/mailersend'
 
 interface InvitationResults {
-  emailSent: boolean
   whatsappSent: boolean
   errors: string[]
-}
-
-async function sendEmailInvitation(
-  email: string,
-  invitationLink: string,
-  sellerName: string,
-  results: InvitationResults
-) {
-  try {
-    console.log(`📧 =================================`)
-    console.log(`📧 ENVIANDO EMAIL CON MAILERSEND`)
-    console.log(`📧 Destinatario: ${email}`)
-    console.log(`📧 Vendedor: ${sellerName}`)
-    console.log(`📧 Link: ${invitationLink}`)
-    console.log(`📧 API Key configurada: ${process.env.MAILERSEND_API_KEY ? 'SI' : 'NO'}`)
-    console.log(`📧 =================================`)
-
-    const html = getInvitationEmailTemplate({
-      sellerName: sellerName || 'Un vendedor',
-      invitationLink,
-    })
-
-    const result = await sendEmail({
-      to: email,
-      subject: `${sellerName || 'Un vendedor'} te invita a conectarte`,
-      html,
-    })
-
-    console.log('📧 Resultado de sendEmail:', result)
-
-    if (result.success) {
-      console.log('✅ Email enviado exitosamente. ID:', result.messageId)
-      results.emailSent = true
-    } else {
-      console.error('❌ Error de Mailersend:', result.error)
-      results.errors.push(`Email: ${result.error}`)
-    }
-  } catch (err: any) {
-    console.error('❌ Error enviando email:', err)
-    results.errors.push(`Email: ${err.message}`)
-  }
 }
 
 function sendWhatsAppInvitation(
@@ -55,12 +12,12 @@ function sendWhatsAppInvitation(
   results: InvitationResults
 ) {
   try {
-    console.log(`📱 WhatsApp simulado a: ${whatsapp}`)
+    console.log(`📱 WhatsApp invitación registrada para: ${whatsapp}`)
     console.log(`Link: ${invitationLink}`)
-    // NOTE: Future integration point for Twilio WhatsApp API
+    // WhatsApp se envía desde el cliente usando wa.me URL scheme
     results.whatsappSent = true
   } catch (err) {
-    console.error('Error enviando WhatsApp:', err)
+    console.error('Error registrando WhatsApp:', err)
   }
 }
 
@@ -76,7 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
-    const { invitationLink, email, whatsapp, sellerName } = body
+    const { invitationLink, whatsapp, sellerName } = body
 
     if (!invitationLink) {
       return NextResponse.json(
@@ -86,26 +43,23 @@ export async function POST(req: NextRequest) {
     }
 
     const results: InvitationResults = {
-      emailSent: false,
       whatsappSent: false,
       errors: []
-    }
-
-    if (email) {
-      await sendEmailInvitation(email, invitationLink, sellerName, results)
     }
 
     if (whatsapp) {
       sendWhatsAppInvitation(whatsapp, invitationLink, results)
     }
 
+    console.log(`✅ Invitación preparada por ${sellerName} para WhatsApp: ${whatsapp}`)
+
     return NextResponse.json({
-      success: results.emailSent || results.whatsappSent,
+      success: results.whatsappSent,
       data: results,
       error: results.errors.length > 0 ? results.errors.join(', ') : undefined,
-      message: results.errors.length > 0 
-        ? `Errores: ${results.errors.join(', ')}`
-        : 'Invitación enviada exitosamente'
+      message: results.whatsappSent 
+        ? 'Invitación lista para enviar por WhatsApp'
+        : 'No se especificó número de WhatsApp'
     })
 
   } catch (error) {
