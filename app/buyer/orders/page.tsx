@@ -1578,10 +1578,9 @@ function OrderGridCard({ order, onCancel, onReorder, onTrack, onInvoice, onDetai
 
   return (
     <div
-      className={`bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all p-6 border-2 relative ${
+      className={`bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-200 p-6 border-2 relative ${
         hasStockIssues ? 'border-amber-400 bg-amber-50/30' : 'border-pastel-blue/30 hover:border-pastel-blue'
       }`}
-      style={needsAttention ? { animation: 'orderPulse 3s ease-in-out infinite' } : {}}
     >
       {hasStockIssues && <OrderStockIssueBanner />}
       {isCompleted && !hasStockIssues && <OrderCompletedBadge isGrid={true} />}
@@ -1645,8 +1644,7 @@ function OrderListCard({ order, onCancel, onReorder, onTrack, onDetails, onConta
 
   return (
     <div
-      className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all p-4 border-2 border-pastel-blue/30 hover:border-pastel-blue relative"
-      style={needsAttention ? { animation: 'orderPulse 3s ease-in-out infinite' } : {}}
+      className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-200 p-4 border-2 border-pastel-blue/30 hover:border-pastel-blue relative"
     >
       {isCompleted && <OrderCompletedBadge isGrid={false} />}
 
