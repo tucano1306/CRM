@@ -21,6 +21,7 @@ import ThemeToggle from './ThemeToggle'
 import UnifiedNotificationBell from '../notifications/UnifiedNotificationBell'
 import { NotificationProvider } from '../providers/NotificationProvider'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
+import { usePendingOrders, usePendingClientRequests } from '@/hooks/useNotifications'
 import { UserButton } from '@clerk/nextjs'
 
 
@@ -67,6 +68,8 @@ export default function Sidebar() {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const { unreadCount } = useUnreadMessages()
+  const { pendingCount: pendingOrders } = usePendingOrders()
+  const { requestsCount: pendingClientRequests } = usePendingClientRequests()
 
   useEffect(() => {
     const handleResize = () => {
@@ -160,8 +163,18 @@ export default function Sidebar() {
           {menuItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
-            const isChatItem = item.href === '/chat'
-            const showBadge = isChatItem && unreadCount > 0
+            
+            // Determinar qué badge mostrar según la sección
+            let badgeCount = 0
+            if (item.href === '/chat') {
+              badgeCount = unreadCount
+            } else if (item.href === '/orders') {
+              badgeCount = pendingOrders
+            } else if (item.href === '/clients') {
+              badgeCount = pendingClientRequests
+            }
+            
+            const showBadge = badgeCount > 0
             
             // Estilos según estado activo y colapsado
             const getActiveStyles = () => {
@@ -184,8 +197,8 @@ export default function Sidebar() {
                 <div className="relative flex-shrink-0">
                   <Icon className={`flex-shrink-0 ${isCollapsed ? 'h-6 w-6' : 'h-5 w-5'}`} />
                   {showBadge && isCollapsed && (
-                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                      {unreadCount > 9 ? '9+' : unreadCount}
+                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
+                      {badgeCount > 9 ? '9+' : badgeCount}
                     </span>
                   )}
                 </div>
@@ -193,8 +206,8 @@ export default function Sidebar() {
                   <div className="flex items-center justify-between flex-1">
                     <span>{item.title}</span>
                     {showBadge && (
-                      <span className="ml-auto h-5 min-w-[20px] px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                        {unreadCount > 99 ? '99+' : unreadCount}
+                      <span className="ml-auto h-5 min-w-[20px] px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
+                        {badgeCount > 99 ? '99+' : badgeCount}
                       </span>
                     )}
                   </div>
@@ -286,8 +299,18 @@ export default function Sidebar() {
           {menuItems.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
-            const isChatItem = item.href === '/chat'
-            const showBadge = isChatItem && unreadCount > 0
+            
+            // Determinar qué badge mostrar según la sección
+            let badgeCount = 0
+            if (item.href === '/chat') {
+              badgeCount = unreadCount
+            } else if (item.href === '/orders') {
+              badgeCount = pendingOrders
+            } else if (item.href === '/clients') {
+              badgeCount = pendingClientRequests
+            }
+            
+            const showBadge = badgeCount > 0
             
             return (
               <Link
@@ -305,16 +328,16 @@ export default function Sidebar() {
                 <div className="relative">
                   <Icon className="h-5 w-5 flex-shrink-0" />
                   {showBadge && (
-                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                      {unreadCount > 9 ? '9+' : unreadCount}
+                    <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
+                      {badgeCount > 9 ? '9+' : badgeCount}
                     </span>
                   )}
                 </div>
                 <div className="flex items-center justify-between flex-1">
                   <span>{item.title}</span>
                   {showBadge && (
-                    <span className="ml-auto h-5 min-w-[20px] px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                      {unreadCount > 99 ? '99+' : unreadCount}
+                    <span className="ml-auto h-5 min-w-[20px] px-1.5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
+                      {badgeCount > 99 ? '99+' : badgeCount}
                     </span>
                   )}
                 </div>

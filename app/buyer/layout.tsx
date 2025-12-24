@@ -9,6 +9,7 @@ import { usePathname } from 'next/navigation'
 import UnifiedNotificationBell from '@/components/notifications/UnifiedNotificationBell'
 import { NotificationProvider } from '@/components/providers/NotificationProvider'
 import { useUnreadMessages } from '@/hooks/useUnreadMessages'
+import { usePendingOrders } from '@/hooks/useNotifications'
 import { useCartCount } from '@/hooks/useCartCount'
 import ThemeToggle from '@/components/shared/ThemeToggle'
 
@@ -21,6 +22,7 @@ export default function BuyerLayout({ children }: BuyerLayoutProps) {
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { unreadCount } = useUnreadMessages()
+  const { pendingCount: pendingOrders } = usePendingOrders()
   const { cartCount } = useCartCount()
 
   const navigation = [
@@ -68,10 +70,18 @@ export default function BuyerLayout({ children }: BuyerLayoutProps) {
           {navigation.map((item) => {
             const Icon = item.icon
             const isActive = pathname === item.href
-            const isChatItem = item.href === '/buyer/chat'
-            const isCartItem = item.href === '/buyer/cart'
-            const showChatBadge = isChatItem && unreadCount > 0
-            const showCartBadge = isCartItem && cartCount > 0
+            
+            // Determinar qué badge mostrar según la sección
+            let badgeCount = 0
+            if (item.href === '/buyer/chat') {
+              badgeCount = unreadCount
+            } else if (item.href === '/buyer/cart') {
+              badgeCount = cartCount
+            } else if (item.href === '/buyer/orders') {
+              badgeCount = pendingOrders
+            }
+            
+            const showBadge = badgeCount > 0
             
             return (
               <Link
@@ -86,24 +96,16 @@ export default function BuyerLayout({ children }: BuyerLayoutProps) {
               >
                 <div className="relative">
                   <Icon className="h-5 w-5" />
-                  {(showChatBadge || showCartBadge) && (
+                  {showBadge && (
                     <span className="absolute -top-1 -right-1 h-4 w-4 bg-gradient-to-r from-rose-500 to-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
-                      {(() => {
-                        if (showChatBadge) return unreadCount > 9 ? '9+' : unreadCount;
-                        return cartCount > 9 ? '9+' : cartCount;
-                      })()}
+                      {badgeCount > 9 ? '9+' : badgeCount}
                     </span>
                   )}
                 </div>
                 <span className="flex-1">{item.name}</span>
-                {showChatBadge && (
-                  <span className="h-5 min-w-[20px] px-1.5 bg-gradient-to-r from-rose-500 to-red-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
-                {showCartBadge && (
-                  <span className="h-5 min-w-[20px] px-1.5 bg-gradient-to-r from-rose-500 to-red-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
-                    {cartCount > 99 ? '99+' : cartCount}
+                {showBadge && (
+                  <span className="h-5 min-w-[20px] px-1.5 bg-gradient-to-r from-rose-500 to-red-600 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-md">
+                    {badgeCount > 99 ? '99+' : badgeCount}
                   </span>
                 )}
               </Link>
