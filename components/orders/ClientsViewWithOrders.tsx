@@ -364,7 +364,7 @@ export default function ClientsViewWithOrders({
       <div className="space-y-4">
         {/* Estadísticas - Dinámicas según filtro */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg p-4 text-white">
+          <div className="bg-gradient-to-br from-pastel-blue to-pastel-beige rounded-lg p-4 text-white">
             <div className="flex items-center justify-between mb-2">
               <User className="h-5 w-5 opacity-80" />
               <TrendingUp className="h-4 w-4 opacity-60" />
@@ -375,7 +375,7 @@ export default function ClientsViewWithOrders({
             </p>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 text-white">
+          <div className="bg-gradient-to-br from-pastel-beige to-pastel-sand rounded-lg p-4 text-white">
             <div className="flex items-center justify-between mb-2">
               <Package className="h-5 w-5 opacity-80" />
             </div>
@@ -417,7 +417,7 @@ export default function ClientsViewWithOrders({
               placeholder="Buscar cliente por nombre o email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pastel-blue focus:border-pastel-blue"
             />
           </div>
         </div>
@@ -439,7 +439,7 @@ export default function ClientsViewWithOrders({
                 <div className="flex items-center justify-center gap-2">
                   <button
                     onClick={() => setSearchTerm('')}
-                    className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors font-medium"
+                    className="px-4 py-2 bg-pastel-blue/20 text-gray-700 rounded-lg hover:bg-pastel-blue/30 transition-colors font-medium"
                   >
                     Limpiar búsqueda
                   </button>
@@ -451,21 +451,21 @@ export default function ClientsViewWithOrders({
               // 🎨 Esquemas de colores vibrantes y modernos
               const colors = [
                 { 
-                  bg: 'from-violet-500 via-purple-500 to-fuchsia-500', 
-                  glow: 'shadow-purple-200',
-                  accent: 'text-purple-600',
-                  light: 'bg-purple-50',
-                  border: 'border-purple-100',
-                  statBg: 'from-purple-100 to-purple-50',
+                  bg: 'from-pastel-blue via-pastel-blue to-pastel-beige', 
+                  glow: 'shadow-pastel-blue/30',
+                  accent: 'text-pastel-blue',
+                  light: 'bg-pastel-blue/10',
+                  border: 'border-pastel-blue/20',
+                  statBg: 'from-pastel-blue/20 to-pastel-blue/10',
                   emoji: '💜'
                 },
                 { 
-                  bg: 'from-blue-500 via-cyan-500 to-teal-500', 
-                  glow: 'shadow-blue-200',
-                  accent: 'text-blue-600',
-                  light: 'bg-blue-50',
-                  border: 'border-blue-100',
-                  statBg: 'from-blue-100 to-blue-50',
+                  bg: 'from-pastel-beige via-pastel-sand to-pastel-cream', 
+                  glow: 'shadow-pastel-beige/30',
+                  accent: 'text-amber-600',
+                  light: 'bg-pastel-beige/10',
+                  border: 'border-pastel-beige/20',
+                  statBg: 'from-pastel-beige/20 to-pastel-beige/10',
                   emoji: '💙'
                 },
                 { 
@@ -496,12 +496,12 @@ export default function ClientsViewWithOrders({
                   emoji: '💗'
                 },
                 { 
-                  bg: 'from-indigo-500 via-blue-500 to-purple-500', 
-                  glow: 'shadow-indigo-200',
-                  accent: 'text-indigo-600',
-                  light: 'bg-indigo-50',
-                  border: 'border-indigo-100',
-                  statBg: 'from-indigo-100 to-indigo-50',
+                  bg: 'from-pastel-blue via-sky-200 to-cyan-200', 
+                  glow: 'shadow-pastel-blue/20',
+                  accent: 'text-cyan-600',
+                  light: 'bg-pastel-blue/10',
+                  border: 'border-pastel-blue/20',
+                  statBg: 'from-pastel-blue/20 to-pastel-blue/10',
                   emoji: '💜'
                 },
               ]
@@ -510,8 +510,8 @@ export default function ClientsViewWithOrders({
               // Calcular nivel del cliente basado en total gastado
               const getClientLevel = (spent: number) => {
                 if (spent >= 1000) return { emoji: '👑', label: 'VIP', color: 'from-amber-400 to-yellow-500' }
-                if (spent >= 500) return { emoji: '💎', label: 'Premium', color: 'from-purple-400 to-pink-500' }
-                if (spent >= 200) return { emoji: '⭐', label: 'Frecuente', color: 'from-blue-400 to-cyan-500' }
+                if (spent >= 500) return { emoji: '💎', label: 'Premium', color: 'from-pastel-blue to-pastel-beige' }
+                if (spent >= 200) return { emoji: '⭐', label: 'Frecuente', color: 'from-pastel-blue/70 to-pastel-beige/70' }
                 return { emoji: '🌱', label: 'Nuevo', color: 'from-green-400 to-emerald-500' }
               }
               const clientLevel = getClientLevel(clientData.totalSpent)
@@ -794,14 +794,14 @@ export default function ClientsViewWithOrders({
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
                   <div className="flex items-center gap-2 sm:gap-3">
                     <div className="p-2 sm:p-3 bg-purple-100 rounded-lg">
-                      <ShoppingBag className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
+                      <ShoppingBag className="h-5 w-5 sm:h-6 sm:w-6 text-pastel-blue" />
                     </div>
                     <div>
                       <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
                         Historial de Órdenes
                       </h3>
                       <p className="text-xs sm:text-sm text-gray-600 mt-0.5 sm:mt-1">
-                        {filteredClientOrders.length} de {selectedClient.totalOrders} orden{selectedClient.totalOrders === 1 ? '' : 'es'} de <span className="font-semibold text-purple-600">{selectedClient.client.name}</span>
+                        {filteredClientOrders.length} de {selectedClient.totalOrders} orden{selectedClient.totalOrders === 1 ? '' : 'es'} de <span className="font-semibold text-pastel-blue">{selectedClient.client.name}</span>
                       </p>
                     </div>
                   </div>
@@ -863,7 +863,7 @@ export default function ClientsViewWithOrders({
                   <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4 border border-gray-200 backdrop-blur-sm">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
                       <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <CheckSquare className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600 flex-shrink-0" />
+                        <CheckSquare className="h-4 w-4 sm:h-5 sm:w-5 text-pastel-blue flex-shrink-0" />
                         <span className="text-xs sm:text-sm font-semibold text-gray-700">Selección:</span>
                       </div>
                       
@@ -872,7 +872,7 @@ export default function ClientsViewWithOrders({
                           onClick={handleSelectAll}
                           size="sm"
                           variant="outline"
-                          className="text-purple-600 border-purple-300 hover:bg-purple-50 hover:border-purple-400 transition-all text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
+                          className="text-pastel-blue border-purple-300 hover:bg-pastel-blue/10 hover:border-purple-400 transition-all text-xs sm:text-sm h-8 sm:h-9 px-2 sm:px-3"
                         >
                           <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-1.5" />
                           <span className="hidden sm:inline">Todas ({filteredClientOrders.length})</span>

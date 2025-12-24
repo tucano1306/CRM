@@ -207,7 +207,7 @@ function OrdersPageContent() {
       <MainLayout>
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
-            <Loader2 className="animate-spin h-12 w-12 border-b-2 border-blue-600 mx-auto" />
+            <Loader2 className="animate-spin h-12 w-12 text-pastel-blue mx-auto" />
             <p className="mt-4 text-gray-600">Cargando órdenes...</p>
           </div>
         </div>

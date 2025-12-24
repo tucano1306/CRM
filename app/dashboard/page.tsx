@@ -69,7 +69,7 @@ function getStatusIconBgClass(status: string): string {
     'CANCELED': 'bg-red-100 text-red-600',
     'CANCELLED': 'bg-red-100 text-red-600',
   }
-  return statusMap[status] || 'bg-blue-100 text-blue-600'
+  return statusMap[status] || 'bg-pastel-blue/20 text-pastel-blue'
 }
 
 function getStatusBadgeClass(status: string): string {
@@ -82,7 +82,7 @@ function getStatusBadgeClass(status: string): string {
     'CANCELED': 'bg-red-100 text-red-700',
     'CANCELLED': 'bg-red-100 text-red-700',
   }
-  return statusMap[status] || 'bg-blue-100 text-blue-700'
+  return statusMap[status] || 'bg-pastel-blue/20 text-pastel-blue'
 }
 
 function getStatusLabel(status: string): string {
@@ -108,7 +108,7 @@ function getTimelineIconClass(status: string): string {
     'CANCELED': 'bg-red-500 text-white',
     'CANCELLED': 'bg-red-500 text-white',
   }
-  return statusMap[status] || 'bg-blue-500 text-white'
+  return statusMap[status] || 'bg-pastel-blue text-gray-700'
 }
 
 function getTimelineBadgeClass(status: string): string {
@@ -151,7 +151,7 @@ function DashboardLoadingState() {
     <MainLayout>
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-          <TrendingUp className="text-blue-600" size={36} />
+          <TrendingUp className="text-pastel-blue" size={36} />
           Dashboard
         </h1>
         <p className="text-gray-600 mt-1">Cargando datos...</p>
@@ -172,7 +172,7 @@ function DashboardTimedOutState({ onRetry }: { readonly onRetry: () => void }) {
         <p className="text-gray-700 mb-4">La carga del dashboard está tardando más de lo esperado.</p>
         <button
           onClick={onRetry}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+          className="w-full bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-700 py-2 rounded-lg hover:opacity-90"
         >
           Reintentar
         </button>
@@ -192,7 +192,7 @@ function DashboardErrorState({ error, onRetry }: { readonly error: string; reado
         <p className="text-gray-700 mb-4">{error}</p>
         <button
           onClick={onRetry}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+          className="w-full bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-700 py-2 rounded-lg hover:opacity-90"
         >
           Reintentar
         </button>
@@ -484,7 +484,7 @@ export default function DashboardPage() {
       title: 'Órdenes Totales',
       value: stats.totalOrders,
       icon: ShoppingCart,
-      color: 'bg-gradient-to-br from-purple-500 to-purple-700',
+      color: 'bg-gradient-to-br from-pastel-blue to-pastel-beige',
       trend: stats.ordersGrowth,
     },
     {
@@ -509,14 +509,14 @@ export default function DashboardPage() {
       title: 'Ingresos Totales',
       value: formatPrice(stats.totalRevenue || 0),
       icon: DollarSign,
-      color: 'bg-gradient-to-br from-cyan-500 to-blue-600',
+      color: 'bg-gradient-to-br from-pastel-beige to-pastel-sand',
       trend: stats.revenueGrowth,
     },
     {
       title: 'Productos',
       value: stats.totalProducts,
       icon: Package,
-      color: 'bg-gradient-to-br from-indigo-500 to-purple-600',
+      color: 'bg-gradient-to-br from-pastel-blue to-pastel-beige',
       trend: stats.productsGrowth,
     },
     {
@@ -671,7 +671,7 @@ export default function DashboardPage() {
                       {formatPrice(order.totalAmount)}
                     </span>
                     <button
-                      className="text-blue-600 hover:text-blue-800 p-2 rounded-lg bg-blue-50 flex items-center gap-1 text-sm font-medium"
+                      className="text-pastel-blue hover:text-gray-700 p-2 rounded-lg bg-pastel-blue/10 flex items-center gap-1 text-sm font-medium"
                     >
                       <Eye size={16} />
                       Ver
@@ -725,7 +725,7 @@ export default function DashboardPage() {
                       <td className="py-3 px-4 text-right">
                         <button
                           onClick={() => router.push('/orders')}
-                          className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
+                          className="text-pastel-blue hover:text-gray-700 p-1 rounded hover:bg-pastel-blue/10"
                           title="Ver orden"
                         >
                           <Eye size={18} />
@@ -833,12 +833,12 @@ export default function DashboardPage() {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-                <ShoppingCart className="text-purple-600" size={24} />
+                <ShoppingCart className="text-pastel-blue" size={24} />
                 Órdenes Recientes
               </h2>
               <button
                 onClick={fetchRecentOrders}
-                className="text-sm text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                className="text-sm text-pastel-blue hover:text-gray-700 flex items-center gap-1"
               >
                 <RotateCcw size={16} />
                 Actualizar
@@ -852,7 +852,7 @@ export default function DashboardPage() {
                     type="button"
                     key={order.id}
                     onClick={() => router.push(`/orders?orderId=${order.id}`)}
-                    className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-purple-50 rounded-lg border border-gray-200 cursor-pointer transition-all hover:border-purple-300"
+                    className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-pastel-blue/10 rounded-lg border border-gray-200 cursor-pointer transition-all hover:border-pastel-blue"
                   >
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getStatusIconBgClass(order.status)}`}>
@@ -886,15 +886,15 @@ export default function DashboardPage() {
 
           {/* Resumen de Actividad del Día */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg p-5 text-white">
+            <div className="bg-gradient-to-br from-pastel-blue to-pastel-beige rounded-lg p-5 text-white">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-100 text-sm">Órdenes Hoy</p>
+                  <p className="text-gray-600 text-sm">Órdenes Hoy</p>
                   <p className="text-3xl font-bold mt-1">
                     {recentOrders.filter((o: any) => isOrderFromToday(o.createdAt)).length}
                   </p>
                 </div>
-                <ShoppingCart className="text-purple-200" size={40} />
+                <ShoppingCart className="text-gray-500" size={40} />
               </div>
             </div>
             
@@ -926,7 +926,7 @@ export default function DashboardPage() {
           {/* Línea de tiempo de actividad */}
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <Activity className="text-purple-600" size={24} />
+              <Activity className="text-pastel-blue" size={24} />
               Línea de Tiempo
             </h2>
             
@@ -1118,7 +1118,7 @@ export default function DashboardPage() {
                   setShowQuickActionsModal(false)
                   router.push('/orders')
                 }}
-                className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
+                className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-4 border border-gray-200 rounded-lg hover:bg-pastel-blue/10 hover:border-blue-300 transition-colors"
               >
                 <div className="bg-blue-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
                   <ShoppingCart className="text-blue-600" size={18} />
@@ -1150,10 +1150,10 @@ export default function DashboardPage() {
                   setShowQuickActionsModal(false)
                   router.push('/clients')
                 }}
-                className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-300 transition-colors"
+                className="w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-4 border border-gray-200 rounded-lg hover:bg-pastel-blue/10 hover:border-pastel-blue transition-colors"
               >
                 <div className="bg-purple-100 p-2 sm:p-3 rounded-lg flex-shrink-0">
-                  <Users className="text-purple-600" size={18} />
+                  <Users className="text-pastel-blue" size={18} />
                 </div>
                 <div className="text-left">
                   <p className="font-semibold text-gray-800 text-sm sm:text-base">Clientes</p>

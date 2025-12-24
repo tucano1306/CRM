@@ -91,7 +91,7 @@ export default function StatsPage() {
       <MainLayout>
         <div className="flex items-center justify-center h-screen">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pastel-blue mx-auto"></div>
             <p className="mt-4 text-gray-600">Cargando estadísticas...</p>
           </div>
         </div>
@@ -182,7 +182,7 @@ export default function StatsPage() {
                   productStats.lowStock,
                   productStats.noSales
                 )}
-                className="text-blue-600 hover:bg-blue-50"
+                className="text-pastel-blue hover:bg-pastel-blue/10"
               >
                 <Download className="h-4 w-4 mr-1" />
                 Productos Excel
@@ -217,10 +217,10 @@ export default function StatsPage() {
             </p>
           </div>
 
-          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-purple-500">
+          <div className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-4 sm:p-6 border-l-4 border-pastel-blue">
             <div className="flex items-center justify-between mb-2">
               <div className="bg-gradient-to-br from-pastel-blue to-pastel-beige p-2 rounded-xl shadow-md">
-                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
+                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-gray-700" />
               </div>
             </div>
             <p className="text-gray-600 text-xs sm:text-sm font-semibold uppercase tracking-wide mb-1">Promedio</p>
@@ -249,7 +249,7 @@ export default function StatsPage() {
         <Card className="shadow-lg border-0">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-blue-600" />
+              <Calendar className="h-5 w-5 text-pastel-blue" />
               Ventas - Últimos 15 Días
             </CardTitle>
             <CardDescription>
@@ -310,7 +310,7 @@ export default function StatsPage() {
                       <YAxis />
                       <Tooltip />
                       <Legend />
-                      <Bar dataKey="vendidos" fill="#8b5cf6" name="Unidades Vendidas" />
+                      <Bar dataKey="vendidos" fill="#a8d5e5" name="Unidades Vendidas" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -399,7 +399,7 @@ export default function StatsPage() {
           <Card className="shadow-lg border-0">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-blue-600" />
+                <BarChart3 className="h-5 w-5 text-pastel-blue" />
                 Detalle de Productos Más Vendidos
               </CardTitle>
             </CardHeader>
@@ -407,7 +407,7 @@ export default function StatsPage() {
               <div className="space-y-4">
                 {productStats.topSelling.slice(0, 10).map((product, index) => (
                   <div key={product.productId} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="bg-blue-100 text-blue-700 rounded-full w-10 h-10 flex items-center justify-center font-bold">
+                    <div className="bg-pastel-blue/30 text-pastel-blue rounded-full w-10 h-10 flex items-center justify-center font-bold">
                       {index + 1}
                     </div>
                     <div className="flex-1">
