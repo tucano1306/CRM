@@ -174,7 +174,7 @@ export async function DELETE(
       )
     }
 
-    // Eliminar todo en orden para respetar foreign keys
+    // Eliminar en orden para respetar foreign keys
     // 1. Eliminar items de órdenes
     await prisma.orderItem.deleteMany({
       where: {

@@ -4,7 +4,11 @@ import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-export function BuyerAccessValidator({ children }: { children: React.ReactNode }) {
+interface BuyerAccessValidatorProps {
+  readonly children: React.ReactNode
+}
+
+export function BuyerAccessValidator({ children }: BuyerAccessValidatorProps) {
   const { user, isLoaded } = useUser()
   const router = useRouter()
   const [isValidating, setIsValidating] = useState(true)

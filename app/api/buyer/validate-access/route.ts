@@ -10,12 +10,11 @@ export async function GET() {
       return NextResponse.json({ hasAccess: false, reason: 'No autenticado' })
     }
 
-    // Buscar el cliente en la base de datos
-    const client = await prisma.client.findUnique({
-      where: { clerkUserId: userId },
+    // Buscar el usuario autenticado con sus clientes
+    const authUser = await prisma.authenticated_users.findUnique({
+      where: { authId: userId },
       include: {
-        connections: {
-          where: { status: 'ACCEPTED' },
+        clients: {
           include: {
             seller: true
           }
@@ -23,7 +22,16 @@ export async function GET() {
       }
     })
 
-    // Verificar si el cliente existe
+    if (!authUser) {
+      return NextResponse.json({ 
+        hasAccess: false, 
+        reason: 'Usuario no encontrado en el sistema' 
+      })
+    }
+
+    // Verificar si el usuario tiene un cliente asociado
+    const client = authUser.clients[0]
+    
     if (!client) {
       return NextResponse.json({ 
         hasAccess: false, 
@@ -31,21 +39,21 @@ export async function GET() {
       })
     }
 
-    // Verificar si tiene al menos una conexión activa con un vendedor
-    if (client.connections.length === 0) {
+    // Verificar si tiene vendedor asignado
+    if (!client.sellerId || !client.seller) {
       return NextResponse.json({ 
         hasAccess: false, 
         reason: 'No estás conectado con ningún vendedor activo' 
       })
     }
 
-    // Cliente válido con conexión activa
+    // Cliente válido con vendedor
     return NextResponse.json({ 
       hasAccess: true,
       client: {
         id: client.id,
         name: client.name,
-        connections: client.connections.length
+        sellerName: client.seller.name
       }
     })
 
