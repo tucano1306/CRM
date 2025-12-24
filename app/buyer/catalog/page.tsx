@@ -306,9 +306,9 @@ export default function CatalogPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center page-fade">
+      <div className="min-h-screen bg-gradient-to-br from-pastel-cream via-pastel-blue/20 to-pastel-beige/40 flex items-center justify-center page-fade">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 animate-spin text-pastel-blue mx-auto mb-4" />
           <p className="text-gray-600 font-medium">Cargando catálogo...</p>
         </div>
       </div>
@@ -317,14 +317,14 @@ export default function CatalogPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center p-4 page-fade">
-        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
+      <div className="min-h-screen bg-gradient-to-br from-pastel-cream via-pastel-blue/20 to-pastel-beige/40 flex items-center justify-center p-4 page-fade">
+        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-pastel-blue/20">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-800 mb-2">Error al cargar</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <button 
             onClick={fetchProducts}
-            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all"
+            className="px-6 py-3 bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800 rounded-xl font-semibold hover:opacity-90 transition-all shadow-md"
           >
             Reintentar
           </button>
@@ -334,7 +334,7 @@ export default function CatalogPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 page-transition">
+    <div className="min-h-screen bg-gradient-to-br from-pastel-cream via-pastel-blue/20 to-pastel-beige/40 page-transition">
       {/* Toast Notifications */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
         {toasts.map(toast => {
@@ -356,11 +356,11 @@ export default function CatalogPage() {
       </div>
 
       {/* Header */}
-      <div className="bg-white shadow-md sticky top-0 z-40">
+      <div className="bg-white/80 backdrop-blur-sm shadow-md sticky top-0 z-40 border-b border-pastel-blue/20">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-pastel-blue to-pastel-beige bg-clip-text text-transparent">
                 📦 Catálogo de Productos
               </h1>
               <p className="text-gray-500 text-sm">
@@ -376,7 +376,7 @@ export default function CatalogPage() {
                 placeholder="Buscar productos..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-10 py-2.5 border-2 border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-400 transition-all"
+                className="w-full pl-10 pr-10 py-2.5 border-2 border-pastel-blue/40 rounded-xl focus:ring-2 focus:ring-pastel-blue focus:border-pastel-blue transition-all"
               />
               {search && (
                 <button
@@ -394,7 +394,7 @@ export default function CatalogPage() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-4 py-2 border-2 border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 bg-white font-medium"
+              className="px-4 py-2 border-2 border-pastel-blue/40 rounded-xl focus:ring-2 focus:ring-pastel-blue bg-white font-medium"
             >
               {categories.map(cat => (
                 <option key={cat.id} value={cat.id}>
@@ -412,15 +412,15 @@ export default function CatalogPage() {
           {/* Lista de Productos */}
           <div className="flex-1">
             {/* Header de la tabla */}
-            <div className="bg-white rounded-t-xl shadow-md">
-              <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b-2 border-purple-100 text-sm font-semibold text-gray-600">
+            <div className="bg-white/80 backdrop-blur-sm rounded-t-xl shadow-md">
+              <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b-2 border-pastel-blue/30 text-sm font-semibold text-gray-600">
                 <div className="col-span-1 flex items-center">
-                  <span className="text-purple-600">✓</span>
+                  <span className="text-pastel-blue">✓</span>
                 </div>
                 <div className="col-span-5 md:col-span-4 flex items-center gap-2">
                   <button 
                     onClick={() => handleSort('name')}
-                    className="flex items-center gap-1 hover:text-purple-600 transition-colors"
+                    className="flex items-center gap-1 hover:text-pastel-blue transition-colors"
                   >
                     Producto
                     <ArrowUpDown className="w-4 h-4" />
@@ -429,7 +429,7 @@ export default function CatalogPage() {
                 <div className="col-span-2 hidden md:flex items-center gap-2">
                   <button 
                     onClick={() => handleSort('price')}
-                    className="flex items-center gap-1 hover:text-purple-600 transition-colors"
+                    className="flex items-center gap-1 hover:text-pastel-blue transition-colors"
                   >
                     Precio
                     <ArrowUpDown className="w-4 h-4" />
@@ -438,7 +438,7 @@ export default function CatalogPage() {
                 <div className="col-span-2 hidden md:flex items-center gap-2">
                   <button 
                     onClick={() => handleSort('stock')}
-                    className="flex items-center gap-1 hover:text-purple-600 transition-colors"
+                    className="flex items-center gap-1 hover:text-pastel-blue transition-colors"
                   >
                     Stock
                     <ArrowUpDown className="w-4 h-4" />

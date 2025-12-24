@@ -90,17 +90,17 @@ export default function Sidebar() {
           variant="outline"
           size="sm"
           onClick={() => setIsMobileOpen(!isMobileOpen)}
-          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl border-0 hover:from-blue-700 hover:to-purple-700 transition-all hover:scale-105"
+          className="bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-700 shadow-xl border-0 hover:from-pastel-blue/90 hover:to-pastel-beige/90 transition-all hover:scale-105"
         >
           {isMobileOpen ? <X className="h-5 w-5" /> : <PanelLeftOpen className="h-5 w-5" />}
         </Button>
       </div>
 
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar - Pastel Theme */}
       <div className={`
         hidden lg:flex lg:flex-col lg:fixed lg:left-0 lg:top-0 lg:h-full 
-        bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 
-        shadow-lg transition-all duration-300 ease-in-out z-40
+        bg-gradient-to-b from-pastel-blue/80 via-pastel-cream to-pastel-beige/60 dark:bg-gray-900 border-r border-pastel-sand/30 dark:border-gray-700 
+        shadow-lg backdrop-blur-xl transition-all duration-300 ease-in-out z-40
         ${isCollapsed ? 'lg:w-16' : 'lg:w-64'}
       `}>
         {/* Desktop Header - Clean design */}
@@ -168,10 +168,10 @@ export default function Sidebar() {
                 key={item.href}
                 href={item.href}
                 className={`
-                  flex items-center px-4 py-3 rounded-lg transition-all duration-200 font-medium relative
+                  flex items-center px-4 py-3 rounded-xl transition-all duration-200 font-medium relative
                   ${isActive 
-                    ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700' 
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+                    ? 'bg-white/80 dark:bg-blue-900/50 text-pastel-blue dark:text-blue-300 border border-pastel-blue/30 dark:border-blue-700 shadow-md' 
+                    : 'text-gray-700 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                   }
                   ${isCollapsed ? 'justify-center' : 'space-x-3'}
                 `}
@@ -201,9 +201,9 @@ export default function Sidebar() {
 
         {/* Desktop Footer - User Profile + Actions */}
         {!isCollapsed && (
-          <div className="border-t border-gray-200 dark:border-gray-700">
+          <div className="border-t border-pastel-sand/30 dark:border-gray-700">
             {/* Notifications & Theme row */}
-            <div className="flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
+            <div className="flex items-center justify-between px-4 py-3 bg-white/40 dark:bg-gray-800/50">
               <div className="flex items-center gap-1">
                 <UnifiedNotificationBell role="seller" />
                 <ThemeToggle />
@@ -251,13 +251,13 @@ export default function Sidebar() {
 
       {/* Mobile Sidebar */}
       <div className={`
-        lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-gray-900 
-        border-r border-gray-200 dark:border-gray-700 shadow-xl
+        lg:hidden fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-pastel-blue/90 via-pastel-cream to-pastel-beige/80 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 
+        border-r border-pastel-blue/30 dark:border-gray-700 shadow-xl backdrop-blur-lg
         transform transition-transform duration-300 ease-in-out flex flex-col
         ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         {/* Mobile Header - Clean */}
-        <div className="flex items-center justify-between h-14 px-4 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between h-14 px-4 border-b border-pastel-blue/30 dark:border-gray-700 bg-white/50">
           <Image 
             src="/logo.png" 
             alt="Bargain Logo" 
@@ -292,8 +292,8 @@ export default function Sidebar() {
                 className={`
                   flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium relative
                   ${isActive 
-                    ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700' 
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
+                    ? 'bg-white/80 dark:bg-blue-900/50 text-pastel-blue dark:text-blue-300 border border-pastel-blue/30 dark:border-blue-700 shadow-md' 
+                    : 'text-gray-700 dark:text-gray-400 hover:bg-white/60 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                   }
                 `}
               >
@@ -319,9 +319,9 @@ export default function Sidebar() {
         </nav>
         
         {/* Mobile Footer - User + Actions */}
-        <div className="border-t border-gray-200 dark:border-gray-700 mt-auto">
+        <div className="border-t border-pastel-blue/30 dark:border-gray-700 mt-auto">
           {/* Actions row */}
-          <div className="flex items-center justify-around px-4 py-3 bg-gray-50 dark:bg-gray-800/50">
+          <div className="flex items-center justify-around px-4 py-3 bg-white/40 dark:bg-gray-800/50">
             <UnifiedNotificationBell role="seller" />
             <ThemeToggle />
           </div>

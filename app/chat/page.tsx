@@ -68,7 +68,7 @@ function SellerChatContent() {
     return (
       <MainLayout>
         <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pastel-blue" />
         </div>
       </MainLayout>
     )
@@ -93,7 +93,7 @@ function SellerChatContent() {
             </label>
             <select
               id="mobile-client-selector"
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full p-2 border border-pastel-blue/50 rounded-lg focus:ring-2 focus:ring-pastel-blue focus:border-pastel-blue"
               value={selectedClient?.id || ''}
               onChange={(e) => {
                 const client = clients.find(c => c.id === e.target.value)
@@ -117,9 +117,9 @@ function SellerChatContent() {
         <div className="hidden md:block md:col-span-4 lg:col-span-3">
           <Card>
             <CardContent className="p-0">
-              <div className="p-3 md:p-4 border-b bg-gradient-to-r from-purple-50 to-indigo-50">
+              <div className="p-3 md:p-4 border-b bg-gradient-to-r from-pastel-blue/30 to-pastel-beige/30">
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 md:h-5 md:w-5 text-purple-600" />
+                  <Users className="h-4 w-4 md:h-5 md:w-5 text-pastel-blue" />
                   <h3 className="text-sm md:text-base font-semibold text-gray-900">
                     Clientes ({clients.length})
                   </h3>
@@ -138,9 +138,9 @@ function SellerChatContent() {
                       type="button"
                       key={client.id}
                       onClick={() => setSelectedClient(client)}
-                      className={`w-full text-left p-3 md:p-4 cursor-pointer hover:bg-purple-50 transition-all bg-transparent border-0 ${
+                      className={`w-full text-left p-3 md:p-4 cursor-pointer hover:bg-pastel-blue/20 transition-all bg-transparent border-0 ${
                         selectedClient?.id === client.id
-                          ? 'bg-gradient-to-r from-purple-50 to-indigo-50 border-l-4 border-purple-600 shadow-sm'
+                          ? 'bg-gradient-to-r from-pastel-blue/30 to-pastel-beige/30 border-l-4 border-pastel-blue shadow-sm'
                           : ''
                       }`}
                     >

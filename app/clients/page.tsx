@@ -88,7 +88,7 @@ function TimeoutState({ onRetry }: { readonly onRetry: () => void }) {
         </p>
         <button
           onClick={onRetry}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+          className="w-full bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800 py-2 rounded-lg hover:opacity-90 transition-all"
         >
           Reintentar
         </button>
@@ -108,7 +108,7 @@ function ErrorState({ error, onRetry }: { readonly error: string; readonly onRet
         <p className="text-gray-700 mb-4">{error}</p>
         <button
           onClick={onRetry}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+          className="w-full bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800 py-2 rounded-lg hover:opacity-90 transition-all"
         >
           Reintentar
         </button>
@@ -140,37 +140,37 @@ function StatsCards({ displayClients, selectedClientId, searchQuery }: StatsCard
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-      <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl shadow-lg p-6 text-white">
+      <div className="bg-gradient-to-br from-pastel-blue to-pastel-blue/70 rounded-2xl shadow-lg p-6 text-gray-800">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-blue-100 text-sm font-medium mb-1">{getClientsLabel()}</p>
+            <p className="text-gray-600 text-sm font-medium mb-1">{getClientsLabel()}</p>
             <p className="text-4xl font-bold">{displayClients.length}</p>
           </div>
-          <Users className="w-12 h-12 text-blue-200 opacity-80" />
+          <Users className="w-12 h-12 text-gray-500 opacity-80" />
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl shadow-lg p-6 text-white">
+      <div className="bg-gradient-to-br from-pastel-beige to-pastel-sand rounded-2xl shadow-lg p-6 text-gray-800">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-green-100 text-sm font-medium mb-1">{getOrdersLabel()}</p>
+            <p className="text-gray-600 text-sm font-medium mb-1">{getOrdersLabel()}</p>
             <p className="text-4xl font-bold">
               {displayClients.reduce((sum, c) => sum + (c.stats?.totalOrders || 0), 0)}
             </p>
           </div>
-          <ShoppingBag className="w-12 h-12 text-green-200 opacity-80" />
+          <ShoppingBag className="w-12 h-12 text-gray-500 opacity-80" />
         </div>
       </div>
 
-      <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl shadow-lg p-6 text-white">
+      <div className="bg-gradient-to-br from-pastel-cream to-pastel-blue/40 rounded-2xl shadow-lg p-6 text-gray-800">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-purple-100 text-sm font-medium mb-1">{getIncomeLabel()}</p>
+            <p className="text-gray-600 text-sm font-medium mb-1">{getIncomeLabel()}</p>
             <p className="text-4xl font-bold">
               {formatPrice(displayClients.reduce((sum, c) => sum + (c.stats?.totalSpent || 0), 0))}
             </p>
           </div>
-          <DollarSign className="w-12 h-12 text-purple-200 opacity-80" />
+          <DollarSign className="w-12 h-12 text-gray-500 opacity-80" />
         </div>
       </div>
     </div>
@@ -197,7 +197,7 @@ function SearchBar({ searchQuery, onSearchChange, onClear, totalClients, filtere
           placeholder="Buscar por nombre, email, teléfono o dirección..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full pl-12 pr-12 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition-all text-lg"
+          className="w-full pl-12 pr-12 py-4 border-2 border-pastel-blue/40 rounded-xl focus:ring-2 focus:ring-pastel-blue focus:border-pastel-blue shadow-sm transition-all text-lg"
         />
         {searchQuery && (
           <button

@@ -22,11 +22,11 @@ export default function ProductsPage() {
   }, [router])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 p-4 page-transition">
-      <Card className="max-w-md w-full shadow-xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pastel-cream via-pastel-blue/20 to-pastel-beige/40 p-4 page-transition">
+      <Card className="max-w-md w-full shadow-xl bg-white/90 backdrop-blur-sm border border-pastel-blue/20">
         <CardContent className="pt-6 text-center">
-          <div className="w-16 h-16 mx-auto bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mb-4">
-            <Users className="w-8 h-8 text-white" />
+          <div className="w-16 h-16 mx-auto bg-gradient-to-br from-pastel-blue to-pastel-beige rounded-full flex items-center justify-center mb-4 shadow-lg">
+            <Users className="w-8 h-8 text-gray-700" />
           </div>
           
           <h2 className="text-xl font-bold text-gray-900 mb-2">
@@ -38,16 +38,16 @@ export default function ProductsPage() {
             Cada cliente puede tener su propia lista de productos y precios personalizados.
           </p>
 
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
-            <p className="text-sm text-purple-800">
+          <div className="bg-pastel-blue/20 border border-pastel-blue/40 rounded-lg p-4 mb-4">
+            <p className="text-sm text-gray-700">
               <strong>💡 Tip:</strong> Ve a <strong>Clientes</strong> → selecciona un cliente → 
               presiona el botón <strong>&quot;Catálogo&quot;</strong> para gestionar sus productos.
             </p>
           </div>
 
-          <div className="flex items-center justify-center gap-2 text-purple-600">
+          <div className="flex items-center justify-center gap-2 text-pastel-blue">
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span className="text-sm">Redirigiendo a Clientes...</span>
+            <span className="text-sm text-gray-600">Redirigiendo a Clientes...</span>
           </div>
         </CardContent>
       </Card>

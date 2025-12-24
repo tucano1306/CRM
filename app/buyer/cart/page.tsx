@@ -351,14 +351,14 @@ function CartPageContent() {
   // Empty cart
   if (!cart || cart.items.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full text-center">
-          <ShoppingCart className="w-20 h-20 text-gray-300 mx-auto mb-4" />
+      <div className="min-h-screen bg-gradient-to-br from-pastel-cream via-pastel-blue/20 to-pastel-beige/40 flex items-center justify-center p-4">
+        <div className="bg-white/90 backdrop-blur-sm p-8 rounded-2xl shadow-xl max-w-md w-full text-center border border-pastel-blue/20">
+          <ShoppingCart className="w-20 h-20 text-pastel-blue/50 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Carrito vacío</h2>
           <p className="text-gray-600 mb-6">No tienes productos en tu carrito</p>
           <button 
             onClick={() => router.push('/buyer/catalog')}
-            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center gap-2 mx-auto"
+            className="px-6 py-3 bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800 rounded-xl font-semibold hover:opacity-90 transition-all flex items-center gap-2 mx-auto shadow-md"
           >
             <Package className="w-5 h-5" />
             Ir al Catálogo
@@ -371,7 +371,7 @@ function CartPageContent() {
   const sortedItems = getSortedItems()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 page-transition">
+    <div className="min-h-screen bg-gradient-to-br from-pastel-cream via-pastel-blue/20 to-pastel-beige/40 page-transition">
       {/* Toast Notifications */}
       <div className="fixed top-4 right-4 z-50 space-y-2">
         {toasts.map(toast => {
@@ -393,12 +393,12 @@ function CartPageContent() {
       </div>
 
       {/* Header */}
-      <div className="bg-white shadow-md sticky top-0 z-40">
+      <div className="bg-white/80 backdrop-blur-sm shadow-md sticky top-0 z-40 border-b border-pastel-blue/20">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-2">
-                <ShoppingCart className="w-7 h-7 text-purple-600" />
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-pastel-blue to-pastel-beige bg-clip-text text-transparent flex items-center gap-2">
+                <ShoppingCart className="w-7 h-7 text-pastel-blue" />
                 Mi Carrito
               </h1>
               <p className="text-gray-500 text-sm">
@@ -434,15 +434,15 @@ function CartPageContent() {
           {/* Lista de Productos */}
           <div className="flex-1">
             {/* Header de la tabla */}
-            <div className="bg-white rounded-t-xl shadow-md">
-              <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b-2 border-purple-100 text-sm font-semibold text-gray-600">
+            <div className="bg-white/80 backdrop-blur-sm rounded-t-xl shadow-md">
+              <div className="grid grid-cols-12 gap-4 px-4 py-3 border-b-2 border-pastel-blue/30 text-sm font-semibold text-gray-600">
                 <div className="col-span-1 flex items-center">
                   <button
                     onClick={handleSelectAll}
                     className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
                       selectAll
-                        ? 'bg-gradient-to-r from-purple-600 to-indigo-600 border-purple-600 text-white'
-                        : 'border-gray-300 hover:border-purple-400'
+                        ? 'bg-gradient-to-r from-pastel-blue to-pastel-beige border-pastel-blue text-gray-700'
+                        : 'border-gray-300 hover:border-pastel-blue'
                     }`}
                   >
                     {selectAll && <Check className="w-4 h-4" />}

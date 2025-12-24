@@ -343,13 +343,13 @@ export default function BuyerDashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50">
-        <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-xl">
+      <div className="min-h-screen bg-gradient-to-br from-pastel-cream via-pastel-blue/20 to-pastel-beige/40">
+        <div className="bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800 shadow-xl">
           <div className="container mx-auto px-6 py-8">
             <h1 className="text-4xl font-bold mb-2">
               ¡Hola, Comprador! 👋
             </h1>
-            <p className="text-purple-100 text-lg">Cargando tu panel de compras...</p>
+            <p className="text-gray-600 text-lg">Cargando tu panel de compras...</p>
           </div>
         </div>
         <div className="container mx-auto px-6 py-8">
@@ -360,19 +360,19 @@ export default function BuyerDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-pastel-cream via-pastel-blue/20 to-pastel-beige/40">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-xl">
+      <div className="bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800 shadow-xl backdrop-blur-sm">
         <div className="container mx-auto px-6 py-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold mb-2">
                 ¡Hola, {user?.firstName || 'Comprador'}! 👋
               </h1>
-              <p className="text-purple-100 text-lg">Bienvenido a tu panel de compras</p>
+              <p className="text-gray-600 text-lg">Bienvenido a tu panel de compras</p>
             </div>
             <Link href="/buyer/cart">
-              <Button className="bg-white text-purple-600 hover:bg-purple-50 font-semibold px-6 py-3 relative shadow-lg hover:shadow-xl transition-all">
+              <Button className="bg-white/90 text-pastel-blue hover:bg-white font-semibold px-6 py-3 relative shadow-lg hover:shadow-xl transition-all border border-pastel-blue/30">
                 <ShoppingCart className="mr-2 h-5 w-5" />
                 Mi Carrito
                 {cartCount > 0 && (
@@ -394,10 +394,10 @@ export default function BuyerDashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard
             href="/buyer/orders?status=all"
-            borderColor="border-purple-500"
-            iconBgClass="bg-gradient-to-br from-purple-500 to-purple-700"
+            borderColor="border-pastel-blue"
+            iconBgClass="bg-gradient-to-br from-pastel-blue to-pastel-blue/80"
             icon={<Package className="h-5 w-5 sm:h-6 sm:w-6 text-white" />}
-            arrowColor="text-purple-400"
+            arrowColor="text-pastel-blue"
             title="Total Órdenes"
             value={stats?.totalOrders || 0}
             hint={getStatHint(stats?.totalOrders, '↗️ Ver todas', 'Aún no tienes órdenes')}
@@ -438,15 +438,15 @@ export default function BuyerDashboardPage() {
         </div>
 
         {/* Gráfico de Gastos Mensuales */}
-        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 border border-pastel-blue/20">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent flex items-center gap-2">
+            <h3 className="text-xl font-bold bg-gradient-to-r from-pastel-blue to-pastel-beige bg-clip-text text-transparent flex items-center gap-2">
               📊 Gastos Mensuales
             </h3>
             <select 
               value={chartPeriod}
               onChange={(e) => setChartPeriod(e.target.value as ChartPeriod)}
-              className="px-4 py-2 border border-purple-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none font-medium text-gray-700 bg-white shadow-sm hover:border-purple-400 transition-colors"
+              className="px-4 py-2 border border-pastel-blue/50 rounded-lg text-sm focus:ring-2 focus:ring-pastel-blue focus:border-transparent outline-none font-medium text-gray-700 bg-white shadow-sm hover:border-pastel-blue transition-colors"
             >
               <option value="6months">Últimos 6 meses</option>
               <option value="year">Este año</option>
@@ -456,7 +456,7 @@ export default function BuyerDashboardPage() {
           
           {recentOrders.length === 0 ? (
             <div className="text-center py-12">
-              <TrendingUp className="w-16 h-16 text-purple-200 mx-auto mb-4" />
+              <TrendingUp className="w-16 h-16 text-pastel-blue/40 mx-auto mb-4" />
               <p className="text-gray-600 font-medium">No hay datos para mostrar aún</p>
               <p className="text-sm text-gray-500 mt-2">Realiza tu primera compra para ver estadísticas</p>
             </div>
@@ -468,12 +468,12 @@ export default function BuyerDashboardPage() {
                   <div key={month.name} className="flex-1 flex flex-col items-center group">
                     <div className="relative w-full">
                       {/* Tooltip on hover */}
-                      <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-3 py-1 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
+                      <div className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800 px-3 py-1 rounded-lg text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-lg">
                         {formatPrice(month.amount)}
-                        <div className="text-xs text-purple-100">{month.count} órdenes</div>
+                        <div className="text-xs text-gray-600">{month.count} órdenes</div>
                       </div>
                       <div 
-                        className="w-full bg-gradient-to-t from-purple-500 to-indigo-500 rounded-t-lg hover:from-purple-600 hover:to-indigo-600 transition-all cursor-pointer shadow-md"
+                        className="w-full bg-gradient-to-t from-pastel-blue to-pastel-beige rounded-t-lg hover:from-pastel-blue/80 hover:to-pastel-beige/80 transition-all cursor-pointer shadow-md"
                         style={{ 
                           height: `${Math.max(month.percentage, 5)}%`,
                           minHeight: month.amount > 0 ? '20px' : '5px'
@@ -486,9 +486,9 @@ export default function BuyerDashboardPage() {
               </div>
 
               {/* Resumen del gráfico */}
-              <div className="mt-6 pt-6 border-t border-gray-200 grid grid-cols-3 gap-4 text-center">
+              <div className="mt-6 pt-6 border-t border-pastel-blue/20 grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  <p className="text-2xl font-bold bg-gradient-to-r from-pastel-blue to-pastel-beige bg-clip-text text-transparent">
                     {formatPrice(getMonthlyData().reduce((sum, m) => sum + m.amount, 0))}
                   </p>
                   <p className="text-sm text-gray-600 mt-1 font-medium">Total del período</p>

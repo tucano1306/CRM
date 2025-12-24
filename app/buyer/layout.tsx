@@ -34,21 +34,21 @@ export default function BuyerLayout({ children }: BuyerLayoutProps) {
 
   return (
     <NotificationProvider>
-      <div className="flex h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="flex h-screen bg-gradient-to-br from-pastel-cream via-pastel-blue/20 to-pastel-beige/30 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <button 
           type="button"
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm border-0 cursor-default"
+          className="fixed inset-0 bg-black/30 z-40 lg:hidden backdrop-blur-sm border-0 cursor-default"
           onClick={() => setSidebarOpen(false)}
           aria-label="Close sidebar"
         />
       )}
       
-      {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-purple-600 to-indigo-600 shadow-2xl transition-transform lg:translate-x-0 lg:static flex flex-col`}>
+      {/* Sidebar - Pastel Theme */}
+      <aside className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-pastel-blue via-pastel-blue/90 to-pastel-beige/50 shadow-2xl transition-transform lg:translate-x-0 lg:static flex flex-col backdrop-blur-xl border-r border-white/20`}>
         {/* Header with logo */}
-        <div className="flex h-16 items-center justify-between px-4 border-b border-purple-500/30">
+        <div className="flex h-16 items-center justify-between px-4 border-b border-pastel-sand/30">
           <Image 
             src="/logo.png" 
             alt="Bargain Logo" 
@@ -58,7 +58,7 @@ export default function BuyerLayout({ children }: BuyerLayoutProps) {
             className="object-contain"
             priority
           />
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white hover:bg-white/20 p-2 rounded-lg transition">
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-700 hover:bg-white/40 p-2 rounded-lg transition">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -80,8 +80,8 @@ export default function BuyerLayout({ children }: BuyerLayoutProps) {
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 rounded-xl px-4 py-3 font-medium transition relative ${
                   isActive 
-                    ? 'bg-white text-purple-700 shadow-lg' 
-                    : 'text-white/90 hover:bg-white/20 hover:text-white'
+                    ? 'bg-white/90 text-pastel-blue shadow-lg shadow-pastel-blue/20 border border-pastel-blue/20' 
+                    : 'text-gray-700 hover:bg-white/50 hover:text-gray-900'
                 }`}
               >
                 <div className="relative">
@@ -112,27 +112,27 @@ export default function BuyerLayout({ children }: BuyerLayoutProps) {
         </nav>
 
         {/* Footer with notifications, theme and user */}
-        <div className="border-t border-purple-500/30">
+        <div className="border-t border-pastel-sand/30">
           {/* Notifications & Theme row */}
-          <div className="flex items-center justify-between px-4 py-3 bg-purple-700/30">
+          <div className="flex items-center justify-between px-4 py-3 bg-white/30">
             <div className="flex items-center gap-2">
               <UnifiedNotificationBell role="buyer" />
               <ThemeToggle />
             </div>
-            <span className="text-xs text-purple-200">Ajustes</span>
+            <span className="text-xs text-gray-600">Ajustes</span>
           </div>
           {/* User profile row */}
-          <div className="flex items-center gap-3 px-4 py-3 bg-purple-700/50">
+          <div className="flex items-center gap-3 px-4 py-3 bg-white/40">
             <UserButton 
               appearance={{
                 elements: {
-                  avatarBox: "w-9 h-9 ring-2 ring-white/30"
+                  avatarBox: "w-9 h-9 ring-2 ring-pastel-blue/30"
                 }
               }}
             />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{user?.firstName || 'Usuario'}</p>
-              <p className="text-xs text-purple-200 truncate">{user?.primaryEmailAddress?.emailAddress}</p>
+              <p className="text-sm font-semibold text-gray-800 truncate">{user?.firstName || 'Usuario'}</p>
+              <p className="text-xs text-gray-600 truncate">{user?.primaryEmailAddress?.emailAddress}</p>
             </div>
           </div>
         </div>

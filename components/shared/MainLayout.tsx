@@ -9,7 +9,7 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children, userRole }: MainLayoutProps) {
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-purple-50 dark:bg-gray-900 transition-colors duration-200 overflow-x-hidden w-full max-w-full">
+    <div className="flex min-h-screen bg-gradient-to-br from-pastel-cream via-pastel-blue/20 to-pastel-beige/30 dark:bg-gray-900 transition-colors duration-200 overflow-x-hidden w-full max-w-full">
       <Sidebar />
       
       {/* Main content - responsive margins and padding */}

@@ -538,7 +538,7 @@ export default function DashboardPage() {
       <div className="page-transition">
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
-          <TrendingUp className="text-purple-600" size={28} />
+          <TrendingUp className="text-pastel-blue" size={28} />
           <span className="sm:inline">Dashboard</span>
         </h1>
         <p className="text-sm sm:text-base text-gray-700 mt-1">
@@ -547,7 +547,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Tabs de navegación */}
-      <div className="mb-6 flex gap-1 sm:gap-2 border-b-2 border-purple-200 overflow-x-auto bg-white rounded-t-lg px-2">
+      <div className="mb-6 flex gap-1 sm:gap-2 border-b-2 border-pastel-blue/30 overflow-x-auto bg-white/80 backdrop-blur-sm rounded-t-lg px-2">
         {tabs.map((tab) => {
           const TabIcon = tab.icon
           return (
@@ -556,8 +556,8 @@ export default function DashboardPage() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-3 font-medium transition-all whitespace-nowrap text-sm sm:text-base rounded-t-lg ${
                 activeTab === tab.id
-                  ? 'text-white bg-gradient-to-r from-purple-600 to-indigo-600 shadow-lg'
-                  : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+                  ? 'text-gray-800 bg-gradient-to-r from-pastel-blue to-pastel-beige shadow-lg'
+                  : 'text-gray-600 hover:text-pastel-blue hover:bg-pastel-blue/10'
               }`}
             >
               <TabIcon size={16} className="sm:w-[18px] sm:h-[18px]" />
@@ -581,7 +581,7 @@ export default function DashboardPage() {
           return (
             <div
               key={card.title}
-              className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-3 border-l-4 border-purple-500"
+              className="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-2xl transition-all transform hover:-translate-y-1 p-3 border-l-4 border-pastel-blue"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className={`${card.color} p-1.5 rounded-xl shadow-md`}>
@@ -755,8 +755,8 @@ export default function DashboardPage() {
               onClick={() => setRevenuePeriod('7d')}
               className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${
                 revenuePeriod === '7d'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800'
+                  : 'bg-white/60 text-gray-700 hover:bg-pastel-blue/20'
               }`}
             >
               7 días
@@ -765,8 +765,8 @@ export default function DashboardPage() {
               onClick={() => setRevenuePeriod('30d')}
               className={`px-3 sm:px-4 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base ${
                 revenuePeriod === '30d'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-gradient-to-r from-pastel-blue to-pastel-beige text-gray-800'
+                  : 'bg-white/60 text-gray-700 hover:bg-pastel-blue/20'
               }`}
             >
               30 días
