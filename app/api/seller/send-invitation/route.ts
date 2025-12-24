@@ -36,7 +36,9 @@ export async function POST(req: NextRequest) {
         console.log(`📧 =================================`)
         console.log(`📧 ENVIANDO EMAIL CON MAILERSEND`)
         console.log(`📧 Destinatario: ${email}`)
+        console.log(`📧 Vendedor: ${sellerName}`)
         console.log(`📧 Link: ${invitationLink}`)
+        console.log(`📧 API Key configurada: ${process.env.MAILERSEND_API_KEY ? 'SI' : 'NO'}`)
         console.log(`📧 =================================`)
 
         const html = getInvitationEmailTemplate({
@@ -49,6 +51,8 @@ export async function POST(req: NextRequest) {
           subject: `${sellerName || 'Un vendedor'} te invita a conectarte`,
           html,
         })
+
+        console.log('📧 Resultado de sendEmail:', result)
 
         if (result.success) {
           console.log('✅ Email enviado exitosamente. ID:', result.messageId)
@@ -90,8 +94,11 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
-      data: results
+      success: results.emailSent || results.whatsappSent || results.smsSent,
+      data: results,
+      message: results.errors.length > 0 
+        ? `Errores: ${results.errors.join(', ')}`
+        : 'Invitación enviada exitosamente'
     })
 
   } catch (error) {

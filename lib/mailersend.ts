@@ -37,9 +37,17 @@ export async function sendEmail(params: EmailParams): Promise<MailersendResponse
   // Normalizar destinatarios
   const recipients = Array.isArray(params.to) ? params.to : [params.to]
   
+  // Validar formato de emails
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const invalidEmails = recipients.filter(email => !emailRegex.test(email))
+  if (invalidEmails.length > 0) {
+    console.error('❌ [MAILERSEND] Emails inválidos:', invalidEmails)
+    return { success: false, error: `Emails inválidos: ${invalidEmails.join(', ')}` }
+  }
+  
   const payload = {
     from: {
-      email: params.from?.email || 'noreply@test-zxk54v8vq11ljy6v.mlsender.net',
+      email: params.from?.email || 'MS_JgPwI3@trial-7dnvo4d86z94z850.mlsender.net',
       name: params.from?.name || 'Food Orders CRM'
     },
     to: recipients.map(email => ({ email })),
@@ -50,6 +58,7 @@ export async function sendEmail(params: EmailParams): Promise<MailersendResponse
   try {
     console.log('📧 [MAILERSEND] Enviando email...')
     console.log('📧 [MAILERSEND] Destinatarios:', recipients)
+    console.log('📧 [MAILERSEND] From:', payload.from)
     
     const response = await fetch(MAILERSEND_API_URL, {
       method: 'POST',
@@ -68,9 +77,16 @@ export async function sendEmail(params: EmailParams): Promise<MailersendResponse
 
     const errorData = await response.json().catch(() => ({}))
     console.error('❌ [MAILERSEND] Error:', response.status, errorData)
+    
+    // Mensaje de error más específico
+    let errorMessage = errorData.message || `HTTP ${response.status}`
+    if (response.status === 422) {
+      errorMessage = 'El email remitente no está verificado en Mailersend'
+    }
+    
     return { 
       success: false, 
-      error: errorData.message || `HTTP ${response.status}` 
+      error: errorMessage
     }
   } catch (error: any) {
     console.error('❌ [MAILERSEND] Error de conexión:', error.message)
