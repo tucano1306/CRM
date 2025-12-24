@@ -77,16 +77,21 @@ export async function sendEmail(params: EmailParams): Promise<MailersendResponse
 
     const errorData = await response.json().catch(() => ({}))
     console.error('❌ [MAILERSEND] Error:', response.status, errorData)
+    console.error('❌ [MAILERSEND] Response completo:', JSON.stringify(errorData, null, 2))
     
     // Mensaje de error más específico
     let errorMessage = errorData.message || `HTTP ${response.status}`
     if (response.status === 422) {
-      errorMessage = 'El email remitente no está verificado en Mailersend'
+      errorMessage = 'El email remitente no está verificado en Mailersend. Usa el dominio trial correcto.'
+    } else if (response.status === 401) {
+      errorMessage = 'API key inválida o expirada'
+    } else if (errorData.errors) {
+      errorMessage = JSON.stringify(errorData.errors)
     }
     
     return { 
       success: false, 
-      error: errorMessage
+      error: errorMessage,
     }
   } catch (error: any) {
     console.error('❌ [MAILERSEND] Error de conexión:', error.message)
