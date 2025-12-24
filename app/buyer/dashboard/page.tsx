@@ -512,14 +512,14 @@ export default function BuyerDashboardPage() {
 
         {/* Compra Nuevamente - Productos Frecuentes */}
         <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6 mb-8">
-          <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-6">🔁 Compra Nuevamente</h3>
+          <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-6">🔁 Compra Nuevamente</h3>
           
           {frequentProducts.length === 0 ? (
             <div className="text-center py-8">
-              <RefreshCw className="w-12 h-12 text-purple-200 mx-auto mb-3" />
+              <RefreshCw className="w-12 h-12 text-blue-200 mx-auto mb-3" />
               <p className="text-gray-600 text-sm font-medium">Realiza tu primera compra para ver recomendaciones</p>
               <Link href="/buyer/catalog">
-                <Button className="mt-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md">
+                <Button className="mt-4 bg-gradient-to-r from-blue-100 to-purple-100 hover:from-blue-200 hover:to-purple-200 text-blue-700 shadow-md">
                   Explorar Catálogo
                 </Button>
               </Link>
@@ -548,8 +548,8 @@ export default function BuyerDashboardPage() {
 
         {/* Acciones Rápidas con Tabs */}
         <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all mb-8 overflow-hidden">
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6">
-            <h2 className="text-2xl font-bold text-white">Acciones Rápidas</h2>
+          <div className="bg-gradient-to-r from-blue-100 to-purple-100 p-6 border-b border-blue-200">
+            <h2 className="text-2xl font-bold text-blue-800">Acciones Rápidas</h2>
           </div>
           
           <div className="flex border-b border-gray-200">
@@ -557,7 +557,7 @@ export default function BuyerDashboardPage() {
               onClick={() => setActiveTab('shop')}
               className={`flex-1 py-4 font-semibold transition-all ${
                 activeTab === 'shop' 
-                  ? 'border-b-2 border-purple-600 text-purple-600 bg-purple-50' 
+                  ? 'border-b-2 border-blue-400 text-blue-600 bg-blue-50' 
                   : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
@@ -567,7 +567,7 @@ export default function BuyerDashboardPage() {
               onClick={() => setActiveTab('manage')}
               className={`flex-1 py-4 font-semibold transition-all ${
                 activeTab === 'manage' 
-                  ? 'border-b-2 border-purple-600 text-purple-600 bg-purple-50' 
+                  ? 'border-b-2 border-blue-400 text-blue-600 bg-blue-50' 
                   : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
@@ -577,7 +577,7 @@ export default function BuyerDashboardPage() {
               onClick={() => setActiveTab('support')}
               className={`flex-1 py-4 font-semibold transition-all ${
                 activeTab === 'support' 
-                  ? 'border-b-2 border-purple-600 text-purple-600 bg-purple-50' 
+                  ? 'border-b-2 border-blue-400 text-blue-600 bg-blue-50' 
                   : 'text-gray-500 hover:bg-gray-50'
               }`}
             >
@@ -590,26 +590,26 @@ export default function BuyerDashboardPage() {
             {activeTab === 'shop' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link href="/buyer/catalog">
-                  <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 hover:from-purple-100 hover:to-indigo-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-purple-200">
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-blue-200">
                     <div className="flex items-center gap-3">
-                      <div className="bg-gradient-to-br from-purple-500 to-indigo-600 p-2 rounded-lg">
+                      <div className="bg-gradient-to-br from-blue-400 to-purple-400 p-2 rounded-lg">
                         <Store className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-purple-900">Ver Catálogo</h3>
-                        <p className="text-sm text-purple-700 font-medium">Explora productos disponibles</p>
+                        <h3 className="font-bold text-blue-900">Ver Catálogo</h3>
+                        <p className="text-sm text-blue-700 font-medium">Explora productos disponibles</p>
                       </div>
                     </div>
                   </div>
                 </Link>
 
                 <Link href="/buyer/cart">
-                  <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 hover:from-emerald-100 hover:to-green-100 rounded-xl transition-all cursor-pointer relative shadow-md hover:shadow-lg border border-emerald-200">
+                  <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 rounded-xl transition-all cursor-pointer relative shadow-md hover:shadow-lg border border-emerald-200">
                     <div className="flex items-center gap-3">
-                      <div className="relative bg-gradient-to-br from-emerald-500 to-green-600 p-2 rounded-lg">
+                      <div className="relative bg-gradient-to-br from-emerald-400 to-teal-400 p-2 rounded-lg">
                         <ShoppingCart className="h-6 w-6 text-white" />
                         {cartCount > 0 && (
-                          <span className="absolute -top-2 -right-2 h-5 min-w-[20px] px-1 bg-gradient-to-r from-rose-500 to-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
+                          <span className="absolute -top-2 -right-2 h-5 min-w-[20px] px-1 bg-gradient-to-r from-rose-400 to-red-400 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md">
                             {cartCount > 9 ? '9+' : cartCount}
                           </span>
                         )}
@@ -625,28 +625,28 @@ export default function BuyerDashboardPage() {
                 </Link>
 
                 <Link href="/buyer/recurring-orders">
-                  <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-amber-200">
+                  <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-orange-200">
                     <div className="flex items-center gap-3">
-                      <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2 rounded-lg">
+                      <div className="bg-gradient-to-br from-orange-400 to-amber-400 p-2 rounded-lg">
                         <RefreshCw className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-amber-900">Órdenes Recurrentes</h3>
-                        <p className="text-sm text-amber-700 font-medium">Automatiza tus pedidos</p>
+                        <h3 className="font-bold text-orange-900">Órdenes Recurrentes</h3>
+                        <p className="text-sm text-orange-700 font-medium">Automatiza tus pedidos</p>
                       </div>
                     </div>
                   </div>
                 </Link>
 
                 <Link href="/buyer/catalog?featured=true">
-                  <div className="p-4 bg-gradient-to-r from-rose-50 to-pink-50 hover:from-rose-100 hover:to-pink-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-rose-200">
+                  <div className="p-4 bg-gradient-to-r from-pink-50 to-rose-50 hover:from-pink-100 hover:to-rose-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-pink-200">
                     <div className="flex items-center gap-3">
-                      <div className="bg-gradient-to-br from-rose-500 to-pink-600 p-2 rounded-lg">
+                      <div className="bg-gradient-to-br from-pink-400 to-rose-400 p-2 rounded-lg">
                         <Heart className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-rose-900">Favoritos</h3>
-                        <p className="text-sm text-rose-700 font-medium">Productos que te gustan</p>
+                        <h3 className="font-bold text-pink-900">Favoritos</h3>
+                        <p className="text-sm text-pink-700 font-medium">Productos que te gustan</p>
                       </div>
                     </div>
                   </div>
@@ -660,7 +660,7 @@ export default function BuyerDashboardPage() {
                 <Link href="/buyer/orders">
                   <div className="p-4 bg-gradient-to-r from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-indigo-200">
                     <div className="flex items-center gap-3">
-                      <div className="bg-gradient-to-br from-indigo-500 to-blue-600 p-2 rounded-lg">
+                      <div className="bg-gradient-to-br from-indigo-400 to-blue-400 p-2 rounded-lg">
                         <Package className="h-6 w-6 text-white" />
                       </div>
                       <div>
@@ -672,14 +672,14 @@ export default function BuyerDashboardPage() {
                 </Link>
 
                 <Link href="/buyer/recurring-orders">
-                  <div className="p-4 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-amber-200">
+                  <div className="p-4 bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-orange-200">
                     <div className="flex items-center gap-3">
-                      <div className="bg-gradient-to-br from-amber-500 to-orange-600 p-2 rounded-lg">
+                      <div className="bg-gradient-to-br from-orange-400 to-amber-400 p-2 rounded-lg">
                         <RefreshCw className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-amber-900">Órdenes Recurrentes</h3>
-                        <p className="text-sm text-amber-700 font-medium">Automatiza tus pedidos</p>
+                        <h3 className="font-bold text-orange-900">Órdenes Recurrentes</h3>
+                        <p className="text-sm text-orange-700 font-medium">Automatiza tus pedidos</p>
                       </div>
                     </div>
                   </div>
@@ -688,7 +688,7 @@ export default function BuyerDashboardPage() {
                 <Link href="/buyer/orders">
                   <div className="p-4 bg-gradient-to-r from-teal-50 to-cyan-50 hover:from-teal-100 hover:to-cyan-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-teal-200">
                     <div className="flex items-center gap-3">
-                      <div className="bg-gradient-to-br from-teal-500 to-cyan-600 p-2 rounded-lg">
+                      <div className="bg-gradient-to-br from-teal-400 to-cyan-400 p-2 rounded-lg">
                         <CreditCard className="h-6 w-6 text-white" />
                       </div>
                       <div>
@@ -705,51 +705,51 @@ export default function BuyerDashboardPage() {
             {activeTab === 'support' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Link href="/buyer/chat">
-                  <div className="p-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-xl transition-all cursor-pointer shadow-lg hover:shadow-xl">
+                  <div className="p-4 bg-gradient-to-r from-blue-100 to-purple-100 hover:from-blue-200 hover:to-purple-200 rounded-xl transition-all cursor-pointer shadow-lg hover:shadow-xl border border-blue-200">
                     <div className="flex items-center gap-3">
-                      <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
-                        <MessageCircle className="h-6 w-6 text-white" />
+                      <div className="bg-blue-500/20 p-2 rounded-lg backdrop-blur-sm">
+                        <MessageCircle className="h-6 w-6 text-blue-700" />
                       </div>
                       <div>
-                        <h3 className="font-bold text-white">Chat con Vendedor</h3>
-                        <p className="text-sm text-purple-100 font-medium">Envía mensajes directos</p>
+                        <h3 className="font-bold text-blue-800">Chat con Vendedor</h3>
+                        <p className="text-sm text-blue-700 font-medium">Envía mensajes directos</p>
                       </div>
                     </div>
                   </div>
                 </Link>
 
-                <div className="p-4 bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-blue-100 hover:to-cyan-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-blue-200">
+                <div className="p-4 bg-gradient-to-r from-cyan-50 to-sky-50 hover:from-cyan-100 hover:to-sky-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-cyan-200">
                   <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-blue-500 to-cyan-600 p-2 rounded-lg">
+                    <div className="bg-gradient-to-br from-cyan-400 to-sky-400 p-2 rounded-lg">
                       <MessageCircle className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-blue-900">Centro de Ayuda</h3>
-                      <p className="text-sm text-blue-700 font-medium">Preguntas frecuentes</p>
+                      <h3 className="font-bold text-cyan-900">Centro de Ayuda</h3>
+                      <p className="text-sm text-cyan-700 font-medium">Preguntas frecuentes</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-green-200">
+                <div className="p-4 bg-gradient-to-r from-teal-50 to-emerald-50 hover:from-teal-100 hover:to-emerald-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-teal-200">
                   <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2 rounded-lg">
+                    <div className="bg-gradient-to-br from-teal-400 to-emerald-400 p-2 rounded-lg">
                       <Package className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-green-900">Rastreo de Envío</h3>
-                      <p className="text-sm text-green-700 font-medium">Sigue tus pedidos</p>
+                      <h3 className="font-bold text-teal-900">Rastreo de Envío</h3>
+                      <p className="text-sm text-teal-700 font-medium">Sigue tus pedidos</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 bg-gradient-to-r from-yellow-50 to-amber-50 hover:from-yellow-100 hover:to-amber-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-yellow-200">
+                <div className="p-4 bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-100 hover:to-yellow-100 rounded-xl transition-all cursor-pointer shadow-md hover:shadow-lg border border-amber-200">
                   <div className="flex items-center gap-3">
-                    <div className="bg-gradient-to-br from-yellow-500 to-amber-600 p-2 rounded-lg">
+                    <div className="bg-gradient-to-br from-amber-400 to-yellow-400 p-2 rounded-lg">
                       <AlertCircle className="h-6 w-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-yellow-900">Reportar Problema</h3>
-                      <p className="text-sm text-yellow-700 font-medium">Ayúdanos a mejorar</p>
+                      <h3 className="font-bold text-amber-900">Reportar Problema</h3>
+                      <p className="text-sm text-amber-700 font-medium">Ayúdanos a mejorar</p>
                     </div>
                   </div>
                 </div>
@@ -761,18 +761,18 @@ export default function BuyerDashboardPage() {
         {/* Órdenes Recientes */}
         <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">📦 Órdenes Recientes</h3>
-            <Link href="/buyer/orders" className="text-purple-600 hover:text-purple-700 font-semibold text-sm flex items-center gap-1 transition-colors">
+            <h3 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">📦 Órdenes Recientes</h3>
+            <Link href="/buyer/orders" className="text-blue-600 hover:text-blue-700 font-semibold text-sm flex items-center gap-1 transition-colors">
               Ver todas <ArrowUpRight className="w-4 h-4" />
             </Link>
           </div>
           
           {recentOrders.length === 0 ? (
             <div className="text-center py-12">
-              <Package className="h-16 w-16 text-purple-200 mx-auto mb-4" />
+              <Package className="h-16 w-16 text-blue-200 mx-auto mb-4" />
               <p className="text-gray-600 font-medium">No hay órdenes aún</p>
               <Link href="/buyer/catalog">
-                <Button className="mt-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md">
+                <Button className="mt-4 bg-gradient-to-r from-blue-100 to-purple-100 hover:from-blue-200 hover:to-purple-200 text-blue-700 shadow-md">
                   Explorar Catálogo
                 </Button>
               </Link>
