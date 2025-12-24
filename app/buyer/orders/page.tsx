@@ -2379,7 +2379,7 @@ function OrdersPageContent() {
               )}
 
               {/* Tabs */}
-              <div className="flex border-b border-pastel-sand sticky top-[120px] bg-white z-10">
+              <div className="flex border-b border-pastel-sand bg-white z-20 relative">
                 <button 
                   onClick={(e) => { e.stopPropagation(); setActiveTab('productos'); }}
                   className={`px-6 py-3 font-medium transition-colors ${
