@@ -60,8 +60,8 @@ export async function GET(req: NextRequest) {
     })
 
     // Verificar si fue aceptado recientemente (últimos 30 segundos)
-    const justAccepted = recentRequest && recentRequest.respondedAt 
-      ? (new Date().getTime() - new Date(recentRequest.respondedAt).getTime()) < 30000
+    const justAccepted = recentRequest?.respondedAt 
+      ? (Date.now() - new Date(recentRequest.respondedAt).getTime()) < 30000
       : false
 
     return NextResponse.json({
