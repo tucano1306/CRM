@@ -12,7 +12,6 @@ import { useUnreadMessages } from '@/hooks/useUnreadMessages'
 import { usePendingOrders } from '@/hooks/useNotifications'
 import { useCartCount } from '@/hooks/useCartCount'
 import ThemeToggle from '@/components/shared/ThemeToggle'
-import { BuyerAccessValidator } from '@/components/buyer/BuyerAccessValidator'
 
 interface BuyerLayoutProps {
   readonly children: React.ReactNode
@@ -174,9 +173,7 @@ export default function BuyerLayout({ children }: BuyerLayoutProps) {
         </header>
         
         <main className="flex-1 overflow-y-auto">
-          <BuyerAccessValidator>
-            {children}
-          </BuyerAccessValidator>
+          {children}
         </main>
       </div>
     </div>

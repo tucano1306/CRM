@@ -35,7 +35,7 @@ export function BuyerAccessValidator({ children }: BuyerAccessValidatorProps) {
         setAccessState('granted')
       } else {
         // Verificar si hay invitación pendiente
-        if (typeof window !== 'undefined') {
+        if (globalThis.window !== undefined) {
           const pending = sessionStorage.getItem('pendingInvitation')
           if (pending) {
             const { token, sellerId } = JSON.parse(pending)

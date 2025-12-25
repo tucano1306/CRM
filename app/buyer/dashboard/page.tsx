@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useUser } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { 
   ShoppingCart, Package, Clock, CheckCircle, 
@@ -235,7 +236,8 @@ function getStatHint(value: number | undefined, positiveText: string, zeroText: 
 // ============ Main Component ============
 
 export default function BuyerDashboardPage() {
-  const { user } = useUser()
+  const { user, isLoaded } = useUser()
+  const router = useRouter()
   const { cartCount } = useCartCount()
   const [stats, setStats] = useState<BuyerStats | null>(null)
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([])
@@ -245,6 +247,27 @@ export default function BuyerDashboardPage() {
   const [showQuickActions, setShowQuickActions] = useState(false)
   const [frequentProducts, setFrequentProducts] = useState<any[]>([])
   const [addingToCart, setAddingToCart] = useState<string | null>(null)
+
+  // Verificar si hay invitación pendiente al cargar
+  useEffect(() => {
+    if (!isLoaded || !user) return
+
+    if (globalThis.window !== undefined) {
+      const pending = sessionStorage.getItem('pendingInvitation')
+      if (pending) {
+        try {
+          const { token, sellerId } = JSON.parse(pending)
+          if (token && sellerId) {
+            router.push(`/buyer/connect?token=${token}&seller=${sellerId}`)
+            return
+          }
+        } catch (e) {
+          console.error('Error parsing pendingInvitation:', e)
+          sessionStorage.removeItem('pendingInvitation')
+        }
+      }
+    }
+  }, [isLoaded, user, router])
 
   const getMonthlyData = () => calculateMonthlyData(recentOrders, chartPeriod)
 
