@@ -59,13 +59,13 @@ export async function POST(request: NextRequest) {
       try {
         const name = row['Nombre'] || row['nombre'] || row['NOMBRE'] || row['Name'] || row['name']
         const priceStr = row['Precio'] || row['precio'] || row['PRECIO'] || row['Price'] || row['price'] || '0'
-        const price = typeof priceStr === 'number' ? priceStr : parseFloat(String(priceStr).replace(/[^0-9.-]/g, ''))
+        const price = typeof priceStr === 'number' ? priceStr : Number.parseFloat(String(priceStr).replaceAll(/[^0-9.-]/g, ''))
         const description = row['Descripción'] || row['descripcion'] || row['Description'] || ''
         const sku = row['SKU'] || row['sku'] || row['Código'] || row['codigo'] || ''
         const stockStr = row['Stock'] || row['stock'] || row['Existencia'] || '0'
-        const stock = typeof stockStr === 'number' ? stockStr : parseInt(String(stockStr).replace(/[^0-9]/g, ''))
+        const stock = typeof stockStr === 'number' ? stockStr : Number.parseInt(String(stockStr).replaceAll(/\D/g, ''), 10)
 
-        if (!name || isNaN(price)) {
+        if (!name || Number.isNaN(price)) {
           errors.push(`Fila sin nombre o precio inválido`)
           continue
         }
@@ -77,10 +77,13 @@ export async function POST(request: NextRequest) {
             description: description || '',
             price,
             sku: sku || undefined,
-            stock: isNaN(stock) ? 0 : stock,
+            stock: Number.isNaN(stock) ? 0 : stock,
             isActive: true,
-            sellerId: seller.id,
-            category: 'General'
+            sellers: {
+              create: {
+                sellerId: seller.id
+              }
+            }
           }
         })
 

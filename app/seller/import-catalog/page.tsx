@@ -18,7 +18,7 @@ export default function ImportCatalogPage() {
   } | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files?.[0]) {
       setFile(e.target.files[0])
       setResult(null)
     }
@@ -92,13 +92,7 @@ export default function ImportCatalogPage() {
                 className="hidden"
               />
               
-              {!file ? (
-                <label htmlFor="file-input" className="cursor-pointer">
-                  <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600 mb-2">Haz clic para seleccionar un archivo Excel</p>
-                  <p className="text-sm text-gray-400">.xlsx o .xls</p>
-                </label>
-              ) : (
+              {file ? (
                 <div className="space-y-4">
                   <div className="flex items-center justify-center gap-2 text-green-600">
                     <FileSpreadsheet className="h-6 w-6" />
@@ -131,6 +125,12 @@ export default function ImportCatalogPage() {
                     </Button>
                   </div>
                 </div>
+              ) : (
+                <label htmlFor="file-input" className="cursor-pointer">
+                  <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600 mb-2">Haz clic para seleccionar un archivo Excel</p>
+                  <p className="text-sm text-gray-400">.xlsx o .xls</p>
+                </label>
               )}
             </div>
 
@@ -155,8 +155,8 @@ export default function ImportCatalogPage() {
                         {result.errors && result.errors.length > 0 && (
                           <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded">
                             <p className="text-yellow-800 font-medium">Advertencias:</p>
-                            {result.errors.map((err, i) => (
-                              <p key={i} className="text-xs text-yellow-700">• {err}</p>
+                            {result.errors.map((err) => (
+                              <p key={err} className="text-xs text-yellow-700">• {err}</p>
                             ))}
                           </div>
                         )}
