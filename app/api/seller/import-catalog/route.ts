@@ -3,6 +3,57 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import * as XLSX from 'xlsx'
 
+function extractRowData(row: any) {
+  const name = row['Nombre'] || row['nombre'] || row['NOMBRE'] || row['Name'] || row['name']
+  const priceStr = row['Precio'] || row['precio'] || row['PRECIO'] || row['Price'] || row['price'] || '0'
+  const price = typeof priceStr === 'number' ? priceStr : Number.parseFloat(String(priceStr).replaceAll(/[^0-9.-]/g, ''))
+  const description = row['Descripción'] || row['descripcion'] || row['Description'] || ''
+  const sku = row['SKU'] || row['sku'] || row['Código'] || row['codigo'] || ''
+  const stockStr = row['Stock'] || row['stock'] || row['Existencia'] || '0'
+  const stock = typeof stockStr === 'number' ? stockStr : Number.parseInt(String(stockStr).replaceAll(/\D/g, ''), 10)
+
+  return { name, price, description, sku, stock }
+}
+
+async function processProduct(rowData: any, seller: any, clients: any[]) {
+  const { name, price, description, sku, stock } = extractRowData(rowData)
+
+  if (!name || Number.isNaN(price)) {
+    throw new Error('Fila sin nombre o precio inválido')
+  }
+
+  const product = await prisma.product.create({
+    data: {
+      name,
+      description: description || '',
+      price,
+      sku: sku || undefined,
+      stock: Number.isNaN(stock) ? 0 : stock,
+      isActive: true,
+      sellers: {
+        create: {
+          sellerId: seller.id
+        }
+      }
+    }
+  })
+
+  let assignmentsCreated = 0
+  for (const client of clients) {
+    await prisma.clientProduct.create({
+      data: {
+        clientId: client.id,
+        productId: product.id,
+        customPrice: price,
+        isVisible: true
+      }
+    })
+    assignmentsCreated++
+  }
+
+  return assignmentsCreated
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth()
@@ -10,7 +61,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
-    // Verificar que sea vendedor
     const seller = await prisma.seller.findFirst({
       where: {
         authenticated_users: { some: { authId: userId } }
@@ -28,7 +78,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No se envió archivo' }, { status: 400 })
     }
 
-    // Leer el archivo
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
     
@@ -41,7 +90,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'El archivo está vacío' }, { status: 400 })
     }
 
-    // Obtener clientes del vendedor
     const clients = await prisma.client.findMany({
       where: { sellerId: seller.id }
     })
@@ -54,53 +102,11 @@ export async function POST(request: NextRequest) {
     let assignmentsCreated = 0
     const errors: string[] = []
 
-    // Procesar cada fila
     for (const row of data as any[]) {
       try {
-        const name = row['Nombre'] || row['nombre'] || row['NOMBRE'] || row['Name'] || row['name']
-        const priceStr = row['Precio'] || row['precio'] || row['PRECIO'] || row['Price'] || row['price'] || '0'
-        const price = typeof priceStr === 'number' ? priceStr : Number.parseFloat(String(priceStr).replaceAll(/[^0-9.-]/g, ''))
-        const description = row['Descripción'] || row['descripcion'] || row['Description'] || ''
-        const sku = row['SKU'] || row['sku'] || row['Código'] || row['codigo'] || ''
-        const stockStr = row['Stock'] || row['stock'] || row['Existencia'] || '0'
-        const stock = typeof stockStr === 'number' ? stockStr : Number.parseInt(String(stockStr).replaceAll(/\D/g, ''), 10)
-
-        if (!name || Number.isNaN(price)) {
-          errors.push(`Fila sin nombre o precio inválido`)
-          continue
-        }
-
-        // Crear producto
-        const product = await prisma.product.create({
-          data: {
-            name,
-            description: description || '',
-            price,
-            sku: sku || undefined,
-            stock: Number.isNaN(stock) ? 0 : stock,
-            isActive: true,
-            sellers: {
-              create: {
-                sellerId: seller.id
-              }
-            }
-          }
-        })
-
+        const assignments = await processProduct(row, seller, clients)
         productsCreated++
-
-        // Asignar a todos los clientes
-        for (const client of clients) {
-          await prisma.clientProduct.create({
-            data: {
-              clientId: client.id,
-              productId: product.id,
-              customPrice: price,
-              isVisible: true
-            }
-          })
-          assignmentsCreated++
-        }
+        assignmentsCreated += assignments
       } catch (err: any) {
         errors.push(`Error procesando producto: ${err.message}`)
       }

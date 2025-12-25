@@ -56,6 +56,9 @@ export default function CatalogPage() {
   // Productos seleccionados con cantidades
   const [selectedProducts, setSelectedProducts] = useState<Map<string, number>>(new Map())
   
+  // Mostrar panel móvil
+  const [showMobileCart, setShowMobileCart] = useState(false)
+  
   // Enviando al carrito
   const [submitting, setSubmitting] = useState(false)
 
@@ -597,8 +600,8 @@ export default function CatalogPage() {
             </div>
           </div>
 
-          {/* Panel de Selección */}
-          <div className="lg:w-80 lg:flex-shrink-0">
+          {/* Panel de Selección - Desktop */}
+          <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
             <div className="bg-white rounded-xl shadow-lg p-6 lg:sticky lg:top-32">
               <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <ShoppingCart className="w-5 h-5 text-purple-600" />
@@ -684,6 +687,118 @@ export default function CatalogPage() {
         </div>
       </div>
 
+      {/* Botón flotante móvil */}
+      {selectedProducts.size > 0 && (
+        <div className="lg:hidden fixed bottom-6 right-6 z-50">
+          <button
+            onClick={() => setShowMobileCart(true)}
+            className="relative bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full p-4 shadow-2xl hover:shadow-3xl transform hover:scale-110 transition-all"
+          >
+            <ShoppingCart className="w-6 h-6" />
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+              {selectedProducts.size}
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* Modal móvil */}
+      {showMobileCart && (
+        <div className="lg:hidden fixed inset-0 bg-black/50 z-50 flex items-end">
+          <div className="bg-white w-full rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto animate-slide-up">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5 text-purple-600" />
+                Selección Actual
+              </h2>
+              <button
+                onClick={() => setShowMobileCart(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {selectedProducts.size === 0 ? (
+              <div className="text-center py-8">
+                <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">No hay productos seleccionados</p>
+              </div>
+            ) : (
+              <>
+                {/* Lista de seleccionados */}
+                <div className="space-y-3 mb-4">
+                  {Array.from(selectedProducts).map(([productId, quantity]) => {
+                    const product = products.find(p => p.id === productId)
+                    if (!product) return null
+                    return (
+                      <div key={productId} className="flex items-center justify-between bg-purple-50 rounded-lg p-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-gray-800 text-sm truncate">{product.name}</p>
+                          <p className="text-xs text-purple-600">
+                            {quantity} x {formatPrice(product.price)}
+                          </p>
+                        </div>
+                        <div className="text-right ml-2">
+                          <p className="font-bold text-purple-600 text-sm">
+                            {formatPrice(product.price * quantity)}
+                          </p>
+                          <button
+                            onClick={() => toggleProduct(productId)}
+                            className="text-red-500 hover:text-red-600 text-xs"
+                          >
+                            Quitar
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Total y acciones */}
+                <div className="border-t-2 border-purple-100 pt-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-gray-600 font-medium">Total:</span>
+                    <span className="text-2xl font-bold text-purple-600">
+                      {formatPrice(calculateTotal())}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-4 text-center">
+                    {selectedProducts.size} producto(s) seleccionado(s)
+                  </p>
+                  
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => {
+                        addToCart()
+                        setShowMobileCart(false)
+                      }}
+                      disabled={submitting}
+                      className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-700 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {submitting ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <ShoppingCart className="w-5 h-5" />
+                      )}
+                      {submitting ? 'Agregando...' : 'Agregar al Carrito'}
+                    </button>
+                    
+                    <button
+                      onClick={clearSelection}
+                      className="w-full py-2 bg-gray-100 text-gray-600 rounded-xl font-medium hover:bg-gray-200 transition-all flex items-center justify-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Limpiar Selección
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Estilos para animaciones */}
       <style>{`
         @keyframes slide-in {
@@ -696,8 +811,19 @@ export default function CatalogPage() {
             opacity: 1;
           }
         }
+        @keyframes slide-up {
+          from {
+            transform: translateY(100%);
+          }
+          to {
+            transform: translateY(0);
+          }
+        }
         .animate-slide-in {
           animation: slide-in 0.3s ease-out;
+        }
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out;
         }
       `}</style>
     </div>
