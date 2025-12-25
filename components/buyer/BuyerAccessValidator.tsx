@@ -9,7 +9,7 @@ interface BuyerAccessValidatorProps {
   readonly children: React.ReactNode
 }
 
-type AccessState = 'loading' | 'validating' | 'granted' | 'denied'
+type AccessState = 'loading' | 'validating' | 'granted' | 'denied' | 'connecting'
 
 export function BuyerAccessValidator({ children }: BuyerAccessValidatorProps) {
   const { user, isLoaded } = useUser()
@@ -34,6 +34,18 @@ export function BuyerAccessValidator({ children }: BuyerAccessValidatorProps) {
       if (data.hasAccess) {
         setAccessState('granted')
       } else {
+        // Verificar si hay invitación pendiente
+        if (typeof window !== 'undefined') {
+          const pending = sessionStorage.getItem('pendingInvitation')
+          if (pending) {
+            const { token, sellerId } = JSON.parse(pending)
+            if (token && sellerId) {
+              setAccessState('connecting')
+              router.push(`/buyer/connect?token=${token}&seller=${sellerId}`)
+              return
+            }
+          }
+        }
         setErrorReason(data.reason || 'Tu cuenta de cliente no existe en el sistema')
         setAccessState('denied')
       }
@@ -42,7 +54,7 @@ export function BuyerAccessValidator({ children }: BuyerAccessValidatorProps) {
       setErrorReason('Error de conexión. Intenta de nuevo.')
       setAccessState('denied')
     }
-  }, [isLoaded, user])
+  }, [isLoaded, user, router])
 
   useEffect(() => {
     validateAccess()
@@ -64,12 +76,14 @@ export function BuyerAccessValidator({ children }: BuyerAccessValidatorProps) {
   }
 
   // Loading state
-  if (!isLoaded || accessState === 'loading' || accessState === 'validating') {
+  if (!isLoaded || accessState === 'loading' || accessState === 'validating' || accessState === 'connecting') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pastel-blue via-pastel-cream to-pastel-sand">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Validando acceso...</p>
+          <p className="text-gray-600">
+            {accessState === 'connecting' ? 'Conectando con vendedor...' : 'Validando acceso...'}
+          </p>
         </div>
       </div>
     )

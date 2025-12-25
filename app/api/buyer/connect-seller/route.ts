@@ -6,11 +6,14 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth()
     
+    console.log('🔵 connect-seller: userId =', userId)
+    
     if (!userId) {
       return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
     }
 
     const { token, sellerId, phone } = await request.json()
+    console.log('🔵 connect-seller: token =', token, 'sellerId =', sellerId)
 
     if (!token || !sellerId) {
       return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
@@ -20,6 +23,7 @@ export async function POST(request: NextRequest) {
     const seller = await prisma.seller.findUnique({
       where: { id: sellerId }
     })
+    console.log('🔵 connect-seller: seller =', seller?.name)
 
     if (!seller) {
       return NextResponse.json({ error: 'Vendedor no encontrado' }, { status: 404 })
@@ -30,24 +34,45 @@ export async function POST(request: NextRequest) {
       headers: { Authorization: `Bearer ${process.env.CLERK_SECRET_KEY}` }
     })
     const clerkUser = await clerkRes.json()
+    console.log('🔵 connect-seller: clerkUser email =', clerkUser.email_addresses?.[0]?.email_address)
 
-    const email = clerkUser.email_addresses?.[0]?.email_address || ''
+    const email = clerkUser.email_addresses?.[0]?.email_address || `${userId}@temp.com`
     const name = `${clerkUser.first_name || ''} ${clerkUser.last_name || ''}`.trim() || email.split('@')[0]
     const phoneNumber = phone || clerkUser.phone_numbers?.[0]?.phone_number || ''
 
-    // Crear authenticated_user si no existe
-    const authUser = await prisma.authenticated_users.findUnique({
+    // Buscar o crear authenticated_user
+    let authUser = await prisma.authenticated_users.findUnique({
       where: { authId: userId }
-    }) ?? await prisma.authenticated_users.create({
-      data: {
-        id: userId,
-        authId: userId,
-        email,
-        name,
-        role: 'CLIENT',
-        updatedAt: new Date()
-      }
     })
+    console.log('🔵 connect-seller: authUser existente =', authUser?.id)
+
+    if (!authUser) {
+      // Verificar si existe por email también
+      const existingByEmail = await prisma.authenticated_users.findUnique({
+        where: { email }
+      })
+      
+      if (existingByEmail) {
+        // Actualizar el authId si el email ya existe
+        authUser = await prisma.authenticated_users.update({
+          where: { email },
+          data: { authId: userId, updatedAt: new Date() }
+        })
+        console.log('🔵 connect-seller: authUser actualizado por email =', authUser.id)
+      } else {
+        authUser = await prisma.authenticated_users.create({
+          data: {
+            id: userId,
+            authId: userId,
+            email,
+            name,
+            role: 'CLIENT',
+            updatedAt: new Date()
+          }
+        })
+        console.log('🔵 connect-seller: authUser creado =', authUser.id)
+      }
+    }
 
     // Verificar si ya existe cliente con este vendedor
     let client = await prisma.client.findFirst({
@@ -56,6 +81,7 @@ export async function POST(request: NextRequest) {
         sellerId: seller.id
       }
     })
+    console.log('🔵 connect-seller: cliente existente =', client?.id)
 
     if (client) {
       return NextResponse.json({
@@ -76,6 +102,7 @@ export async function POST(request: NextRequest) {
         authenticated_users: { connect: { id: authUser.id } }
       }
     })
+    console.log('🔵 connect-seller: cliente creado =', client.id)
 
     // Notificar al vendedor
     await prisma.notification.create({
@@ -87,6 +114,7 @@ export async function POST(request: NextRequest) {
         relatedId: client.id
       }
     })
+    console.log('🔵 connect-seller: notificación creada')
 
     console.log('✅ Cliente conectado:', client.id, '-> Vendedor:', seller.name)
 

@@ -132,6 +132,7 @@ export default function BuyerSignUpPage() {
           }}
           signInUrl="/buyer/sign-in"
           forceRedirectUrl={redirectUrl || '/buyer/dashboard'}
+          fallbackRedirectUrl={redirectUrl || '/buyer/dashboard'}
         />
       </div>
     </div>
