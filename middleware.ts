@@ -26,7 +26,9 @@ const isPublicRoute = createRouteMatcher([
   '/buyer/connect(.*)', // Permitir acceso sin auth para procesar invitaciones
   '/api/sellers(.*)', // Permitir consultar vendedores sin auth
   '/api/webhooks(.*)',
+  '/api/devops(.*)', // API de DevOps Dashboard
   '/select-mode',
+  '/devops', // DevOps Dashboard público
   // Asegurar que activos estáticos críticos no requieran auth
   '/favicon.ico',
   '/site.webmanifest',
