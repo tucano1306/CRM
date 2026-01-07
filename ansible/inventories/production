@@ -1,0 +1,35 @@
+# ==============================================================================
+# Production Inventory - Food Orders CRM
+# ==============================================================================
+
+[web]
+web-01 ansible_host=192.168.1.10
+web-02 ansible_host=192.168.1.11
+
+[db]
+db-01 ansible_host=192.168.1.20
+db-02 ansible_host=192.168.1.21
+
+[cache]
+redis-01 ansible_host=192.168.1.30
+
+[monitoring]
+prometheus-01 ansible_host=192.168.1.40
+grafana-01 ansible_host=192.168.1.41
+
+[ci]
+jenkins-01 ansible_host=192.168.1.50
+
+[production:children]
+web
+db
+cache
+monitoring
+ci
+
+[production:vars]
+ansible_user=deploy
+ansible_python_interpreter=/usr/bin/python3
+env=production
+docker_image=food-orders-crm
+docker_registry=docker.io

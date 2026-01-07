@@ -1,0 +1,24 @@
+# ==============================================================================
+# Staging Inventory - Food Orders CRM
+# ==============================================================================
+
+[web]
+staging-web-01 ansible_host=192.168.2.10
+
+[db]
+staging-db-01 ansible_host=192.168.2.20
+
+[cache]
+staging-redis-01 ansible_host=192.168.2.30
+
+[staging:children]
+web
+db
+cache
+
+[staging:vars]
+ansible_user=deploy
+ansible_python_interpreter=/usr/bin/python3
+env=staging
+docker_image=food-orders-crm
+docker_registry=docker.io

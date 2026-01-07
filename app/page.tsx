@@ -135,6 +135,18 @@ export default function HomePage() {
           </SignedOut>
 
         </CardContent>
+        
+        {/* DevOps Dashboard Link */}
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <Link href="/devops">
+            <Button 
+              variant="ghost" 
+              className="w-full text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+            >
+              🚀 DevOps Dashboard
+            </Button>
+          </Link>
+        </div>
       </Card>
     </div>
   )

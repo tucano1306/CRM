@@ -1,0 +1,90 @@
+# ==============================================================================
+# Deploy Playbook - Food Orders CRM
+# Deploys the application using Docker
+# ==============================================================================
+
+---
+- name: Deploy Food Orders CRM Application
+  hosts: web
+  become: true
+  vars:
+    app_name: food-orders-crm
+    docker_image: "{{ docker_registry }}/{{ app_name }}"
+    docker_tag: "{{ docker_tag | default('latest') }}"
+    app_port: 3000
+    
+  tasks:
+    - name: Ensure Docker is installed
+      include_role:
+        name: docker
+        
+    - name: Pull latest Docker image
+      docker_image:
+        name: "{{ docker_image }}"
+        tag: "{{ docker_tag }}"
+        source: pull
+        force_source: yes
+      register: pull_result
+      
+    - name: Stop existing container
+      docker_container:
+        name: "{{ app_name }}"
+        state: stopped
+      ignore_errors: yes
+      
+    - name: Remove existing container
+      docker_container:
+        name: "{{ app_name }}"
+        state: absent
+      ignore_errors: yes
+      
+    - name: Start new container
+      docker_container:
+        name: "{{ app_name }}"
+        image: "{{ docker_image }}:{{ docker_tag }}"
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "{{ app_port }}:3000"
+        env:
+          DATABASE_URL: "{{ database_url }}"
+          REDIS_URL: "{{ redis_url }}"
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: "{{ clerk_publishable_key }}"
+          CLERK_SECRET_KEY: "{{ clerk_secret_key }}"
+          NODE_ENV: "{{ env }}"
+        networks:
+          - name: crm-network
+        volumes:
+          - "{{ app_name }}-uploads:/app/public/uploads"
+        healthcheck:
+          test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+          interval: 30s
+          timeout: 10s
+          retries: 3
+          start_period: 40s
+      register: container_result
+      
+    - name: Wait for application to be healthy
+      uri:
+        url: "http://localhost:{{ app_port }}/api/health"
+        status_code: 200
+      register: health_check
+      until: health_check.status == 200
+      retries: 10
+      delay: 5
+      
+    - name: Verify deployment
+      debug:
+        msg: "Application deployed successfully with image {{ docker_image }}:{{ docker_tag }}"
+        
+    - name: Clean up old Docker images
+      docker_prune:
+        images: yes
+        images_filters:
+          dangling: true
+          
+  handlers:
+    - name: restart nginx
+      systemd:
+        name: nginx
+        state: restarted

@@ -1,0 +1,238 @@
+# Makefile - Food Orders CRM DevOps Utilities
+
+.PHONY: help setup start stop restart logs clean deploy backup monitor
+
+# Variables
+COMPOSE=docker-compose
+ANSIBLE=ansible-playbook
+PUPPET=puppet
+
+# Colors for output
+BLUE=\033[0;34m
+GREEN=\033[0;32m
+RED=\033[0;31m
+NC=\033[0m # No Color
+
+help: ## Muestra esta ayuda
+	@echo "$(BLUE)Food Orders CRM - DevOps Commands$(NC)"
+	@echo ""
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(GREEN)%-20s$(NC) %s\n", $$1, $$2}'
+
+# ==============================================================================
+# Setup & Installation
+# ==============================================================================
+
+setup: ## Configuración inicial del proyecto
+	@echo "$(BLUE)Configurando proyecto...$(NC)"
+	cp .env.example .env
+	@echo "$(GREEN)✓ Archivo .env creado$(NC)"
+	@echo "$(RED)⚠ Edita .env con tus credenciales antes de continuar$(NC)"
+
+install-deps: ## Instala dependencias npm
+	@echo "$(BLUE)Instalando dependencias...$(NC)"
+	npm ci
+	npx prisma generate
+	@echo "$(GREEN)✓ Dependencias instaladas$(NC)"
+
+# ==============================================================================
+# Docker Services
+# ==============================================================================
+
+start: ## Inicia todos los servicios
+	@echo "$(BLUE)Iniciando servicios...$(NC)"
+	$(COMPOSE) up -d
+	@echo "$(GREEN)✓ Servicios iniciados$(NC)"
+
+start-monitoring: ## Inicia servicios de monitoreo
+	@echo "$(BLUE)Iniciando monitoreo...$(NC)"
+	$(COMPOSE) --profile monitoring up -d
+	@echo "$(GREEN)✓ Prometheus, Grafana y exportadores iniciados$(NC)"
+
+start-ci: ## Inicia servicios CI/CD
+	@echo "$(BLUE)Iniciando CI/CD...$(NC)"
+	$(COMPOSE) --profile ci up -d
+	@echo "$(GREEN)✓ Jenkins y SonarQube iniciados$(NC)"
+
+start-all: ## Inicia TODOS los servicios (app + monitoring + CI)
+	@echo "$(BLUE)Iniciando todos los servicios...$(NC)"
+	$(COMPOSE) --profile monitoring --profile ci up -d
+	@echo "$(GREEN)✓ Todos los servicios iniciados$(NC)"
+	@make status
+
+stop: ## Detiene todos los servicios
+	@echo "$(BLUE)Deteniendo servicios...$(NC)"
+	$(COMPOSE) down
+	@echo "$(GREEN)✓ Servicios detenidos$(NC)"
+
+restart: stop start ## Reinicia todos los servicios
+
+status: ## Muestra el estado de los servicios
+	@echo "$(BLUE)Estado de servicios:$(NC)"
+	@$(COMPOSE) ps
+
+logs: ## Muestra logs de todos los servicios
+	$(COMPOSE) logs -f
+
+logs-app: ## Muestra logs de la aplicación
+	$(COMPOSE) logs -f app
+
+logs-jenkins: ## Muestra logs de Jenkins
+	$(COMPOSE) logs -f jenkins
+
+logs-prometheus: ## Muestra logs de Prometheus
+	$(COMPOSE) logs -f prometheus
+
+# ==============================================================================
+# Development
+# ==============================================================================
+
+dev: ## Inicia entorno de desarrollo
+	@echo "$(BLUE)Iniciando entorno de desarrollo...$(NC)"
+	npm run dev
+
+build: ## Build de la aplicación
+	@echo "$(BLUE)Building aplicación...$(NC)"
+	npm run build
+
+test: ## Ejecuta tests
+	@echo "$(BLUE)Ejecutando tests...$(NC)"
+	npm run test
+
+test-coverage: ## Ejecuta tests con coverage
+	@echo "$(BLUE)Ejecutando tests con coverage...$(NC)"
+	npm run test:coverage
+
+lint: ## Ejecuta linter
+	@echo "$(BLUE)Ejecutando linter...$(NC)"
+	npm run lint
+
+# ==============================================================================
+# Database
+# ==============================================================================
+
+db-migrate: ## Ejecuta migraciones de Prisma
+	@echo "$(BLUE)Ejecutando migraciones...$(NC)"
+	npm run prisma:migrate
+
+db-seed: ## Seed de base de datos
+	@echo "$(BLUE)Seeding base de datos...$(NC)"
+	npm run prisma:seed
+
+db-studio: ## Abre Prisma Studio
+	@echo "$(BLUE)Abriendo Prisma Studio...$(NC)"
+	npm run prisma:studio
+
+db-reset: ## Reset completo de base de datos
+	@echo "$(RED)⚠ Esto eliminará todos los datos$(NC)"
+	@read -p "¿Continuar? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		npm run db:reset-seed; \
+	fi
+
+# ==============================================================================
+# Ansible Deployment
+# ==============================================================================
+
+deploy-staging: ## Deploy a staging
+	@echo "$(BLUE)Deploying to staging...$(NC)"
+	$(ANSIBLE) -i ansible/inventories/staging ansible/playbooks/deploy.yml
+	@echo "$(GREEN)✓ Deploy completado$(NC)"
+
+deploy-production: ## Deploy a producción (requiere confirmación)
+	@echo "$(RED)⚠ Deploy a PRODUCCIÓN$(NC)"
+	@read -p "¿Continuar? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		$(ANSIBLE) -i ansible/inventories/production ansible/playbooks/deploy.yml; \
+		echo "$(GREEN)✓ Deploy completado$(NC)"; \
+	fi
+
+setup-servers: ## Configuración inicial de servidores
+	@echo "$(BLUE)Configurando servidores...$(NC)"
+	$(ANSIBLE) -i ansible/inventories/production ansible/playbooks/setup.yml
+
+backup-db: ## Backup de base de datos
+	@echo "$(BLUE)Creando backup...$(NC)"
+	$(ANSIBLE) -i ansible/inventories/production ansible/playbooks/backup.yml
+	@echo "$(GREEN)✓ Backup completado$(NC)"
+
+# ==============================================================================
+# Puppet
+# ==============================================================================
+
+puppet-apply: ## Aplica configuración de Puppet
+	@echo "$(BLUE)Aplicando configuración Puppet...$(NC)"
+	$(PUPPET) apply puppet/manifests/site.pp
+
+puppet-validate: ## Valida sintaxis de manifests
+	@echo "$(BLUE)Validando manifests...$(NC)"
+	$(PUPPET) parser validate puppet/manifests/site.pp
+	@echo "$(GREEN)✓ Sintaxis correcta$(NC)"
+
+# ==============================================================================
+# Monitoring
+# ==============================================================================
+
+monitor: ## Muestra URLs de monitoreo
+	@echo "$(BLUE)Servicios de Monitoreo:$(NC)"
+	@echo "Prometheus:  http://localhost:9090"
+	@echo "Grafana:     http://localhost:3001 (admin/admin)"
+	@echo "Alertmanager: http://localhost:9093"
+
+ci-urls: ## Muestra URLs de CI/CD
+	@echo "$(BLUE)Servicios CI/CD:$(NC)"
+	@echo "Jenkins:     http://localhost:8082"
+	@echo "SonarQube:   http://localhost:9000 (admin/admin)"
+
+urls: monitor ci-urls ## Muestra todas las URLs
+	@echo ""
+	@echo "$(BLUE)Aplicación:$(NC)"
+	@echo "App:         http://localhost:3000"
+	@echo "Adminer:     http://localhost:8080"
+
+# ==============================================================================
+# Maintenance & Cleanup
+# ==============================================================================
+
+clean: ## Limpia contenedores y volúmenes
+	@echo "$(RED)⚠ Esto eliminará contenedores y volúmenes$(NC)"
+	@read -p "¿Continuar? [y/N] " -n 1 -r; \
+	echo; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		$(COMPOSE) down -v; \
+		echo "$(GREEN)✓ Limpieza completada$(NC)"; \
+	fi
+
+clean-docker: ## Limpia imágenes y contenedores no usados
+	@echo "$(BLUE)Limpiando Docker...$(NC)"
+	docker system prune -f
+	docker image prune -a -f
+	@echo "$(GREEN)✓ Docker limpio$(NC)"
+
+backup-config: ## Backup de configuraciones
+	@echo "$(BLUE)Creando backup de configuraciones...$(NC)"
+	tar -czf devops-config-backup-$$(date +%Y%m%d-%H%M%S).tar.gz \
+		prometheus/ grafana/ jenkins/ ansible/ puppet/
+	@echo "$(GREEN)✓ Backup creado$(NC)"
+
+# ==============================================================================
+# Health Checks
+# ==============================================================================
+
+health: ## Verifica salud de servicios
+	@echo "$(BLUE)Verificando servicios...$(NC)"
+	@curl -f http://localhost:3000/api/health || echo "$(RED)✗ App$(NC)"
+	@curl -f http://localhost:9090/-/healthy || echo "$(RED)✗ Prometheus$(NC)"
+	@curl -f http://localhost:3001/api/health || echo "$(RED)✗ Grafana$(NC)"
+	@echo "$(GREEN)✓ Health check completado$(NC)"
+
+# ==============================================================================
+# Quick Commands
+# ==============================================================================
+
+up: start ## Alias para start
+
+down: stop ## Alias para stop
+
+ps: status ## Alias para status

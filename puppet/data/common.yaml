@@ -1,0 +1,41 @@
+# ==============================================================================
+# Common Hiera Data - Food Orders CRM
+# ==============================================================================
+
+# Application settings
+app_name: 'food-orders-crm'
+app_port: 3000
+
+# Docker settings
+docker_registry: 'docker.io'
+docker_image: 'food-orders-crm'
+
+# Database settings
+postgres_version: '16'
+postgres_max_connections: 100
+
+# Redis settings
+redis_maxmemory: '256mb'
+redis_maxmemory_policy: 'allkeys-lru'
+
+# Monitoring
+prometheus_server: '192.168.1.40'
+grafana_admin_user: 'admin'
+
+# Backup settings
+backup_retention_days: 30
+backup_schedule: '0 2 * * *'
+
+# Security settings
+ssh_port: 22
+fail2ban_bantime: 3600
+fail2ban_maxretry: 5
+
+# NTP servers
+ntp_servers:
+  - '0.pool.ntp.org'
+  - '1.pool.ntp.org'
+  - '2.pool.ntp.org'
+
+# System timezone
+timezone: 'UTC'

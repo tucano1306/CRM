@@ -38,7 +38,15 @@
     "monitor:report": "tsx scripts/monitor-performance-cli.ts report",
     "monitor:demo": "tsx scripts/performance-demo.ts",
     "performance:profile": "tsx scripts/monitor-performance-cli.ts monitor --duration 60 --output performance-report.txt",
-    "performance:analyze": "tsx scripts/monitor-performance-cli.ts report --json --output performance-data.json"
+    "performance:analyze": "tsx scripts/monitor-performance-cli.ts report --json --output performance-data.json",
+    "setup": "node scripts/quick-setup.js",
+    "docker:dev": "docker-compose -f docker-compose.dev-simple.yml up -d",
+    "docker:dev:stop": "docker-compose -f docker-compose.dev-simple.yml down",
+    "docker:dev:logs": "docker-compose -f docker-compose.dev-simple.yml logs -f",
+    "vercel:dev": "vercel dev",
+    "vercel:deploy": "vercel deploy",
+    "vercel:deploy:prod": "vercel deploy --prod",
+    "vercel:pull": "vercel env pull"
   },
   "dependencies": {
     "@auth/core": "^0.18.6",

@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
 import { updateOrderSchema, validateSchema } from '@/lib/validations'
 import { sanitizeText } from '@/lib/sanitize'
+import { notifyOrderModified } from '@/lib/notifications'
 
 // Usar singleton de Prisma para evitar múltiples conexiones en serverless
 
@@ -56,6 +57,50 @@ export async function GET(
   }
 }
 
+function buildUpdateData(status: any, notes: any, deliveryAddress: any, deliveryInstructions: any) {
+  const updateData: any = {}
+  
+  if (status) {
+    updateData.status = status
+  }
+  
+  if (notes !== undefined) {
+    updateData.notes = notes ? sanitizeText(notes) : null
+  }
+  
+  if (deliveryAddress !== undefined) {
+    updateData.deliveryAddress = sanitizeText(deliveryAddress)
+  }
+  
+  if (deliveryInstructions !== undefined) {
+    updateData.deliveryInstructions = sanitizeText(deliveryInstructions)
+  }
+
+  return updateData
+}
+
+function buildChangesList(status: any, notes: any, deliveryAddress: any, deliveryInstructions: any) {
+  const changes: string[] = []
+  if (status) changes.push(`Estado: ${status}`)
+  if (notes !== undefined) changes.push('Notas')
+  if (deliveryAddress !== undefined) changes.push('Dirección de entrega')
+  if (deliveryInstructions !== undefined) changes.push('Instrucciones de entrega')
+  return changes
+}
+
+async function sendOrderModifiedNotification(updatedOrder: any, changes: string[]) {
+  if (updatedOrder.sellerId && changes.length > 0) {
+    await notifyOrderModified(
+      updatedOrder.sellerId,
+      updatedOrder.id,
+      updatedOrder.orderNumber,
+      updatedOrder.client?.name || 'Cliente',
+      'Comprador',
+      changes
+    ).catch(err => console.error('Error creando notificación:', err))
+  }
+}
+
 // PATCH /api/orders/[id] - Actualizar estado de la orden
 export async function PATCH(
   request: Request,
@@ -72,7 +117,6 @@ export async function PATCH(
     const orderId = params.id
     const body = await request.json()
 
-    // ✅ VALIDACIÓN CON ZOD
     const validation = validateSchema(updateOrderSchema, body)
     if (!validation.success) {
       return NextResponse.json({ 
@@ -83,7 +127,6 @@ export async function PATCH(
 
     const { status, notes, deliveryAddress, deliveryInstructions } = validation.data
 
-    // Verificar que la orden existe
     const existingOrder = await prisma.order.findUnique({
       where: { id: orderId },
     })
@@ -95,24 +138,7 @@ export async function PATCH(
       )
     }
 
-    // ✅ CONSTRUIR OBJETO DE ACTUALIZACIÓN CON SANITIZACIÓN
-    const updateData: any = {}
-    
-    if (status) {
-      updateData.status = status
-    }
-    
-    if (notes !== undefined) {
-      updateData.notes = notes ? sanitizeText(notes) : null
-    }
-    
-    if (deliveryAddress !== undefined) {
-      updateData.deliveryAddress = sanitizeText(deliveryAddress)
-    }
-    
-    if (deliveryInstructions !== undefined) {
-      updateData.deliveryInstructions = sanitizeText(deliveryInstructions)
-    }
+    const updateData = buildUpdateData(status, notes, deliveryAddress, deliveryInstructions)
 
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
@@ -124,8 +150,12 @@ export async function PATCH(
           },
         },
         client: true,
+        seller: true,
       },
     })
+
+    const changes = buildChangesList(status, notes, deliveryAddress, deliveryInstructions)
+    await sendOrderModifiedNotification(updatedOrder, changes)
 
     return NextResponse.json({
       success: true,

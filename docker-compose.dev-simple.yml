@@ -1,0 +1,111 @@
+# ==============================================================================
+# Docker Compose - Desarrollo Local Simplificado
+# Para desarrollo local con Vercel deployment
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # ==============================================================================
+  # PostgreSQL Database (Local Development)
+  # ==============================================================================
+  db:
+    image: postgres:16-alpine
+    container_name: crm-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-crmuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crmpassword}
+      POSTGRES_DB: ${POSTGRES_DB:-food_orders_crm}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-crmuser}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==============================================================================
+  # Redis Cache (Local Development)
+  # ==============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: crm-redis-dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ==============================================================================
+  # Prometheus (Opcional - Monitoreo Local)
+  # ==============================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: crm-prometheus-dev
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts:/etc/prometheus/alerts:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    profiles:
+      - monitoring
+
+  # ==============================================================================
+  # Grafana (Opcional - Dashboards)
+  # ==============================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: crm-grafana-dev
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: true
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
+
+  # ==============================================================================
+  # Adminer (Database UI)
+  # ==============================================================================
+  adminer:
+    image: adminer:latest
+    container_name: crm-adminer-dev
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
+    name: crm-postgres-data-dev
+  redis_data:
+    name: crm-redis-data-dev
+  prometheus_data:
+    name: crm-prometheus-data-dev
+  grafana_data:
+    name: crm-grafana-data-dev

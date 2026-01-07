@@ -1,0 +1,63 @@
+# ==============================================================================
+# Database Backup Playbook - Food Orders CRM
+# ==============================================================================
+
+---
+- name: Backup PostgreSQL Database
+  hosts: db
+  become: true
+  
+  vars:
+    backup_dir: /backups/postgres
+    retention_days: 30
+    
+  tasks:
+    - name: Create backup directory
+      file:
+        path: "{{ backup_dir }}"
+        state: directory
+        mode: '0755'
+        owner: postgres
+        group: postgres
+        
+    - name: Generate backup filename
+      set_fact:
+        backup_file: "{{ backup_dir }}/crm-backup-{{ ansible_date_time.date }}-{{ ansible_date_time.hour }}{{ ansible_date_time.minute }}.sql.gz"
+        
+    - name: Create database backup
+      shell: |
+        docker exec crm-postgres pg_dump \
+          -U {{ postgres_user | default('crmuser') }} \
+          -d {{ postgres_db | default('food_orders_crm') }} \
+          | gzip > {{ backup_file }}
+      args:
+        creates: "{{ backup_file }}"
+        
+    - name: Set backup file permissions
+      file:
+        path: "{{ backup_file }}"
+        mode: '0600'
+        owner: postgres
+        group: postgres
+        
+    - name: Remove old backups
+      find:
+        paths: "{{ backup_dir }}"
+        age: "{{ retention_days }}d"
+        patterns: "*.sql.gz"
+      register: old_backups
+      
+    - name: Delete old backup files
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      loop: "{{ old_backups.files }}"
+      
+    - name: Verify backup
+      stat:
+        path: "{{ backup_file }}"
+      register: backup_stat
+      
+    - name: Report backup status
+      debug:
+        msg: "Backup created successfully: {{ backup_file }} ({{ backup_stat.stat.size | filesizeformat }})"

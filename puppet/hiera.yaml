@@ -1,0 +1,31 @@
+# ==============================================================================
+# Hiera Configuration - Hierarchical Data
+# ==============================================================================
+
+---
+version: 5
+
+defaults:
+  datadir: data
+  data_hash: yaml_data
+
+hierarchy:
+  # Environment-specific
+  - name: "Per-environment"
+    path: "environments/%{environment}.yaml"
+
+  # Node-specific
+  - name: "Per-node"
+    path: "nodes/%{trusted.certname}.yaml"
+
+  # Role-specific
+  - name: "Per-role"
+    path: "roles/%{role}.yaml"
+
+  # OS-specific
+  - name: "Per-OS"
+    path: "os/%{facts.os.family}.yaml"
+
+  # Common defaults
+  - name: "Common"
+    path: "common.yaml"

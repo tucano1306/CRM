@@ -1,0 +1,153 @@
+# ==============================================================================
+# Jenkins Configuration as Code (JCasC)
+# Food Orders CRM - Jenkins Setup
+# ==============================================================================
+
+jenkins:
+  systemMessage: "Food Orders CRM - Jenkins CI/CD Server"
+  numExecutors: 4
+  mode: NORMAL
+  
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "${JENKINS_ADMIN_PASSWORD:-admin}"
+          
+  authorizationStrategy:
+    globalMatrix:
+      permissions:
+        - "Overall/Administer:admin"
+        - "Overall/Read:authenticated"
+        
+  remotingSecurity:
+    enabled: true
+    
+  crumbIssuer:
+    standard:
+      excludeClientIPFromCrumb: false
+
+# ==============================================================================
+# Credentials
+# ==============================================================================
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - usernamePassword:
+              scope: GLOBAL
+              id: "docker-registry-credentials"
+              username: "${DOCKER_USERNAME}"
+              password: "${DOCKER_PASSWORD}"
+              description: "Docker Registry Credentials"
+              
+          - string:
+              scope: GLOBAL
+              id: "sonarqube-token"
+              secret: "${SONARQUBE_TOKEN}"
+              description: "SonarQube Authentication Token"
+              
+          - usernamePassword:
+              scope: GLOBAL
+              id: "github-credentials"
+              username: "${GITHUB_USERNAME}"
+              password: "${GITHUB_TOKEN}"
+              description: "GitHub Credentials"
+
+# ==============================================================================
+# Tools
+# ==============================================================================
+tool:
+  git:
+    installations:
+      - name: "Default"
+        home: "git"
+        
+  nodejs:
+    installations:
+      - name: "NodeJS 22"
+        properties:
+          - installSource:
+              installers:
+                - nodeJSInstaller:
+                    id: "22.0.0"
+                    npmPackagesRefreshHours: 72
+
+# ==============================================================================
+# SonarQube Configuration
+# ==============================================================================
+unclassified:
+  sonarGlobalConfiguration:
+    installations:
+      - name: "SonarQube"
+        serverUrl: "http://sonarqube:9000"
+        credentialsId: "sonarqube-token"
+        
+  location:
+    url: "http://jenkins:8080/"
+    adminAddress: "admin@foodorderscrm.com"
+
+# ==============================================================================
+# Jobs
+# ==============================================================================
+jobs:
+  - script: >
+      pipelineJob('food-orders-crm-pipeline') {
+        description('Main CI/CD pipeline for Food Orders CRM')
+        
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/tucano1306/CRM.git')
+                  credentials('github-credentials')
+                }
+                branches('*/main', '*/develop')
+              }
+            }
+            scriptPath('Jenkinsfile')
+          }
+        }
+        
+        triggers {
+          scm('H/5 * * * *')
+        }
+        
+        properties {
+          disableConcurrentBuilds()
+          buildDiscarder {
+            strategy {
+              logRotator {
+                daysToKeepStr('30')
+                numToKeepStr('10')
+              }
+            }
+          }
+        }
+      }
+      
+  - script: >
+      pipelineJob('nightly-build') {
+        description('Nightly build with full test suite')
+        
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/tucano1306/CRM.git')
+                  credentials('github-credentials')
+                }
+                branches('*/main')
+              }
+            }
+            scriptPath('jenkins/nightly-pipeline.jenkinsfile')
+          }
+        }
+        
+        triggers {
+          cron('H 2 * * *')
+        }
+      }
